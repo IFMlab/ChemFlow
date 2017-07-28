@@ -1,0 +1,36 @@
+#!/bin/bash
+run_folder=$PWD
+
+# Start up
+source $CHEMFLOW_HOME/ScoreFlow/ScoreFlow_interface.bash
+source $CHEMFLOW_HOME/ScoreFlow/ScoreFlow_functions.bash
+source $CHEMFLOW_HOME/common/check_mazinger_status.bash
+
+# Welcome user
+welcome
+
+# Source ChemFlow config file for paths
+source $CHEMFLOW_HOME/ChemFlow.config
+
+# Ask for user to configure or read from a .config file.
+source ${PWD}/ScoreFlow.config
+
+# Identify which program to use
+if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
+  rescore_method="plants"
+elif [ "${scoring_function}" == "vina" ]; then
+  rescore_method="vina"
+elif $(list_include_item "PB3 GB5 GB8" "${scoring_function}"); then
+  rescore_method="mmpbsa"
+fi
+
+# Run
+eval "prepare_rescoring; run_${rescore_method}"
+
+# copy config file to output folder
+cp ${run_folder}/ScoreFlow.config ${run_folder}/output/${scoring_function}_rescoring/
+
+if [ ${run_mode} = "mazinger" ]; then check_mazinger_status; fi
+
+# Exit
+exit_message

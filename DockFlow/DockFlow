@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Start up
+source $CHEMFLOW_HOME/DockFlow/DockFlow_interface.bash
+source $CHEMFLOW_HOME/DockFlow/DockFlow_functions.bash
+source $CHEMFLOW_HOME/common/check_mazinger_status.bash
+
+# Welcome user
+welcome
+
+# Source ChemFlow config file for paths
+source $CHEMFLOW_HOME/ChemFlow.config
+
+# Ask for user to configure or read from a .config file.
+DF_CLI "$@"
+# if config file specified using the -f flag
+if [ ! -z "$CONFIG_FILE" ]; then
+  echo "Reading configuration from $CONFIG_FILE"
+  source "$CONFIG_FILE"
+else
+# if a config file was not specified
+  # if a config file exists in the current directory
+  if [ -f "${PWD}/DockFlow.config" ]; then
+    # ask the user
+    echo -n "Configuration file detected in the current directory ! Use it for DockFlow (y/n) : "
+    read answer
+    if [ "$answer" == "y" ]; then
+      source $PWD/DockFlow.config
+    elif [ "$answer" == "n" ]; then
+      write_DF_config
+    else
+      echo "Answer \"$answer\" not recognized ! Aborting..."
+      exit 1
+    fi
+  # else, read configuration from command line
+  else
+    write_DF_config
+  fi
+fi
+
+# Prepare folders and input file to run
+prepare_plants
+
+# Run plants with the options
+run_plants
+
+# Extract scores
+if [ ! "${run_mode}" = "mazinger" ]; then
+  echo -ne "Docking finished !"
+  plants_score_csv
+else
+  check_mazinger_status
+  plants_score_csv
+fi
+
+# exit
+exit_message
