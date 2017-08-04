@@ -5,6 +5,7 @@ run_folder=$PWD
 source $CHEMFLOW_HOME/ScoreFlow/ScoreFlow_interface.bash
 source $CHEMFLOW_HOME/ScoreFlow/ScoreFlow_functions.bash
 source $CHEMFLOW_HOME/common/check_mazinger_status.bash
+source $CHEMFLOW_HOME/common/ProgressBar.bash
 
 # Welcome user
 welcome
@@ -15,22 +16,38 @@ source $CHEMFLOW_HOME/ChemFlow.config
 # Ask for user to configure or read from a .config file.
 source ${PWD}/ScoreFlow.config
 
-# Identify which program to use
+# Check input file and make list of poses to rescore
+prepare_rescoring
+
+# Identify which program to use, and run it
 if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
   rescore_method="plants"
+  run_plants
 elif [ "${scoring_function}" == "vina" ]; then
   rescore_method="vina"
+  run_vina
 elif $(list_include_item "PB3 GB5 GB8" "${scoring_function}"); then
   rescore_method="mmpbsa"
+  run_mmpbsa
 fi
-
-# Run
-eval "prepare_rescoring; run_${rescore_method}"
 
 # copy config file to output folder
 cp ${run_folder}/ScoreFlow.config ${run_folder}/output/${scoring_function}_rescoring/
 
-if [ ${run_mode} = "mazinger" ]; then check_mazinger_status; fi
+# If running on mazinger, wait untill all jobs are finished
+if [ ${run_mode} = "mazinger" ]; then mazinger_progress_bar; fi
+
+# Remove empty directories
+cd ${run_folder}/output/${scoring_function}_rescoring
+rmdir --ignore-fail-on-non-empty * &> /dev/null
+cd ${run_folder}
+
+# If some results are missing, count how many and output it
+if [ -f output/${scoring_function}_rescoring/errors.csv ]; then
+  errorcount=$(cat output/${scoring_function}_rescoring/errors.csv | wc -l)
+  echo -e "${RED}ERRORS detected${NC} : ${errorcount}"
+  echo "See output/${scoring_function}_rescoring/errors.csv for more info"
+fi
 
 # Exit
 exit_message

@@ -30,9 +30,9 @@ If several complexes are given, please align them before using ScoreFlow.
 Mode VS : rescores results from Virtual screening with another function.
 ##############################################################################################
 Mode BEST : rescores a selection of docking poses.
-${GREEN}/!\\${NC} : run ${GREEN}ChemFlow/Tools/ligfind.bash${NC} before using this mode
+${RED}/!\ ${NC}: run ${PURPLE}ChemFlow/Tools/multiligfind.bash${NC} before using this mode
 ##############################################################################################
-For ${RED}MMPBSA${NC} calculations, run ${GREEN}ChemFlow/Tools/ligprep.bash${NC} before using.
+For ${RED}MMPBSA${NC} calculations, run ${PURPLE}ChemFlow/Tools/ligprep.bash${NC} before using.
 A new 'rescoring' folder will be created in the output folder.
 All paths given must be absolute paths.
 "
@@ -156,10 +156,9 @@ elif [ "${rescore_method}" = "plants" ] && [ -z "${water}" ] && [ ! -z "${water_
   exit 1
 
 elif [ "${rescore_method}" = "mmpbsa" ] && [ ! -z "${water}" ]; then
-  echo -e "${BLUE}Rescoring with water${NC}"
+  echo -e "${BLUE}Rescoring with structural water molecule${NC}"
  
 else
-  echo -e "${BLUE}Rescoring without water${NC}"
   dock_water=""
 fi
 
@@ -194,13 +193,16 @@ then
     VINA=$(which vina)
   fi
 
+# if set to local, do nothing
+elif [ "${run_mode}" = "local" ]; then true
+
 else
   echo -e "${RED}ERROR${NC} : ${RED}Running mode${NC} (${run_mode}) not recognized"
 fi
 
 ## Check for an already existing rescoring with the same scoring function, and make backup if necessary
-if [ -d "$dir/output/${scoring_function}_rescoring" ]; then
-  mv $dir/output/${scoring_function}_rescoring $dir/output/${scoring_function}_rescoring.${datetime}.bak
+if [ -d "${run_folder}/output/${scoring_function}_rescoring" ]; then
+  mv ${run_folder}/output/${scoring_function}_rescoring ${run_folder}/output/${scoring_function}_rescoring.${datetime}.bak
   echo "Made a backup of an already existing ${scoring_function} rescoring"
 fi
 }
