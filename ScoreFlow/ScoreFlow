@@ -1,5 +1,8 @@
 #!/bin/bash
-run_folder=$PWD
+run_folder="$PWD"
+
+# Create a time stamp, in order to make backups
+datetime=$(date "+%Y%m%d%H%M%S")
 
 # Start up
 source $CHEMFLOW_HOME/ScoreFlow/ScoreFlow_interface.bash
@@ -13,8 +16,31 @@ welcome
 # Source ChemFlow config file for paths
 source $CHEMFLOW_HOME/ChemFlow.config
 
-# Ask for user to configure or read from a .config file.
-source ${PWD}/ScoreFlow.config
+# User interface
+SF_CLI "$@"
+
+# Write user parameters to a temporary file
+declare -p | awk '/declare --/ {print $3}' | awk 'f;/^_.*$/{f=1}' | grep -Fv -e "^_" -e "_list" > temp.config
+
+# if config file specified using the -f flag
+if [ ! -z "$CONFIG_FILE" ]; then
+  echo "Reading configuration from $CONFIG_FILE"
+  source "$CONFIG_FILE"
+else
+# if a config file was not specified
+  # if a config file exists in the current directory
+  if [ -f ScoreFlow.config ]; then
+    # Use this one instead
+    source ScoreFlow.config
+  # if no config file was specified and doesn't exist in the current directory
+  else
+    echo "${RED}FATAL ERROR${NC} : No configuration file found for ScoreFlow"
+    usage
+    exit 1
+  fi
+fi
+# Overwrite parameters in config files with user parameters
+write_SF_config
 
 # Check input file and make list of poses to rescore
 prepare_rescoring
@@ -32,21 +58,21 @@ elif $(list_include_item "PB3 GB5 GB8" "${scoring_function}"); then
 fi
 
 # copy config file to output folder
-cp ${run_folder}/ScoreFlow.config ${run_folder}/output/${scoring_function}_rescoring/
+cp ${run_folder}/ScoreFlow.config ${run_folder}/rescoring/${scoring_function}/
 
 # If running on mazinger, wait untill all jobs are finished
-if [ ${run_mode} = "mazinger" ]; then mazinger_progress_bar; fi
+if [ ${run_mode} = "mazinger" ]; then mazinger_progress_bar ${run_folder}/output/${scoring_function}_rescoring/jobs_list_${datetime}.mazinger; fi
 
 # Remove empty directories
-cd ${run_folder}/output/${scoring_function}_rescoring
+cd ${run_folder}/rescoring/${scoring_function}/
 rmdir --ignore-fail-on-non-empty * &> /dev/null
 cd ${run_folder}
 
 # If some results are missing, count how many and output it
-if [ -f output/${scoring_function}_rescoring/errors.csv ]; then
-  errorcount=$(cat output/${scoring_function}_rescoring/errors.csv | wc -l)
+if [ -f rescoring/${scoring_function}/errors.csv ]; then
+  errorcount=$(cat rescoring/${scoring_function}/errors.csv | wc -l)
   echo -e "${RED}ERRORS detected${NC} : ${errorcount}"
-  echo "See output/${scoring_function}_rescoring/errors.csv for more info"
+  echo "See rescoring/${scoring_function}/errors.csv for more info"
 fi
 
 # Exit

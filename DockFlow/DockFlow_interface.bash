@@ -31,11 +31,14 @@ echo "
 This script is designed to work with PLANTS (for now).
 It can perform an automatic VS based on information given by the user :
 ligands, receptor, binding site info, and extra options.
-PLANTS only accepts mol2 files as input.
+PLANTS only accepts mol2 files as input (1 or more compounds per file).
 Ligands in the mol2 format should be all put in the same directory.
-Binding site is a sphere defined by xyz coordinates of the center of the sphere and its radius.
-For each ligand, a folder will be created containing docking poses and extra info from PLANTS.
-All paths given must be absolute paths. 
+All paths given must be absolute paths.
+DockFlow will try to read a DockFlow.config file in the current directory.
+If such file doesn't exist, please run ConfigFlow to guide you,
+or copy $CHEMFLOW_HOME/config_files/DockFlow.config here.
+If you already have an existing config file and which to rerun DockFlow
+only modifying some options, see the help below.
 
 Usage : DockFlow
                  -h/--help           : Show this help message and quit
@@ -46,8 +49,7 @@ Usage : DockFlow
                                        spheric binding site, separated by a space
                  -bsr/--radius       : Radius of the spheric binding site
                  -n/--number         : Number of poses to generate, per ligand
-                 --run               : Run on this machine (default), in 
-                                       parallel, or on mazinger
+                 --run               : local, parallel, mazinger
 _________________________________________________________________________________
 For parallel :
                  -c/--core_number    : Number of cores for parallel
@@ -57,12 +59,6 @@ Optionnal :
                  -wxyzr/--water_xyzr : xyz coordinates and radius of the water
                                        sphere, separated by a space
 "
-}
-
-error() {
-usage
-echo -e "${RED}FATAL ERROR${NC} : ${RED}${1}${NC} is missing"
-exit 1
 }
 
 
@@ -127,6 +123,12 @@ done
 
 # write config file for DockFLow from CLI
 write_DF_config() {
+# Save the old config file
+if [ -f DockFlow.config ]; then cp DockFlow.config DockFlow.${datetime}.config ; fi
+
+# Overwrite. This only works because we used the same variable names in the interface and the config file.
+source temp.config
+
 echo "# Config file generated from CLI
 # Absolute path to receptor's mol2 file
 rec=\"$rec\"
@@ -152,13 +154,25 @@ water=\"$water\"
 # xyz coordinates and radius of the sphere, separated by a space
 water_xyzr=\"$water_xyzr\"
 
+# Add any other parameter here
+plants_user_parameters=\"\"
+
 # Run on this machine (default), in parallel, or on mazinger
 # local, parallel, mazinger
 run_mode=\"$run_mode\"
 
-#If parallel is chosen, please specify the number of cores available
+# If parallel is chosen, please specify the number of cores available
 core_number=\"$core_number\"
 " > DockFlow.config
+
+# remove temporary file
+rm -f temp.config
+}
+
+error() {
+usage
+echo -e "${RED}FATAL ERROR${NC} : ${RED}${1}${NC} is missing"
+exit 1
 }
 
 check_input() {
@@ -222,9 +236,9 @@ fi
 
 
 ## Check for an already existing rescoring with the same scoring function, and make backup if necessary
-if [ -d "$dir/output/VS" ]; then
-  mv $dir/output/VS $dir/output/VS.${datetime}.bak
-  echo "Made a backup of an already existing VS"
+if [ -d "${run_folder}/docking" ]; then
+  mv ${run_folder}/docking ${run_folder}/docking.${datetime}.bak
+  echo "Made a backup of an already existing docking campaign"
 fi
 }
 

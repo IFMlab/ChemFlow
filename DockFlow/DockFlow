@@ -1,9 +1,15 @@
 #!/bin/bash
 
+run_folder="$PWD"
+
+# Create a time stamp, in order to backup PLANTS output if it already exists
+datetime=$(date "+%Y%m%d%H%M%S")
+
 # Start up
 source $CHEMFLOW_HOME/DockFlow/DockFlow_interface.bash
 source $CHEMFLOW_HOME/DockFlow/DockFlow_functions.bash
 source $CHEMFLOW_HOME/common/check_mazinger_status.bash
+source $CHEMFLOW_HOME/common/ProgressBar.bash
 
 # Welcome user
 welcome
@@ -11,8 +17,12 @@ welcome
 # Source ChemFlow config file for paths
 source $CHEMFLOW_HOME/ChemFlow.config
 
-# Ask for user to configure or read from a .config file.
+# User interface
 DF_CLI "$@"
+
+# Write user parameters to a temporary file
+declare -p | awk '/declare --/ {print $3}' | awk 'f;/^_.*$/{f=1}' | grep -Fv -e "^_" -e "_list" > temp.config
+
 # if config file specified using the -f flag
 if [ ! -z "$CONFIG_FILE" ]; then
   echo "Reading configuration from $CONFIG_FILE"
@@ -20,37 +30,36 @@ if [ ! -z "$CONFIG_FILE" ]; then
 else
 # if a config file was not specified
   # if a config file exists in the current directory
-  if [ -f "${PWD}/DockFlow.config" ]; then
-    # ask the user
-    echo -n "Configuration file detected in the current directory ! Use it for DockFlow (y/n) : "
-    read answer
-    if [ "$answer" == "y" ]; then
-      source $PWD/DockFlow.config
-    elif [ "$answer" == "n" ]; then
-      write_DF_config
-    else
-      echo "Answer \"$answer\" not recognized ! Aborting..."
-      exit 1
-    fi
-  # else, read configuration from command line
+  if [ -f DockFlow.config ]; then
+    # Use this one instead
+    source DockFlow.config
+  # if no config file was specified and doesn't exist in the current directory
   else
-    write_DF_config
+    echo "${RED}FATAL ERROR${NC} : No configuration file found for DockFlow"
+    usage
+    exit 1
   fi
 fi
+# Overwrite parameters in config files with user parameters
+write_DF_config
 
 # Prepare folders and input file to run
-prepare_plants
+prepare_docking
 
 # Run plants with the options
 run_plants
 
-# Extract scores
-if [ ! "${run_mode}" = "mazinger" ]; then
-  echo -ne "Docking finished !"
-  plants_score_csv
-else
-  check_mazinger_status
-  plants_score_csv
+# copy config file to output folder
+cp ${run_folder}/DockFlow.config ${run_folder}/docking/
+
+# If running on mazinger, wait untill all jobs are finished
+if [ ${run_mode} = "mazinger" ]; then mazinger_progress_bar ${run_folder}/docking/jobs_list_${datetime}.mazinger; fi
+
+# If some results are missing, count how many and output it
+if [ -f docking/errors.csv ]; then
+  errorcount=$(cat docking/errors.csv | wc -l)
+  echo -e "${RED}ERRORS detected${NC} : ${errorcount}"
+  echo "See docking/errors.csv for more info"
 fi
 
 # exit

@@ -4,20 +4,17 @@
 prepare_rescoring() {
 # Check the ScoreFlow config file, make folders and write config files for rescoring
 
-# Create a time stamp, in order to backup rescoring output directories if they already exists
-datetime=$(date "+%Y%m%d%H%M%S")
-
 # Check if everything is ok with the input.
 check_input
 
-# Depending on what the user wants to do (VS, BEST or PDB rescoring), take actions
+# Depending on what the user wants to do (ALL, BEST or PDB rescoring), take actions
 
 # PDB rescoring mode
 if [ "${mode}" = "PDB" ]; then
   # List complexes, create folder
   # and write plants config in each folder
   list_complexes
-elif $(list_include_item "VS BEST" "${mode}"); then
+elif $(list_include_item "ALL BEST" "${mode}"); then
   list_docking
 fi
 }
@@ -35,21 +32,21 @@ fi
 
 # Create an output folder per complex.
 for com in ${com_list} ; do
-  mkdir -p ${run_folder}/output/${scoring_function}_rescoring/${com}
+  mkdir -p ${run_folder}/rescoring/${scoring_function}/${com}
 
   # And write the plants config file there.
-  cd ${run_folder}/output/${scoring_function}_rescoring/${com}
+  cd ${run_folder}/rescoring/${scoring_function}/${com}
 
   # Separate the complex in protein, ligand(s) and water mol2 files
   cd ${PDB_folder} # otherwise spores will add the path to the ligand name inside the file, which causes some bugs with PLANTS
-  ${SPORES} --mode splitpdb ${com}.pdb > ${run_folder}/output/${scoring_function}_rescoring/${com}/spores.job 2>&1
+  ${SPORES} --mode splitpdb ${com}.pdb > ${run_folder}/rescoring/${scoring_function}/${com}/spores.job 2>&1
  
   # Output is $PDB_folder, so we need to move it
-  mv ${PDB_folder}/*.mol2 ${run_folder}/output/${scoring_function}_rescoring/${com}/
+  mv ${PDB_folder}/*.mol2 ${run_folder}/rescoring/${scoring_function}/${com}/
   
   # path to ligand and receptor
-  lig=$(ls ${run_folder}/output/${scoring_function}_rescoring/${com}/ligand*.mol2 | sed s/.mol2//g)
-  rec=$(ls ${run_folder}/output/${scoring_function}_rescoring/${com}/protein.mol2 | sed s/.mol2//g)
+  lig=$(ls ${run_folder}/rescoring/${scoring_function}/${com}/ligand*.mol2 | sed s/.mol2//g)
+  rec=$(ls ${run_folder}/rescoring/${scoring_function}/${com}/protein.mol2 | sed s/.mol2//g)
   if [ "${rescore_method}" = "mmpbsa" ]; then
     babel -imol2 ${rec}.mol2 -opdb babel_${rec}.pdb
     pdb4amber -i babel_${rec}.pdb -o ${rec}.pdb
@@ -62,7 +59,7 @@ for com in ${com_list} ; do
   fi
 
   # write the config file
-  cd ${run_folder}/output/${scoring_function}_rescoring/${com}
+  cd ${run_folder}/rescoring/${scoring_function}/${com}
   echo -ne "Configuring ${PURPLE}${com}${NC}    \r"
   if [ "${rescore_method}" = "plants" ]; then
     sphere_list=$(python ${CHEMFLOW_HOME}/common/bounding_sphere.py ${lig}.mol2)
@@ -75,8 +72,12 @@ for com in ${com_list} ; do
 done
 
 if [ "${rescore_method}" = "mmpbsa" ]; then
-  cd ${run_folder}/output/${scoring_function}_rescoring/
+  cd ${run_folder}/rescoring/${scoring_function}/
   write_pbsa_config
+  if [ "${PB_method}" = "MD" ]; then
+    # write input files for MD
+    write_quickMD_config
+  fi
 fi
 
 echo "Rescoring configuration finished                                               "
@@ -99,7 +100,7 @@ elif [ "${extension}" = "mol2" ] ; then rec=$(echo "${rec}" | sed s/.mol2//g)
 fi
 
 # list all docking folders
-if [ "${mode}" = "VS" ]; then
+if [ "${mode}" = "ALL" ]; then
  dock_list=$(cd ${VS_folder} ; \ls -l | grep "^d" | awk '{print $9}')
 elif [ "${mode}" = "BEST" ]; then
   dock_list=$(cd ${BEST_folder} ; \ls -l | grep "^d" | awk '{print $9}')
@@ -108,7 +109,7 @@ fi
 # list all docking poses in the VS_folder
 pose_list=""
 for dock_folder in ${dock_list}; do
-  if [ "${mode}" = "VS" ]; then
+  if [ "${mode}" = "ALL" ]; then
     poses_list=$(cd ${VS_folder}/${dock_folder}/docking/; \ls *conf*.mol2 | sed s/.mol2//g )
   elif [ "${mode}" = "BEST" ]; then
     poses_list=$(cd ${BEST_folder}/${dock_folder}/docking/; \ls *.mol2 | sed s/.mol2//g )
@@ -120,9 +121,9 @@ for dock_folder in ${dock_list}; do
     pose_list+=" ${lig_name}/${pose}/${dock_folder}"
 
     # And write the plants config file there.
-    mkdir -p ${run_folder}/output/${scoring_function}_rescoring/${lig_name}/${pose}
-    cd ${run_folder}/output/${scoring_function}_rescoring/${lig_name}/${pose}
-    if [ "${mode}" = "VS" ]; then
+    mkdir -p ${run_folder}/rescoring/${scoring_function}/${lig_name}/${pose}
+    cd ${run_folder}/rescoring/${scoring_function}/${lig_name}/${pose}
+    if [ "${mode}" = "ALL" ]; then
       lig="${VS_folder}/${dock_folder}/docking/${pose}"
     elif [ "${mode}" = "BEST" ]; then
       lig="${BEST_folder}/${dock_folder}/docking/${pose}"
@@ -142,15 +143,19 @@ for dock_folder in ${dock_list}; do
 done
 
 if [ "${rescore_method}" = "mmpbsa" ]; then
-  cd ${run_folder}/output/${scoring_function}_rescoring/
+  cd ${run_folder}/rescoring/${scoring_function}/
   write_pbsa_config
+  if [ "${PB_method}" = "MD" ]; then
+    # write input files for MD
+    write_quickMD_config
+  fi
 fi
 
 echo "Rescoring configuration finished                                               "
 
 if [ -z "${pose_list}" ]
 then
-  if [ "${mode}" = "VS" ]; then
+  if [ "${mode}" = "ALL" ]; then
     echo -e "${RED}ERROR${NC} : Could not find mol2 docking poses in ${VS_folder}"    
   elif [ "${mode}" = "BEST" ]; then
     echo -e "${RED}ERROR${NC} : Could not find mol2 docking poses in ${BEST_folder}"
@@ -227,8 +232,8 @@ write_plants_pbs() {
 echo "#!/bin/bash
 #PBS -N PLANTS_${pose_name}
 #PBS -l nodes=1:ppn=1,walltime=24:00:00.00
-#PBS -o ${run_folder}/output/${scoring_function}_rescoring/${common_folder}/${pose_name}.o
-#PBS -e ${run_folder}/output/${scoring_function}_rescoring/${common_folder}/${pose_name}.e
+#PBS -o ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.o
+#PBS -e ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.e
 
 #-----user_section-----------------------------------------------
 module load plants/1.2
@@ -250,16 +255,16 @@ run_plants() {
 
 # Create features.csv and ranking.csv headers
 echo "LIGAND_ENTRY,TOTAL_SCORE,SCORE_RB_PEN,SCORE_NORM_HEVATOMS,SCORE_NORM_CRT_HEVATOMS,SCORE_NORM_WEIGHT,SCORE_NORM_CRT_WEIGHT,\
-SCORE_RB_PEN_NORM_CRT_HEVATOMS,SCORE_NORM_CONTACT,EVAL,TIME">${run_folder}/output/${scoring_function}_rescoring/ranking.csv
+SCORE_RB_PEN_NORM_CRT_HEVATOMS,SCORE_NORM_CONTACT,EVAL,TIME">${run_folder}/rescoring/${scoring_function}/ranking.csv
 echo "LIGAND_ENTRY,TOTAL_SCORE,SCORE_RB_PEN,SCORE_NORM_HEVATOMS,SCORE_NORM_CRT_HEVATOMS,SCORE_NORM_WEIGHT,SCORE_NORM_CRT_WEIGHT,\
 SCORE_RB_PEN_NORM_CRT_HEVATOMS,SCORE_NORM_CONTACT,PLPtotal,PLPparthbond,PLPpartsteric,PLPpartmetal,PLPpartrepulsive,PLPpartburpolar,\
 LIG_NUM_CLASH,LIG_NUM_CONTACT,LIG_NUM_NO_CONTACT,CHEMpartmetal,CHEMparthbond,CHEMparthbondCHO,DON,ACC,UNUSED_DON,UNUSED_ACC,\
-CHEMPLP_CLASH2,TRIPOS_TORS,ATOMS_OUTSIDE_BINDINGSITE">${run_folder}/output/${scoring_function}_rescoring/features.csv
+CHEMPLP_CLASH2,TRIPOS_TORS,ATOMS_OUTSIDE_BINDINGSITE">${run_folder}/rescoring/${scoring_function}/features.csv
 
 # List to iterate
 if [ "${mode}" = "PDB" ]; then
   common_list="${com_list}"
-elif $(list_include_item "VS BEST" "${mode}"); then
+elif $(list_include_item "ALL BEST" "${mode}"); then
   common_list="${pose_list}"
 fi
 
@@ -282,7 +287,7 @@ do
     lig_name="${common_folder}"
     pose_name="${common_folder}"
     dock_folder="${common_folder}"
-  elif $(list_include_item "VS BEST" "${mode}"); then
+  elif $(list_include_item "ALL BEST" "${mode}"); then
     common_folder=$(echo "${item}"    | cut -d"/" -f"1,2")
     lig_name=$(echo "$common_folder"  | cut -d"/" -f1)
     pose_name=$(echo "$common_folder" | cut -d"/" -f2)
@@ -290,7 +295,7 @@ do
   fi
 
   # Go to the rescoring folder
-  cd ${run_folder}/output/${scoring_function}_rescoring/${common_folder}
+  cd ${run_folder}/rescoring/${scoring_function}/${common_folder}
   
   # Run
   if [ "${run_mode}" = "local" ]    ; then
@@ -304,17 +309,17 @@ do
     { kill $! && wait $!; } 2>/dev/null
 
   elif [ "${run_mode}" = "parallel" ] ; then
-    echo -n "cd ${run_folder}/output/${scoring_function}_rescoring/${common_folder}; \
+    echo -n "cd ${run_folder}/rescoring/${scoring_function}/${common_folder}; \
     source ${CHEMFLOW_HOME}/ChemFlow.config; \
-    source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash; " >> ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel
-    CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel
+    source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash; " >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
+    CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
     echo "; plants_cmd; \
-    echo -n 0 >>${run_folder}/output/${scoring_function}_rescoring/.progress.dat" >> ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel
+    echo -n 0 >>${run_folder}/rescoring/${scoring_function}/.progress.dat" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
 
   elif [ "${run_mode}" = "mazinger" ]; then
     write_plants_pbs
     jobid=$(qsub plants.pbs)
-    echo "$jobid" >> ${run_folder}/output/${scoring_function}_rescoring/jobs_list_${datetime}.mazinger
+    echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
     echo -ne "Running ${PURPLE}${pose_name}${NC} on ${BLUE}${jobid}${NC}              \r"
   fi
 done
@@ -324,14 +329,14 @@ if [ "${run_mode}" = "parallel" ]; then
   echo -e "\rFinished preparing parallel... Running"
   { kill $! && wait $!; } 2>/dev/null
   # Run the progress bar
-  touch ${run_folder}/output/${scoring_function}_rescoring/.progress.dat
-  (while :; do progress_count=$(cat ${run_folder}/output/${scoring_function}_rescoring/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
+  touch ${run_folder}/rescoring/${scoring_function}/.progress.dat
+  (while :; do progress_count=$(cat ${run_folder}/rescoring/${scoring_function}/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
   # Run parallel
-  ${parallel} -j ${core_number} < ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel \
-  > ${run_folder}/output/${scoring_function}_rescoring/parallel.job 2>&1
+  ${parallel} -j ${core_number} < ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel \
+  > ${run_folder}/rescoring/${scoring_function}/parallel.job 2>&1
   # Kill the progress bar when parallel is done
   { printf '\n'; kill $! && wait $!; } 2>/dev/null
-  rm -f ${run_folder}/output/${scoring_function}_rescoring/.progress.dat
+  rm -f ${run_folder}/rescoring/${scoring_function}/.progress.dat
 fi
 }
 
@@ -345,17 +350,16 @@ reorganize_plants
 reorganize_plants() {
 if [ -d results ]; then
   cd results
-  mv protein_bindingsite_fixed.mol2 ${run_folder}/output/${scoring_function}_rescoring/
+  mv protein_bindingsite_fixed.mol2 ${run_folder}/rescoring/${scoring_function}/
   # the command tail -n +2 skip the first line (containing the header), and starts printing at the 2nd line of the file
   # PLANTS appends _entry_XXX_conf_XX to the rescored poses in the csv tables, so we use sed 's/\(^.*_entry.*_conf.*\)_entry.*_conf_[[:digit:]]*\(,.*$\)/\1\2/g'
   # to remove this string from the names
-  tail -n +2 features.csv | sed 's/\(^.*_entry.*_conf.*\)_entry.*_conf_[[:digit:]]*\(,.*$\)/\1\2/g'>> ${run_folder}/output/${scoring_function}_rescoring/features.csv
-  tail -n +2 ranking.csv  | sed 's/\(^.*_entry.*_conf.*\)_entry.*_conf_[[:digit:]]*\(,.*$\)/\1\2/g'>> ${run_folder}/output/${scoring_function}_rescoring/ranking.csv
-  cd ${run_folder}/output/${scoring_function}_rescoring/
+  tail -n +2 features.csv | sed 's/\(^.*_entry.*_conf.*\)_entry.*_conf_[[:digit:]]*\(,.*$\)/\1\2/g'>> ${run_folder}/rescoring/${scoring_function}/features.csv
+  tail -n +2 ranking.csv  | sed 's/\(^.*_entry.*_conf.*\)_entry.*_conf_[[:digit:]]*\(,.*$\)/\1\2/g'>> ${run_folder}/rescoring/${scoring_function}/ranking.csv
+  cd ${run_folder}/rescoring/${scoring_function}/
   rm -rf ${common_folder}
-  echo "${common_folder}" >> folders.txt
 else
-  echo "${pose_name},${dock_folder}" >> ${run_folder}/output/${scoring_function}_rescoring/errors.csv
+  echo "${pose_name},${dock_folder}" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
 fi
 }
 
@@ -375,8 +379,8 @@ write_vina_pbs() {
 echo "#!/bin/bash
 #PBS -N PLANTS_${pose_name}
 #PBS -l nodes=1:ppn=1,walltime=24:00:00.00
-#PBS -o ${run_folder}/output/${scoring_function}_rescoring/${common_folder}/${pose_name}.o
-#PBS -e ${run_folder}/output/${scoring_function}_rescoring/${common_folder}/${pose_name}.e
+#PBS -o ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.o
+#PBS -e ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.e
 
 #-----user_section-----------------------------------------------
 module load vina
@@ -399,8 +403,8 @@ if [ "${mode}" = "PDB" ]; then
   ${ADT}/prepare_receptor4.py -r ${rec}.mol2 > convert2pdbqt.job
   # Prepare ligand
   ${ADT}/prepare_ligand4.py -l ${lig}.mol2 >> convert2pdbqt.job
-# Mode BEST or VS
-elif $(list_include_item "VS BEST" "${mode}"); then
+# Mode BEST or ALL
+elif $(list_include_item "ALL BEST" "${mode}"); then
   # Convert pose to pdbqt if it doesn't exist
   if [ ! -f ${run_folder}/input_files/lig/${lig_name}/${pose_name}.pdbqt ]; then
     mkdir -p ${run_folder}/input_files/lig/${lig_name}
@@ -418,12 +422,12 @@ reorganize_vina
 
 run_vina() {
 # Headers for the concatenated score file
-echo "Ligand,Affinity,gauss_1,gauss_2,repulsion,hydrophobic,Hydrogen" > ${run_folder}/output/${scoring_function}_rescoring/ranking.csv
+echo "Ligand,Affinity,gauss_1,gauss_2,repulsion,hydrophobic,Hydrogen" > ${run_folder}/rescoring/${scoring_function}/ranking.csv
 
 # List to iterate
 if [ "${mode}" = "PDB" ]; then
   common_list="${com_list}"
-elif $(list_include_item "VS BEST" "${mode}"); then
+elif $(list_include_item "ALL BEST" "${mode}"); then
   common_list="${pose_list}"
 fi
 
@@ -438,7 +442,7 @@ if [ "${run_mode}" = "parallel" ]; then
 fi
 
 # Convert receptor if it's not already done
-if $(list_include_item "VS BEST" "${mode}") && [ ! -f ${rec}.pdbqt ]; then 
+if $(list_include_item "ALL BEST" "${mode}") && [ ! -f ${rec}.pdbqt ]; then 
   cd $(dirname ${rec}.${extension})
   ${ADT}/prepare_receptor4.py -r ${rec}.${extension} > convert2pdbqt.job
 fi
@@ -452,7 +456,7 @@ do
     lig_name="${common_folder}"
     pose_name="${common_folder}"
     dock_folder="${common_folder}"
-  elif $(list_include_item "VS BEST" "${mode}"); then
+  elif $(list_include_item "ALL BEST" "${mode}"); then
     common_folder=$(echo "${item}"    | cut -d"/" -f"1,2")
     lig_name=$(echo "$common_folder"  | cut -d"/" -f1)
     pose_name=$(echo "$common_folder" | cut -d"/" -f2)
@@ -460,15 +464,15 @@ do
   fi
 
   # Go to the rescoring folder
-  cd ${run_folder}/output/${scoring_function}_rescoring/${common_folder}
+  cd ${run_folder}/rescoring/${scoring_function}/${common_folder}
 
   # List ligands for complex mode
   if [ "${mode}" = "PDB" ]; then
     lig=$(ls ligand*.mol2 | sed s/.mol2//g)
     rec=$(ls protein.mol2 | sed s/.mol2//g)
-  elif $(list_include_item "VS BEST" "${mode}"); then
+  elif $(list_include_item "ALL BEST" "${mode}"); then
     # Set folders, for pdbqt conversion
-    if [ ${mode} = "VS" ]; then 
+    if [ ${mode} = "ALL" ]; then 
       folder="${VS_folder}"
     elif [ ${mode} = "BEST" ]; then 
       folder="${BEST_folder}"
@@ -487,17 +491,17 @@ do
     { kill $! && wait $!; } 2>/dev/null
 
   elif [ "${run_mode}" = "parallel" ] ; then
-    echo -n "cd ${run_folder}/output/${scoring_function}_rescoring/${common_folder}; \
+    echo -n "cd ${run_folder}/rescoring/${scoring_function}/${common_folder}; \
     source ${CHEMFLOW_HOME}/ChemFlow.config; \
-    source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash; " >> ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel
-    CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel
+    source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash; " >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
+    CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
     echo "; vina_cmd; \
-    echo -n 0 >>${run_folder}/output/${scoring_function}_rescoring/.progress.dat" >> ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel
+    echo -n 0 >>${run_folder}/rescoring/${scoring_function}/.progress.dat" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
 
   elif [ "${run_mode}" = "mazinger" ]; then
     write_vina_pbs
     jobid=$(qsub plants.pbs)
-    echo "$jobid" >> ${run_folder}/output/${scoring_function}_rescoring/jobs_list_${datetime}.mazinger
+    echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
     echo -ne "Running ${PURPLE}${pose_name}${NC} on ${BLUE}${jobid}${NC}              \r"
   fi
 done
@@ -507,14 +511,14 @@ if [ "${run_mode}" = "parallel" ]; then
   echo -e "\rFinished preparing parallel... Running"
   { kill $! && wait $!; } 2>/dev/null
   # Run the progress bar
-  touch ${run_folder}/output/${scoring_function}_rescoring/.progress.dat
-  (while :; do progress_count=$(cat ${run_folder}/output/${scoring_function}_rescoring/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
+  touch ${run_folder}/rescoring/${scoring_function}/.progress.dat
+  (while :; do progress_count=$(cat ${run_folder}/rescoring/${scoring_function}/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
   # Run parallel
-  ${parallel} -j ${core_number} < ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel \
-  > ${run_folder}/output/${scoring_function}_rescoring/parallel.job 2>&1
+  ${parallel} -j ${core_number} < ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel \
+  > ${run_folder}/rescoring/${scoring_function}/parallel.job 2>&1
   # Kill the progress bar when parallel is done
   { printf '\n'; kill $! && wait $!; } 2>/dev/null
-  rm -f ${run_folder}/output/${scoring_function}_rescoring/.progress.dat
+  rm -f ${run_folder}/rescoring/${scoring_function}/.progress.dat
 fi
 }
 
@@ -534,12 +538,12 @@ if [ -f output.log ]; then
   done
   echo "" >> energy.csv
   # Concatenate to ranking
-  cat energy.csv >> ${run_folder}/output/${scoring_function}_rescoring/ranking.csv
+  cat energy.csv >> ${run_folder}/rescoring/${scoring_function}/ranking.csv
   # remove the old files
-  cd ${run_folder}/output/${scoring_function}_rescoring/
+  cd ${run_folder}/rescoring/${scoring_function}/
   rm -rf ${common_folder}
 else
-  echo "${pose_name},${dock_folder}" >> ${run_folder}/output/${scoring_function}_rescoring/errors.csv
+  echo "${pose_name},${dock_folder}" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
 fi
 }
 
@@ -608,9 +612,19 @@ quit">tleap.cmd
 }
 
 run_tleap() {
-# Run tleap
-
-tleap -f tleap.cmd &>tleap.job
+# If the complex topology doesn't exist, run tleap
+if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop ]; then
+  mkdir -p ${run_folder}/input_files/com/${lig_name}
+  mkdir -p ${run_folder}/input_files/lig/${lig_name}
+  # Run tleap to prepare topology and coordinates
+  if [ -z "${water}" ]; then
+    write_tleap_without_water
+  else
+    write_tleap_with_water
+  fi
+  # Run tleap
+  tleap -f tleap.cmd &>tleap.job
+fi
 }
 
 write_pbsa_config() {
@@ -667,14 +681,38 @@ cavity_offset=0.92,
 fi
 }
 
+write_quickMD_config() {
+echo "Complex: initial minimization prior to MD GB model
+ &cntrl
+  imin   = 1,
+  maxcyc = 500,
+  ncyc   = 250,
+  ntb    = 0,
+  igb    = ${GB_model},
+  cut    = 999
+ /">min.in
+
+
+echo "Complex MD Generalized Born, infinite cut off
+ &cntrl
+  imin = 0, ntb = 0,
+  igb = ${GB_model}, ntpr = 1000, ntwx = 1000,
+  ntt = 3, gamma_ln = 1.0,
+  tempi = 300.0, temp0 = 300.0
+  nstlim = ${MD_time}000, dt = 0.001,
+  cut = 999
+ /
+">prod.in
+}
+
 write_pbsa_pbs() {
 # Write PBS script for MMPBSA
 
 echo "#!/bin/bash
 #PBS -N ${pose_name}
 #PBS -l nodes=1:ppn=1,walltime=24:00:00.00
-#PBS -o ${run_folder}/output/${scoring_function}_rescoring/${common_folder}/${pose_name}.o
-#PBS -e ${run_folder}/output/${scoring_function}_rescoring/${common_folder}/${pose_name}.e
+#PBS -o ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.o
+#PBS -e ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.e
 
 source ${amber} 
 
@@ -686,91 +724,203 @@ source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash
 "> mmpbsa.pbs
 print_vars >> mmpbsa.pbs
 echo "
-mmpbsa_cmd" >> mmpbsa.pbs
+# Make trajectory and topology of the complex from the pdb file
+run_tleap
+# Create files
+mmpbsa_${PB_method}_cmd
+# Run calculation
+mmpbsa_calculation
+# Reorganize files
+reorganize_mmpbsa" >> mmpbsa.pbs
 }
 
-
-mmpbsa_cmd() {
-# Preparation of files for MMPBSA, and running
-
-# If the complex topology doesn't exist, run tleap
-if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop ]; then
-  mkdir -p ${run_folder}/input_files/com/${lig_name}
-  mkdir -p ${run_folder}/input_files/lig/${lig_name}
-  # Run tleap to prepare topology and coordinates
-  if [ -z "${water}" ]; then
-    write_tleap_without_water
-  else
-    write_tleap_with_water
-  fi
-  run_tleap
-fi
+mmpbsa_1F_cmd() {
+# Preparation of files prior to 1F MMPBSA
 
 # Run a quick minimization if asked by user
 if [ ! -z "${min_steps}" ]; then
   # If the complex_before_min.rst7 file doesn't exist, run the minimization
-  if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_no_min.rst7 ]; then
-    mv ${run_folder}/input_files/com/${lig_name}/${pose_name}.pdb ${run_folder}/input_files/com/${lig_name}/${pose_name}_no_min.pdb
-    mv ${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7 ${run_folder}/input_files/com/${lig_name}/${pose_name}_no_min.rst7
+  if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7 ]; then
     if [ "${min_type}" = "backbone" ]; then
       minab_mask=":${min_mask}:CA|:${min_mask}:N|:${min_mask}:C|:${min_mask}:O"
     else
       minab_mask="${min_mask}"
     fi
     # Minimize
-    minab ${run_folder}/input_files/com/${lig_name}/${pose_name}_no_min.pdb \
-    ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
-    ${run_folder}/input_files/com/${lig_name}/${pose_name}.pdb ${implicit_model} ${min_steps} \'${minab_mask}\' ${min_energy} > minab.job
+    minab ${run_folder}/input_files/com/${lig_name}/${pose_name}.pdb \
+          ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+          ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.pdb \
+          ${implicit_model} ${min_steps} \'${minab_mask}\' ${min_energy} &> minab.job
     # Write trajectory from minimized pdb
     cpptraj -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
-    -y ${run_folder}/input_files/com/${lig_name}/${pose_name}.pdb \
-    -x ${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7
+            -y ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.pdb \
+            -x ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7 &> cpptraj.job
+  fi
+  mmpbsa_rst7="${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7"
+else
+  mmpbsa_rst7="${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7"
+fi
+}
+
+mmpbsa_MD_cmd() {
+# Preparation of files for a quick implicit solvent MD prior to MMPBSA
+
+# Run Minimization
+if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 ]; then
+pmemd.cuda  -O -i ${run_folder}/rescoring/${scoring_function}/min.in \
+            -c ${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7 \
+            -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+            -o min.mdout -e min.mden -v min.mdvel \
+            -r ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 \
+            -x ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.mdcrd \
+            -ref ${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7 &> MD_min.job
+  if [ ! -f min.mdout ]; then
+    echo "${pose_name},${dock_folder},implicit solvent MD minimization" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
+  fi
+fi
+# Run MD
+if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.rst7 ]; then
+pmemd.cuda  -O -i ${run_folder}/rescoring/${scoring_function}/prod.in \
+            -c ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 \
+            -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+            -o prod.mdout -e prod.mden -v prod.mdvel \
+            -r ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.rst7 \
+            -x ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.mdcrd \
+            -ref ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 &> MD_prod.job
+  if [ ! -f prod.mdout ]; then
+    # if no output file was found
+    echo "${pose_name},${dock_folder},implicit solvent MD production" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
   fi
 fi
 
-# Calculation
-if [ "${scoring_function}" = "PB3" ] ; then
-  ante-MMPBSA.py -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
-  -c com.top -r rec.top -l lig.top -s \'${strip_mask}\' -n ${lig_mask}
-  MMPBSA.py -O -i ${run_folder}/output/${scoring_function}_rescoring/${scoring_function}.in \
-  -o MM${scoring_function::2}SA.dat -eo MM${scoring_function::2}SA.csv -cp com.top -rp rec.top -lp lig.top \
-  -y ${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7
-else
-  ante-MMPBSA.py -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
-  -c com.top -r rec.top -l lig.top -s \'${strip_mask}\' -n ${lig_mask} --radii=${radii}
-  MMPBSA.py -O -i ${run_folder}/output/${scoring_function}_rescoring/${scoring_function}.in \
-  -o MM${scoring_function::2}SA.dat -eo MM${scoring_function::2}SA.csv -cp com.top -rp rec.top -lp lig.top \
-  -y ${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7
-fi
+mmpbsa_rst7="${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.rst7"
+}
 
-# Reorganize files and output master csv table
-reorganize_mmpbsa
+mmpbsa_calculation() {
+# Run the calculation
+if [ "${scoring_function}" = "PB3" ] ; then
+  ante-MMPBSA.py  -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+                  -c com.top -r rec.top -l lig.top -s \'${strip_mask}\' -n ${lig_mask} &> ante_mmpbsa.job
+else
+  ante-MMPBSA.py  -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+                  -c com.top -r rec.top -l lig.top -s \'${strip_mask}\' -n ${lig_mask} --radii=${radii} &> ante_mmpbsa.job
+fi
+MMPBSA.py -O -i ${run_folder}/rescoring/${scoring_function}/${scoring_function}.in \
+          -o MM${scoring_function::2}SA.dat -eo MM${scoring_function::2}SA.csv -cp com.top -rp rec.top -lp lig.top \
+          -y ${mmpbsa_rst7} &> mmpbsa.job
+# Check if output was created
+if [ ! -f MM${scoring_function::2}SA.csv ]; then
+  echo "${pose_name},${dock_folder},mmpbsa results" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
+fi
 }
 
 reorganize_mmpbsa() {
-# if the output file exist
+# if the PB_method was 1F, output minimization results
+if [ "${PB_method}" = "1F" ]; then
+  # if the minimization was done
+  if [ ! -z "$(grep "ff:" minab.job)" ]; then
+    # Exemple :
+    #       iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+    # ff:     0 1578877638.37  11225.12 1578897661.82 -20085.46      0.00 -11163.11  2.26e+08
+    # ff:    10 431224018.15  11225.56 431244076.20 -20120.38      0.00 -11163.23  4.93e+07
+    # ff:    20 3604773.52  11303.20 3624879.97 -20246.27      0.44 -11163.83  1.37e+05
+
+    # Match lines begining with "ff:" : /^ff:/
+    # Replace groups of spaces with a comma : s/\s\+/,/g
+    # Replace "ff:" with the name of the ligand and print : s/^ff:/${pose_name}/gp
+    sed -n "/^ff:/s/\s\+/,/g;s/^ff:/${pose_name}/gp" minab.job >> ${run_folder}/rescoring/${scoring_function}/1F_min.csv
+  fi
+
+# if the PB_method was MD, output min and prod results
+elif [ "${PB_method}" = "MD" ]; then
+  if [ -f min.mdout ]; then
+    # Exemple of min.mdout :
+    #   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    #      1      -7.2130E+02     4.2787E+01     4.0475E+02     H20       185
+    #
+    # BOND    =       94.3081  ANGLE   =      191.4991  DIHED      =      162.5874
+    # VDWAALS =       58.5641  EEL     =     1651.2674  EGB        =     -153.7386
+    # 1-4 VDW =       22.9043  1-4 EEL =    -2748.6909  RESTRAINT  =        0.0000
+    #
+    #
+    #   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    #...
+
+    # Get lines that are between "4. RESULTS" and "FINAL RESULTS" in the mdout file to obtain only the values shown above
+    lines=$(awk '/4.  RESULTS/{f=1;next};/FINAL RESULTS/{f=0}f' min.mdout)
+    # Get values following the "NSTEP" line, and output them in csv format
+    # awk '/NSTEP/{f=1;next};/^\s*$/{f=0} : start reading after the line containing NSTEP, and stop at the first empty line
+    # Thus we only get the values following the "NSTEP" flag
+    # f{gsub (/\s+/, ",", $0); print}' : for the lines marked by the flag, replace groups of spaces (\s\+) with a comma (",") on all the line ($0)
+    # in order to obtain a csv formatted file
+    values1=$(echo "${lines}" | awk '/NSTEP/{f=1;next};/^\s*$/{f=0}f{gsub (/\s+/, ",", $0); print}')
+    # Get energy decomposition
+    # sed -n '/BOND/,/1-4 VDW/ : For the lines between "BOND" and "1-4 VDW" (inclusive)
+    # s/^.*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\)$/ : search for a regular expression : chars = space float, repeated 3 times
+    # /\1,\2,\3/gp' : return only the values between parenthesis, and separated by commas
+    # This will return 3 lines with 3 values each separated by commas, but for a csv format we want 1 line per NSTEP
+    # | sed -n '$!N;s/\n/,/;$!N;s/\n/,/p' : join line1 and line2, replace \n with a comma, then join line1+line2 and line3, replace \n with a comma
+    # so that "1 2\n3 4\n5 6\n" becomes "1 2 3 4 5 6\n"
+    values2=$(echo "${lines}" | sed -n '/BOND/,/1-4 VDW/s/^.*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\)$/\1,\2,\3/gp' \
+              | sed -n '$!N;s/\n/,/;$!N;s/\n/,/p')
+    # Concatenate both gathered values on the same rows
+    lines=$(paste -d"," <(echo "${values1}") <(echo "${values2}"))
+    # Make the final csv table by appending the docking pose name
+    echo "${lines}" | sed -n "s/^/${pose_name}/gp" >> ${run_folder}/rescoring/${scoring_function}/MD_min.csv
+  fi
+
+    if [ -f prod.mdout ]; then
+    # Exemple :
+    # NSTEP =        0   TIME(PS) =       0.000  TEMP(K) =   306.02  PRESS =     0.0
+    # Etot   =      -895.1130  EKtot   =       176.0523  EPtot      =     -1071.1653
+    # BOND   =         3.8889  ANGLE   =       149.0011  DIHED      =       120.7584
+    # 1-4 NB =        19.5578  1-4 EEL =     -2766.3216  VDWAALS    =       -94.1882
+    # EELEC  =      1671.7489  EGB     =      -175.6107  RESTRAINT  =         0.0000
+    # ------------------------------------------------------------------------------
+    #
+    #
+    # NSTEP =     1000   TIME(PS) =       1.000  TEMP(K) =   235.78  PRESS =     0.0
+    #...
+
+    # Get lines between "4. RESULTS" and "A V E R A G E S" to obtain the values shown above
+    lines=$(awk '/4.  RESULTS/{f=1;next};/A V E R A G E S/{f=0}f' prod.mdout)
+    # Get energy decomposition
+    # sed -n '/NSTEP/,/RESTRAINT/ : For the lines between NSTEP and RESTRAINT (inclusive)
+    # s/^.*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\)$/\1,\2,\3/gp' : return only the values
+    # Notice that the first line contains 4 values, but with this regular expression, we are only asking for 3
+    # As a result, the most left-side value (NSTEP), will be ignored. This is acceptable since we have a value that can get us back
+    # to NSTEP if needed : the TIME(PS). NSTEP = 1000*TIME(PS) since we chose a dt of 0.001
+    # | sed -n '$!N;s/\n/,/;$!N;s/\n/,/;$!N;s/\n/,/;$!N;s/\n/,/p' : output the 5 lines separated by \n as 1 line separated by commas
+    values=$( echo "${lines}" | sed -n '/NSTEP/,/RESTRAINT/s/^.*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\)$/\1,\2,\3/gp'  \
+              | sed -n '$!N;s/\n/,/;$!N;s/\n/,/;$!N;s/\n/,/;$!N;s/\n/,/p')
+    # # Make the final csv table by appending the docking pose name
+    echo "${values}" | sed -n "s/^/${pose_name},/gp" >> ${run_folder}/rescoring/${scoring_function}/MD_prod.csv
+  fi
+fi
+
+# if the MM-PB/GB-SA output file exists
 if [ -f MM${scoring_function::2}SA.csv ]; then
   # Get the values for all structures
   for structure in Ligand Receptor Complex DELTA
   do
-    # We want to retrieve only the values in the MM-PB/GB-SA csv file
+    # We want to retrieve the values in the MM-PB/GB-SA csv file to output a computer-readable csv file
     # We identify the line corresponding to our structure with var="${structure} Energy Terms" '$0 ~ var'
     # At this point, we set the flag to true starting 2 lines after the match : {flag=1;getline;getline}
     # We then search for the last values for our structure, identified by an empty line : /^\s*$/
     # When we match this empty line, the flag is set to false for the remaining lines : {flag=0}
     # And we print the lines for which the flag was set to true : flag
-    values=$(awk -v var="${structure} Energy Terms" '$0 ~ var {flag=1;getline;getline}/^\s*$/{flag=0}flag' MM${scoring_function::2}SA.csv)
-    echo "${pose_name},${structure},${values}" >> energy.csv
+    # This will output all values corresponding to the $structure in csv format
+    # Then, with sed, we insert the docking pose name, and the structure, at the beginning of the file
+    awk -v var="${structure} Energy Terms" '$0 ~ var {flag=1;getline;getline}/^\s*$/{flag=0}flag' MM${scoring_function::2}SA.csv \
+    | sed -n "s/^/${pose_name},${structure},/gp" >> energy.csv
   done
 # Concatenate to ranking
-cat energy.csv >> ${run_folder}/output/${scoring_function}_rescoring/ranking.csv
-# remove the old files
-cd ${run_folder}/output/${scoring_function}_rescoring/
+cat energy.csv >> ${run_folder}/rescoring/${scoring_function}/ranking.csv
+
+# Delete all output files related to the docking pose, since we managed to gather the results
+cd ${run_folder}/rescoring/${scoring_function}/
 rm -rf ${common_folder}
 
-# if no output file was found
-else
-  echo "${pose_name},${dock_folder}" >> ${run_folder}/output/${scoring_function}_rescoring/errors.csv
 fi
 }
 
@@ -779,19 +929,30 @@ run_mmpbsa() {
 # Run MMPBSA or MMGBSA
 
 # Headers for the concatenated score file
-# If the 2 first letters are PB
+# If the 2 first letters of scoring function (PB3, GB5...) are PB
 if [ "${scoring_function::2}" = "PB" ]; then
   echo "Ligand,Structure,Frame #,BOND,ANGLE,DIHED,UB,IMP,CMAP,VDWAALS,EEL,1-4 VDW,1-4 EEL,EPB,ENPOLAR,EDISPER,G gas,G solv,TOTAL" \
-  > ${run_folder}/output/${scoring_function}_rescoring/ranking.csv
+  > ${run_folder}/rescoring/${scoring_function}/ranking.csv
+# If it's GB
 elif [ "${scoring_function::2}" = "GB" ]; then
   echo "Ligand,Structure,Frame #,BOND,ANGLE,DIHED,UB,IMP,CMAP,VDWAALS,EEL,1-4 VDW,1-4 EEL,EGB,ESURF,G gas,G solv,TOTAL" \
-  > ${run_folder}/output/${scoring_function}_rescoring/ranking.csv
+  > ${run_folder}/rescoring/${scoring_function}/ranking.csv
+fi
+# Time series for minimization and production
+if [ "${PB_method}" = "1F" ]; then
+  echo "Ligand,iter,Total,bad,vdW,elect,nonpolar,genBorn,frms" \
+  > ${run_folder}/rescoring/${scoring_function}/1F_min.csv
+elif [ "${PB_method}" = "MD" ]; then
+  echo "Ligand,NSTEP,ENERGY,RMS,GMAX,NAME,NUMBER,BOND,ANGLE,DIHED,VDWAALS,EEL,EGB,1-4 VDW,1-4 EEL,RESTRAINT" \
+  > ${run_folder}/rescoring/${scoring_function}/MD_min.csv
+  echo "Ligand,TIME(PS),TEMP(K),PRESS,Etot,EKtot,EPtot,BOND,ANGLE,DIHED,1-4 NB,1-4 EEL,VDWAALS,EELEC,EGB,RESTRAINT" \
+  > ${run_folder}/rescoring/${scoring_function}/MD_prod.csv
 fi
 
 # List to iterate
 if [ "${mode}" = "PDB" ]; then
   common_list="${com_list}"
-elif $(list_include_item "VS BEST" "${mode}"); then
+elif $(list_include_item "ALL BEST" "${mode}"); then
   common_list="${pose_list}"
 fi
 
@@ -817,7 +978,7 @@ do
     lig_name="${common_folder}"
     pose_name="${common_folder}"
     dock_folder="${common_folder}"
-  elif $(list_include_item "VS BEST" "${mode}"); then
+  elif $(list_include_item "ALL BEST" "${mode}"); then
     common_folder=$(echo "${item}"    | cut -d"/" -f"1,2")
     lig_name=$(echo "$common_folder"  | cut -d"/" -f1)
     pose_name=$(echo "$common_folder" | cut -d"/" -f2)
@@ -825,15 +986,15 @@ do
   fi
 
   # Go to the rescoring folder
-  cd ${run_folder}/output/${scoring_function}_rescoring/${common_folder}
+  cd ${run_folder}/rescoring/${scoring_function}/${common_folder}
 
   # List ligands for complex mode
   if [ "${mode}" = "PDB" ]; then
     lig=$(ls ligand*.mol2 | sed s/.mol2//g)
     rec=$(ls protein.mol2 | sed s/.mol2//g)
-  elif $(list_include_item "VS BEST" "${mode}"); then
+  elif $(list_include_item "ALL BEST" "${mode}"); then
     # Set folders, for amber files preparation
-    if [ ${mode} = "VS" ]; then 
+    if [ ${mode} = "ALL" ]; then 
       folder="${VS_folder}"
     elif [ ${mode} = "BEST" ]; then 
       folder="${BEST_folder}"
@@ -845,25 +1006,33 @@ do
   if [ "${run_mode}" = "local" ]    ; then
     # Progress
     (ProgressBar ${progress_count} ${length}) &
-    # Run
-    mmpbsa_cmd
+
+    # Make trajectory and topology of the complex from the pdb file
+    run_tleap
+    # Create files
+    mmpbsa_${PB_method}_cmd
+    # Run calculation
+    mmpbsa_calculation
+    # Reorganize files
+    reorganize_mmpbsa
+
     # update progress bar
     let progress_count+=1
     # Kill the progress bar when plants is done
     { kill $! && wait $!; } 2>/dev/null
 
   elif [ "${run_mode}" = "parallel" ] ; then
-    echo -n "cd ${run_folder}/output/${scoring_function}_rescoring/${common_folder}; \
+    echo -n "cd ${run_folder}/rescoring/${scoring_function}/${common_folder}; \
     source ${CHEMFLOW_HOME}/ChemFlow.config; \
-    source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash; " >> ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel
-    CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel
-    echo "; mmpbsa_cmd; \
-    echo -n 0 >>${run_folder}/output/${scoring_function}_rescoring/.progress.dat" >> ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel
+    source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash; " >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
+    CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
+    echo "; run_tleap; mmpbsa_${PB_method}_cmd; mmpbsa_calculation; reorganize_mmpbsa; \
+    echo -n 0 >>${run_folder}/rescoring/${scoring_function}/.progress.dat" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
 
   elif [ "${run_mode}" = "mazinger" ]; then
     write_mmpbsa_pbs
     jobid=$(qsub plants.pbs)
-    echo "$jobid" >> ${run_folder}/output/${scoring_function}_rescoring/jobs_list_${datetime}.mazinger
+    echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
     echo -ne "Running ${PURPLE}${pose_name}${NC} on ${BLUE}${jobid}${NC}              \r"
   fi
 done
@@ -873,13 +1042,13 @@ if [ "${run_mode}" = "parallel" ]; then
   echo -e "\rFinished preparing parallel... Running"
   { kill $! && wait $!; } 2>/dev/null
   # Run the progress bar
-  touch ${run_folder}/output/${scoring_function}_rescoring/.progress.dat
-  (while :; do progress_count=$(cat ${run_folder}/output/${scoring_function}_rescoring/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
+  touch ${run_folder}/rescoring/${scoring_function}/.progress.dat
+  (while :; do progress_count=$(cat ${run_folder}/rescoring/${scoring_function}/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
   # Run parallel
-  ${parallel} -j ${core_number} < ${run_folder}/output/${scoring_function}_rescoring/rescore_${datetime}.parallel \
-  > ${run_folder}/output/${scoring_function}_rescoring/parallel.job 2>&1
+  ${parallel} -j ${core_number} < ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel \
+  > ${run_folder}/rescoring/${scoring_function}/parallel.job 2>&1
   # Kill the progress bar when parallel is done
   { printf '\n'; kill $! && wait $!; } 2>/dev/null
-  rm -f ${run_folder}/output/${scoring_function}_rescoring/.progress.dat
+  rm -f ${run_folder}/rescoring/${scoring_function}/.progress.dat
 fi
 }
