@@ -5,10 +5,13 @@ run_folder="$PWD"
 # Create a time stamp, in order to backup PLANTS output if it already exists
 datetime=$(date "+%Y%m%d%H%M%S")
 
+# Time format
+TIMEFORMAT='Execution time : %1lR'
+
 # Start up
 source $CHEMFLOW_HOME/DockFlow/DockFlow_interface.bash
 source $CHEMFLOW_HOME/DockFlow/DockFlow_functions.bash
-source $CHEMFLOW_HOME/common/check_mazinger_status.bash
+source $CHEMFLOW_HOME/common/mazinger_functions.bash
 source $CHEMFLOW_HOME/common/ProgressBar.bash
 
 # Welcome user
@@ -40,6 +43,7 @@ else
     exit 1
   fi
 fi
+
 # Overwrite parameters in config files with user parameters
 write_DF_config
 
@@ -47,13 +51,17 @@ write_DF_config
 prepare_docking
 
 # Run plants with the options
-run_plants
+time run_plants
 
 # copy config file to output folder
 cp ${run_folder}/DockFlow.config ${run_folder}/docking/
 
-# If running on mazinger, wait untill all jobs are finished
-if [ ${run_mode} = "mazinger" ]; then mazinger_progress_bar ${run_folder}/docking/jobs_list_${datetime}.mazinger; fi
+# Sort results
+if [ -f docking/ranking.csv ]; then
+  header=$(head -1 docking/ranking.csv)
+  tail -n +2 docking/ranking.csv | sort -t, -g -k 2 -o docking/ranking_sorted.csv
+  sed -i "1s/^/$header\n/" docking/ranking_sorted.csv
+fi
 
 # If some results are missing, count how many and output it
 if [ -f docking/errors.csv ]; then

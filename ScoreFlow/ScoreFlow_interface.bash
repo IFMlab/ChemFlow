@@ -8,7 +8,7 @@ PURPLE="\e[0;35m"
 NC="\033[0m"
 
 welcome() {
-echo -e "
+echo -e "\
 //=======================================================\\\\\\
 ||                       ${GREEN}ScoreFlow${NC}                       ||
 || Laboratoire d'Ingenierie des Fonctions Moleculaires   ||
@@ -20,29 +20,13 @@ echo -e "
 }
 
 usage() {
-echo -e "
-###################################### Requirements ##########################################
-Mode PDB : performs a rescoring of X-ray structures in PDB format.
-The user must have SPORES installed.
-Structures must be put in a common \"complex\" folder.
-If several complexes are given, please align them before using ScoreFlow.
-##############################################################################################
-Mode ALL : rescores all results from docking with another scoring function.
-##############################################################################################
-Mode BEST : rescores a selection of docking poses.
-${RED}/!\ ${NC}: run ${PURPLE}ChemFlow/Tools/ligprep.bash${NC} before using this mode
-##############################################################################################
-All paths given must be absolute paths.
-ScoreFlow will try to read a ScoreFlow.config file in the current directory.
-If such file doesn't exist, please run ConfigFlow to guide you,
-or copy $CHEMFLOW_HOME/config_files/ScoreFlow.config here.
-If you already have an existing config file and which to rerun DockFlow
-only modifying some options, see the help below.
-
+echo -e "\
 Usage : ScoreFlow
                   -h/--help           : Show this help message and quit
-                  -f/--file           : Path to ScoreFlow configuration file
+                  -hh/--fullhelp      : Show a more detailed help
+                  -c/--config         : Path to ScoreFlow configuration file
                   -m/--mode           : ALL, BEST, PDB
+                  -f/--folder         : Path to a custom \"docking\" or \"input_files/lig\" folder
                   -sf/--function      : chemplp, plp, plp95, vina, PB3, GB5, GB8
                   --run               : local, parallel, mazinger
 _________________________________________________________________________________
@@ -71,12 +55,34 @@ For calculations on implicit solvent MD :
                   -im/--model         : Implicit GB model used for solvation (1,5,8)
 _________________________________________________________________________________
 For parallel :
-                  -c/--core_number    : Number of cores for parallel
+                  -cn/--corenumber    : Number of cores for parallel
 _________________________________________________________________________________
 Optionnal :
                   -w/--water          : Path to the structural water molecule
                   -wxyzr/--water_xyzr : xyz coordinates and radius of the water
                                         sphere, separated by a space"
+}
+
+requirements() {
+echo -e "\
+###################################### Requirements ##########################################
+Mode PDB : performs a rescoring of X-ray structures in PDB format.
+The user must have SPORES installed.
+Structures must be put in a common \"complex\" folder.
+If several complexes are given, please align them before using ScoreFlow.
+##############################################################################################
+Mode ALL : rescores all results from docking with another scoring function.
+##############################################################################################
+Mode BEST : rescores a selection of docking poses.
+${RED}/!\ ${NC}: run ${PURPLE}LigFlow --amber${NC} before using this mode
+##############################################################################################
+All paths given must be absolute paths.
+ScoreFlow will try to read a ScoreFlow.config file in the current directory.
+If such file doesn't exist, please run ConfigFlow to guide you,
+or copy $CHEMFLOW_HOME/config_files/ScoreFlow.config here.
+If you already have an existing config file and wish to rerun DockFlow
+only modifying some options, see the help below.
+"
 }
 
 # User Command Line Interface, reading flags to assign variables
@@ -90,7 +96,13 @@ case $key in
     exit
     shift # past argument
     ;;
-    -f|--file)
+    -hh|--fullhelp)
+    requirements
+    usage
+    exit
+    shift
+    ;;
+    -c|--config)
     CONFIG_FILE="$2"
     shift # past argument
     ;;
@@ -98,13 +110,17 @@ case $key in
     rec="$2"
     shift # past argument
     ;;
+    -f|--folder)
+    folder="$2"
+    shift
+    ;;
     -m|--mode)
     mode="$2"
     shift # past argument
     ;;
     -sf|--function)
     scoring_function="$2"
-    shift 3 # past argument
+    shift # past argument
     ;;
     -b|--base)
     PB_method="$2"
@@ -154,7 +170,7 @@ case $key in
     run_mode="$2"
     shift # past argument
     ;;
-    -c|--core_number)
+    -cn|--corenumber)
     core_number="$2"
     shift # past argument
     ;;
@@ -169,8 +185,6 @@ done
 
 # write config file for DockFLow from CLI
 write_SF_config() {
-# Save the old config file
-if [ -f ScoreFlow.config ]; then cp ScoreFlow.config ScoreFlow.${datetime}.config ; fi
 
 # Overwrite. This only works because we used the same variable names in the interface and the config file.
 source temp.config
@@ -196,16 +210,10 @@ PDB_folder=\"$PDB_folder\"
 # Path to the receptor : PDB file for MMPBSA and MMGBSA, MOL2 file for chemplp, plp, and plp95, PDB or MOL2 for vina
 rec=\"$rec\"
 
-# Path to docking
-# If the ALL mode is chosen, we will assume that you are launching ScoreFlow from the same folder that contains lig,rec, and docking directories from DockFlow.
-# So the following variable should stay empty, but you can state otherwise here :
-VS_folder=\"$VS_folder\"
-
-# Path to output/lig_selection or your own selection of ligands
-# If the BEST mode is chosen, don't forget to configure and launch the multiligfind.bash script in ChemFlow/Tools before running this.
-# We will assume that you are launching ScoreFlow from the same folder that contains lig,rec, and docking directories from DockFlow.
-# So the following variable should stay empty, but you can state otherwise here :
-BEST_folder=\"BEST_folder\"
+# By default, ScoreFlow will assume that you are running from the same folder that contains your lig, rec and docking results directories.
+# This way, depending on the mode you chose (ALL or BEST ), it will automatically find the location of your mol2 files. 
+# If necessary, you can overwrite the path to a custom \"docking\" or \"input_files/lig\" folder here.
+folder=\"$folder\"
 
 # If mmpbsa or mmgbsa scoring function is chosen :
 # base calculations on 1 frame (1F) or on a quick implicit solvent (GB) MD simulation : 1F, MD
@@ -250,6 +258,9 @@ plants_user_parameters=\"$plants_user_parameters\"
 run_mode=\"$run_mode\"
   # If parallel is chosen, please specify the number of cores available
   core_number=\"$core_number\"
+  # If mazinger is chosen, please specify the maximum number of jobs to submit
+  # If you leave this variable empty, ScoreFlow will submit 1 job per docking pose
+  max_submissions=\"$max_submissions\"
 " > ScoreFlow.config
 
 # remove temporary file
@@ -304,7 +315,7 @@ if [ "${rescore_method}" = "plants" ]; then
     extension="${filename##*.}"
     if [ ! "${extension}" = "mol2" ]; then echo -e "${RED}ERROR${NC} : your receptor is ${RED}not a MOL2 file${NC}"; exit 1; fi
   fi
-  if [ -z "${PLANTS}" ] && [ ! "${run_mode}" = "mazinger" ] ; then error "the location of PLANTS's executable"; fi
+  if [ -z "${plants}" ] && [ ! "${run_mode}" = "mazinger" ] ; then error "the location of PLANTS's executable"; fi
 
 # VINA
 elif [ "${rescore_method}" = "vina" ]; then
@@ -354,12 +365,12 @@ else
 fi
 
 if [ "${mode}" = "PDB" ]; then
-  if [ -z "${PDB_folder}" ]    ; then error "the complex's directory"                           ; fi
-  if [ -z "${SPORES}" ]        ; then error "the location of SPORES's executable"               ; fi
+  if [ -z "${PDB_folder}" ]    ; then error "the complex's directory"                ; fi
+  if [ -z "${SPORES}" ]        ; then error "the location of SPORES's executable"    ; fi
 elif [ "${mode}" = "ALL" ]; then
-  if [ -z "${VS_folder}" ]     ; then VS_folder="${PWD}/docking/"                              ; fi
+  if [ -z "${folder}" ]     ; then folder="${run_folder}/docking/"                   ; fi
 elif [ "${mode}" = "BEST" ]; then
-  if [ -z "${BEST_folder}" ]     ; then BEST_folder="${PWD}/output/lig_selection"                 ; fi
+  if [ -z "${folder}" ]   ; then folder="${run_folder}/input_files/lig"              ; fi
 else
   echo -e "${RED}ERROR${NC} : ${RED}Rescoring mode${NC} not recognized"; exit 1
 fi
@@ -407,10 +418,10 @@ elif [ "${run_mode}" = "mazinger" ]
 then
   if [ "$rescore_method" == "plants" ]; then
     module load plants/1.2
-    PLANTS=$(which plants)
+    plants=$(which plants)
   elif [ "$rescore_method" == "vina" ]; then
     module load vina/1.1.2
-    VINA=$(which vina)
+    plants=$(which vina)
   fi
 
 # if set to local, do nothing

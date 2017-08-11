@@ -95,51 +95,42 @@ list_docking() {
 # Receptor
 filename=$(basename "${rec}")
 extension="${filename##*.}"
-if   [ "${extension}" = "pdb" ]  ; then rec=$(echo "${rec}" | sed s/.pdb//g)
-elif [ "${extension}" = "mol2" ] ; then rec=$(echo "${rec}" | sed s/.mol2//g)
-fi
+rec=$(echo "${rec}" | sed "s/.${extension}//g")
 
 # list all docking folders
-if [ "${mode}" = "ALL" ]; then
- dock_list=$(cd ${VS_folder} ; \ls -l | grep "^d" | awk '{print $9}')
-elif [ "${mode}" = "BEST" ]; then
-  dock_list=$(cd ${BEST_folder} ; \ls -l | grep "^d" | awk '{print $9}')
-fi
+# For the ALL mode, this will correspond to folders named after the mol2 files used for docking
+# For the BEST mode, this will correspond to folders named after the ligands
+dock_list=$(cd ${folder} ; \ls -l | grep "^d" | awk '{print $9}')
 
-# list all docking poses in the VS_folder
+# list all docking poses in the sub-folder
 pose_list=""
 for dock_folder in ${dock_list}; do
-  if [ "${mode}" = "ALL" ]; then
-    poses_list=$(cd ${VS_folder}/${dock_folder}/docking/; \ls *conf*.mol2 | sed s/.mol2//g )
-  elif [ "${mode}" = "BEST" ]; then
-    poses_list=$(cd ${BEST_folder}/${dock_folder}/docking/; \ls *.mol2 | sed s/.mol2//g )
-  fi
+    poses_list=$(cd ${folder}/${dock_folder}/; \ls *conf*.mol2 2>/dev/null | sed s/.mol2//g )
   
-  for pose in ${poses_list}
-  do
-    lig_name=$(echo ${pose} | cut -d_ -f1)
-    pose_list+=" ${lig_name}/${pose}/${dock_folder}"
-
-    # And write the plants config file there.
-    mkdir -p ${run_folder}/rescoring/${scoring_function}/${lig_name}/${pose}
-    cd ${run_folder}/rescoring/${scoring_function}/${lig_name}/${pose}
-    if [ "${mode}" = "ALL" ]; then
-      lig="${VS_folder}/${dock_folder}/docking/${pose}"
-    elif [ "${mode}" = "BEST" ]; then
-      lig="${BEST_folder}/${dock_folder}/docking/${pose}"
-    fi
-    echo -ne "Configuring ${PURPLE}${pose}${NC} from ${PURPLE}${lig_name}${NC}   \r"
-    if [ "${rescore_method}" = "plants" ]; then
-      # Compute the binding-site center (average on coordinates) and radius
-      sphere_list=$(python ${CHEMFLOW_HOME}/common/bounding_sphere.py ${lig}.mol2)
-      bs_center=$(echo "${sphere_list}" | cut -d";" -f1)
-      bs_radius=$(echo "${sphere_list}" | cut -d";" -f2)
-      write_plants_config
-    elif [ "${rescore_method}" = "vina" ]; then
-      lig="${run_folder}/input_files/lig/${lig_name}/${pose}"
-      write_vina_config
-    fi
-  done
+  if [ ! -z "$poses_list" ]; then
+    for pose in ${poses_list}
+    do
+      lig_name=$(echo ${pose} | cut -d_ -f1)
+      pose_list+=" ${lig_name}/${pose}/${dock_folder}"
+  
+      # And write the plants config file there.
+      mkdir -p ${run_folder}/rescoring/${scoring_function}/${lig_name}/${pose}
+      cd ${run_folder}/rescoring/${scoring_function}/${lig_name}/${pose}
+      lig="${folder}/${dock_folder}/${pose}"
+      
+      echo -ne "Configuring ${PURPLE}${pose}${NC} from ${PURPLE}${lig_name}${NC}   \r"
+      if [ "${rescore_method}" = "plants" ]; then
+        # Compute the binding-site center (average on coordinates) and radius
+        sphere_list=$(python ${CHEMFLOW_HOME}/common/bounding_sphere.py ${lig}.mol2)
+        bs_center=$(echo "${sphere_list}" | cut -d";" -f1)
+        bs_radius=$(echo "${sphere_list}" | cut -d";" -f2)
+        write_plants_config
+      elif [ "${rescore_method}" = "vina" ]; then
+        lig="${run_folder}/input_files/lig/${lig_name}/${pose}"
+        write_vina_config
+      fi
+    done
+  fi
 done
 
 if [ "${rescore_method}" = "mmpbsa" ]; then
@@ -155,11 +146,7 @@ echo "Rescoring configuration finished                                          
 
 if [ -z "${pose_list}" ]
 then
-  if [ "${mode}" = "ALL" ]; then
-    echo -e "${RED}ERROR${NC} : Could not find mol2 docking poses in ${VS_folder}"    
-  elif [ "${mode}" = "BEST" ]; then
-    echo -e "${RED}ERROR${NC} : Could not find mol2 docking poses in ${BEST_folder}"
-  fi
+  echo -e "${RED}ERROR${NC} : Could not find mol2 docking poses in ${folder}'s sub-folders"    
   exit 1
 fi
 }
@@ -227,26 +214,29 @@ write_protein_conformations 0
 ">config.plants
 }
 
-
-write_plants_pbs() {
+write_plants_pbs_header() {
 echo "#!/bin/bash
-#PBS -N PLANTS_${pose_name}
+#PBS -N PLANTS_${identifier}
 #PBS -l nodes=1:ppn=1,walltime=24:00:00.00
-#PBS -o ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.o
-#PBS -e ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.e
+#PBS -o ${run_folder}/pbs_scripts/plants_${identifier}.o
+#PBS -e ${run_folder}/pbs_scripts/plants_${identifier}.e
 
-#-----user_section-----------------------------------------------
+#-----user_section----------
 module load plants/1.2
 
-cd \$PBS_O_WORKDIR
-
-source ${CHEMFLOW_HOME}/ChemFlow.config
 source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash
+"> ${run_folder}/pbs_scripts/plants_${identifier}.pbs
+}
 
-"> plants.pbs
-print_vars >> plants.pbs
+write_plants_pbs() {
 echo "
-plants_cmd" >> plants.pbs
+#-----------------------------
+cd ${run_folder}/rescoring/${scoring_function}/${common_folder}
+">> ${run_folder}/pbs_scripts/plants_${identifier}.pbs
+print_vars >> ${run_folder}/pbs_scripts/plants_${identifier}.pbs
+echo "
+plants_cmd
+" >> ${run_folder}/pbs_scripts/plants_${identifier}.pbs
 }
 
 
@@ -276,6 +266,13 @@ progress_count=0
 if [ "${run_mode}" = "parallel" ]; then
   # Run a spinner in the background
   (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
+elif [ "${run_mode}" = "mazinger" ]; then
+  # Initialize variable that counts the number of poses rescored per pbs script
+  pbs_count=0
+  # Get the ceiling value of the number of jobs to put per pbs script
+  let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}
+  # create pbs_script folder
+  mkdir -p ${run_folder}/pbs_scripts/
 fi
 
 # Iterate over the docking poses
@@ -317,10 +314,24 @@ do
     echo -n 0 >>${run_folder}/rescoring/${scoring_function}/.progress.dat" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
 
   elif [ "${run_mode}" = "mazinger" ]; then
-    write_plants_pbs
-    jobid=$(qsub plants.pbs)
-    echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
-    echo -ne "Running ${PURPLE}${pose_name}${NC} on ${BLUE}${jobid}${NC}              \r"
+    if [ -z "${max_submissions}" ]; then
+      identifier=${pose_name}
+      write_plants_pbs
+      jobid=$(qsub ${run_folder}/pbs_scripts/plants_${identifier}.pbs)
+      echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+      echo -ne "Running ${PURPLE}${pose_name}${NC} on ${BLUE}${jobid}${NC}              \r"
+    else
+      let progress_count+=1
+      mazinger_current=$(mazinger_submitter ${pbs_count} ${max_jobs_pbs} ${progress_count} ${length} ${run_folder}/pbs_scripts/plants write_plants_pbs)
+      pbs_count=$( echo "${mazinger_current}" | cut -d, -f1)
+      identifier=$(echo "${mazinger_current}" | cut -d, -f2)
+      test_jobid=$(echo "${mazinger_current}" | cut -d, -f3)
+      if [ ! -z "${test_jobid}" ]; then 
+        jobid=${test_jobid}
+        echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+        echo -ne "Running ${PURPLE}PBS script #${identifier}${NC} on ${BLUE}${jobid}${NC}              \r"
+      fi
+    fi
   fi
 done
   
@@ -337,12 +348,17 @@ if [ "${run_mode}" = "parallel" ]; then
   # Kill the progress bar when parallel is done
   { printf '\n'; kill $! && wait $!; } 2>/dev/null
   rm -f ${run_folder}/rescoring/${scoring_function}/.progress.dat
+
+# If running on mazinger, wait untill all jobs are finished
+elif [ "${run_mode}" = "mazinger" ]; then
+  mazinger_progress_bar ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+  echo ""
 fi
 }
 
 plants_cmd() {
 # Run
-${PLANTS} --mode rescore config.plants > plants.job 2>&1
+${plants} --mode rescore config.plants > plants.job 2>&1
 # reorganize results
 reorganize_plants
 }
@@ -385,10 +401,10 @@ echo "#!/bin/bash
 #-----user_section-----------------------------------------------
 module load vina
 
-cd \$PBS_O_WORKDIR
-
 source ${CHEMFLOW_HOME}/ChemFlow.config
 source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash
+
+cd \$PBS_O_WORKDIR
 
 "> vina.pbs
 print_vars >> vina.pbs
@@ -408,7 +424,7 @@ elif $(list_include_item "ALL BEST" "${mode}"); then
   # Convert pose to pdbqt if it doesn't exist
   if [ ! -f ${run_folder}/input_files/lig/${lig_name}/${pose_name}.pdbqt ]; then
     mkdir -p ${run_folder}/input_files/lig/${lig_name}
-    ${ADT}/prepare_ligand4.py -l ${folder}/${dock_folder}/docking/${pose_name}.mol2 >> convert2pdbqt.job
+    ${ADT}/prepare_ligand4.py -l ${folder}/${dock_folder}/${pose_name}.mol2 >> convert2pdbqt.job
     mv ${pose_name}.pdbqt ${run_folder}/input_files/lig/${lig_name}
   fi
 fi
@@ -470,13 +486,6 @@ do
   if [ "${mode}" = "PDB" ]; then
     lig=$(ls ligand*.mol2 | sed s/.mol2//g)
     rec=$(ls protein.mol2 | sed s/.mol2//g)
-  elif $(list_include_item "ALL BEST" "${mode}"); then
-    # Set folders, for pdbqt conversion
-    if [ ${mode} = "ALL" ]; then 
-      folder="${VS_folder}"
-    elif [ ${mode} = "BEST" ]; then 
-      folder="${BEST_folder}"
-    fi
   fi
 
   # Run
@@ -715,11 +724,10 @@ echo "#!/bin/bash
 #PBS -e ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.e
 
 source ${amber} 
-
-cd \$PBS_O_WORKDIR
-
 source ${CHEMFLOW_HOME}/ChemFlow.config
 source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash
+
+cd \$PBS_O_WORKDIR
 
 "> mmpbsa.pbs
 print_vars >> mmpbsa.pbs
@@ -993,13 +1001,7 @@ do
     lig=$(ls ligand*.mol2 | sed s/.mol2//g)
     rec=$(ls protein.mol2 | sed s/.mol2//g)
   elif $(list_include_item "ALL BEST" "${mode}"); then
-    # Set folders, for amber files preparation
-    if [ ${mode} = "ALL" ]; then 
-      folder="${VS_folder}"
-    elif [ ${mode} = "BEST" ]; then 
-      folder="${BEST_folder}"
-    fi
-    lig="${folder}/${dock_folder}/docking/${pose_name}"
+    lig="${folder}/${dock_folder}/${pose_name}"
   fi
 
   # Run

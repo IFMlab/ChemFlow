@@ -132,6 +132,10 @@ if [ "${run_mode}" = "parallel" ]; then
   # Kill the progress bar when parallel is done
   { printf '\n'; kill $! && wait $!; } 2>/dev/null
   rm -f ${run_folder}/docking/.progress.dat
+  
+# If running on mazinger, wait untill all jobs are finished
+elif [ ${run_mode} = "mazinger" ]; then 
+  mazinger_progress_bar ${run_folder}/docking/jobs_list_${datetime}.mazinger
 fi
 }
 

@@ -6,7 +6,7 @@ PURPLE="\e[0;35m"
 NC="\033[0m"
 
 welcome() {
-echo -e "
+echo -e "\
 //=======================================================\\\\\\
 ||                        ${RED}DockFlow${NC}                       ||
 || Laboratoire d'Ingenierie des Fonctions Moleculaires   ||
@@ -24,24 +24,10 @@ The ChemFlow team @IFMlab"
 
 
 usage() {
-echo "
-#################################################################################
-# Requirements ##################################################################
-#################################################################################
-This script is designed to work with PLANTS (for now).
-It can perform an automatic VS based on information given by the user :
-ligands, receptor, binding site info, and extra options.
-PLANTS only accepts mol2 files as input (1 or more compounds per file).
-Ligands in the mol2 format should be all put in the same directory.
-All paths given must be absolute paths.
-DockFlow will try to read a DockFlow.config file in the current directory.
-If such file doesn't exist, please run ConfigFlow to guide you,
-or copy $CHEMFLOW_HOME/config_files/DockFlow.config here.
-If you already have an existing config file and which to rerun DockFlow
-only modifying some options, see the help below.
-
+echo "\
 Usage : DockFlow
                  -h/--help           : Show this help message and quit
+                 -hh/--fullhelp      : Show a more detailed help
                  -f/--file           : Path to DockFlow configuration file
                  -r/--receptor       : Path to the receptor's mol2 file
                  -l/--ligand         : Path to the ligand folder
@@ -57,7 +43,23 @@ ________________________________________________________________________________
 Optionnal :
                  -w/--water          : Path to the structural water molecule
                  -wxyzr/--water_xyzr : xyz coordinates and radius of the water
-                                       sphere, separated by a space
+                                       sphere, separated by a space"
+}
+
+requirements() {
+echo "\
+###################################### Requirements ##########################################
+This script is designed to work with PLANTS (for now).
+It can perform an automatic VS based on information given by the user :
+ligands, receptor, binding site info, and extra options.
+PLANTS only accepts mol2 files as input (1 or more compounds per file).
+Ligands in the mol2 format should be all put in the same directory.
+All paths given must be absolute paths.
+DockFlow will try to read a DockFlow.config file in the current directory.
+If such file doesn't exist, please run ConfigFlow to guide you,
+or copy $CHEMFLOW_HOME/config_files/DockFlow.config here.
+If you already have an existing config file and which to rerun DockFlow
+only modifying some options, see the help below.
 "
 }
 
@@ -71,6 +73,12 @@ case $key in
     usage
     exit
     shift # past argument
+    ;;
+    -hh|--fullhelp)
+    requirements
+    usage
+    exit
+    shift
     ;;
     -f|--file)
     CONFIG_FILE="$2"

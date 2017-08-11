@@ -7,7 +7,7 @@ then
   echo "
 # ChemFlow
 export CHEMFLOW_HOME=\"$PWD\"
-export PATH=\$PATH:\$CHEMFLOW_HOME/DockFlow:\$CHEMFLOW_HOME/ScoreFlow:\$CHEMFLOW_HOME/common
+export PATH=\$PATH:\$CHEMFLOW_HOME/DockFlow:\$CHEMFLOW_HOME/ScoreFlow:\$CHEMFLOW_HOME/Tools
 " >> ~/.bashrc
   echo "ChemFlow successfully installed !"
 

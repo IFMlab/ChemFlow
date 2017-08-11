@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# Splits sdf and mol2 files in smaller files
+
+#####################################
+# Functions
+#####################################
+
+usage() {
+echo -e "
+Usage : splitmol
+                 -h|--help        : Show this help message and quit
+                 -i               : Input file
+                 -o               : Common name of the output files
+                 -fo              : Format of the output file
+                 -max             : Maximum number of molecules per output file
+"
+}
+
+splitmol_CLI() {
+# Command line interface
+while [[ $# -gt 0 ]]; do
+key="$1"
+
+case $key in
+    -h|--help)
+    usage
+    exit
+    ;;
+    -i)
+    input="$2"
+    shift # past argument
+    ;;
+    -o)
+    output="$2"
+    shift # past argument
+    ;;
+    -fo)
+    format_o="$2"
+    shift # past argument
+    ;;
+    -max)
+    maxmol="$2"
+    shift # past argument
+    ;;
+    *)
+    unknown="$1" # unknown option
+    echo "Unknown flag \"$unknown\". Aborting."
+    exit 1
+    ;;
+esac
+shift # past argument or value
+done
+}
+
+#####################################
+# Main
+#####################################
+
+# Color output
+RED="\e[0;31m"
+BLUE="\e[0;34m"
+GREEN="\e[0;32m"
+PURPLE="\e[0;35m"
+NC="\033[0m"
+
+# progress bar
+source $CHEMFLOW_HOME/common/ProgressBar.bash
+
+# Working directory
+run_folder="$PWD"
+
+# Run interface
+splitmol_CLI "$@"
+
+# Count # of molecules
+end=$(grep "TRIPOS>MOLECULE" ${input} |wc -l)
+
+# Split 
+for ((i=1;i<=${end};i=$i+${maxmol}))
+do
+  let finish=${i}+${maxmol}-1
+  if [ ${finish} -gt ${end} ] ; then finish=${end} ; fi 
+  babel ${input} ${output}_${i}_${finish}.${format_o} -f ${i} -l ${finish} >> ${output}_babel.job 2>&1
+done
+
+# check
+if [ -f ${output}_${i}_${finish}.${format_o} ]; then 
+  rm -f ${output}_babel.job
+else
+  echo "Error detected. Check ${output}_babel.job for more info"
+fi

@@ -4,10 +4,13 @@ run_folder="$PWD"
 # Create a time stamp, in order to make backups
 datetime=$(date "+%Y%m%d%H%M%S")
 
+# Time format
+TIMEFORMAT='Execution time : %1lR'
+
 # Start up
 source $CHEMFLOW_HOME/ScoreFlow/ScoreFlow_interface.bash
 source $CHEMFLOW_HOME/ScoreFlow/ScoreFlow_functions.bash
-source $CHEMFLOW_HOME/common/check_mazinger_status.bash
+source $CHEMFLOW_HOME/common/mazinger_functions.bash
 source $CHEMFLOW_HOME/common/ProgressBar.bash
 
 # Welcome user
@@ -48,20 +51,17 @@ prepare_rescoring
 # Identify which program to use, and run it
 if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
   rescore_method="plants"
-  run_plants
+  time run_plants
 elif [ "${scoring_function}" == "vina" ]; then
   rescore_method="vina"
-  run_vina
+  time run_vina
 elif $(list_include_item "PB3 GB5 GB8" "${scoring_function}"); then
   rescore_method="mmpbsa"
-  run_mmpbsa
+  time run_mmpbsa
 fi
 
 # copy config file to output folder
 cp ${run_folder}/ScoreFlow.config ${run_folder}/rescoring/${scoring_function}/
-
-# If running on mazinger, wait untill all jobs are finished
-if [ ${run_mode} = "mazinger" ]; then mazinger_progress_bar ${run_folder}/output/${scoring_function}_rescoring/jobs_list_${datetime}.mazinger; fi
 
 # Remove empty directories
 cd ${run_folder}/rescoring/${scoring_function}/
