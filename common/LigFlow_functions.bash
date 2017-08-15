@@ -13,16 +13,18 @@ Usage : LigFlow
                  -d|--docking     : Path to the docking folder
                                     Default : $PWD/docking
                 -at|--atomtype    : gaff, gaff2, amber, bcc, sybyl
-                                    Default : keep current atom types
+                                    Default : None. Keep existing atom types
                 -ch|--charge      : Gasteiger (gas), AM1-BCC (bcc) or RESP (resp).
-                                    Default : keep current charges
+                                    Default : None. Keep existing charges
                  -p|--purge       : Delete all previous ligands configuration
                  -a|--amber       : Prepare frcmod and lib files for amber
                -rst|--restart     : Restart from errors.csv
                  -r|--run         : local, parallel (not for RESP charges), mazinger
-                -cn|--corenumber  : Number of cores for parallel or RESP charges.
+                -cn|--corenumber  : Number of cores for parallel, mazinger, and/or RESP charges.
                                     Default : 8
                -mem|--memory      : Memory allocated for computing RESP charges. Default : 8GB
+               -max|--maxsub      : Maximum number of jobs to submit to mazinger.
+                                    Default : None. 1 job per pose
 
 Please use the ${RED}--purge${NC} option before running any new calculation.
 To try recovering from errors with the --restart option, please re-enter the run mode, and if you are running locally, please re-enter the full parameters.
@@ -75,10 +77,14 @@ case $key in
     purge="true"
     ;; 
     -a|--amber)
-    amber="true"
+    amber_flag="true"
     ;; 
     -rst|--restart)
     restart_from_errors="true"
+    ;;
+    -max|--maxsub)
+    max_submissions="$2"
+    shift
     ;;
     # Hidden option, for dev
     -pp|--purgeonly)
@@ -102,34 +108,26 @@ if [ -z ${core_number} ];      then core_number=8      ; fi
 if [ -z ${run_mode} ];         then run_mode="local"   ; fi
 }
 
-print_vars() {
-# Print all variables defined from the console
-# declare -p will print all system variables
-# awk '/declare --/ {print $3}' will extract all users variables names and values as well as some other undesired variables
-# awk 'f;/^_.*$/{f=1}' will start printing the variables after it reads a variable starting with _
-# grep -v "^_" will remove all remaining variables starting with _
-# grep -v "_list" will remove every list of variables
-# in the end we should only be left with variables defined within the workflow which we could need
-declare -p | awk '/declare --/ {print $3}' | awk 'f;/^_.*$/{f=1}' | grep -Fv -e "^_" -e "_list"
+write_pbs_header() { # Write the job
+echo "#!/bin/bash
+#PBS -V
+#PBS -l  nodes=1:ppn=${core_number},walltime=24:00:00
+#PBS -N  ligflow_${identifier}
+#PBS -o  ${run_folder}/pbs_scripts/ligflow_${identifier}.o
+#PBS -e  ${run_folder}/pbs_scripts/ligflow_${identifier}.e
+
+source $CHEMFLOW_HOME/common/LigFlow_functions.bash
+" > ${run_folder}/pbs_scripts/ligflow_${identifier}.pbs
 }
 
 write_pbs() { # Write the job
 echo "
-#!/bin/bash
-#PBS -V
-#PBS -l  nodes=1:ppn=${core_number}
-#PBS -l  walltime=24:00:00
-#PBS -N  ${pose}
-#PBS -o  ${run_folder}/input_files/lig/${lig}/${pose}.o
-#PBS -e  ${run_folder}/input_files/lig/${lig}/${pose}.e
-
-# AMBER Paths
-source ${CHEMFLOW_HOME}/ChemFlow.config
-source $CHEMFLOW_HOME/common/LigFlow_functions.bash
-" > pbs_scripts/${pose}.pbs
-print_vars >> pbs_scripts/${pose}.pbs
+#---------------------
+" >> ${run_folder}/pbs_scripts/ligflow_${identifier}.pbs
+print_vars >> ${run_folder}/pbs_scripts/ligflow_${identifier}.pbs
 echo "
-run_preparation" >> pbs_scripts/${pose}.pbs
+run_preparation
+" >> ${run_folder}/pbs_scripts/ligflow_${identifier}.pbs
 }
 
 list_poses() {
@@ -180,13 +178,20 @@ prepare_poses() {
 # Each folder contains the prepared mol2 docking poses.
 
 # counts the number of docking poses extracted
-pose_count=0
+progress_count=0
 length=$(echo "${poses_selected_list}" | wc -l)
 
 # Print a spinner on the screen while preparing the commands for parallel
 if [ "${run_mode}" = "parallel" ]; then
   # Run a spinner in the background
   (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
+elif [ "${run_mode}" = "mazinger" ]; then
+  # Initialize variable that counts the number of poses rescored per pbs script
+  pbs_count=0
+  # Get the ceiling value of the number of jobs to put per pbs script
+  let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}
+  # create pbs_script folder
+  mkdir -p ${run_folder}/pbs_scripts/
 fi
 
 # for each selected poses               
@@ -205,11 +210,11 @@ do
   # If the user only wants to extract the poses
   if [ -z "${atom_type}" ] && [ -z "${charge_method}" ]; then
     # Progress in background
-    (ProgressBar ${pose_count} ${length}) &
+    (ProgressBar ${progress_count} ${length}) &
     # Create a symbolic link to the selected pose
     ln -s ${path}/${dock_folder}/${pose}.mol2 ${run_folder}/input_files/lig/${lig}/${pose}.mol2
     # Count number of poses prepared
-    let pose_count+=1
+    let progress_count+=1
     # Kill the progress bar when done
     { kill $! && wait $!; } 2>/dev/null
 
@@ -218,26 +223,39 @@ do
     # Run
     if [ "${run_mode}" = "local" ]    ; then
       # Progress in background
-      (ProgressBar ${pose_count} ${length}) &
+      (ProgressBar ${progress_count} ${length}) &
       # Run
       run_preparation
       # update progress bar
-      let pose_count+=1
+      let progress_count+=1
       # Kill the progress bar when done
       { kill $! && wait $!; } 2>/dev/null
   
     elif [ "${run_mode}" = "parallel" ] ; then
-      echo -n "source ${CHEMFLOW_HOME}/ChemFlow.config; \
-               source $CHEMFLOW_HOME/common/LigFlow_functions.bash; " >> ${run_folder}/LigFlow_${datetime}.parallel
+      echo -n "source $CHEMFLOW_HOME/common/LigFlow_functions.bash; " >> ${run_folder}/LigFlow_${datetime}.parallel
       CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/LigFlow_${datetime}.parallel
       echo "; run_preparation; \
       echo -n 0 >> ${run_folder}/.progress.dat" >> ${run_folder}/LigFlow_${datetime}.parallel
   
     elif [ "${run_mode}" = "mazinger" ]; then
-      write_pbs
-      jobid=$(qsub pbs_scripts/${pose}.pbs)
-      echo "$jobid" >> ${run_folder}/jobs_list_${datetime}.mazinger
-      echo -ne "Running ${PURPLE}${pose}${NC} on ${BLUE}${jobid}${NC}              \r"
+      if [ -z "${max_submissions}" ]; then
+        identifier=${pose}
+        write_pbs
+        jobid=$(qsub ${run_folder}/pbs_scripts/ligflow_${identifier}.pbs)
+        echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+        echo -ne "Running ${PURPLE}${pose}${NC} on ${BLUE}${jobid}${NC}              \r"
+      else
+        let progress_count+=1
+        mazinger_current=$(mazinger_submitter ${pbs_count} ${max_jobs_pbs} ${progress_count} ${length} ${run_folder}/pbs_scripts/ligflow write_pbs)
+        pbs_count=$( echo "${mazinger_current}" | cut -d, -f1)
+        identifier=$(echo "${mazinger_current}" | cut -d, -f2)
+        test_jobid=$(echo "${mazinger_current}" | cut -d, -f3)
+        if [ ! -z "${test_jobid}" ]; then 
+          jobid=${test_jobid}
+          echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+          echo -ne "Running ${PURPLE}PBS script #${identifier}${NC} on ${BLUE}${jobid}${NC}              \r"
+        fi
+      fi
     fi
   fi
 done
@@ -270,6 +288,11 @@ fi
 
 run_preparation() {
 # Run ligand parametrization for a given force field and charge method
+source ${amber}
+
+# prepare each pose into a separate subfolder, to avoid overwriting intermediate files
+mkdir -p ${run_folder}/input_files/${pose}
+cd ${run_folder}/input_files/${pose}
 
 if [ ! -f ${run_folder}/input_files/lig/${lig}/${pose}.mol2 ]; then
   # Get the number of atoms in compound
@@ -345,7 +368,7 @@ if [ ! -f ${run_folder}/input_files/lig/${lig}/${pose}.mol2 ]; then
   fi
 fi
 
-if [ "${amber}" = "true" ]; then
+if [ "${amber_flag}" = "true" ]; then
   if [ ! -f ${run_folder}/input_files/lig/${lig}/${pose}.frcmod ]; then
     if [ -f ${run_folder}/input_files/lig/${lig}/${pose}.mol2 ]; then
       # Remove useless output files
@@ -381,6 +404,9 @@ if [ "${amber}" = "true" ]; then
     fi
   fi
 fi
+
+# remove temporary folder for preparation
+rm -rf ${run_folder}/input_files/${pose}
 }
 
 purge_ligands() {

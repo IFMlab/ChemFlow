@@ -123,7 +123,7 @@ case $key in
     shift # past argument
     ;;
     -b|--base)
-    PB_method="$2"
+    pb_method="$2"
     shift # past argument
     ;;
     -sm|--stripmask)
@@ -151,11 +151,11 @@ case $key in
     shift
     ;;
     -t|--time)
-    MD_time="$2"
+    md_time="$2"
     shift
     ;;
     -im/--model)
-    GB_model="$2"
+    gb_model="$2"
     shift
     ;;
     -w|--water)
@@ -204,7 +204,7 @@ scoring_function=\"$scoring_function\"
 #######################################################################################################################
 
 # If the PDB mode is chosen, absolute path to the complexes folder
-PDB_folder=\"$PDB_folder\"
+pdb_folder=\"${pdb_folder}\"
 
 # If the ALL or BEST modes are chosen :
 # Path to the receptor : PDB file for MMPBSA and MMGBSA, MOL2 file for chemplp, plp, and plp95, PDB or MOL2 for vina
@@ -217,7 +217,7 @@ folder=\"$folder\"
 
 # If mmpbsa or mmgbsa scoring function is chosen :
 # base calculations on 1 frame (1F) or on a quick implicit solvent (GB) MD simulation : 1F, MD
-PB_method=\"$PB_method\"
+pb_method=\"${pb_method}\"
 # Amber mask of atoms needed to be stripped from the solvated complex to make the dry complex topology file
 strip_mask=\"$strip_mask\"
 # Amber mask of atoms needed to be stripped from COMPLEX to create LIGAND
@@ -235,9 +235,9 @@ lig_mask=\"$lig_mask\"
       min_mask=\"$min_mask\"
 # If the quick MD simulation approach was chosen :
   # Length of the production, in ps
-  MD_time=\"$MD_time\"
+  md_time=\"$md_time\"
   # GB model used for implicit solvation : 1,5,8
-  GB_model=\"$GB_model\"
+  gb_model=\"$gb_model\"
 
 #######################################################################################################################
 # Optionnal input
@@ -272,19 +272,6 @@ error() {
 usage
 echo -e "${RED}FATAL ERROR${NC} : ${RED}${1}${NC} is missing"
 exit 1
-}
-
-# equivalent to python : if item in list
-list_include_item() {
-  local list="$1"
-  local item="$2"
-  if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]] ; then
-    # yes, list include item
-    result=0
-  else
-    result=1
-  fi
-  return $result
 }
 
 check_input() {
@@ -326,8 +313,8 @@ elif [ "${rescore_method}" = "vina" ]; then
     extension="${filename##*.}"
     if [ ! "${extension}" = "mol2" ] && [ ! "${extension}" = "pdb" ]; then echo -e "${RED}ERROR${NC} : your receptor is ${RED}not a MOL2 or PDB file${NC}"; exit 1; fi
   fi
-  if [ -z "${VINA}" ] && [ ! "${run_mode}" = "mazinger" ] ; then error "the location of VINA's executable"; fi
-  if [ -z "${ADT}" ]; then error "the location of AutoDockTools folder"; fi
+  if [ -z "${vina_exec}" ] && [ ! "${run_mode}" = "mazinger" ] ; then error "the location of VINA's executable"; fi
+  if [ -z "${adt_u24}" ]; then error "the location of AutoDockTools folder"; fi
 
 # MMGBSA
 elif [ "${rescore_method}" = "mmpbsa" ]; then
@@ -339,12 +326,12 @@ elif [ "${rescore_method}" = "mmpbsa" ]; then
     if [ ! "${extension}" = "pdb" ]; then echo -e "${RED}ERROR${NC} : your receptor is ${RED}not a PDB file${NC}"; exit 1; fi
   fi
 
-  if ! $(list_include_item "1F MD" "${PB_method}"); then 
-    echo -e "${RED}FATAL ERROR${NC} : ${RED}MMPBSA calculations method${NC} not recognized (1F or MD : ${PB_method})"; exit 1; fi
+  if ! $(list_include_item "1F MD" "${pb_method}"); then 
+    echo -e "${RED}FATAL ERROR${NC} : ${RED}MMPBSA calculations method${NC} not recognized (1F or MD : ${pb_method})"; exit 1; fi
   if [ -z "$amber" ]     ;  then error "the path to amber.sh"; fi
   if [ -z "$strip_mask" ];  then error "the amber strip mask to create the dry complex from the solvated system"; fi
   if [ -z "$lig_mask" ]  ;  then error "the amber strip mask to create the ligand from the complex"; fi
-  if [ "${PB_method}" = "1F" ]; then
+  if [ "${pb_method}" = "1F" ]; then
     if [ ! -z "$min_steps" ]; then
       if [ -z "$min_energy" ]; then
         error "the restraint applied to your selection for the minimization"
@@ -355,9 +342,9 @@ elif [ "${rescore_method}" = "mmpbsa" ]; then
       echo -e "${PURPLE}Rescoring without minimization${NC}"
     fi
 
-  elif [ "${PB_method}" = "MD" ]; then
-    if [ -z "${MD_time}" ];  then error "the length of the production"; fi
-    if [ -z "${GB_model}" ]; then error "the GB model used for implicit solvation"; fi
+  elif [ "${pb_method}" = "MD" ]; then
+    if [ -z "${md_time}" ];  then error "the length of the production"; fi
+    if [ -z "${gb_model}" ]; then error "the GB model used for implicit solvation"; fi
   fi
 
 else
@@ -365,8 +352,8 @@ else
 fi
 
 if [ "${mode}" = "PDB" ]; then
-  if [ -z "${PDB_folder}" ]    ; then error "the complex's directory"                ; fi
-  if [ -z "${SPORES}" ]        ; then error "the location of SPORES's executable"    ; fi
+  if [ -z "${pdb_folder}" ]    ; then error "the complex's directory"                ; fi
+  if [ -z "${spores_exec}" ]        ; then error "the location of SPORES's executable"    ; fi
 elif [ "${mode}" = "ALL" ]; then
   if [ -z "${folder}" ]     ; then folder="${run_folder}/docking/"                   ; fi
 elif [ "${mode}" = "BEST" ]; then

@@ -27,6 +27,7 @@ source ${CHEMFLOW_HOME}/ChemFlow.config
 source $CHEMFLOW_HOME/common/LigFlow_functions.bash
 source $CHEMFLOW_HOME/common/mazinger_functions.bash
 source $CHEMFLOW_HOME/common/ProgressBar.bash
+source $CHEMFLOW_HOME/common/ChemFlow_functions.bash
 
 # Run interface
 LigFlow_CLI "$@"

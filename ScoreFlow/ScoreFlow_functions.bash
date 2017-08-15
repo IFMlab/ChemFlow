@@ -23,10 +23,10 @@ fi
 list_complexes() {
 # List complexes, make folders and write the config files
 # list all pdb files in the complex folder.
-com_list=$(cd ${PDB_folder} ; ls *.pdb | sed s/.pdb//g )
+com_list=$(cd ${pdb_folder} ; ls *.pdb | sed s/.pdb//g )
 
 if [ -z "${com_list}" ]; then
-  echo -e "${RED}ERROR${NC} : Could not find pdb files in ${PDB_folder}"
+  echo -e "${RED}ERROR${NC} : Could not find pdb files in ${pdb_folder}"
   exit 1
 fi
 
@@ -38,11 +38,11 @@ for com in ${com_list} ; do
   cd ${run_folder}/rescoring/${scoring_function}/${com}
 
   # Separate the complex in protein, ligand(s) and water mol2 files
-  cd ${PDB_folder} # otherwise spores will add the path to the ligand name inside the file, which causes some bugs with PLANTS
-  ${SPORES} --mode splitpdb ${com}.pdb > ${run_folder}/rescoring/${scoring_function}/${com}/spores.job 2>&1
+  cd ${pdb_folder} # otherwise spores will add the path to the ligand name inside the file, which causes some bugs with PLANTS
+  ${spores_exec} --mode splitpdb ${com}.pdb > ${run_folder}/rescoring/${scoring_function}/${com}/spores.job 2>&1
  
-  # Output is $PDB_folder, so we need to move it
-  mv ${PDB_folder}/*.mol2 ${run_folder}/rescoring/${scoring_function}/${com}/
+  # Output is ${pdb_folder}, so we need to move it
+  mv ${pdb_folder}/*.mol2 ${run_folder}/rescoring/${scoring_function}/${com}/
   
   # path to ligand and receptor
   lig=$(ls ${run_folder}/rescoring/${scoring_function}/${com}/ligand*.mol2 | sed s/.mol2//g)
@@ -74,7 +74,7 @@ done
 if [ "${rescore_method}" = "mmpbsa" ]; then
   cd ${run_folder}/rescoring/${scoring_function}/
   write_pbsa_config
-  if [ "${PB_method}" = "MD" ]; then
+  if [ "${pb_method}" = "MD" ]; then
     # write input files for MD
     write_quickMD_config
   fi
@@ -83,7 +83,7 @@ fi
 echo "Rescoring configuration finished                                               "
 
 if [ -z "${com_list}" ]; then
-  echo -e "${RED}ERROR${NC} : Could not find pdb files in ${PDB_folder}"    
+  echo -e "${RED}ERROR${NC} : Could not find pdb files in ${pdb_folder}"    
   exit 1
 fi
 }
@@ -136,7 +136,7 @@ done
 if [ "${rescore_method}" = "mmpbsa" ]; then
   cd ${run_folder}/rescoring/${scoring_function}/
   write_pbsa_config
-  if [ "${PB_method}" = "MD" ]; then
+  if [ "${pb_method}" = "MD" ]; then
     # write input files for MD
     write_quickMD_config
   fi
@@ -149,30 +149,6 @@ then
   echo -e "${RED}ERROR${NC} : Could not find mol2 docking poses in ${folder}'s sub-folders"    
   exit 1
 fi
-}
-
-# Equivalent to python : if item in list
-list_include_item() {
-  local list="$1"
-  local item="$2"
-  if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]] ; then
-    # yes, list include item
-    result=0
-  else
-    result=1
-  fi
-  return $result
-}
-
-print_vars() {
-# Print all variables defined from the console
-# declare -p will print all system variables
-# awk '/declare --/ {print $3}' will extract all users variables names and values as well as some other undesired variables
-# awk 'f;/^_.*$/{f=1}' will start printing the variables after it reads a variable starting with _
-# grep -v "^_" will remove all remaining variables starting with _
-# grep -v "_list" will remove every list of variables
-# in the end we should only be left with variables defined within the workflow which we could need
-declare -p | awk '/declare --/ {print $3}' | awk 'f;/^_.*$/{f=1}' | grep -Fv -e "^_" -e "_list" -e "bs_center"
 }
 
 
@@ -307,7 +283,6 @@ do
 
   elif [ "${run_mode}" = "parallel" ] ; then
     echo -n "cd ${run_folder}/rescoring/${scoring_function}/${common_folder}; \
-    source ${CHEMFLOW_HOME}/ChemFlow.config; \
     source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash; " >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
     CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
     echo "; plants_cmd; \
@@ -391,46 +366,50 @@ ligand   = ${lig}.pdbqt
 ">config.vina
 }
 
-write_vina_pbs() {
+write_vina_pbs_header() {
 echo "#!/bin/bash
-#PBS -N PLANTS_${pose_name}
+#PBS -N VINA_${identifier}
 #PBS -l nodes=1:ppn=1,walltime=24:00:00.00
-#PBS -o ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.o
-#PBS -e ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.e
+#PBS -o ${run_folder}/pbs_scripts/vina_${identifier}.o
+#PBS -e ${run_folder}/pbs_scripts/vina_${identifier}.e
 
-#-----user_section-----------------------------------------------
+#-----user_section--------
 module load vina
 
-source ${CHEMFLOW_HOME}/ChemFlow.config
 source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash
+" > ${run_folder}/pbs_scripts/vina_${identifier}.pbs
+}
 
-cd \$PBS_O_WORKDIR
-
-"> vina.pbs
-print_vars >> vina.pbs
+write_vina_pbs() {
 echo "
-vina_cmd" >> vina.pbs
+#----------------------
+cd ${run_folder}/rescoring/${scoring_function}/${common_folder}
+">> ${run_folder}/pbs_scripts/vina_${identifier}.pbs
+print_vars >> ${run_folder}/pbs_scripts/vina_${identifier}.pbs
+echo "
+vina_cmd
+" >> ${run_folder}/pbs_scripts/vina_${identifier}.pbs
 }
 
 vina_cmd() {
 # PDB mode
 if [ "${mode}" = "PDB" ]; then
   # Prepare receptor
-  ${ADT}/prepare_receptor4.py -r ${rec}.mol2 > convert2pdbqt.job
+  ${adt_u24}/prepare_receptor4.py -r ${rec}.mol2 > convert2pdbqt.job
   # Prepare ligand
-  ${ADT}/prepare_ligand4.py -l ${lig}.mol2 >> convert2pdbqt.job
+  ${adt_u24}/prepare_ligand4.py -l ${lig}.mol2 >> convert2pdbqt.job
 # Mode BEST or ALL
 elif $(list_include_item "ALL BEST" "${mode}"); then
   # Convert pose to pdbqt if it doesn't exist
   if [ ! -f ${run_folder}/input_files/lig/${lig_name}/${pose_name}.pdbqt ]; then
     mkdir -p ${run_folder}/input_files/lig/${lig_name}
-    ${ADT}/prepare_ligand4.py -l ${folder}/${dock_folder}/${pose_name}.mol2 >> convert2pdbqt.job
+    ${adt_u24}/prepare_ligand4.py -l ${folder}/${dock_folder}/${pose_name}.mol2 >> convert2pdbqt.job
     mv ${pose_name}.pdbqt ${run_folder}/input_files/lig/${lig_name}
   fi
 fi
 
 # Run
-${VINA} --score_only --config config.vina --log output.log > vina.job
+${vina_exec} --score_only --config config.vina --log output.log > vina.job
 # Reorganize files and output master csv table
 reorganize_vina
 }
@@ -455,12 +434,19 @@ progress_count=0
 if [ "${run_mode}" = "parallel" ]; then
   # Run a spinner in the background
   (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
+elif [ "${run_mode}" = "mazinger" ]; then
+  # Initialize variable that counts the number of poses rescored per pbs script
+  pbs_count=0
+  # Get the ceiling value of the number of jobs to put per pbs script
+  let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}
+  # create pbs_script folder
+  mkdir -p ${run_folder}/pbs_scripts/
 fi
 
 # Convert receptor if it's not already done
 if $(list_include_item "ALL BEST" "${mode}") && [ ! -f ${rec}.pdbqt ]; then 
   cd $(dirname ${rec}.${extension})
-  ${ADT}/prepare_receptor4.py -r ${rec}.${extension} > convert2pdbqt.job
+  ${adt_u24}/prepare_receptor4.py -r ${rec}.${extension} > convert2pdbqt.job
 fi
 
 # Iterate over the docking poses
@@ -501,17 +487,30 @@ do
 
   elif [ "${run_mode}" = "parallel" ] ; then
     echo -n "cd ${run_folder}/rescoring/${scoring_function}/${common_folder}; \
-    source ${CHEMFLOW_HOME}/ChemFlow.config; \
     source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash; " >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
     CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
     echo "; vina_cmd; \
     echo -n 0 >>${run_folder}/rescoring/${scoring_function}/.progress.dat" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
 
   elif [ "${run_mode}" = "mazinger" ]; then
-    write_vina_pbs
-    jobid=$(qsub plants.pbs)
-    echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
-    echo -ne "Running ${PURPLE}${pose_name}${NC} on ${BLUE}${jobid}${NC}              \r"
+    if [ -z "${max_submissions}" ]; then
+      identifier=${pose_name}
+      write_vina_pbs
+      jobid=$(qsub ${run_folder}/pbs_scripts/vina_${identifier}.pbs)
+      echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+      echo -ne "Running ${PURPLE}${pose_name}${NC} on ${BLUE}${jobid}${NC}              \r"
+    else
+      let progress_count+=1
+      mazinger_current=$(mazinger_submitter ${pbs_count} ${max_jobs_pbs} ${progress_count} ${length} ${run_folder}/pbs_scripts/vina write_vina_pbs)
+      pbs_count=$( echo "${mazinger_current}" | cut -d, -f1)
+      identifier=$(echo "${mazinger_current}" | cut -d, -f2)
+      test_jobid=$(echo "${mazinger_current}" | cut -d, -f3)
+      if [ ! -z "${test_jobid}" ]; then 
+        jobid=${test_jobid}
+        echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+        echo -ne "Running ${PURPLE}PBS script #${identifier}${NC} on ${BLUE}${jobid}${NC}              \r"
+      fi
+    fi
   fi
 done
 
@@ -528,6 +527,11 @@ if [ "${run_mode}" = "parallel" ]; then
   # Kill the progress bar when parallel is done
   { printf '\n'; kill $! && wait $!; } 2>/dev/null
   rm -f ${run_folder}/rescoring/${scoring_function}/.progress.dat
+
+# If running on mazinger, wait untill all jobs are finished
+elif [ "${run_mode}" = "mazinger" ]; then
+  mazinger_progress_bar ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+  echo ""
 fi
 }
 
@@ -697,7 +701,7 @@ echo "Complex: initial minimization prior to MD GB model
   maxcyc = 500,
   ncyc   = 250,
   ntb    = 0,
-  igb    = ${GB_model},
+  igb    = ${gb_model},
   cut    = 999
  /">min.in
 
@@ -705,41 +709,45 @@ echo "Complex: initial minimization prior to MD GB model
 echo "Complex MD Generalized Born, infinite cut off
  &cntrl
   imin = 0, ntb = 0,
-  igb = ${GB_model}, ntpr = 1000, ntwx = 1000,
+  igb = ${gb_model}, ntpr = 1000, ntwx = 1000,
   ntt = 3, gamma_ln = 1.0,
   tempi = 300.0, temp0 = 300.0
-  nstlim = ${MD_time}000, dt = 0.001,
+  nstlim = ${md_time}000, dt = 0.001,
   cut = 999
  /
 ">prod.in
 }
 
-write_pbsa_pbs() {
+write_mmpbsa_pbs_header() {
 # Write PBS script for MMPBSA
-
 echo "#!/bin/bash
-#PBS -N ${pose_name}
+#PBS -N MMPBSA_${identifier}
 #PBS -l nodes=1:ppn=1,walltime=24:00:00.00
-#PBS -o ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.o
-#PBS -e ${run_folder}/rescoring/${scoring_function}/${common_folder}/${pose_name}.e
+#PBS -o ${run_folder}/pbs_scripts/mmpbsa_${identifier}.o
+#PBS -e ${run_folder}/pbs_scripts/mmpbsa_${identifier}.e
 
-source ${amber} 
-source ${CHEMFLOW_HOME}/ChemFlow.config
+source ${amber}
 source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash
+" > ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs
+}
 
-cd \$PBS_O_WORKDIR
-
-"> mmpbsa.pbs
-print_vars >> mmpbsa.pbs
+write_mmpbsa_pbs() {
+# Write PBS script for MMPBSA
+echo "
+#----------------------
+cd ${run_folder}/rescoring/${scoring_function}/${common_folder}
+">> ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs
+print_vars >> ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs
 echo "
 # Make trajectory and topology of the complex from the pdb file
 run_tleap
 # Create files
-mmpbsa_${PB_method}_cmd
+mmpbsa_${pb_method}_cmd
 # Run calculation
 mmpbsa_calculation
 # Reorganize files
-reorganize_mmpbsa" >> mmpbsa.pbs
+reorganize_mmpbsa
+" >> ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs
 }
 
 mmpbsa_1F_cmd() {
@@ -824,7 +832,7 @@ fi
 
 reorganize_mmpbsa() {
 # if the PB_method was 1F, output minimization results
-if [ "${PB_method}" = "1F" ]; then
+if [ "${pb_method}" = "1F" ]; then
   # if the minimization was done
   if [ ! -z "$(grep "ff:" minab.job)" ]; then
     # Exemple :
@@ -840,7 +848,7 @@ if [ "${PB_method}" = "1F" ]; then
   fi
 
 # if the PB_method was MD, output min and prod results
-elif [ "${PB_method}" = "MD" ]; then
+elif [ "${pb_method}" = "MD" ]; then
   if [ -f min.mdout ]; then
     # Exemple of min.mdout :
     #   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
@@ -947,10 +955,10 @@ elif [ "${scoring_function::2}" = "GB" ]; then
   > ${run_folder}/rescoring/${scoring_function}/ranking.csv
 fi
 # Time series for minimization and production
-if [ "${PB_method}" = "1F" ]; then
+if [ "${pb_method}" = "1F" ]; then
   echo "Ligand,iter,Total,bad,vdW,elect,nonpolar,genBorn,frms" \
   > ${run_folder}/rescoring/${scoring_function}/1F_min.csv
-elif [ "${PB_method}" = "MD" ]; then
+elif [ "${pb_method}" = "MD" ]; then
   echo "Ligand,NSTEP,ENERGY,RMS,GMAX,NAME,NUMBER,BOND,ANGLE,DIHED,VDWAALS,EEL,EGB,1-4 VDW,1-4 EEL,RESTRAINT" \
   > ${run_folder}/rescoring/${scoring_function}/MD_min.csv
   echo "Ligand,TIME(PS),TEMP(K),PRESS,Etot,EKtot,EPtot,BOND,ANGLE,DIHED,1-4 NB,1-4 EEL,VDWAALS,EELEC,EGB,RESTRAINT" \
@@ -972,6 +980,13 @@ progress_count=0
 if [ "${run_mode}" = "parallel" ]; then
   # Run a spinner in the background
   (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
+elif [ "${run_mode}" = "mazinger" ]; then
+  # Initialize variable that counts the number of poses rescored per pbs script
+  pbs_count=0
+  # Get the ceiling value of the number of jobs to put per pbs script
+  let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}
+  # create pbs_script folder
+  mkdir -p ${run_folder}/pbs_scripts/
 fi
 
 # Prepare topology and trajectory for the receptor
@@ -1012,7 +1027,7 @@ do
     # Make trajectory and topology of the complex from the pdb file
     run_tleap
     # Create files
-    mmpbsa_${PB_method}_cmd
+    mmpbsa_${pb_method}_cmd
     # Run calculation
     mmpbsa_calculation
     # Reorganize files
@@ -1025,17 +1040,31 @@ do
 
   elif [ "${run_mode}" = "parallel" ] ; then
     echo -n "cd ${run_folder}/rescoring/${scoring_function}/${common_folder}; \
-    source ${CHEMFLOW_HOME}/ChemFlow.config; \
     source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash; " >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
     CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
-    echo "; run_tleap; mmpbsa_${PB_method}_cmd; mmpbsa_calculation; reorganize_mmpbsa; \
+    echo "; run_tleap; mmpbsa_${pb_method}_cmd; mmpbsa_calculation; reorganize_mmpbsa; \
     echo -n 0 >>${run_folder}/rescoring/${scoring_function}/.progress.dat" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
 
   elif [ "${run_mode}" = "mazinger" ]; then
-    write_mmpbsa_pbs
-    jobid=$(qsub plants.pbs)
-    echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
-    echo -ne "Running ${PURPLE}${pose_name}${NC} on ${BLUE}${jobid}${NC}              \r"
+
+    if [ -z "${max_submissions}" ]; then
+      identifier=${pose_name}
+      write_mmpbsa_pbs
+      jobid=$(qsub ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs)
+      echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+      echo -ne "Running ${PURPLE}${pose_name}${NC} on ${BLUE}${jobid}${NC}              \r"
+    else
+      let progress_count+=1
+      mazinger_current=$(mazinger_submitter ${pbs_count} ${max_jobs_pbs} ${progress_count} ${length} ${run_folder}/pbs_scripts/mmpbsa write_mmpbsa_pbs)
+      pbs_count=$( echo "${mazinger_current}" | cut -d, -f1)
+      identifier=$(echo "${mazinger_current}" | cut -d, -f2)
+      test_jobid=$(echo "${mazinger_current}" | cut -d, -f3)
+      if [ ! -z "${test_jobid}" ]; then 
+        jobid=${test_jobid}
+        echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+        echo -ne "Running ${PURPLE}PBS script #${identifier}${NC} on ${BLUE}${jobid}${NC}              \r"
+      fi
+    fi
   fi
 done
 
@@ -1052,5 +1081,10 @@ if [ "${run_mode}" = "parallel" ]; then
   # Kill the progress bar when parallel is done
   { printf '\n'; kill $! && wait $!; } 2>/dev/null
   rm -f ${run_folder}/rescoring/${scoring_function}/.progress.dat
+
+# If running on mazinger, wait untill all jobs are finished
+elif [ "${run_mode}" = "mazinger" ]; then
+  mazinger_progress_bar ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+  echo ""
 fi
 }

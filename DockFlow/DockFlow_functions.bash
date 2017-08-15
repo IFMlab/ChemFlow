@@ -39,30 +39,6 @@ echo -e "\rFinished preparing files... Running"
 
 }
 
-# Equivalent to python : if item in list
-list_include_item() {
-  local list="$1"
-  local item="$2"
-  if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]] ; then
-    # yes, list include item
-    result=0
-  else
-    result=1
-  fi
-  return $result
-}
-
-print_vars() {
-# Print all variables defined from the console
-# declare -p will print all system variables
-# awk '/declare --/ {print $3}' will extract all users variables names and values as well as some other undesired variables
-# awk 'f;/^_.*$/{f=1}' will start printing the variables after it reads a variable starting with _
-# grep -v "^_" will remove all remaining variables starting with _
-# grep -v "_list" will remove every list of variables
-# in the end we should only be left with variables defined within the workflow which we could need
-declare -p | awk '/declare --/ {print $3}' | awk 'f;/^_.*$/{f=1}' | grep -Fv -e "^_" -e "_list" -e "bs_center"
-}
-
 #######################################################################
 # PLANTS
 #######################################################################
@@ -105,7 +81,6 @@ for lig in ${lig_list} ; do
   # If running locally with parallel
   elif [ "${run_mode}" = "parallel" ] ; then
     echo -n "cd ${run_folder}/docking/${lig}; \
-    source ${CHEMFLOW_HOME}/ChemFlow.config; \
     source ${CHEMFLOW_HOME}/DockFlow/DockFlow_functions.bash; " >> ${run_folder}/docking/VS_${datetime}.parallel
     CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/docking/VS_${datetime}.parallel
     echo "; plants_cmd; \
@@ -141,7 +116,7 @@ fi
 
 plants_cmd() {
 # Run
-${PLANTS} --mode screen config.plants > plants.job
+${plants_exec} --mode screen config.plants > plants.job
 # Reorganize files
 reorganize_plants
 }
@@ -199,8 +174,7 @@ module load plants/1.2
 
 cd \$PBS_O_WORKDIR
 
-source ${CHEMFLOW_HOME}/ChemFlow.config
-source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash
+source ${CHEMFLOW_HOME}/DockFlow/DockFlow_functions.bash
 
 "> plants.pbs
 print_vars >> plants.pbs
@@ -209,25 +183,8 @@ plants_cmd" >> plants.pbs
 }
 
 
-# Create a csv table with all energies--------------------------------
-plants_score_csv() {
-# List ranking.csv files
-ranking_list=$(cd ${run_folder}/docking/; ls */docking/ranking.csv)
-
-# Make a list of docking poses with the associated energy
-echo "#POSE,FILE,PLANTS_SCORE" > ${run_folder}/docking/VS_scores.csv
-for file in ${ranking_list}
-do
-  lig=$(echo $file | cut -d"/" -f1)
-  echo -ne "Processing ${PURPLE}$lig${NC} to gather docking scores          \r"
-  awk -F, -v lig=$lig '{print $1","lig","$2}' ${run_folder}/docking/$file >> ${run_folder}/docking/VS_scores.csv
-done
-echo ""
-sort -o ${run_folder}/docking/VS_scores_sorted.csv -nk3 ${run_folder}/docking/VS_scores.csv -t","
-echo -e "${GREEN}Sorted docking results successfully${NC}"
-}
-
 reorganize_plants() {
+# Append the scores to a unique csv file, and reorganize files
 if [ -f docking/ranking.csv ]; then
   cd docking
   mv protein_bindingsite_fixed.mol2 ${run_folder}/docking/

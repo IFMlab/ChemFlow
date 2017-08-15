@@ -191,7 +191,7 @@ if [ -z "${lig_folder}" ]   ; then error "the ligands folder"                   
 if [ -z "${bs_center}" ]    ; then error "the definition of binding site center coordinates" ; fi
 if [ -z "${bs_radius}" ]    ; then error "the binding site radius"                           ; fi
 if [ -z "${poses_number}" ] ; then error "the number of docking poses to create"             ; fi
-if [ -z "${PLANTS}" ] && [ ! "${run_mode}" = "mazinger" ] ; then error "the location of PLANTS's executable"  ; fi
+if [ -z "${plants_exec}" ] && [ ! "${run_mode}" = "mazinger" ] ; then error "the location of PLANTS's executable"  ; fi
 echo -e "${GREEN}Successfully read all mandatory parameters${NC}"
 
 # Optionnal parameters
@@ -237,7 +237,7 @@ then
 elif [ "${run_mode}" = "mazinger" ]
 then
   module load plants/1.2
-  PLANTS=$(which plants)
+  plants_exec=$(which plants)
 else
   echo -e "${RED}ERROR${NC} : ${RED}Running mode${NC} not recognized"
 fi

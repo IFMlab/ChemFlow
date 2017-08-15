@@ -13,6 +13,7 @@ source $CHEMFLOW_HOME/DockFlow/DockFlow_interface.bash
 source $CHEMFLOW_HOME/DockFlow/DockFlow_functions.bash
 source $CHEMFLOW_HOME/common/mazinger_functions.bash
 source $CHEMFLOW_HOME/common/ProgressBar.bash
+source $CHEMFLOW_HOME/common/ChemFlow_functions.bash
 
 # Welcome user
 welcome
@@ -58,8 +59,11 @@ cp ${run_folder}/DockFlow.config ${run_folder}/docking/
 
 # Sort results
 if [ -f docking/ranking.csv ]; then
+  # copy header
   header=$(head -1 docking/ranking.csv)
+  # sort
   tail -n +2 docking/ranking.csv | sort -t, -g -k 2 -o docking/ranking_sorted.csv
+  # insert header back into sorted file
   sed -i "1s/^/$header\n/" docking/ranking_sorted.csv
 fi
 
