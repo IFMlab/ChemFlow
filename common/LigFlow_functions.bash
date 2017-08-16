@@ -242,7 +242,7 @@ do
         identifier=${pose}
         write_pbs
         jobid=$(qsub ${run_folder}/pbs_scripts/ligflow_${identifier}.pbs)
-        echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+        echo "$jobid" >> ${run_folder}/jobs_list_${datetime}.mazinger
         echo -ne "Running ${PURPLE}${pose}${NC} on ${BLUE}${jobid}${NC}              \r"
       else
         let progress_count+=1
@@ -252,7 +252,7 @@ do
         test_jobid=$(echo "${mazinger_current}" | cut -d, -f3)
         if [ ! -z "${test_jobid}" ]; then 
           jobid=${test_jobid}
-          echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+          echo "$jobid" >> ${run_folder}/jobs_list_${datetime}.mazinger
           echo -ne "Running ${PURPLE}PBS script #${identifier}${NC} on ${BLUE}${jobid}${NC}              \r"
         fi
       fi

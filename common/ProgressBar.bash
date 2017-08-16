@@ -7,7 +7,7 @@ function ProgressBar {
 # Process data
 	let _progress=(${1}*100/${2})
 	let _done=(${_progress}*4/10)
-	let _left=40-$_done
+	let _left=40-${_done}
 # Build progressbar string lengths
 	_done=$(printf "%${_done}s")
 	_left=$(printf "%${_left}s")

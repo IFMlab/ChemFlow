@@ -3,7 +3,7 @@ check_mazinger_status() {
 echo "ChemFlow's jobs status on mazinger :                                   "
 empty=false
 # Jobs from the rescoring
-CFjobs=$(cat ${run_folder}/output/${scoring_function}_rescoring/jobs_list_${datetime}.mazinger)
+CFjobs=$(cat $1)
 
 while ! $empty
 do
@@ -44,57 +44,61 @@ do
   fi
 done
 echo "All jobs finished                                                                            "
-rm -f ${run_folder}/output/${scoring_function}_rescoring/jobs_list_${datetime}.mazinger
+rm -f $1
 }
 
 mazinger_progress_bar() {
 echo "ChemFlow's progress on mazinger :                                   "
-empty=false
 # Jobs from the rescoring
 CFjobs=$(cat $1)
-count=0
-length=$(echo "$CFjobs" | wc -l)
+CFlength=$(echo "$CFjobs" | wc -l)
 
 # Check jobs status
-while ! $empty
+while true
 do
   # Current jobs of the user (all of them)
   current=$(qstat | tail -n +3)
-  names=($(echo "$current" | cut -d" " -f1))
-  states=($(echo "$current" | awk '{print $5}'))
-
-  # Run the progress bar
-  (ProgressBar $count $length) &
+  current_jobs=($(echo "$current" | cut -d" " -f1))
+  current_length=$(expr ${#current_jobs[@]} - 1)
+  count=0
 
   # Intersection between user's current jobs and rescoring jobs = current rescoring jobs still running
-  intersection=$(comm -12 <(echo "${CFjobs}") <(echo "${names}"))
+  intersection=$(comm -12 <(echo "${CFjobs}") <(echo "${current_jobs}"))
 
   # If no rescoring jobs are still running, quit
   if [ -z "${intersection}" ]
   then
-    empty=true
-    echo ""
+    break
 
   else
-    for job in $CFjobs; do
-      for ((i=0;i<=${#names[@]};i++)); do
-        if [ "${names[i]}" = "$job" ]; then
+    # for every rescoring job
+    for CFjob in $CFjobs; do
+      # for every current jobs of the user
+      for ((i=0;i<${#current_jobs[@]};i++)); do
+        # if the rescoring job matches a current job
+        if [ "${current_jobs[i]}" = "$CFjob" ]; then
+          # the rescoring is not finished yet
+          # go to the next rescoring job
           break
         else
-          if [ $i -eq ${#names[@]} ]; then
+          # if the rescoring job didn't match with any of the current jobs, 
+          # and it was the last current job
+          if [ $i -eq ${current_length} ]; then
+            # increment the count of rescoring jobs that are finished
             let count+=1
           fi
         fi
       done
     done
-  fi
-
+  # Update the progress bar
+  (ProgressBar $count $CFlength) &
   sleep 1
   { kill $! && wait $!; } 2>/dev/null
+  fi
 
 done
 
-echo "All jobs finished                                                                            "
+echo -e "\rAll jobs finished                                        "
 rm -f $1
 }
 

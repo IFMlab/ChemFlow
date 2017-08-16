@@ -246,7 +246,7 @@ elif [ "${run_mode}" = "mazinger" ]; then
   # Initialize variable that counts the number of poses rescored per pbs script
   pbs_count=0
   # Get the ceiling value of the number of jobs to put per pbs script
-  let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}
+  if [ ! -z "${max_submissions}" ]; then let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}; fi
   # create pbs_script folder
   mkdir -p ${run_folder}/pbs_scripts/
 fi
@@ -438,7 +438,7 @@ elif [ "${run_mode}" = "mazinger" ]; then
   # Initialize variable that counts the number of poses rescored per pbs script
   pbs_count=0
   # Get the ceiling value of the number of jobs to put per pbs script
-  let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}
+  if [ ! -z "${max_submissions}" ]; then let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}; fi
   # create pbs_script folder
   mkdir -p ${run_folder}/pbs_scripts/
 fi
@@ -984,7 +984,7 @@ elif [ "${run_mode}" = "mazinger" ]; then
   # Initialize variable that counts the number of poses rescored per pbs script
   pbs_count=0
   # Get the ceiling value of the number of jobs to put per pbs script
-  let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}
+  if [ ! -z "${max_submissions}" ]; then let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}; fi
   # create pbs_script folder
   mkdir -p ${run_folder}/pbs_scripts/
 fi
