@@ -33,3 +33,7 @@ A tutorial on how to install python packages with PIP is available [here](https:
 We also advise the user to install [jupyter_contrib_nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) to improve the functionality of the notebooks. 
 
 Paths to some of the softwares executables (PLANTS, SPORES, Vina, Amber) should be added in the `$CHEMFLOW_HOME/ChemFlow.config` file.
+
+# Usage
+
+Check our [wiki](https://github.com/IFMlab/ChemFlow/wiki) for instructions and tutorials.
