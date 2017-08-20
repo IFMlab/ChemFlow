@@ -33,6 +33,6 @@ We strongly advise the user to install [jupyter_contrib_nbextensions](https://gi
 
 Paths to some of the softwares executables (PLANTS, SPORES, Vina, Amber) should be added in the `$CHEMFLOW_HOME/ChemFlow.config` file.
 
-# :information_source: Usage
+# :question: Usage
 
 Check our awesome [wiki](https://github.com/IFMlab/ChemFlow/wiki) for a complete documentation and tutorials.
