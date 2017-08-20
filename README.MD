@@ -1,50 +1,35 @@
 # ChemFlow
 
-
-## <span style="color:red">DockFlow</span>
-
-to be completed...
-It is designed to work with PLANTS (for now).
-It can perform an automatic VS based on information given by the user :
-ligands, receptor, binding site info, and extra options.
-
-
-## <span style="color:green">ScoreFlow</span>
-to be completed...
+ChemFlow is a serie of computational chemistry workflow's designed to automatize and simplify as much as possible the drug discovery pipeline and scoring function benchmarking.
+It consists of BASH and PYTHON scripts that can be launched locally, locally with GNU parallel, or an a compute node via PBS.
+The aim of these workflow's is to let the user spend more time on the experimental part, i.e. running benchmarks or experiments, analysing the data, and taking decisions, rather than the programming/testing/debugging part.
+* DockFlow : virtual screening
+* LigFlow : ligand extraction and preparation from DockFlow to ScoreFlow
+* ScoreFlow : rescoring using PLANTS, Vina, or MM-PB/GB-SA
+* ReportFlow : Extensive data analysis
+* and other usefull tools !
 
 
+# Installation
 
-## <span style="color:blue">RMSDFlow</span>
-
-RMSDFlow is a **Python 3** script that, as its name states it, computes the Root Mean Squared Deviation (RMSD) between one or several input molecular structures and one or more references. RMSDFlow's force relies on its implementation of the Hungarian Algorithm to correctly account for poses related by symmetry operations. It is also capable of using more classical algorithms to compute the RMSD.
-
-
-## <span style="color:orange">ReportFlow</span>
-
-ReportFlow is a set of scripts to analyse data obtained from <span style="color:red">DockFlow</span>, <span style="color:green">ScoreFlow</span>, and <span style="color:blue">RMSDFlow</span>.
-It can generate automatically tables and figures.
-It consists of IPython notebooks that can be opened with **Jupyter-Notebook**.
-The code is written in **Python 3**, with some Bash commands.
+Clone or download the latest version of ChemFlow to it's destination, open a terminal and run the `install.sh` script located inside ChemFlow's directory. It will create a `CHEMFLOW_HOME` variable, and add the necessary executables to your path.
 
 
 # Requirements
 
-We do not provide any of the licensed softwares previously mentionned. It is up to the user to acquire and install PLANTS, SPORES, Python 3 and the other softwares that might be added in future releases of ChemFlow.
+We do not provide any of the licensed softwares used by ChemFlow. It is up to the user to acquire and install PLANTS, Vina, Amber, Python 3 and the other softwares that might be added in future releases of ChemFlow.
 
-PLANTS and SPORES are both available under a free academic license [here](http://www.uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/plants.html).
-As mentionned before, RMSDFlow and ReportFlow make heavy uses of Python 3, which can be downloaded [here](https://www.python.org/). They require the following Python packages to run seamleslly :
-* numpy
+[PLANTS](http://www.uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/plants.html) and [SPORES](http://www.mnf.uni-tuebingen.de/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/spores.html) are both available under a free academic license.
+ReportFlow makes heavy uses of [Python 3](https://www.python.org/) through Jupyter-Notebook. It requires the following Python packages to run seamleslly :
+* jupyter
 * matplotlib
+* numpy
 * pandas
-* seaborn
+* scikit-learn
 * scipy
+* seaborn
 
 A tutorial on how to install python packages with PIP is available [here](https://pip.pypa.io/en/stable/installing/)
+We also advise the user to install [jupyter_contrib_nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) to improve the functionality of the notebooks. 
 
-Paths to docking and structure preparation softwares (PLANTS, SPORES) should be added in the `ChemFlow.config` file located in the main ChemFlow folder.
-In addition to this, we recommand that you add the following lines to your `.bashrc` file located in your home directory. Please make sure to replace `/path/to/ChemFlow` with ChemFlow's actual destination folder :
-``` bash
-export CHEMFLOW_HOME="/path/to/ChemFlow"
-export PATH=$PATH:$CHEMFLOW_HOME/DockFlow:$CHEMFLOW_HOME/ScoreFlow:$CHEMFLOW_HOME/Tools
-```
-
+Paths to some of the softwares executables (PLANTS, SPORES, Vina, Amber) should be added in the `$CHEMFLOW_HOME/ChemFlow.config` file.
