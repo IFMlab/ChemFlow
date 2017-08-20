@@ -9,12 +9,12 @@ The aim of these workflow's is to let the user spend more time on the experiment
 * and other usefull tools !
 
 
-# Installation
+# :package: Installation
 
 Clone or download the latest version of ChemFlow to it's destination, open a terminal and run the `install.sh` script located inside ChemFlow's directory. It will create a `CHEMFLOW_HOME` variable, and add the necessary executables to your path.
 
 
-# Requirements
+# :warning: Requirements
 
 We do not provide any of the licensed softwares used by ChemFlow. It is up to the user to acquire and install PLANTS, Vina, Amber, Python 3 and the other softwares that might be added in future releases of ChemFlow.
 
@@ -33,6 +33,6 @@ We strongly advise the user to install [jupyter_contrib_nbextensions](https://gi
 
 Paths to some of the softwares executables (PLANTS, SPORES, Vina, Amber) should be added in the `$CHEMFLOW_HOME/ChemFlow.config` file.
 
-# Usage
+# :information_source: Usage
 
 Check our awesome [wiki](https://github.com/IFMlab/ChemFlow/wiki) for a complete documentation and tutorials.
