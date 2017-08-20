@@ -1,5 +1,5 @@
 # ChemFlow
-<img src="https://user-images.githubusercontent.com/27850535/29497661-3bddc6d8-85ec-11e7-8c4e-e03d4729d1e1.png" alt="Logo" align="left"/>ChemFlow is a serie of computational chemistry workflow's designed to automatize and simplify as much as possible the drug discovery pipeline and scoring function benchmarking. It consists of BASH and PYTHON scripts that can be launched locally, locally with GNU parallel, or an a compute node via PBS.
+<img src="https://user-images.githubusercontent.com/27850535/29497661-3bddc6d8-85ec-11e7-8c4e-e03d4729d1e1.png" alt="Logo" align="left"/>ChemFlow is a serie of computational chemistry workflow's designed to automatize and simplify as much as possible the drug discovery pipeline and scoring function benchmarking. It consists of BASH and PYTHON scripts that can be launched locally, locally with GNU parallel, or on a compute node via PBS.
 
 The aim of these workflow's is to let the user spend more time on the experimental part, i.e. running benchmarks or experiments, analysing the data, and taking decisions, rather than the programming/testing/debugging part.
 * DockFlow : virtual screening
@@ -29,10 +29,10 @@ ReportFlow makes heavy uses of [Python 3](https://www.python.org/) through Jupyt
 * seaborn
 
 A tutorial on how to install python packages with PIP is available [here](https://pip.pypa.io/en/stable/installing/)
-We also advise the user to install [jupyter_contrib_nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) to improve the functionality of the notebooks. 
+We strongly advise the user to install [jupyter_contrib_nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) to improve the functionality of the notebooks. 
 
 Paths to some of the softwares executables (PLANTS, SPORES, Vina, Amber) should be added in the `$CHEMFLOW_HOME/ChemFlow.config` file.
 
 # Usage
 
-Check our [wiki](https://github.com/IFMlab/ChemFlow/wiki) for instructions and tutorials.
+Check our awesome [wiki](https://github.com/IFMlab/ChemFlow/wiki) for instructions and tutorials.
