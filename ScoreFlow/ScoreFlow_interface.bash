@@ -216,7 +216,8 @@ rec=\"$rec\"
 folder=\"$folder\"
 
 # If mmpbsa or mmgbsa scoring function is chosen :
-# base calculations on 1 frame (1F) or on a quick implicit solvent (GB) MD simulation : 1F, MD
+# base calculations on a single snapshot from the docking pose (with or without minimization) : 1F
+# or on a quick implicit solvent (GB) MD simulation : MD
 pb_method=\"${pb_method}\"
 # Amber mask of atoms needed to be stripped from the solvated complex to make the dry complex topology file
 strip_mask=\"$strip_mask\"
@@ -302,7 +303,7 @@ if [ "${rescore_method}" = "plants" ]; then
     extension="${filename##*.}"
     if [ ! "${extension}" = "mol2" ]; then echo -e "${RED}ERROR${NC} : your receptor is ${RED}not a MOL2 file${NC}"; exit 1; fi
   fi
-  if [ -z "${plants}" ] && [ ! "${run_mode}" = "mazinger" ] ; then error "the location of PLANTS's executable"; fi
+  if [ -z "${plants_exec}" ] && [ ! "${run_mode}" = "mazinger" ] ; then error "the location of PLANTS's executable"; fi
 
 # VINA
 elif [ "${rescore_method}" = "vina" ]; then

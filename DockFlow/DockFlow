@@ -62,7 +62,8 @@ if [ -f docking/ranking.csv ]; then
   # copy header
   header=$(head -1 docking/ranking.csv)
   # sort
-  tail -n +2 docking/ranking.csv | sort -t, -g -k 2 -o docking/ranking_sorted.csv
+  # The LC_ALL=C is needed to get an accurate sorting
+  tail -n +2 docking/ranking.csv | LC_ALL=C sort -t, -g -k2 -o docking/ranking_sorted.csv
   # insert header back into sorted file
   sed -i "1s/^/$header\n/" docking/ranking_sorted.csv
 fi

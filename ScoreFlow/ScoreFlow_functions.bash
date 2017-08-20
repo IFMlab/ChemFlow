@@ -333,7 +333,7 @@ fi
 
 plants_cmd() {
 # Run
-${plants} --mode rescore config.plants > plants.job 2>&1
+${plants_exec} --mode rescore config.plants > plants.job 2>&1
 # reorganize results
 reorganize_plants
 }

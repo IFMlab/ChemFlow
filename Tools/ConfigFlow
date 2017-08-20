@@ -1,7 +1,11 @@
 #!/bin/bash
 
+source $CHEMFLOW_HOME/common/ChemFlow_functions.bash
+run_folder="$PWD/"
+
 FLOW() {
-flow=$(zenity --entry --title "ConfigFlow" --text "Generate a configuration file for :" DockFlow ScoreFlow)
+flow=$(zenity --entry --title "ConfigFlow" \
+--text "`echo -e "Welcome to the configuration file generator for ChemFlow.\nYou can close the generator at any time by pressing Ctrl+C on your terminal.\nGenerate a configuration file for :"`" DockFlow ScoreFlow)
 case $? in
   0)
       if [ $flow = "DockFlow" ]; then
@@ -29,7 +33,7 @@ esac
 ###################
 
 REC() {
-rec=$(zenity --file-selection --title "DF : Select your receptor" --filename "$PWD" --file-filter "*.mol2")
+rec=$(zenity --file-selection --title "DF : Select your receptor" --filename "$run_folder" --file-filter "*.mol2")
 case $? in
   0)
       LIG
@@ -44,7 +48,7 @@ esac
 }
 
 LIG() {
-lig_folder=$(zenity --file-selection --title "DF : Select your ligand folder" --filename "$PWD" --directory)
+lig_folder=$(zenity --file-selection --title "DF : Select your ligand folder" --filename "$run_folder" --directory)
 case $? in
   0)
       BS
@@ -111,14 +115,18 @@ options=$(zenity \
 --list --checklist --title "DF : options" --text "Select 0 or more options for the docking experiment" \
 --ok-label "Next" --cancel-label "Previous" \
 --separator "|" \
+--width 600 \
 --column "Choice(s)" \
 --column "Option" \
 --column "Description" \
-FALSE 'Water' 'Add a structural water molecule for docking')
+FALSE 'Water' 'Add a structural water molecule for docking' \
+FALSE 'Other parameters' 'Pass other parameters to PLANTS for docking')
 case $? in
   0)  
-      if [ "$options" == "Water" ]; then
+      if [ "$options" = "Water" ]; then
         WATER_MOL
+      elif [ "$options" = "Other parameters" ]; then
+        PLANTS_USER_PARAM
       else
         RUN_MODE
       fi
@@ -133,7 +141,7 @@ esac
 }
 
 WATER_MOL() {
-water=$(zenity --file-selection --title "DF : Select your water molecule" --filename "$PWD" --file-filter "*.mol2")
+water=$(zenity --file-selection --title "DF : Select your water molecule" --filename "$run_folder" --file-filter "*.mol2")
 case $? in
   0)
       WATER_XYZR
@@ -148,7 +156,11 @@ esac
 }
 
 WATER_XYZR() {
-water_xyzr=$(zenity --cancel-label "Previous" --ok-label "Next" --forms --title "DF : Structural water molecule" --separator "|" --text "XYZ coordinates of the center of the sphere containing the water molecule and radius R (in angstroms) in which the water can move" --add-entry "X" --add-entry "Y" --add-entry "Z" --add-entry "R")
+water_xyzr=$(zenity --forms --separator "|" \
+--cancel-label "Previous" --ok-label "Next" \
+--title "DF : Structural water molecule" \
+--text "`echo -e "XYZ coordinates of the center of the sphere containing the water molecule \nand radius R (in angstroms) in which the water can move"`" \
+--add-entry "X" --add-entry "Y" --add-entry "Z" --add-entry "R")
 case $? in
   0)
       wat_x=$(echo "$water_xyzr" | cut -d"|" -f1)
@@ -169,6 +181,31 @@ case $? in
       ;;
   1)
       WATER_MOL
+      ;;
+  -1)
+      echo "Unexpected error."
+      ;;
+esac
+}
+
+PLANTS_USER_PARAM() {
+plants_user_params=$(zenity --forms --separator "|" \
+--width 400 --height 200 \
+--title "DF : Other PLANTS parameters" \
+--text "Pass other parameters to PLANTS :" \
+--add-entry "" \
+--add-entry "" \
+--add-entry "" \
+--add-entry "" \
+--add-entry "" \
+--ok-label "Next" --cancel-label "Previous")
+case $? in
+  0)
+      plants_user_parameters=$(echo "$plants_user_params" | sed 's/|/\n/g')
+      RUN_MODE
+      ;;
+  1)
+      OPTIONS
       ;;
   -1)
       echo "Unexpected error."
@@ -213,7 +250,10 @@ esac
 }
 
 CORE_NUMBER() {
-core_number=$(zenity --forms --ok-label "Generate config file" --cancel-label "Previous" --title "DF : Number of cores" --text "Number of cores to be used by parallel :" --add-entry "")
+core_number=$(zenity --forms \
+--ok-label "Generate config file" --cancel-label "Previous" \
+--title "DF : Number of cores" --text "Number of cores to be used by parallel :" \
+--add-entry "")
 case $? in
   0)
       if [ -z "$core_number" ]; then
@@ -255,6 +295,10 @@ water=\"$water\"
 # xyz coordinates and radius of the sphere, separated by a space
 water_xyzr=\"$water_line\"
 
+# Other user defined parameters, for PLANTS
+# This must be formated as expected by PLANTS
+plants_user_parameters=\"$plants_user_parameters\"
+
 # Run on this machine (default), in parallel, or on mazinger
 # local, parallel, mazinger
 run_mode=\"$run_mode\"
@@ -276,23 +320,30 @@ scoring_function=$(zenity \
 --list --radiolist --title "SF : Scoring Function" --text "Select the function used for rescoring :" \
 --ok-label "Next" --cancel-label "Previous" \
 --separator "|" \
---width 800 \
---height 250 \
+--width 675 \
+--height 300 \
 --column "Choice" \
---column "Scoring Function" \
+--column "Function" \
 --column "Description" \
-FALSE 'chemplp' "PLANTS version of the Piecewise Linear Potential implementing GOLD's terms" \
-FALSE 'plp' "PLANTS version of the Piecewise Linear Potential" \
-FALSE 'plp95' 'Piecewise Linear Potential from Gehlhaar DK et al' \
-FALSE 'vina' "AutoDock Vina's scoring function" \
-FALSE 'mmgbsa' 'Molecular Mechanics with Generalized-Born and Surface Area solvation' \
-FALSE 'mmpbsa' 'Molecular Mechanics with Poisson-Boltzmann and Surface Area solvation')
+--column "Radii for Gpol" \
+--column "SASA for Gnp" \
+--column "Surface Tension (y)" \
+--column "Surface Offset (b)" \
+--column "Ionic Strength" \
+FALSE 'chemplp' "PLANTS version of the Piecewise Linear Potential implementing GOLD's terms" '' '' '' '' '' \
+FALSE 'plp' "PLANTS version of the Piecewise Linear Potential" '' '' '' '' '' \
+FALSE 'plp95' 'Piecewise Linear Potential from Gehlhaar DK et al' '' '' '' '' '' \
+FALSE 'vina' "AutoDock Vina's scoring function" '' '' '' '' '' \
+FALSE 'PB3' 'MMPBSA, model 3' 'Parse' 'Molsurf' '0.00542' '0.92' '0.15' \
+FALSE 'GB5' 'MMGBSA, model 5' 'mbondi2' 'LCPO' '0.00500' '0.0000' '0.15' \
+FALSE 'GB8' 'MMGBSA, model 8' 'mbondi3' 'LCPO' 'atom dependant' '0.195141' '0.15')
+
 case $? in
   0)
       if [ ! -z "$scoring_function" ]; then
-        if [ "$scoring_function" == "mmpbsa" ] || [ "$scoring_function" == "mmgbsa" ]; then
+        if $(list_include_item "PB3 GB5 GB8" "${scoring_function}"); then
           MMPBSA
-        elif [ "$scoring_function" == "chemplp" ] || [ "$scoring_function" == "plp" ] || [ "$scoring_function" == "plp95" ] || [ "$scoring_function" == "vina" ]; then
+        elif $(list_include_item "chemplp plp plp95 vina" "${scoring_function}"); then
           SF_MODE
         fi
       else
@@ -313,18 +364,22 @@ mode=$(zenity \
 --list --checklist --title "SF : Rescoring mode" --text "Select what kind of rescoring you wish to perform :" \
 --ok-label "Next" --cancel-label "Previous" \
 --separator "|" \
+--height 200 \
+--width 700 \
 --column "Choice(s)" \
 --column "Option" \
 --column "Description" \
-FALSE 'VS' 'All results in the VS folder' \
+FALSE 'ALL' 'Virtual Screening results from DockFlow' \
 FALSE 'BEST' "A selection of ligands from DockFlow's VS results" \
 FALSE 'PDB' 'Crystal structures from PDB files')
 case $? in
   0)
       if [ ! -z "$mode" ]; then
-        if [ "$mode" == "VS" ]; then
+        if [ "$mode" == "ALL" ]; then
+          SF_REC
           VS_MODE
         elif [ "$mode" == "BEST" ]; then
+          SF_REC
           BEST_MODE
         elif [ "$mode" == "PDB" ]; then
           PDB_MODE
@@ -346,8 +401,30 @@ case $? in
 esac
 }
 
+SF_REC() {
+zenity --info \
+--width 300 \
+--height 150 \
+--title "SF : Select your receptor" \
+--text "`echo -e "Please select the right format : \nPDB file for MMPBSA and MMGBSA,\nMOL2 file for chemplp, plp, and plp95,\nPDB or MOL2 for vina"`"
+rec=$(zenity --file-selection \
+--title "" \
+--filename "$run_folder" --file-filter ""*.mol2" "*.pdb"")
+case $? in
+  0)
+      true
+      ;;
+  1)
+      SF_MODE
+      ;;
+  -1)
+      echo "Unexpected error."
+      ;;
+esac
+}
+
 VS_MODE() {
-VS_folder=$(zenity --file-selection --title "SF : Select your VS folder" --filename "$PWD" --directory)
+folder=$(zenity --file-selection --title "SF : Select your docking folder, containing all the poses" --filename "$run_folder" --directory)
 case $? in
   0)
       SF_OPTIONS
@@ -362,7 +439,7 @@ esac
 }
 
 BEST_MODE() {
-BEST_folder=$(zenity --file-selection --title "SF : Select the folder containing a selection of the VS results" --filename "$PWD" --directory)
+folder=$(zenity --file-selection --title "SF : Select your input_files/lig folder" --filename "$run_folder" --directory)
 case $? in
   0)
       SF_OPTIONS
@@ -377,7 +454,7 @@ esac
 }
 
 PDB_MODE() {
-PDB_folder=$(zenity --file-selection --title "SF : Select your complexes folder" --filename "$PWD" --directory)
+pdb_folder=$(zenity --file-selection --title "SF : Select your complexes folder" --filename "$run_folder" --directory)
 case $? in
   0)
       SF_OPTIONS
@@ -392,27 +469,23 @@ esac
 }
 
 MMPBSA() {
-PB_method=$(zenity \
---list --radiolist --title "SF : MM-PBSA/MM-GBSA Method" --text "Select the method used for MM-PBSA/MM-GBSA :" \
+pb_method=$(zenity \
+--list --radiolist --title "SF : MM-PB/GB-SA Method" --text "Select the method used for computing MM-PB/GB-SA :" \
 --ok-label "Next" --cancel-label "Previous" \
 --separator "|" \
---width 810 \
---height 200 \
+--width 700 \
+--height 100 \
 --column "Choice" \
 --column "Method" \
---column "Radii for Gpol" \
---column "SASA for Gnp" \
---column "Surface Tension (y)" \
---column "Surface Offset (b)" \
---column "Ionic Strength" \
-FALSE 'PB3' 'Parse' 'Molsurf' '0.00542' '0.92' '0.15' \
-FALSE 'GB8' 'mbondi3' 'LCPO' 'atom dependant' '0.195141' '0.15')
+--column "Description" \
+FALSE '1F' 'Single snapshot from the docking pose (with or without minimization)' \
+FALSE 'MD' 'Quick MD simulation in inplicit solvent (GB)')
 case $? in
   0)
       if [ ! -z "$scoring_function" ]; then
         AMBER_MASKS
       else
-        zenity --error --title "SF : MM-PBSA/MM-GBSA Method" --text "You must select a method."
+        zenity --error --title "SF : MM-PB/GB-SA Method" --text "You must select a method."
         MMPBSA
       fi;;
   1)
@@ -434,8 +507,12 @@ case $? in
   0)
       strip_mask=$(echo "$amber_masks" | cut -d";" -f1)
       lig_mask=$(echo "$amber_masks" | cut -d";" -f2)
-      if [ $(echo "$strip_mask $lig_mask" | wc -w) = 2 ]; then
-        MINIMIZE
+      if [ $(echo "$strip_mask $lig_mask" | wc -w) -ge 2 ]; then
+        if [ "$pb_method" = "1F" ] ; then
+          MINIMIZE
+        else
+          MD_TIME
+        fi
       else
         zenity --error --title "SF : Amber masks of atoms" --text "Some entries are missing"
         echo "SOLVATED -> DRY mask : $strip_mask"
@@ -445,6 +522,57 @@ case $? in
       ;;
   1)
       MMPBSA
+      ;;
+  -1)
+      echo "Unexpected error."
+      ;;
+esac
+}
+
+MD_TIME() {
+md_time=$(zenity --entry --cancel-label "Previous" --ok-label "Next" \
+--title "SF : MD production length" \
+--text "Length of the MD production, in ps")
+case $? in
+  0)
+      echo "> $md_time <"
+      if [ ! -z "$md_time" ]; then
+        GB_MODEL
+      else
+        zenity --error --title "SF : MD production length" --text "Cannot be empty."
+        MD_TIME
+      fi
+      ;;
+  1)
+      AMBER_MASKS
+      ;;
+  -1)
+      echo "Unexpected error."
+      ;;
+esac
+}
+
+GB_MODEL() {
+gb_model=$(zenity \
+--list --radiolist --title "SF : Implicit solvation GB model" \
+--text "Select the GB model used for implicit solvation :" \
+--ok-label "Next" --cancel-label "Previous" \
+--separator "|" \
+--column "Choice" \
+--column "Method" \
+FALSE '1' \
+FALSE '5' \
+FALSE '8')
+case $? in
+  0)
+      if [ ! -z "$gb_model" ]; then
+        SF_MODE
+      else
+        zenity --error --title "SF : Implicit solvation GB model" --text "You must select a model."
+        GB_MODEL
+      fi;;
+  1)
+      MD_TIME
       ;;
   -1)
       echo "Unexpected error."
@@ -517,14 +645,18 @@ options=$(zenity \
 --list --checklist --title "SF : options" --text "Select 0 or more options for the rescoring experiment" \
 --ok-label "Next" --cancel-label "Previous" \
 --separator "|" \
+--width 600 \
 --column "Choice(s)" \
 --column "Option" \
 --column "Description" \
-FALSE 'Water' 'Add a structural water molecule for rescoring')
+FALSE 'Water' 'Add a structural water molecule for rescoring' \
+FALSE 'Other parameters' 'Pass other parameters to PLANTS for rescoring')
 case $? in
-  0)
-      if [ "$options" == "Water" ]; then
+  0)  
+      if [ "$options" = "Water" ]; then
         SF_WATER_MOL
+      elif [ "$options" = "Other parameters" ]; then
+        SF_PLANTS_USER_PARAM
       else
         SF_RUN_MODE
       fi
@@ -538,8 +670,33 @@ case $? in
 esac
 }
 
+SF_PLANTS_USER_PARAM() {
+plants_user_params=$(zenity --forms --separator "|" \
+--width 400 --height 200 \
+--title "SF : Other PLANTS parameters" \
+--text "Pass other parameters to PLANTS :" \
+--add-entry "" \
+--add-entry "" \
+--add-entry "" \
+--add-entry "" \
+--add-entry "" \
+--ok-label "Next" --cancel-label "Previous")
+case $? in
+  0)
+      plants_user_parameters=$(echo "$plants_user_params" | sed 's/|/\n/g')
+      SF_RUN_MODE
+      ;;
+  1)
+      SF_OPTIONS
+      ;;
+  -1)
+      echo "Unexpected error."
+      ;;
+esac
+}
+
 SF_WATER_MOL() {
-water=$(zenity --file-selection --title "SF : Select your water molecule" --filename "$PWD" --file-filter "*.mol2")
+water=$(zenity --file-selection --title "SF : Select your water molecule" --filename "$run_folder" --file-filter "*.mol2")
 case $? in
   0)
       SF_WATER_XYZR
@@ -600,6 +757,8 @@ case $? in
       if [ ! -z "$run_mode" ]; then
         if [ "$run_mode" == "parallel" ]; then
           SF_CORE_NUMBER
+        elif [ "$run_mode" == "mazinger" ]; then
+          MAZINGER_MAXSUB
         else
           GENERATE_SF
         fi
@@ -639,14 +798,30 @@ case $? in
 esac
 }
 
+MAZINGER_MAXSUB() {
+max_submissions=$(zenity --entry --cancel-label "Previous" --ok-label "Generate config file" \
+--title "SF : Number of jobs for mazinger" \
+--text "`echo -e "Maximum number of jobs to submit to mazinger.\nIf you leave this empty, ScoreFlow will submit 1 job per docking pose"`")
+case $? in
+  0)
+      GENERATE_SF
+      ;;
+  1)
+      SF_RUN_MODE;;
+  -1)
+      echo "Unexpected error."
+      ;;
+esac
+}
+
 GENERATE_SF() {
 echo "# Type of rescoring : 
-  # Virtual Screening results from DockFlow : VS
+  # Virtual Screening results from DockFlow : ALL
   # A selection of ligands from DockFlow's VS results : BEST
   # Crystal structure from a PDB file : PDB
 mode=\"${mode}\"
 
-# Scoring function : mmgbsa, mmpbsa, chemplp, plp, plp95, vina
+# Scoring function : chemplp, plp, plp95, vina, PB3, GB5, GB8
 scoring_function=\"${scoring_function}\"
 
 #######################################################################################################################
@@ -654,21 +829,22 @@ scoring_function=\"${scoring_function}\"
 #######################################################################################################################
 
 # If the PDB mode is chosen, absolute path to the complexes folder
-PDB_folder=\"${PDB_folder}\"
+pdb_folder=\"$pdb_folder\"
 
-# If the VS mode is chosen, we will assume that you are launching ScoreFlow from the same folder that contains lig,rec, and output directories from DockFlow.
-# So the following variable should stay empty, but you can state otherwise here :
-VS_folder=\"${VS_folder}\"
+# If the ALL or BEST modes are chosen :
+# Path to the receptor : PDB file for MMPBSA and MMGBSA, MOL2 file for chemplp, plp, and plp95, PDB or MOL2 for vina
+rec=\"$rec\"
 
-# If the BEST mode is chosen, don't forget to configure and launch the ligfind.bash script in ChemFlow/Tools before running this.
-# We will assume that you are launching ScoreFlow from the same folder that contains lig,rec, and output directories from DockFlow.
-# So the following variable should stay empty, but you can state otherwise here :
-BEST_folder=\"${BEST_folder}\"
+# By default, ScoreFlow will assume that you are running from the same folder that contains your lig, rec and docking results directories.
+# This way, depending on the mode you chose (ALL or BEST ), it will automatically find the location of your mol2 files. 
+# If necessary, you can overwrite the path to a custom \"docking\" or \"input_files/lig\" folder here.
+folder=\"$folder\"
 
 # If mmpbsa or mmgbsa scoring function is chosen :
-# which method is going to be used : PB3 or GB8
-PB_method=\"${PB_method}\"
-# Amber mask of atoms needed to be stripped from the solvated complex to make the dry complex topology file
+# base calculations on a single snapshot from the docking pose (with or without minimization) : 1F
+# or on a quick implicit solvent (GB) MD simulation : MD
+pb_method=\"${pb_method}\"
+# Amber mask of atoms needed to be stripped from the SOLVATED complex to make the DRY complex topology file
 strip_mask=\"${strip_mask}\"
 # Amber mask of atoms needed to be stripped from COMPLEX to create LIGAND
 lig_mask=\"${lig_mask}\"
@@ -681,6 +857,11 @@ min_energy=\"${min_energy}\"
     # If backbone, for resid x to y of all chains of the receptor, write x-y.
     # If custom, specify residues or atoms to be tethered in their motion using NAB atom expression (see amber manual).
     min_mask=\"${min_mask}\"
+# If the quick MD simulation approach was chosen :
+  # Length of the production, in ps
+  md_time=\"$md_time\"
+  # GB model used for implicit solvation : 1,5,8
+  gb_model=\"$gb_model\"
 
 #######################################################################################################################
 # Optionnal input
@@ -692,12 +873,18 @@ water=\"$water\"
 # xyz coordinates and radius of the sphere, separated by a space
 water_xyzr=\"$water_line\"
 
+# For chemplp, plp, and plp95 :
+# User defined parameters, for PLANTS
+plants_user_parameters=\"$plants_user_parameters\"
+
 # Run on this machine (default), in parallel, or on mazinger
 # local, parallel, mazinger
 run_mode=\"$run_mode\"
-
-#If parallel is chosen, please specify the number of cores available
-core_number=\"$core_number\"
+  # If parallel is chosen, please specify the number of cores available
+  core_number=\"$core_number\"
+  # If mazinger is chosen, please specify the maximum number of jobs to submit
+  # If you leave this variable empty, ScoreFlow will submit 1 job per docking pose
+  max_submissions=\"$max_submissions\"
 " > ScoreFlow.config
 
 zenity --info --title "SF : Configuration File" --text "Configuration file for ScoreFlow generated !"
