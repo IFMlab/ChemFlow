@@ -772,9 +772,9 @@ if [ ! -z "${min_steps}" ]; then
             -y ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.pdb \
             -x ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7 &> cpptraj.job
   fi
-  mmpbsa_rst7="${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7"
+  mmpbsa_traj="${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7"
 else
-  mmpbsa_rst7="${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7"
+  mmpbsa_traj="${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7"
 fi
 }
 
@@ -809,7 +809,7 @@ pmemd.cuda  -O -i ${run_folder}/rescoring/${scoring_function}/prod.in \
   fi
 fi
 
-mmpbsa_rst7="${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.rst7"
+mmpbsa_traj="${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.mdcrd"
 }
 
 mmpbsa_calculation() {
@@ -822,8 +822,10 @@ else
                   -c com.top -r rec.top -l lig.top -s \'${strip_mask}\' -n ${lig_mask} --radii=${radii} &> ante_mmpbsa.job
 fi
 MMPBSA.py -O -i ${run_folder}/rescoring/${scoring_function}/${scoring_function}.in \
-          -o MM${scoring_function::2}SA.dat -eo MM${scoring_function::2}SA.csv -cp com.top -rp rec.top -lp lig.top \
-          -y ${mmpbsa_rst7} &> mmpbsa.job
+          -o MM${scoring_function::2}SA.dat \
+          -eo MM${scoring_function::2}SA.csv \
+          -cp com.top -rp rec.top -lp lig.top \
+          -y ${mmpbsa_traj} &> mmpbsa.job
 # Check if output was created
 if [ ! -f MM${scoring_function::2}SA.csv ]; then
   echo "${pose_name},${dock_folder},mmpbsa results" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
@@ -885,7 +887,7 @@ elif [ "${pb_method}" = "MD" ]; then
     echo "${lines}" | sed -n "s/^/${pose_name}/gp" >> ${run_folder}/rescoring/${scoring_function}/MD_min.csv
   fi
 
-    if [ -f prod.mdout ]; then
+  if [ -f prod.mdout ]; then
     # Exemple :
     # NSTEP =        0   TIME(PS) =       0.000  TEMP(K) =   306.02  PRESS =     0.0
     # Etot   =      -895.1130  EKtot   =       176.0523  EPtot      =     -1071.1653
@@ -916,12 +918,30 @@ fi
 
 # if the MM-PB/GB-SA output file exists
 if [ -f MM${scoring_function::2}SA.csv ]; then
+  # Exemple :
+  # GENERALIZED BORN:
+  # Complex Energy Terms
+  # Frame #,BOND,ANGLE,DIHED,UB,IMP,CMAP,VDWAALS,EEL,1-4 VDW,1-4 EEL,EGB,ESURF,G gas,G solv,TOTAL
+  # 0,1084.2011,1632.7714,2456.3263,0.0,0.0,0.0,-1427.0694,-13621.3645,653.7996,7967.7268,-2427.8025,85.378788,-1253.6086999999989,-2342.423712,-3596.0324119999987
+  # 
+  # Receptor Energy Terms
+  # Frame #,BOND,ANGLE,DIHED,UB,IMP,CMAP,VDWAALS,EEL,1-4 VDW,1-4 EEL,EGB,ESURF,G gas,G solv,TOTAL
+  # 0,1060.7625,1599.903,2429.7444,0.0,0.0,0.0,-1386.9484,-13721.0535,638.1646,8312.9529,-2386.7304,85.60304135999999,-1066.4745000000003,-2301.12735864,-3367.60185864
+  # 
+  # Ligand Energy Terms
+  # Frame #,BOND,ANGLE,DIHED,UB,IMP,CMAP,VDWAALS,EEL,1-4 VDW,1-4 EEL,EGB,ESURF,G gas,G solv,TOTAL
+  # 0,23.4386,32.8685,26.582,0.0,0.0,0.0,-3.455,95.3726,15.635,-345.2261,-52.6417,5.146031519999999,-154.78439999999998,-47.49566848,-202.28006847999995
+  # 
+  # DELTA Energy Terms
+  # Frame #,BOND,ANGLE,DIHED,UB,IMP,CMAP,VDWAALS,EEL,1-4 VDW,1-4 EEL,EGB,ESURF,DELTA G gas,DELTA G solv,DELTA TOTAL
+  # 0,-4.973799150320701e-14,-9.999999993226538e-05,-9.999999986831654e-05,0.0,0.0,0.0,-36.666000000000096,4.3164000000003,1.0480505352461478e-13,1.1368683772161603e-13,11.569600000000136,-5.370284879999991,-32.34979999999862,6.199315119999987,-26.150484879998658
+
   # Get the values for all structures
   for structure in Ligand Receptor Complex DELTA
   do
     # We want to retrieve the values in the MM-PB/GB-SA csv file to output a computer-readable csv file
     # We identify the line corresponding to our structure with var="${structure} Energy Terms" '$0 ~ var'
-    # At this point, we set the flag to true starting 2 lines after the match : {flag=1;getline;getline}
+    # At this point, we set the flag to true starting 2 lines after the match to get the values : {flag=1;getline;getline}
     # We then search for the last values for our structure, identified by an empty line : /^\s*$/
     # When we match this empty line, the flag is set to false for the remaining lines : {flag=0}
     # And we print the lines for which the flag was set to true : flag
