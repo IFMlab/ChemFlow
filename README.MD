@@ -1,12 +1,15 @@
 # ChemFlow
-<img src="https://user-images.githubusercontent.com/27850535/29564754-6b07a548-8743-11e7-9463-8626675b9481.png" alt="Logo" align="left" width=132/>ChemFlow is a serie of computational chemistry workflows designed to automatize and simplify as much as possible the drug discovery pipeline and scoring function benchmarking. It consists of BASH and PYTHON scripts that can be launched locally, locally with GNU parallel, or on a compute node via PBS.
+<img src="https://user-images.githubusercontent.com/27850535/29564754-6b07a548-8743-11e7-9463-8626675b9481.png" alt="Logo" align="left" width=132/>ChemFlow is a series of computational chemistry workflow's designed to automatize and simplify the drug discovery pipeline and scoring function benchmarking.
 
-The aim of these workflow's is to let the user spend more time on the experimental part, i.e. running benchmarks or experiments, analysing the data, and taking decisions, rather than the programming/testing/debugging part.
-* DockFlow : virtual screening
-* LigFlow : ligand extraction and preparation from DockFlow to ScoreFlow
-* ScoreFlow : rescoring using PLANTS, Vina, or MM-PB/GB-SA
-* ReportFlow : Extensive data analysis
+The workflows allow the user spend more time **thinking**, i.e. running benchmarks or experiments, analyzing the data, and taking decisions, rather than programming/testing/debugging.
+
+It consists of BASH and PYTHON scripts that can be launched locally (serial or with GNU parallel) or on a compute cluster via PBS.
+* **DockFlow** : Docking and Virtual Screening
+* **LigFlow** : Ligand extraction and preparation from DockFlow to ScoreFlow
+* **ScoreFlow** : Rescoring using PLANTS, Vina, or MM(PB,GB)SA
+* **ReportFlow** : Extensive data analysis and reporting tool  
 * and other usefull tools !
+
 
 
 # :package: Installation
