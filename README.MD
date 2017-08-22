@@ -1,5 +1,5 @@
 # ChemFlow
-<img src="https://user-images.githubusercontent.com/27850535/29497661-3bddc6d8-85ec-11e7-8c4e-e03d4729d1e1.png" alt="Logo" align="left"/>ChemFlow is a serie of computational chemistry workflows designed to automatize and simplify as much as possible the drug discovery pipeline and scoring function benchmarking. It consists of BASH and PYTHON scripts that can be launched locally, locally with GNU parallel, or on a compute node via PBS.
+<img src="https://user-images.githubusercontent.com/27850535/29564754-6b07a548-8743-11e7-9463-8626675b9481.png" alt="Logo" align="left" width=132/>ChemFlow is a serie of computational chemistry workflows designed to automatize and simplify as much as possible the drug discovery pipeline and scoring function benchmarking. It consists of BASH and PYTHON scripts that can be launched locally, locally with GNU parallel, or on a compute node via PBS.
 
 The aim of these workflow's is to let the user spend more time on the experimental part, i.e. running benchmarks or experiments, analysing the data, and taking decisions, rather than the programming/testing/debugging part.
 * DockFlow : virtual screening
