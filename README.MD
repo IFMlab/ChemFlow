@@ -10,12 +10,16 @@ It consists of BASH and PYTHON scripts that can be launched locally (serial or w
 * **ReportFlow** : Extensive data analysis and reporting tool  
 * and other usefull tools !
 
-
-
 # :package: Installation
 
-Clone or download the latest version of ChemFlow to it's destination, open a terminal and run the `install.sh` script located inside ChemFlow's directory. It will create a `CHEMFLOW_HOME` variable, and add the necessary executables to your path.
-
+Clone or download the latest version of ChemFlow to it's destination, open a terminal and run the `install.sh` script located inside ChemFlow's directory.
+```sh
+cd ~/software
+git clone https://github.com/IFMlab/ChemFlow.git
+cd ChemFlow
+./install.sh
+```
+It will create a `CHEMFLOW_HOME` variable, and add the necessary executables to your path.
 
 # :warning: Requirements
 
