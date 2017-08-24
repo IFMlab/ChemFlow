@@ -41,4 +41,4 @@ Paths to some of the softwares executables (PLANTS, SPORES, Vina, Amber) should 
 
 # :question: Usage
 
-Check our awesome [wiki](https://github.com/IFMlab/ChemFlow/wiki) for a complete documentation and tutorials.
+Check our awesome :rocket::star: [wiki](https://github.com/IFMlab/ChemFlow/wiki) :rainbow: for a complete documentation and tutorials.
