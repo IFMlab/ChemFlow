@@ -3,9 +3,8 @@
 
 The workflows allow the user to spend more time **thinking**, i.e. running benchmarks or experiments, analyzing the data, and taking decisions, rather than programming/testing/debugging their own scripts.
 
-It consists of BASH and PYTHON scripts that can be launched locally (serial or with GNU parallel) or on a compute cluster via PBS.
+It consists of *BASH* and *PYTHON* scripts that can be launched locally (serial or with GNU parallel) or on a compute cluster via PBS.
 * **DockFlow** : Docking and Virtual Screening
-* **LigFlow** : Ligand extraction and preparation from DockFlow to ScoreFlow
 * **ScoreFlow** : Rescoring using PLANTS, Vina, or MM(PB,GB)SA
 * **ReportFlow** : Extensive data analysis and reporting tool  
 * and other usefull tools !
@@ -27,13 +26,13 @@ We do not provide any of the licensed softwares used by ChemFlow. It is up to th
 
 [PLANTS](http://www.uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/plants.html) and [SPORES](http://www.mnf.uni-tuebingen.de/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/spores.html) are both available under a free academic license.
 ReportFlow makes heavy uses of [Python 3](https://www.python.org/) through Jupyter-Notebook. It requires the following Python packages to run seamleslly :
-* jupyter
-* matplotlib
-* numpy
-* pandas
-* scikit-learn
-* scipy
-* seaborn
+* **jupyter**
+* **matplotlib**
+* **numpy**
+* **pandas**
+* **scikit-learn**
+* **scipy**
+* **seaborn**
 
 A tutorial on how to install python packages with PIP is available [here](https://pip.pypa.io/en/stable/installing/)
 We strongly advise the user to install [jupyter_contrib_nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) to improve the functionality of the notebooks. 
