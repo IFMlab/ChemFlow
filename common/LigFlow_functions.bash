@@ -123,6 +123,7 @@ echo "#!/bin/bash
 #PBS -e  ${run_folder}/pbs_scripts/ligflow_${identifier}.e
 
 source $CHEMFLOW_HOME/common/LigFlow_functions.bash
+source $CHEMFLOW_HOME/common/ChemFlow_functions.bash
 " > ${run_folder}/pbs_scripts/ligflow_${identifier}.pbs
 }
 
@@ -202,7 +203,7 @@ elif [ "${run_mode}" = "mazinger" ]; then
   # Initialize variable that counts the number of poses rescored per pbs script
   pbs_count=0
   # Get the ceiling value of the number of jobs to put per pbs script
-  let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}
+  if [ ! -z "${max_submissions}" ]; then let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}; fi
   # create pbs_script folder
   mkdir -p ${run_folder}/pbs_scripts/
 fi
@@ -239,7 +240,7 @@ do
       # Progress in background
       (ProgressBar ${progress_count} ${length}) &
       # Run
-      run_preparation
+      run_preparation >> ${run_folder}/LigFlow.job 2>&1
       # update progress bar
       let progress_count+=1
       # Kill the progress bar when done
@@ -254,6 +255,7 @@ do
     elif [ "${run_mode}" = "mazinger" ]; then
       if [ -z "${max_submissions}" ]; then
         identifier=${pose}
+        write_pbs_header
         write_pbs
         jobid=$(qsub ${run_folder}/pbs_scripts/ligflow_${identifier}.pbs)
         echo "$jobid" >> ${run_folder}/jobs_list_${datetime}.mazinger
@@ -433,7 +435,7 @@ if [ "${amber_flag}" = "true" ]; then
     # CREATE PDB for each pose selected
     antechamber \
     -i ${path}/${dock_folder}/${pose}.mol2 -fi mol2 \
-    -o ${run_folder}/input_files/lig/${lig}/${pose}.pdb -fo pdb
+    -o ${run_folder}/input_files/lig/${lig}/${pose}.pdb -fo pdb -rn MOL
   fi
 
 fi
