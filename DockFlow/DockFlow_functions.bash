@@ -116,7 +116,7 @@ fi
 
 plants_cmd() {
 # Run
-${plants_exec} --mode screen config.plants > plants.job
+${plants_exec} --mode screen config.plants > plants.job 2>&1
 # Reorganize files
 reorganize_plants
 }
@@ -146,7 +146,7 @@ bindingsite_radius ${bs_radius}
 ${dock_water}
 
 # Other user-defined parameters
-${plants_user_parameters}
+${PLANTS_user_parameters}
 
 # cluster algorithm
 cluster_structures ${poses_number}

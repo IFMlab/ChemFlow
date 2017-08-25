@@ -6,6 +6,7 @@ usage() {
 echo -e "
 Usage : LigFlow
                  -h|--help        : Show this help message and quit
+                 -f|--file        : Read the docking poses to prepare directly from this file
                  -c|--cutoff      : Only the poses with a score below or equal to this cutoff will be extracted
                                     Default : 0
                 -np|--nbposes     : Restrict preparation to the X best poses per ligand
@@ -13,13 +14,14 @@ Usage : LigFlow
                  -d|--docking     : Path to the docking folder
                                     Default : $PWD/docking
                 -at|--atomtype    : gaff, gaff2, amber, bcc, sybyl
-                                    Default : None. Keep existing atom types
+                                    Default : gaff if different charges are specified, else None (keep current)
                 -ch|--charge      : Gasteiger (gas), AM1-BCC (bcc) or RESP (resp).
                                     Default : None. Keep existing charges
                  -p|--purge       : Delete all previous ligands configuration
-                 -a|--amber       : Prepare frcmod and lib files for amber
+                 -a|--amber       : Prepare frcmod and lib files for MM(PB,GB)SA
                -rst|--restart     : Restart from errors.csv
-                 -r|--run         : local, parallel (not for RESP charges), mazinger
+                 -r|--run         : local, parallel (not for RESP charges), mazinger.
+                                    Default : local
                 -cn|--corenumber  : Number of cores for parallel, mazinger, and/or RESP charges.
                                     Default : 8
                -mem|--memory      : Memory allocated for computing RESP charges. Default : 8GB
@@ -40,6 +42,10 @@ case $key in
     -h|--help)
     usage
     exit
+    ;;
+    -f|--file)
+    input_file="$2"
+    shift
     ;;
     -c|--cutoff)
     cutoff="$2"
@@ -100,12 +106,12 @@ shift # past argument or value
 done
 
 # Default values
-if [ -z ${path} ];             then path=$PWD/docking  ; fi
-if [ -z ${cutoff} ];           then cutoff=0           ; fi
-if [ -z ${nb_poses} ];         then nb_poses=1         ; fi
-if [ -z ${memory} ];           then memory="8GB"       ; fi
-if [ -z ${core_number} ];      then core_number=8      ; fi
-if [ -z ${run_mode} ];         then run_mode="local"   ; fi
+if [ -z "${path}" ];             then path=$PWD/docking  ; fi
+if [ -z "${cutoff}" ];           then cutoff=0           ; fi
+if [ -z "${nb_poses}" ];         then nb_poses=1         ; fi
+if [ -z "${memory}" ];           then memory="8GB"       ; fi
+if [ -z "${core_number}" ];      then core_number=8      ; fi
+if [ -z "${run_mode}" ];         then run_mode="local"   ; fi
 }
 
 write_pbs_header() { # Write the job
@@ -136,38 +142,43 @@ list_poses() {
 # Run a spinner in the background
 (while :; do for s in / - \\ \|; do printf "\rSelecting poses $s";sleep .2; done; done) &
 
-# List folders
-dock_list=$(cd ${path}; \ls -l | grep "^d" | awk '{print $9}')
+# Read ranking_sorted.csv and make restriction on score
+pose_list=$(awk -F, -v cutoff=${cutoff} '{if ($2 <= cutoff) {print $1}}' ${path}/ranking_sorted.csv | sort)
 
-# List of docking poses and folder
-for dock_folder in ${dock_list}
+# Make a ligand list out of pose_list
+lig_list=$(echo "$pose_list" | cut -d_ -f1 | sort -u)
+
+cd ${path}
+
+for lig in $lig_list
 do
-  # List ligands in folder
-  lig_list=$(cd ${path}/${dock_folder}; \ls *.mol2 | sed 's/.mol2//g' | cut -d_ -f1 | uniq)
-
-  for lig in ${lig_list}
+  # Restrict to only a certain ammount of poses per ligand
+  selected_list=$(echo "$pose_list" | \
+  awk -F, -v lig="${lig}" -v max=${nb_poses} 'BEGIN {count=0} {if ($1 ~ lig) {count+=1; if (count <= max) {print lig","$0}}}')
+  # Insert the folder name inside the "docking" directory
+  for line in $selected_list
   do
-    # Create input folder
-    mkdir -p ${run_folder}/input_files/lig/${lig}/
-
-    # awk -F, -v cutoff=${cutoff} -v lig="${lig}_" : set variables and delimiters for awk
-    # '{if (($2 <= cutoff) : if the score is below or equal to the cutoff
-    # && ($1 ~ lig)) : AND if the ligand name's matches lig
-    # -> print the name of the pose
-    # we can then restrict this selection to the number of poses desired by the user with sed "1,${nb_poses} (equivalent to head -${nb_poses})
-    # s/^/${dock_folder},${lig},/gp : insert the docking folder and name of the ligand at the begining of each matched row
-    # the result is appended to the pose list with a newline
-    selected=$(awk -F, -v cutoff=${cutoff} -v lig="${lig}_" \
-                          '{if (($2 <= cutoff) && ($1 ~ lig)) {print $1}}' ${path}/ranking_sorted.csv \
-                          | sed -n "1,${nb_poses}s/^/${dock_folder},${lig},/gp" )
-    poses_selected_list+=$(echo -e "\n${selected}")
-  done
+    pose=$(echo "$line" | cut -d"," -f2)
+    folder=$(find . -name ${pose}.mol2 | cut -d"/" -f2)
+    poses_selected_list+=$(echo -e "\n${folder},${line}")
 done
+done
+cd ${run_folder}
 
 # Kill spinner
 echo -e "\rFinished selecting docking poses..."
 { kill $! && wait $!; } 2>/dev/null
+}
 
+read_list() {
+# Reads a list of docking poses from a file provided by the user
+# The format of this file must be a CSV file :
+# field 1 : name of the folder containing the pose in the "docking" directory
+# field 2 : name of the ligand
+# field 3 : name of the docking pose
+# 1 line per docking pose
+# No extension in the filenames
+poses_selected_list=$(cat $1)
 }
 
 
@@ -183,8 +194,10 @@ length=$(echo "${poses_selected_list}" | wc -l)
 
 # Print a spinner on the screen while preparing the commands for parallel
 if [ "${run_mode}" = "parallel" ]; then
-  # Run a spinner in the background
-  (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
+  if [ ! -z "${atom_type}" ] || [ ! -z "${charge_method}" ]; then
+    # Run a spinner in the background
+    (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
+  fi
 elif [ "${run_mode}" = "mazinger" ]; then
   # Initialize variable that counts the number of poses rescored per pbs script
   pbs_count=0
@@ -212,6 +225,7 @@ do
     # Progress in background
     (ProgressBar ${progress_count} ${length}) &
     # Create a symbolic link to the selected pose
+    mkdir -p ${run_folder}/input_files/lig/${lig}
     ln -s ${path}/${dock_folder}/${pose}.mol2 ${run_folder}/input_files/lig/${lig}/${pose}.mol2
     # Count number of poses prepared
     let progress_count+=1
@@ -232,7 +246,7 @@ do
       { kill $! && wait $!; } 2>/dev/null
   
     elif [ "${run_mode}" = "parallel" ] ; then
-      echo -n "source $CHEMFLOW_HOME/common/LigFlow_functions.bash; " >> ${run_folder}/LigFlow_${datetime}.parallel
+      echo -n "source $CHEMFLOW_HOME/common/LigFlow_functions.bash; source $CHEMFLOW_HOME/common/ChemFlow_functions.bash; " >> ${run_folder}/LigFlow_${datetime}.parallel
       CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/LigFlow_${datetime}.parallel
       echo "; run_preparation; \
       echo -n 0 >> ${run_folder}/.progress.dat" >> ${run_folder}/LigFlow_${datetime}.parallel
@@ -262,17 +276,19 @@ done
 
 # Kill the spinner when the preparation of parallel is done, and run it !
 if [ "${run_mode}" = "parallel" ]; then
-  echo -e "\rFinished preparing parallel... Running"
-  { kill $! && wait $!; } 2>/dev/null
-  # Run the progress bar
-  touch ${run_folder}/.progress.dat
-  (while :; do progress_count=$(cat ${run_folder}/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
-  # Run parallel
-  ${parallel} -j ${core_number} < ${run_folder}/LigFlow_${datetime}.parallel \
-  > ${run_folder}/LigFlow_${datetime}.parallel.job 2>&1
-  # Kill the progress bar when parallel is done
-  { printf '\n'; kill $! && wait $!; } 2>/dev/null
-  rm -f ${run_folder}/.progress.dat
+  if [ ! -z "${atom_type}" ] || [ ! -z "${charge_method}" ]; then
+    echo -e "\rFinished preparing parallel... Running"
+    { kill $! && wait $!; } 2>/dev/null
+    # Run the progress bar
+    touch ${run_folder}/.progress.dat
+    (while :; do progress_count=$(cat ${run_folder}/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
+    # Run parallel
+    ${parallel} -j ${core_number} < ${run_folder}/LigFlow_${datetime}.parallel \
+    > ${run_folder}/LigFlow_${datetime}.parallel.job 2>&1
+    # Kill the progress bar when parallel is done
+    { printf '\n'; kill $! && wait $!; } 2>/dev/null
+    rm -f ${run_folder}/.progress.dat
+  fi
 
 elif [ "${run_mode}" = "local" ]; then
   echo ""
@@ -290,44 +306,58 @@ run_preparation() {
 # Run ligand parametrization for a given force field and charge method
 source ${amber}
 
+# Create lig folder
+mkdir -p ${run_folder}/input_files/lig/${lig}
+
 # prepare each pose into a separate subfolder, to avoid overwriting intermediate files
 mkdir -p ${run_folder}/input_files/${pose}
 cd ${run_folder}/input_files/${pose}
 
-if [ ! -f ${run_folder}/input_files/lig/${lig}/${pose}.mol2 ]; then
+# Preparation of the topology file, common for each pose of the same ligand
+# Check if it doesn't exist, or if it's not running
+if [ ! -f ${run_folder}/input_files/lig/${lig}/${lig}.mol2 ] || [ ! -f ligand.mol2 ]; then
+
+  # We need to prepare the topology only once per ligand with antechamber.
+  # For this, we will use the ligand that was used for the docking experiment
+  # Since the ligand can be in a mol2 file containing multiple ligands, we will used the extract_mol_from_mol2 function
+  # First, get the location of the ligand_folder from the DockFlow.config
+  eval $(\grep "lig_folder=" ${path}/DockFlow.config)
+  # Extract
+  extract_mol_from_mol2 "${lig}" ${lig_folder}/${dock_folder}.mol2 > ligand.mol2
+
   # Get the number of atoms in compound
   # sed -n '/@<TRIPOS>MOLECULE/,+2 : return lines from @<TRIPOS>MOLECULE to 2 lines after
   # {} : run the following command for this selection
   # 3s///p : search and replace, on line 3, for something, and print 
   # s/\([0-9]\+\).*/\1/p : search for a number followed by other characters, return only the number
-  nb_atoms=$(sed -n '/@<TRIPOS>MOLECULE/,+2{3s/\([0-9]\+\).*/\1/p}' ${path}/${dock_folder}/${pose}.mol2)
+  nb_atoms=$(sed -n '/@<TRIPOS>MOLECULE/,+2{3s/\([0-9]\+\).*/\1/p}' ligand.mol2)
   
   if [ ${nb_atoms} -le 100 ]; then
     if [ "${charge_method}" = "resp" ]; then
       # MOL2 to Gaussian (GAFF atom types)
       antechamber \
-        -i ${path}/${dock_folder}/${pose}.mol2               -fi mol2 \
-        -o ${run_folder}/input_files/lig/${lig}/${pose}.gau  -fo gcrt \
-        -gv 1 -ge lig.gesp -gm "%mem=${memory}" -gn "%nproc=${core_number}" \
+        -i ligand.mol2 -fi mol2 \
+        -o ${run_folder}/input_files/lig/${lig}/${lig}.gau  -fo gcrt \
+        -gv 1 -ge ${run_folder}/input_files/lig/${lig}/${lig}.gesp -gm "%mem=${memory}" -gn "%nproc=${core_number}" \
         -s 2 -eq 2 -rn MOL -pf y \
-        -at ${atom_type} > ${run_folder}/input_files/lig/${lig}/${pose}.antechamber_gauss.job
+        -at ${atom_type} > ${run_folder}/input_files/lig/${lig}/${lig}.antechamber_gauss.job
       
       # Run Gaussian to optimize structure and generate electrostatic potential grid
-      g09 ${run_folder}/input_files/lig/${lig}/${pose}.gau > ${run_folder}/input_files/lig/${lig}/${pose}.gaussian.job
+      g09 ${run_folder}/input_files/lig/${lig}/${lig}.gau > ${run_folder}/input_files/lig/${lig}/${lig}.gaussian.job
       
       # Read Gaussian output and write new optimized ligand with RESP charges
       antechamber \
         -i lig.log -fi gout \
-        -o ${run_folder}/input_files/lig/${lig}/${pose}.mol2 -fo mol2 \
+        -o ${run_folder}/input_files/lig/${lig}/${lig}.mol2 -fo mol2 \
         -c ${charge_method} -s 2 -rn MOL -pf y \
-        -at ${atom_type} > ${run_folder}/input_files/lig/${lig}/${pose}.antechamber.job
+        -at ${atom_type} > ${run_folder}/input_files/lig/${lig}/${lig}.antechamber.job
 
     else
       antechamber \
-        -i ${path}/${dock_folder}/${pose}.mol2               -fi mol2 \
-        -o ${run_folder}/input_files/lig/${lig}/${pose}.mol2 -fo mol2 \
+        -i ligand.mol2 -fi mol2 \
+        -o ${run_folder}/input_files/lig/${lig}/${lig}.mol2 -fo mol2 \
         -s 2 -rn MOL -pf y \
-        -at ${atom_type} -c ${charge_method} > ${run_folder}/input_files/lig/${lig}/${pose}.antechamber.job
+        -at ${atom_type} -c ${charge_method} > ${run_folder}/input_files/lig/${lig}/${lig}.antechamber.job
     fi
 
   else
@@ -337,59 +367,54 @@ if [ ! -f ${run_folder}/input_files/lig/${lig}/${pose}.mol2 ]; then
     if [ "${charge_method}" = "resp" ]; then
       # MOL2 to Gaussian (GAFF atom types)
       antechamber \
-        -i ${path}/${dock_folder}/${pose}.mol2               -fi mol2 \
-        -o ${run_folder}/input_files/lig/${lig}/${pose}.gau  -fo gcrt \
-        -gv 1 -ge lig.gesp -gm "%mem=${memory}" -gn "%nproc=${core_number}" \
+        -i ligand.mol2 -fi mol2 \
+        -o ${run_folder}/input_files/lig/${lig}/${lig}.gau  -fo gcrt \
+        -gv 1 -ge ${run_folder}/input_files/lig/${lig}/${lig}.gesp -gm "%mem=${memory}" -gn "%nproc=${core_number}" \
         -s 2 -eq 2 -rn MOL -pf y \
-        -at ${atom_type} > ${run_folder}/input_files/lig/${lig}/${pose}.antechamber_gauss.job
+        -at ${atom_type} > ${run_folder}/input_files/lig/${lig}/${lig}.antechamber_gauss.job
       
       # Run Gaussian to optimize structure and generate electrostatic potential grid
-      g09 ${run_folder}/input_files/lig/${lig}/${pose}.gau > ${run_folder}/input_files/lig/${lig}/${pose}.gaussian.job
+      g09 ${run_folder}/input_files/lig/${lig}/${lig}.gau > ${run_folder}/input_files/lig/${lig}/${lig}.gaussian.job
       
       # Read Gaussian output and write new optimized ligand with RESP charges
       antechamber \
         -i lig.log -fi gout \
-        -o ${run_folder}/input_files/lig/${lig}/${pose}.mol2 -fo mol2 \
+        -o ${run_folder}/input_files/lig/${lig}/${lig}.mol2 -fo mol2 \
         -c ${charge_method} -s 2 -rn MOL -pf y \
-        -at ${atom_type} > ${run_folder}/input_files/lig/${lig}/${pose}.antechamber.job
+        -at ${atom_type} > ${run_folder}/input_files/lig/${lig}/${lig}.antechamber.job
     else
       antechamber \
-        -i ${path}/${dock_folder}/${pose}.mol2               -fi mol2 \
-        -o ${run_folder}/input_files/lig/${lig}/${pose}.mol2 -fo mol2 \
+        -i ligand.mol2 -fi mol2 \
+        -o ${run_folder}/input_files/lig/${lig}/${lig}.mol2 -fo mol2 \
         -s 2 -rn MOL -pf y -pl 30 \
-        -at ${atom_type} -c ${charge_method} > ${run_folder}/input_files/lig/${lig}/${pose}.antechamber.job
+        -at ${atom_type} -c ${charge_method} > ${run_folder}/input_files/lig/${lig}/${lig}.antechamber.job
     fi
   fi
-  if [ -f ${run_folder}/input_files/lig/${lig}/${pose}.mol2 ]; then
-    rm -f ${run_folder}/input_files/lig/${lig}/${pose}.*.job
+  if [ -f ${run_folder}/input_files/lig/${lig}/${lig}.mol2 ]; then
+    rm -f ${run_folder}/input_files/lig/${lig}/${lig}.*.job
     rm -f ${run_folder}/sqm.*
   else
-    echo "${dock_folder},${pose},antechamber" >> ${run_folder}/errors.csv
+    echo "${dock_folder},${pose},antechamber for ${lig}" >> ${run_folder}/errors.csv
   fi
 fi
 
 if [ "${amber_flag}" = "true" ]; then
-  if [ ! -f ${run_folder}/input_files/lig/${lig}/${pose}.frcmod ]; then
-    if [ -f ${run_folder}/input_files/lig/${lig}/${pose}.mol2 ]; then
-      # Remove useless output files
-      rm -f ${run_folder}/input_files/lig/${lig}/${pose}.antechamber_gauss.job \
-            ${run_folder}/input_files/lig/${lig}/${pose}.gaussian.job \
-            ${run_folder}/input_files/lig/${lig}/${pose}.antechamber.job \
-            lig.log lig.gesp
-  
+  if [ ! -f ${run_folder}/input_files/lig/${lig}/${lig}.frcmod ]; then
+    if [ -f ${run_folder}/input_files/lig/${lig}/${lig}.mol2 ]; then 
       # Create frcmod
-      parmchk2 -i ${run_folder}/input_files/lig/${lig}/${pose}.mol2 -f mol2 \
-               -o ${run_folder}/input_files/lig/${lig}/${pose}.frcmod
+      parmchk2 -i ${run_folder}/input_files/lig/${lig}/${lig}.mol2 -f mol2 \
+               -o ${run_folder}/input_files/lig/${lig}/${lig}.frcmod
     fi
   fi
   
-  if [ ! -f ${run_folder}/input_files/lig/${lig}/${pose}.lib ]; then
-    if [ -f ${run_folder}/input_files/lig/${lig}/${pose}.frcmod ]; then
+  if [ ! -f ${run_folder}/input_files/lig/${lig}/${lig}.lib ]; then
+    if [ -f ${run_folder}/input_files/lig/${lig}/${lig}.frcmod ]; then
       # Create lib
       echo "source leaprc.gaff
-      loadAmberParams ${run_folder}/input_files/lig/${lig}/${pose}.frcmod
-      MOL = loadMol2  ${run_folder}/input_files/lig/${lig}/${pose}.mol2
-      saveOff MOL     ${run_folder}/input_files/lig/${lig}/${pose}.lib
+      loadAmberParams   ${run_folder}/input_files/lig/${lig}/${lig}.frcmod
+      MOL = loadMol2    ${run_folder}/input_files/lig/${lig}/${lig}.mol2
+      saveamberparm MOL ${run_folder}/input_files/lig/${lig}/${lig}.prmtop ${run_folder}/input_files/lig/${lig}/${lig}.rst7
+      saveOff MOL       ${run_folder}/input_files/lig/${lig}/${lig}.lib
       quit
       " > tleap_lig.in
       tleap -f tleap_lig.in > tleap.job
@@ -397,12 +422,20 @@ if [ "${amber_flag}" = "true" ]; then
       echo "${dock_folder},${pose},parmchk2" >> ${run_folder}/errors.csv
     fi
     
-    if [ -f  ${run_folder}/input_files/lig/${lig}/${pose}.lib ]; then
+    if [ -f  ${run_folder}/input_files/lig/${lig}/${lig}.lib ]; then
       rm -f tleap_lig.in leap.log tleap.job
     else
       echo "${dock_folder},${pose},tleap" >> ${run_folder}/errors.csv
     fi
   fi
+
+  if [ ! -f ${run_folder}/input_files/lig/${lig}/${pose}.pdb ]; then
+    # CREATE PDB for each pose selected
+    antechamber \
+    -i ${path}/${dock_folder}/${pose}.mol2 -fi mol2 \
+    -o ${run_folder}/input_files/lig/${lig}/${pose}.pdb -fo pdb
+  fi
+
 fi
 
 # remove temporary folder for preparation

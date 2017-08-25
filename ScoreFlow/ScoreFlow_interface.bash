@@ -51,6 +51,7 @@ For calculations on 1 frame :
                                         If custom, use NAB atom expression
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 For calculations on implicit solvent MD :
+                  --gpu               : run pmemd on GPU
                   -t/--time           : Length of the production, in ps
                   -im/--model         : Implicit GB model used for solvation (1,5,8)
 _________________________________________________________________________________
@@ -170,6 +171,9 @@ case $key in
     run_mode="$2"
     shift # past argument
     ;;
+    --gpu)
+    gpu="true"
+    ;;
     -cn|--corenumber)
     core_number="$2"
     shift # past argument
@@ -235,6 +239,8 @@ lig_mask=\"$lig_mask\"
       # If custom, specify residues or atoms to be tethered in their motion using NAB atom expression (see amber manual).
       min_mask=\"$min_mask\"
 # If the quick MD simulation approach was chosen :
+  # Run PMEMD on GPU
+  gpu=\"$gpu\"
   # Length of the production, in ps
   md_time=\"$md_time\"
   # GB model used for implicit solvation : 1,5,8
@@ -252,7 +258,7 @@ water_xyzr=\"$water_xyzr\"
 
 # For chemplp, plp, and plp95 :
 # User defined parameters, for PLANTS
-plants_user_parameters=\"$plants_user_parameters\"
+PLANTS_user_parameters=\"$PLANTS_user_parameters\"
 
 # Run on this machine (default), in parallel, or on mazinger (only available for MMPBSA)
 # local, parallel, mazinger
@@ -296,6 +302,10 @@ if [ -z "${scoring_function}" ]; then error "the scoring function"; fi
 # Depending on the mode chosen, some other parameters might be missing too
 # PLANTS
 if [ "${rescore_method}" = "plants" ]; then
+
+  # search for mol2 files in list_docking
+  pose_extension="mol2"
+
   if [ -z "${rec}" ] && [ ! "$mode" = "PDB" ]; then 
     error "the location of the receptor MOL2 file";
   else
@@ -307,6 +317,10 @@ if [ "${rescore_method}" = "plants" ]; then
 
 # VINA
 elif [ "${rescore_method}" = "vina" ]; then
+
+  # search for mol2 files in list_docking
+  pose_extension="mol2"
+
   if [ -z "${rec}" ] && [ ! "$mode" = "PDB" ]; then 
     error "the location of the receptor MOL2 or PDB file";
   else 
@@ -317,8 +331,12 @@ elif [ "${rescore_method}" = "vina" ]; then
   if [ -z "${vina_exec}" ] && [ ! "${run_mode}" = "mazinger" ] ; then error "the location of VINA's executable"; fi
   if [ -z "${adt_u24}" ]; then error "the location of AutoDockTools folder"; fi
 
-# MMGBSA
+# MMPBSA
 elif [ "${rescore_method}" = "mmpbsa" ]; then
+
+  # search for pdb files in list_docking
+  pose_extension="pdb"
+
   if [ -z "${rec}" ] && [ ! "$mode" = "PDB" ]; then 
     error "the location of the receptor PDB file";
   else 
@@ -417,6 +435,16 @@ elif [ "${run_mode}" = "local" ]; then true
 
 else
   echo -e "${RED}ERROR${NC} : ${RED}Running mode${NC} (${run_mode}) not recognized"
+fi
+
+# amber_MD : sander or pmemd
+if [ -z "${amber_md}" ]; then amber_md=sander; fi
+if [ "${amber_md}" = "pmemd" ]; then
+  if [ "${gpu}" = "true" ] ; then 
+    amber_md=pmemd.cuda
+  else
+    amber_md="mpirun -n 16 pmemd.MPI"
+  fi
 fi
 
 ## Check for an already existing rescoring with the same scoring function, and make backup if necessary

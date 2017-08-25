@@ -51,7 +51,7 @@ for com in ${com_list} ; do
     babel -imol2 ${rec}.mol2 -opdb babel_${rec}.pdb
     pdb4amber -i babel_${rec}.pdb -o ${rec}.pdb
     if [ ! -z "$(cat *_nonprot.pdb)" ]; then
-       illegal_residues=$(awk '{print $4}' *_nonprot.pdb | uniq | sed ':a;N;$!ba;s/\n/ /g')
+       illegal_residues=$(awk '{print $4}' *_nonprot.pdb | sort -u | sed ':a;N;$!ba;s/\n/ /g')
       echo -e "${RED}ERROR${NC} : Non-standard residue detected in your complex pdb file : ${illegal_residues}"
       echo "Exiting"
       exit 1
@@ -105,7 +105,7 @@ dock_list=$(cd ${folder} ; \ls -l | grep "^d" | awk '{print $9}')
 # list all docking poses in the sub-folder
 pose_list=""
 for dock_folder in ${dock_list}; do
-    poses_list=$(cd ${folder}/${dock_folder}/; \ls *conf*.mol2 2>/dev/null | sed s/.mol2//g )
+    poses_list=$(cd ${folder}/${dock_folder}/; \ls *conf*.${pose_extension} 2>/dev/null | sed s/.${pose_extension}//g )
   
   if [ ! -z "$poses_list" ]; then
     for pose in ${poses_list}
@@ -146,7 +146,7 @@ echo "Rescoring configuration finished                                          
 
 if [ -z "${pose_list}" ]
 then
-  echo -e "${RED}ERROR${NC} : Could not find mol2 docking poses in ${folder}'s sub-folders"    
+  echo -e "${RED}ERROR${NC} : Could not find ${pose_extension} docking poses in ${folder} sub-folders"    
   exit 1
 fi
 }
@@ -180,7 +180,7 @@ write_multi_mol2 0
 ${dock_water}
 
 # Other user-defined parameters
-${plants_user_parameters}
+${PLANTS_user_parameters}
 
 # write
 write_ranking_links 0
@@ -345,8 +345,11 @@ if [ -d results ]; then
   # the command tail -n +2 skip the first line (containing the header), and starts printing at the 2nd line of the file
   # PLANTS appends _entry_XXX_conf_XX to the rescored poses in the csv tables, so we use sed 's/\(^.*_entry.*_conf.*\)_entry.*_conf_[[:digit:]]*\(,.*$\)/\1\2/g'
   # to remove this string from the names
-  tail -n +2 features.csv | sed 's/\(^.*_entry.*_conf.*\)_entry.*_conf_[[:digit:]]*\(,.*$\)/\1\2/g'>> ${run_folder}/rescoring/${scoring_function}/features.csv
-  tail -n +2 ranking.csv  | sed 's/\(^.*_entry.*_conf.*\)_entry.*_conf_[[:digit:]]*\(,.*$\)/\1\2/g'>> ${run_folder}/rescoring/${scoring_function}/ranking.csv
+  mkdir -p ${run_folder}/rescoring/${scoring_function}/{ranking,features}
+  tail -n +2 features.csv | sed 's/\(^.*_entry.*_conf.*\)_entry.*_conf_[[:digit:]]*\(,.*$\)/\1\2/g' \
+  >> ${run_folder}/rescoring/${scoring_function}/features/${pose_name}.csv
+  tail -n +2 ranking.csv  | sed 's/\(^.*_entry.*_conf.*\)_entry.*_conf_[[:digit:]]*\(,.*$\)/\1\2/g' \
+  >> ${run_folder}/rescoring/${scoring_function}/ranking/${pose_name}.csv
   cd ${run_folder}/rescoring/${scoring_function}/
   rm -rf ${common_folder}
 else
@@ -551,7 +554,8 @@ if [ -f output.log ]; then
   done
   echo "" >> energy.csv
   # Concatenate to ranking
-  cat energy.csv >> ${run_folder}/rescoring/${scoring_function}/ranking.csv
+  mkdir -p ${run_folder}/rescoring/${scoring_function}/ranking
+  cat energy.csv >> ${run_folder}/rescoring/${scoring_function}/ranking/${pose_name}.csv
   # remove the old files
   cd ${run_folder}/rescoring/${scoring_function}/
   rm -rf ${common_folder}
@@ -564,6 +568,7 @@ fi
 #################################################
 # MMPBSA
 #################################################
+
 tleap_receptor() {
 # Run tleap for the receptor
 
@@ -586,10 +591,9 @@ source leaprc.gaff
 
 set default pbradii ${radii}
 
-loadamberparams ${lig}.frcmod
-loadOff ${lig}.lib
-saveamberparm MOL ${run_folder}/input_files/lig/${lig_name}/${pose_name}.prmtop ${run_folder}/input_files/lig/${lig_name}/${pose_name}.rst7
-savepdb MOL ${run_folder}/input_files/lig/${lig_name}/${pose_name}.pdb
+loadamberparams ${run_folder}/input_files/lig/${lig_name}/${lig_name}.frcmod
+loadOff         ${run_folder}/input_files/lig/${lig_name}/${lig_name}.lib
+MOL = loadPDB   ${run_folder}/input_files/lig/${lig_name}/${pose_name}.pdb
 
 rec = loadpdb ${rec}_amber.pdb
 saveamberparm rec ${rec}.prmtop ${rec}.rst7
@@ -637,6 +641,15 @@ if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop ]; then
   fi
   # Run tleap
   tleap -f tleap.cmd &>tleap.job
+fi
+
+# Exit status
+# prmtop is created even if tleap fails, so check if it's empty instead of checking for the presence of the file
+if [ ! -z "$(cat ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop)" ]; then 
+  continue_running="true"
+else
+  continue_running="false"
+  echo "${pose_name},${dock_folder},Topology creation with tleap" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
 fi
 }
 
@@ -722,7 +735,7 @@ write_mmpbsa_pbs_header() {
 # Write PBS script for MMPBSA
 echo "#!/bin/bash
 #PBS -N MMPBSA_${identifier}
-#PBS -l nodes=1:ppn=1,walltime=24:00:00.00
+#PBS -l nodes=1:ppn=16,walltime=24:00:00.00
 #PBS -o ${run_folder}/pbs_scripts/mmpbsa_${identifier}.o
 #PBS -e ${run_folder}/pbs_scripts/mmpbsa_${identifier}.e
 
@@ -739,96 +752,126 @@ cd ${run_folder}/rescoring/${scoring_function}/${common_folder}
 ">> ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs
 print_vars >> ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs
 echo "
-# Make trajectory and topology of the complex from the pdb file
-run_tleap
-# Create files
-mmpbsa_${pb_method}_cmd
-# Run calculation
-mmpbsa_calculation
-# Reorganize files
-reorganize_mmpbsa
+# Run
+mmpbsa_commands
 " >> ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs
 }
 
 mmpbsa_1F_cmd() {
 # Preparation of files prior to 1F MMPBSA
+if [ "$continue_running" = "true" ]; then
+  # Run a quick minimization if asked by user
+  if [ ! -z "${min_steps}" ]; then
+    # If the complex_before_min.rst7 file doesn't exist, run the minimization
+    if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7 ]; then
+      if [ "${min_type}" = "backbone" ]; then
+        minab_mask=":${min_mask}:CA|:${min_mask}:N|:${min_mask}:C|:${min_mask}:O"
+      else
+        minab_mask="${min_mask}"
+      fi
 
-# Run a quick minimization if asked by user
-if [ ! -z "${min_steps}" ]; then
-  # If the complex_before_min.rst7 file doesn't exist, run the minimization
-  if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7 ]; then
-    if [ "${min_type}" = "backbone" ]; then
-      minab_mask=":${min_mask}:CA|:${min_mask}:N|:${min_mask}:C|:${min_mask}:O"
-    else
-      minab_mask="${min_mask}"
+      # Minimize
+      minab ${run_folder}/input_files/com/${lig_name}/${pose_name}.pdb \
+            ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+            ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.pdb \
+            ${implicit_model} ${min_steps} \'${minab_mask}\' ${min_energy} &> minab.job
+      # Write trajectory from minimized pdb
+      cpptraj -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+              -y ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.pdb \
+              -x ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7 &> cpptraj.job
     fi
-    # Minimize
-    minab ${run_folder}/input_files/com/${lig_name}/${pose_name}.pdb \
-          ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
-          ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.pdb \
-          ${implicit_model} ${min_steps} \'${minab_mask}\' ${min_energy} &> minab.job
-    # Write trajectory from minimized pdb
-    cpptraj -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
-            -y ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.pdb \
-            -x ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7 &> cpptraj.job
+    mmpbsa_traj="${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7"
+
+  else
+    mmpbsa_traj="${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7"
   fi
-  mmpbsa_traj="${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7"
+fi
+
+# error check
+if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_1F_min.rst7 ]; then
+  continue_running="false"
+  echo "${pose_name},${dock_folder},1F minimization" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
 else
-  mmpbsa_traj="${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7"
+  continue_running='true'
 fi
 }
 
 mmpbsa_MD_cmd() {
 # Preparation of files for a quick implicit solvent MD prior to MMPBSA
 
-# Run Minimization
-if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 ]; then
-pmemd.cuda  -O -i ${run_folder}/rescoring/${scoring_function}/min.in \
-            -c ${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7 \
-            -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
-            -o min.mdout -e min.mden -v min.mdvel \
-            -r ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 \
-            -x ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.mdcrd \
-            -ref ${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7 &> MD_min.job
-  if [ ! -f min.mdout ]; then
-    echo "${pose_name},${dock_folder},implicit solvent MD minimization" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
+if [ "$continue_running" = "true" ]; then
+
+  # Run Minimization
+  if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 ]; then
+  ${amber_md} -O -i ${run_folder}/rescoring/${scoring_function}/min.in \
+              -c ${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7 \
+              -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+              -o min.mdout -e min.mden -v min.mdvel \
+              -r ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 \
+              -x ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.mdcrd \
+              -ref ${run_folder}/input_files/com/${lig_name}/${pose_name}.rst7 &> MD_min.job
+    if [ ! -f min.mdout ]; then
+      continue_running="false"
+      echo "${pose_name},${dock_folder},implicit solvent MD minimization" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
+    else
+      continue_running='true'
+    fi
   fi
 fi
-# Run MD
-if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.rst7 ]; then
-pmemd.cuda  -O -i ${run_folder}/rescoring/${scoring_function}/prod.in \
-            -c ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 \
-            -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
-            -o prod.mdout -e prod.mden -v prod.mdvel \
-            -r ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.rst7 \
-            -x ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.mdcrd \
-            -ref ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 &> MD_prod.job
-  if [ ! -f prod.mdout ]; then
-    # if no output file was found
-    echo "${pose_name},${dock_folder},implicit solvent MD production" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
+if [ "$continue_running" = "true" ]; then
+  # Run MD
+  if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.mdcrd ]; then
+  ${amber_md} -O -i ${run_folder}/rescoring/${scoring_function}/prod.in \
+              -c ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 \
+              -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+              -o prod.mdout -e prod.mden -v prod.mdvel \
+              -r ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.rst7 \
+              -x ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.mdcrd \
+              -ref ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_min.rst7 &> MD_prod.job
+    if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.mdcrd ]; then
+      # if no output file was found
+      continue_running="false"
+      echo "${pose_name},${dock_folder},implicit solvent MD production" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
+    else
+      continue_running='true'
+    fi
   fi
+  
+  mmpbsa_traj="${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.mdcrd"
 fi
 
-mmpbsa_traj="${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.mdcrd"
+if [ ! -f ${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.mdcrd ]; then
+  # if no output file was found
+  continue_running="false"
+else
+  continue_running='true'
+fi
 }
 
 mmpbsa_calculation() {
-# Run the calculation
-if [ "${scoring_function}" = "PB3" ] ; then
-  ante-MMPBSA.py  -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
-                  -c com.top -r rec.top -l lig.top -s \'${strip_mask}\' -n ${lig_mask} &> ante_mmpbsa.job
-else
-  ante-MMPBSA.py  -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
-                  -c com.top -r rec.top -l lig.top -s \'${strip_mask}\' -n ${lig_mask} --radii=${radii} &> ante_mmpbsa.job
-fi
-MMPBSA.py -O -i ${run_folder}/rescoring/${scoring_function}/${scoring_function}.in \
-          -o MM${scoring_function::2}SA.dat \
-          -eo MM${scoring_function::2}SA.csv \
-          -cp com.top -rp rec.top -lp lig.top \
-          -y ${mmpbsa_traj} &> mmpbsa.job
-# Check if output was created
-if [ ! -f MM${scoring_function::2}SA.csv ]; then
-  echo "${pose_name},${dock_folder},mmpbsa results" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
+# Run MMPBSA calculation
+
+if [ "$continue_running" = "true" ]; then
+  if [ -f "${mmpbsa_traj}" ]; then
+    # Run the calculation
+    if [ "${scoring_function}" = "PB3" ] ; then
+      ante-MMPBSA.py  -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+                      -c com.top -r rec.top -l lig.top -s \'${strip_mask}\' -n ${lig_mask} &> ante_mmpbsa.job
+    else
+      ante-MMPBSA.py  -p ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop \
+                      -c com.top -r rec.top -l lig.top -s \'${strip_mask}\' -n ${lig_mask} --radii=${radii} &> ante_mmpbsa.job
+    fi
+    MMPBSA.py -O -i ${run_folder}/rescoring/${scoring_function}/${scoring_function}.in \
+              -o MM${scoring_function::2}SA.dat \
+              -eo MM${scoring_function::2}SA.csv \
+              -cp com.top -rp rec.top -lp lig.top \
+              -y ${mmpbsa_traj} &> mmpbsa.job
+  fi
+  
+  # Check if output was created
+  if [ ! -f MM${scoring_function::2}SA.csv ]; then
+    echo "${pose_name},${dock_folder},mmpbsa results,${continue_running},${mmpbsa_traj}" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
+  fi
 fi
 }
 
@@ -846,7 +889,8 @@ if [ "${pb_method}" = "1F" ]; then
     # Match lines begining with "ff:" : /^ff:/
     # Replace groups of spaces with a comma : s/\s\+/,/g
     # Replace "ff:" with the name of the ligand and print : s/^ff:/${pose_name}/gp
-    sed -n "/^ff:/s/\s\+/,/g;s/^ff:/${pose_name}/gp" minab.job >> ${run_folder}/rescoring/${scoring_function}/1F_min.csv
+    mkdir -p ${run_folder}/rescoring/${scoring_function}/1F_min
+    sed -n "/^ff:/s/\s\+/,/g;s/^ff:/${pose_name}/gp" minab.job >> ${run_folder}/rescoring/${scoring_function}/1F_min/${pose_name}.csv
   fi
 
 # if the PB_method was MD, output min and prod results
@@ -884,7 +928,8 @@ elif [ "${pb_method}" = "MD" ]; then
     # Concatenate both gathered values on the same rows
     lines=$(paste -d"," <(echo "${values1}") <(echo "${values2}"))
     # Make the final csv table by appending the docking pose name
-    echo "${lines}" | sed -n "s/^/${pose_name}/gp" >> ${run_folder}/rescoring/${scoring_function}/MD_min.csv
+    mkdir -p ${run_folder}/rescoring/${scoring_function}/MD_min
+    echo "${lines}" | sed -n "s/^/${pose_name}/gp" >> ${run_folder}/rescoring/${scoring_function}/MD_min/${pose_name}.csv
   fi
 
   if [ -f prod.mdout ]; then
@@ -912,7 +957,8 @@ elif [ "${pb_method}" = "MD" ]; then
     values=$( echo "${lines}" | sed -n '/NSTEP/,/RESTRAINT/s/^.*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\)$/\1,\2,\3/gp'  \
               | sed -n '$!N;s/\n/,/;$!N;s/\n/,/;$!N;s/\n/,/;$!N;s/\n/,/p')
     # # Make the final csv table by appending the docking pose name
-    echo "${values}" | sed -n "s/^/${pose_name},/gp" >> ${run_folder}/rescoring/${scoring_function}/MD_prod.csv
+    mkdir -p ${run_folder}/rescoring/${scoring_function}/MD_prod
+    echo "${values}" | sed -n "s/^/${pose_name},/gp" >> ${run_folder}/rescoring/${scoring_function}/MD_prod/${pose_name}.csv
   fi
 fi
 
@@ -951,7 +997,8 @@ if [ -f MM${scoring_function::2}SA.csv ]; then
     | sed -n "s/^/${pose_name},${structure},/gp" >> energy.csv
   done
 # Concatenate to ranking
-cat energy.csv >> ${run_folder}/rescoring/${scoring_function}/ranking.csv
+mkdir -p ${run_folder}/rescoring/${scoring_function}/ranking
+cat energy.csv >> ${run_folder}/rescoring/${scoring_function}/ranking/${pose_name}.csv
 
 # Delete all output files related to the docking pose, since we managed to gather the results
 cd ${run_folder}/rescoring/${scoring_function}/
@@ -960,6 +1007,21 @@ rm -rf ${common_folder}
 fi
 }
 
+mmpbsa_commands() {
+# List of commands to run for mmpbsa, with error check
+
+# Make trajectory and topology of the complex from the pdb file
+run_tleap
+
+# Create files
+mmpbsa_${pb_method}_cmd
+
+# Run calculation
+mmpbsa_calculation
+
+# Reorganize files
+reorganize_mmpbsa
+}
 
 run_mmpbsa() {
 # Run MMPBSA or MMGBSA
@@ -1044,14 +1106,8 @@ do
     # Progress
     (ProgressBar ${progress_count} ${length}) &
 
-    # Make trajectory and topology of the complex from the pdb file
-    run_tleap
-    # Create files
-    mmpbsa_${pb_method}_cmd
-    # Run calculation
-    mmpbsa_calculation
-    # Reorganize files
-    reorganize_mmpbsa
+    # Run
+    mmpbsa_commands
 
     # update progress bar
     let progress_count+=1
@@ -1059,16 +1115,19 @@ do
     { kill $! && wait $!; } 2>/dev/null
 
   elif [ "${run_mode}" = "parallel" ] ; then
+    # Go to the folder and get the functions
     echo -n "cd ${run_folder}/rescoring/${scoring_function}/${common_folder}; \
     source ${CHEMFLOW_HOME}/ScoreFlow/ScoreFlow_functions.bash; " >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
+    # print current variables, and replace newline characters with ";"
     CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
-    echo "; run_tleap; mmpbsa_${pb_method}_cmd; mmpbsa_calculation; reorganize_mmpbsa; \
-    echo -n 0 >>${run_folder}/rescoring/${scoring_function}/.progress.dat" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
+    # Run and update the progress bar file
+    echo "; mmpbsa_commands; echo -n 0 >>${run_folder}/rescoring/${scoring_function}/.progress.dat" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
 
   elif [ "${run_mode}" = "mazinger" ]; then
 
     if [ -z "${max_submissions}" ]; then
       identifier=${pose_name}
+      write_mmpbsa_pbs_header
       write_mmpbsa_pbs
       jobid=$(qsub ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs)
       echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger

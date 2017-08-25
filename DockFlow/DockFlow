@@ -25,7 +25,7 @@ source $CHEMFLOW_HOME/ChemFlow.config
 DF_CLI "$@"
 
 # Write user parameters to a temporary file
-declare -p | awk '/declare --/ {print $3}' | awk 'f;/^_.*$/{f=1}' | grep -Fv -e "^_" -e "_list" > temp.config
+print_vars > temp.config
 
 # if config file specified using the -f flag
 if [ ! -z "$CONFIG_FILE" ]; then

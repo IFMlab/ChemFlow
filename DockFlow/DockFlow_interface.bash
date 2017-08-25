@@ -58,7 +58,7 @@ All paths given must be absolute paths.
 DockFlow will try to read a DockFlow.config file in the current directory.
 If such file doesn't exist, please run ConfigFlow to guide you,
 or copy $CHEMFLOW_HOME/config_files/DockFlow.config here.
-If you already have an existing config file and which to rerun DockFlow
+If you already have an existing config file and wish to rerun DockFlow
 only modifying some options, see the help below.
 "
 }
@@ -163,7 +163,7 @@ water=\"$water\"
 water_xyzr=\"$water_xyzr\"
 
 # Add any other parameter here
-plants_user_parameters=\"\"
+PLANTS_user_parameters=\"\"
 
 # Run on this machine (default), in parallel, or on mazinger
 # local, parallel, mazinger

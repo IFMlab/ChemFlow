@@ -44,8 +44,15 @@ else
   if [ "${purge_only}" = "true" ]; then
     only_purge_ligands
   else
-    # Select the poses
-    list_poses
+    # Select the poses to extract / prepare
+    # From energy cutoff and restriction on the number of poses per ligand
+    if [ -z "${input_file}" ]; then
+      list_poses
+    # From user input
+    else
+      read_list "${input_file}"
+    fi
+    
     # Run the preparation and time it
     time prepare_poses
   fi
@@ -57,5 +64,7 @@ if [ -f ${run_folder}/errors.csv ]; then
   echo -e "${RED}ERRORS detected${NC} : ${errorcount}"
   echo "See errors.csv for more info"
 else
-  if [ "${run_mode}" = "parallel" ]; then rm -f ${run_folder}/LigFlow_${datetime}.parallel ${run_folder}/LigFlow_${datetime}.parallel.job; fi
+  if [ "${run_mode}" = "parallel" ]; then 
+    rm -f ${run_folder}/LigFlow_${datetime}.parallel ${run_folder}/LigFlow_${datetime}.parallel.job
+  fi
 fi

@@ -64,11 +64,11 @@ GREEN="\e[0;32m"
 PURPLE="\e[0;35m"
 NC="\033[0m"
 
-# progress bar
-source $CHEMFLOW_HOME/common/ProgressBar.bash
-
 # Working directory
 run_folder="$PWD"
+
+# Errors
+error_count=0
 
 # Run interface
 splitmol_CLI "$@"
@@ -81,12 +81,16 @@ for ((i=1;i<=${end};i=$i+${maxmol}))
 do
   let finish=${i}+${maxmol}-1
   if [ ${finish} -gt ${end} ] ; then finish=${end} ; fi 
-  babel ${input} ${output}_${i}_${finish}.${format_o} -f ${i} -l ${finish} >> ${output}_babel.job 2>&1
+  babel ${input} ${output}_${i}_${finish}.${format_o} -f ${i} -l ${finish} >> babel.job 2>&1
+
+  # check
+  if [ -f ${output}_${i}_${finish}.${format_o} ]; then 
+    rm -f babel.job
+  else
+    let error_count+=1
+  fi
 done
 
-# check
-if [ -f ${output}_${i}_${finish}.${format_o} ]; then 
-  rm -f ${output}_babel.job
-else
-  echo "Error detected. Check ${output}_babel.job for more info"
+if [ $error_count -gt 0 ]; then
+  echo "$error_count error(s) detected. Check babel.job for more info"
 fi

@@ -201,7 +201,7 @@ plants_user_params=$(zenity --forms --separator "|" \
 --ok-label "Next" --cancel-label "Previous")
 case $? in
   0)
-      plants_user_parameters=$(echo "$plants_user_params" | sed 's/|/\n/g')
+      PLANTS_user_parameters=$(echo "$plants_user_params" | sed 's/|/\n/g')
       RUN_MODE
       ;;
   1)
@@ -297,7 +297,7 @@ water_xyzr=\"$water_line\"
 
 # Other user defined parameters, for PLANTS
 # This must be formated as expected by PLANTS
-plants_user_parameters=\"$plants_user_parameters\"
+PLANTS_user_parameters=\"$PLANTS_user_parameters\"
 
 # Run on this machine (default), in parallel, or on mazinger
 # local, parallel, mazinger
@@ -683,7 +683,7 @@ plants_user_params=$(zenity --forms --separator "|" \
 --ok-label "Next" --cancel-label "Previous")
 case $? in
   0)
-      plants_user_parameters=$(echo "$plants_user_params" | sed 's/|/\n/g')
+      PLANTS_user_parameters=$(echo "$plants_user_params" | sed 's/|/\n/g')
       SF_RUN_MODE
       ;;
   1)
@@ -858,6 +858,8 @@ min_energy=\"${min_energy}\"
     # If custom, specify residues or atoms to be tethered in their motion using NAB atom expression (see amber manual).
     min_mask=\"${min_mask}\"
 # If the quick MD simulation approach was chosen :
+  # Run PMEMD on GPU (true or false)
+  gpu=""
   # Length of the production, in ps
   md_time=\"$md_time\"
   # GB model used for implicit solvation : 1,5,8
@@ -875,7 +877,7 @@ water_xyzr=\"$water_line\"
 
 # For chemplp, plp, and plp95 :
 # User defined parameters, for PLANTS
-plants_user_parameters=\"$plants_user_parameters\"
+PLANTS_user_parameters=\"$PLANTS_user_parameters\"
 
 # Run on this machine (default), in parallel, or on mazinger
 # local, parallel, mazinger

@@ -24,7 +24,7 @@ source $CHEMFLOW_HOME/ChemFlow.config
 SF_CLI "$@"
 
 # Write user parameters to a temporary file
-declare -p | awk '/declare --/ {print $3}' | awk 'f;/^_.*$/{f=1}' | grep -Fv -e "^_" -e "_list" > temp.config
+print_vars > temp.config
 
 # if config file specified using the -f flag
 if [ ! -z "$CONFIG_FILE" ]; then
@@ -53,12 +53,28 @@ prepare_rescoring
 if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
   rescore_method="plants"
   time run_plants
+  # Concatenate final results, serial instead of parallel
+  cat ${run_folder}/rescoring/${scoring_function}/ranking/*.csv >> ${run_folder}/rescoring/${scoring_function}/ranking.csv
+  cat ${run_folder}/rescoring/${scoring_function}/features/*.csv >> ${run_folder}/rescoring/${scoring_function}/features.csv
+  rm -rf ${run_folder}/rescoring/${scoring_function}/{ranking,features}/
+
 elif [ "${scoring_function}" == "vina" ]; then
   rescore_method="vina"
   time run_vina
+  # Concatenate final results, serial instead of parallel
+  cat ${run_folder}/rescoring/${scoring_function}/ranking/*.csv >> ${run_folder}/rescoring/${scoring_function}/ranking.csv
+  rm -rf ${run_folder}/rescoring/${scoring_function}/{ranking}/
+
 elif $(list_include_item "PB3 GB5 GB8" "${scoring_function}"); then
   rescore_method="mmpbsa"
   time run_mmpbsa
+  # Concatenate final results, serial instead of parallel
+  for result in 1F_min MD_min MD_prod ranking; do
+    if [ -d ${run_folder}/rescoring/${scoring_function}/${result} ]; then
+      cat ${run_folder}/rescoring/${scoring_function}/${result}/*.csv >> ${run_folder}/rescoring/${scoring_function}/${result}.csv
+      rm -rf ${run_folder}/rescoring/${scoring_function}/${result}/
+    fi
+  done
 fi
 
 # copy config file to output folder
