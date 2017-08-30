@@ -152,6 +152,60 @@ fi
 }
 
 
+begin_run() {
+# function containing the basic commands that are common at the begining of the run_* functions
+
+# List to iterate
+if [ "${mode}" = "PDB" ]; then
+  common_list="${com_list}"
+elif $(list_include_item "ALL BEST" "${mode}"); then
+  common_list="${pose_list}"
+fi
+
+# Progress Bar
+length=$(echo ${common_list} | wc -w)
+progress_count=0
+
+# Print a spinner on the screen while preparing the commands for parallel
+if [ "${run_mode}" = "parallel" ]; then
+  # Run a spinner in the background
+  (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
+elif [ "${run_mode}" = "mazinger" ]; then
+  # Initialize variable that counts the number of poses rescored per pbs script
+  pbs_count=0
+  # Get the ceiling value of the number of jobs to put per pbs script
+  if [ ! -z "${max_submissions}" ]; then let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}; fi
+  # create pbs_script folder
+  mkdir -p ${run_folder}/pbs_scripts/
+fi
+}
+
+end_run() {
+# function containing the basic commands that are common at the end of the run_* functions
+
+# Kill the spinner when the preparation of parallel is done, and run it !
+if [ "${run_mode}" = "parallel" ]; then
+  echo -e "\rFinished preparing parallel... Running"
+  { kill $! && wait $!; } 2>/dev/null
+  # Run the progress bar
+  touch ${run_folder}/rescoring/${scoring_function}/.progress.dat
+  (while :; do progress_count=$(cat ${run_folder}/rescoring/${scoring_function}/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
+  # Run parallel
+  ${parallel} -j ${core_number} < ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel \
+  > ${run_folder}/rescoring/${scoring_function}/parallel.job 2>&1
+  # Kill the progress bar when parallel is done
+  { printf '\rProgress : [########################################] 100%\n'; kill $! && wait $!; } 2>/dev/null
+  rm -f ${run_folder}/rescoring/${scoring_function}/.progress.dat
+
+# If running on mazinger, wait untill all jobs are finished
+elif [ "${run_mode}" = "mazinger" ]; then
+  mazinger_progress_bar ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
+elif [ "${run_mode}" = "local" ]; then
+  echo -ne "\rProgress : [########################################] 100%\n"
+fi
+}
+
+
 ############################################################
 # PLANTS
 ############################################################
@@ -227,29 +281,8 @@ SCORE_RB_PEN_NORM_CRT_HEVATOMS,SCORE_NORM_CONTACT,PLPtotal,PLPparthbond,PLPparts
 LIG_NUM_CLASH,LIG_NUM_CONTACT,LIG_NUM_NO_CONTACT,CHEMpartmetal,CHEMparthbond,CHEMparthbondCHO,DON,ACC,UNUSED_DON,UNUSED_ACC,\
 CHEMPLP_CLASH2,TRIPOS_TORS,ATOMS_OUTSIDE_BINDINGSITE">${run_folder}/rescoring/${scoring_function}/features.csv
 
-# List to iterate
-if [ "${mode}" = "PDB" ]; then
-  common_list="${com_list}"
-elif $(list_include_item "ALL BEST" "${mode}"); then
-  common_list="${pose_list}"
-fi
-
-# Progress Bar
-length=$(echo ${common_list} | wc -w)
-progress_count=0
-
-# Print a spinner on the screen while preparing the commands for parallel
-if [ "${run_mode}" = "parallel" ]; then
-  # Run a spinner in the background
-  (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
-elif [ "${run_mode}" = "mazinger" ]; then
-  # Initialize variable that counts the number of poses rescored per pbs script
-  pbs_count=0
-  # Get the ceiling value of the number of jobs to put per pbs script
-  if [ ! -z "${max_submissions}" ]; then let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}; fi
-  # create pbs_script folder
-  mkdir -p ${run_folder}/pbs_scripts/
-fi
+# Initialization procedure, common to all scoring functions
+begin_run
 
 # Iterate over the docking poses
 for item in ${common_list}
@@ -309,26 +342,9 @@ do
     fi
   fi
 done
-  
-# Kill the spinner when the preparation of parallel is done, and run it !
-if [ "${run_mode}" = "parallel" ]; then
-  echo -e "\rFinished preparing parallel... Running"
-  { kill $! && wait $!; } 2>/dev/null
-  # Run the progress bar
-  touch ${run_folder}/rescoring/${scoring_function}/.progress.dat
-  (while :; do progress_count=$(cat ${run_folder}/rescoring/${scoring_function}/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
-  # Run parallel
-  ${parallel} -j ${core_number} < ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel \
-  > ${run_folder}/rescoring/${scoring_function}/parallel.job 2>&1
-  # Kill the progress bar when parallel is done
-  { printf '\n'; kill $! && wait $!; } 2>/dev/null
-  rm -f ${run_folder}/rescoring/${scoring_function}/.progress.dat
 
-# If running on mazinger, wait untill all jobs are finished
-elif [ "${run_mode}" = "mazinger" ]; then
-  mazinger_progress_bar ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
-  echo ""
-fi
+# End procedure, common to all scoring functions
+end_run
 }
 
 plants_cmd() {
@@ -422,29 +438,8 @@ run_vina() {
 # Headers for the concatenated score file
 echo "Ligand,Affinity,gauss_1,gauss_2,repulsion,hydrophobic,Hydrogen" > ${run_folder}/rescoring/${scoring_function}/ranking.csv
 
-# List to iterate
-if [ "${mode}" = "PDB" ]; then
-  common_list="${com_list}"
-elif $(list_include_item "ALL BEST" "${mode}"); then
-  common_list="${pose_list}"
-fi
-
-# Progress Bar
-length=$(echo ${common_list} | wc -w)
-progress_count=0
-
-# Print a spinner on the screen while preparing the commands for parallel
-if [ "${run_mode}" = "parallel" ]; then
-  # Run a spinner in the background
-  (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
-elif [ "${run_mode}" = "mazinger" ]; then
-  # Initialize variable that counts the number of poses rescored per pbs script
-  pbs_count=0
-  # Get the ceiling value of the number of jobs to put per pbs script
-  if [ ! -z "${max_submissions}" ]; then let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}; fi
-  # create pbs_script folder
-  mkdir -p ${run_folder}/pbs_scripts/
-fi
+# Initialization procedure, common to all scoring functions
+begin_run
 
 # Convert receptor if it's not already done
 if $(list_include_item "ALL BEST" "${mode}") && [ ! -f ${rec}.pdbqt ]; then 
@@ -517,25 +512,8 @@ do
   fi
 done
 
-# Kill the spinner when the preparation of parallel is done, and run it !
-if [ "${run_mode}" = "parallel" ]; then
-  echo -e "\rFinished preparing parallel... Running"
-  { kill $! && wait $!; } 2>/dev/null
-  # Run the progress bar
-  touch ${run_folder}/rescoring/${scoring_function}/.progress.dat
-  (while :; do progress_count=$(cat ${run_folder}/rescoring/${scoring_function}/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
-  # Run parallel
-  ${parallel} -j ${core_number} < ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel \
-  > ${run_folder}/rescoring/${scoring_function}/parallel.job 2>&1
-  # Kill the progress bar when parallel is done
-  { printf '\n'; kill $! && wait $!; } 2>/dev/null
-  rm -f ${run_folder}/rescoring/${scoring_function}/.progress.dat
-
-# If running on mazinger, wait untill all jobs are finished
-elif [ "${run_mode}" = "mazinger" ]; then
-  mazinger_progress_bar ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
-  echo ""
-fi
+# End procedure, common to all scoring functions
+end_run
 }
 
 reorganize_vina() {
@@ -714,7 +692,7 @@ echo "Complex: initial minimization prior to MD GB model
   maxcyc = 500,
   ncyc   = 250,
   ntb    = 0,
-  igb    = ${gb_model},
+  igb    = ${implicit_model},
   cut    = 999
  /">min.in
 
@@ -753,7 +731,7 @@ cd ${run_folder}/rescoring/${scoring_function}/${common_folder}
 print_vars >> ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs
 echo "
 # Run
-mmpbsa_commands
+mmpbsa_cmd
 " >> ${run_folder}/pbs_scripts/mmpbsa_${identifier}.pbs
 }
 
@@ -913,9 +891,10 @@ elif [ "${pb_method}" = "MD" ]; then
     # Get values following the "NSTEP" line, and output them in csv format
     # awk '/NSTEP/{f=1;next};/^\s*$/{f=0} : start reading after the line containing NSTEP, and stop at the first empty line
     # Thus we only get the values following the "NSTEP" flag
-    # f{gsub (/\s+/, ",", $0); print}' : for the lines marked by the flag, replace groups of spaces (\s\+) with a comma (",") on all the line ($0)
-    # in order to obtain a csv formatted file
-    values1=$(echo "${lines}" | awk '/NSTEP/{f=1;next};/^\s*$/{f=0}f{gsub (/\s+/, ",", $0); print}')
+    # sed -n 's/\s\+/,/gp : replace groups of spaces (\s\+) with a comma (",") for these lines, in order to obtain a csv formatted file
+    # Exemple of result for values 1 :
+    # ,1,-8.9692E+03,1.1374E+01,8.7460E+01,CD1,1658
+    values1=$(echo "${lines}" | awk '/NSTEP/{f=1;next};/^\s*$/{f=0}f' | sed -n 's/\s\+/,/gp')
     # Get energy decomposition
     # sed -n '/BOND/,/1-4 VDW/ : For the lines between "BOND" and "1-4 VDW" (inclusive)
     # s/^.*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\).*=\s\+\([.0-9-]\+\)$/ : search for a regular expression : chars = space float, repeated 3 times
@@ -986,14 +965,13 @@ if [ -f MM${scoring_function::2}SA.csv ]; then
   for structure in Ligand Receptor Complex DELTA
   do
     # We want to retrieve the values in the MM-PB/GB-SA csv file to output a computer-readable csv file
-    # We identify the line corresponding to our structure with var="${structure} Energy Terms" '$0 ~ var'
-    # At this point, we set the flag to true starting 2 lines after the match to get the values : {flag=1;getline;getline}
+    # We identify the line corresponding to our structure with /${structure} Energy Terms/
     # We then search for the last values for our structure, identified by an empty line : /^\s*$/
-    # When we match this empty line, the flag is set to false for the remaining lines : {flag=0}
-    # And we print the lines for which the flag was set to true : flag
+    # For the lines that matched this pattern, we do a regex search and replace :
+    # s/^\([0-9]\+.*\)$/\1/p : search for lines begining with numbers, and return only these lines
     # This will output all values corresponding to the $structure in csv format
     # Then, with sed, we insert the docking pose name, and the structure, at the beginning of the file
-    awk -v var="${structure} Energy Terms" '$0 ~ var {flag=1;getline;getline}/^\s*$/{flag=0}flag' MM${scoring_function::2}SA.csv \
+    sed -n "/${structure} Energy Terms/,/^\s$/ s/^\([0-9]\+.*\)$/\1/p" MM${scoring_function::2}SA.csv \
     | sed -n "s/^/${pose_name},${structure},/gp" >> energy.csv
   done
 # Concatenate to ranking
@@ -1007,13 +985,13 @@ rm -rf ${common_folder}
 fi
 }
 
-mmpbsa_commands() {
+mmpbsa_cmd() {
 # List of commands to run for mmpbsa, with error check
 
 # Make trajectory and topology of the complex from the pdb file
 run_tleap
 
-# Create files
+# Create files necessary for calculations
 mmpbsa_${pb_method}_cmd
 
 # Run calculation
@@ -1047,29 +1025,8 @@ elif [ "${pb_method}" = "MD" ]; then
   > ${run_folder}/rescoring/${scoring_function}/MD_prod.csv
 fi
 
-# List to iterate
-if [ "${mode}" = "PDB" ]; then
-  common_list="${com_list}"
-elif $(list_include_item "ALL BEST" "${mode}"); then
-  common_list="${pose_list}"
-fi
-
-# Progress Bar
-length=$(echo ${common_list} | wc -w)
-progress_count=0
-
-# Print a spinner on the screen while preparing the commands for parallel
-if [ "${run_mode}" = "parallel" ]; then
-  # Run a spinner in the background
-  (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
-elif [ "${run_mode}" = "mazinger" ]; then
-  # Initialize variable that counts the number of poses rescored per pbs script
-  pbs_count=0
-  # Get the ceiling value of the number of jobs to put per pbs script
-  if [ ! -z "${max_submissions}" ]; then let max_jobs_pbs=(${length}+${max_submissions}-1)/${max_submissions}; fi
-  # create pbs_script folder
-  mkdir -p ${run_folder}/pbs_scripts/
-fi
+# Initialization procedure, common to all scoring functions
+begin_run
 
 # Prepare topology and trajectory for the receptor
 if [ ! -f ${rec}.prmtop ]; then tleap_receptor; fi
@@ -1107,7 +1064,7 @@ do
     (ProgressBar ${progress_count} ${length}) &
 
     # Run
-    mmpbsa_commands
+    mmpbsa_cmd
 
     # update progress bar
     let progress_count+=1
@@ -1121,7 +1078,7 @@ do
     # print current variables, and replace newline characters with ";"
     CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
     # Run and update the progress bar file
-    echo "; mmpbsa_commands; echo -n 0 >>${run_folder}/rescoring/${scoring_function}/.progress.dat" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
+    echo "; mmpbsa_cmd; echo -n 0 >>${run_folder}/rescoring/${scoring_function}/.progress.dat" >> ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel
 
   elif [ "${run_mode}" = "mazinger" ]; then
 
@@ -1147,23 +1104,6 @@ do
   fi
 done
 
-# Kill the spinner when the preparation of parallel is done, and run it !
-if [ "${run_mode}" = "parallel" ]; then
-  echo -e "\rFinished preparing parallel... Running"
-  { kill $! && wait $!; } 2>/dev/null
-  # Run the progress bar
-  touch ${run_folder}/rescoring/${scoring_function}/.progress.dat
-  (while :; do progress_count=$(cat ${run_folder}/rescoring/${scoring_function}/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
-  # Run parallel
-  ${parallel} -j ${core_number} < ${run_folder}/rescoring/${scoring_function}/rescore_${datetime}.parallel \
-  > ${run_folder}/rescoring/${scoring_function}/parallel.job 2>&1
-  # Kill the progress bar when parallel is done
-  { printf '\n'; kill $! && wait $!; } 2>/dev/null
-  rm -f ${run_folder}/rescoring/${scoring_function}/.progress.dat
-
-# If running on mazinger, wait untill all jobs are finished
-elif [ "${run_mode}" = "mazinger" ]; then
-  mazinger_progress_bar ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
-  echo ""
-fi
+# End procedure, common to all scoring functions
+end_run
 }

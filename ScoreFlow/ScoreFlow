@@ -46,6 +46,11 @@ fi
 # Overwrite parameters in config files with user parameters
 write_SF_config
 
+# Empty the input_files/com directory for new MD or 1F simulations
+if [ "${purge}" = "true" ]; then
+  rm -rf ${run_folder}/input_files/com
+fi
+
 # Check input file and make list of poses to rescore
 prepare_rescoring
 
@@ -76,6 +81,8 @@ elif $(list_include_item "PB3 GB5 GB8" "${scoring_function}"); then
     fi
   done
 fi
+
+# At this point, calculations should be done
 
 # copy config file to output folder
 cp ${run_folder}/ScoreFlow.config ${run_folder}/rescoring/${scoring_function}/

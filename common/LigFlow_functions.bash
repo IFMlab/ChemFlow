@@ -10,7 +10,7 @@ Usage : LigFlow
                  -c|--cutoff      : Only the poses with a score below or equal to this cutoff will be extracted
                                     Default : 0
                 -np|--nbposes     : Restrict preparation to the X best poses per ligand
-                                    Default : 1
+                                    Default : None. Keep all poses.
                  -d|--docking     : Path to the docking folder
                                     Default : $PWD/docking
                 -at|--atomtype    : gaff, gaff2, amber, bcc, sybyl
@@ -108,7 +108,6 @@ done
 # Default values
 if [ -z "${path}" ];             then path=$PWD/docking  ; fi
 if [ -z "${cutoff}" ];           then cutoff=0           ; fi
-if [ -z "${nb_poses}" ];         then nb_poses=1         ; fi
 if [ -z "${memory}" ];           then memory="8GB"       ; fi
 if [ -z "${core_number}" ];      then core_number=8      ; fi
 if [ -z "${run_mode}" ];         then run_mode="local"   ; fi
@@ -153,16 +152,22 @@ cd ${path}
 
 for lig in $lig_list
 do
-  # Restrict to only a certain ammount of poses per ligand
-  selected_list=$(echo "$pose_list" | \
-  awk -F, -v lig="${lig}" -v max=${nb_poses} 'BEGIN {count=0} {if ($1 ~ lig) {count+=1; if (count <= max) {print lig","$0}}}')
-  # Insert the folder name inside the "docking" directory
+  # if no restriction on the number of poses per ligand
+  if [ -z "${nb_poses}" ]; then
+    selected_list=$(echo "$pose_list" | \
+    awk -F, -v lig="${lig}" 'if ($1 ~ lig) {print lig","$0}')
+  else
+    # Restrict to only a certain ammount of poses per ligand
+    selected_list=$(echo "$pose_list" | \
+    awk -F, -v lig="${lig}" -v max=${nb_poses} 'BEGIN {count=0} {if ($1 ~ lig) {count+=1; if (count <= max) {print lig","$0}}}')
+  fi 
+  # Insert the folder name inside the "docking" directory to the list
   for line in $selected_list
   do
     pose=$(echo "$line" | cut -d"," -f2)
     folder=$(find . -name ${pose}.mol2 | cut -d"/" -f2)
     poses_selected_list+=$(echo -e "\n${folder},${line}")
-done
+  done
 done
 cd ${run_folder}
 
@@ -345,7 +350,7 @@ if [ ! -f ${run_folder}/input_files/lig/${lig}/${lig}.mol2 ] || [ ! -f ligand.mo
         -at ${atom_type} > ${run_folder}/input_files/lig/${lig}/${lig}.antechamber_gauss.job
       
       # Run Gaussian to optimize structure and generate electrostatic potential grid
-      g09 ${run_folder}/input_files/lig/${lig}/${lig}.gau > ${run_folder}/input_files/lig/${lig}/${lig}.gaussian.job
+      ${gaussian_exec} ${run_folder}/input_files/lig/${lig}/${lig}.gau > ${run_folder}/input_files/lig/${lig}/${lig}.gaussian.job
       
       # Read Gaussian output and write new optimized ligand with RESP charges
       antechamber \

@@ -48,7 +48,7 @@ rm -f $1
 }
 
 mazinger_progress_bar() {
-echo "ChemFlow's progress on mazinger :                                   "
+echo "ChemFlow's progress on mazinger :                                                       "
 # Jobs from the rescoring
 CFjobs=$(cat $1)
 CFlength=$(echo "$CFjobs" | wc -l)
@@ -98,7 +98,7 @@ do
 
 done
 
-echo -e "\rAll jobs finished                                        "
+echo -ne "\rProgress : [########################################] 100%\n"
 rm -f $1
 }
 

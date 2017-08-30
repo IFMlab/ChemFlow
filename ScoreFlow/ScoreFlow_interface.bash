@@ -29,11 +29,14 @@ Usage : ScoreFlow
                   -f/--folder         : Path to a custom \"docking\" or \"input_files/lig\" folder
                   -sf/--function      : chemplp, plp, plp95, vina, PB3, GB5, GB8
                   --run               : local, parallel, mazinger
+                                        Default : local
 _________________________________________________________________________________
 For ALL and BEST modes :
                   -r/--receptor       : Path to the receptor's file
 _________________________________________________________________________________
 For MM-PB/GB-SA :
+                  -p/--purge          : Empty the \"input_files/com\" folder before calculations.
+                                        Used to run new simulations.
                   -b/--base           : Base calculations on 1 frame (1F) or 
                                         on a quick implicit solvent (GB) MD simulation
                   -sm/--stripmask     : Amber mask of atoms needed to be stripped from the 
@@ -53,7 +56,6 @@ For calculations on 1 frame :
 For calculations on implicit solvent MD :
                   --gpu               : run pmemd on GPU
                   -t/--time           : Length of the production, in ps
-                  -im/--model         : Implicit GB model used for solvation (1,5,8)
 _________________________________________________________________________________
 For parallel :
                   -cn/--corenumber    : Number of cores for parallel
@@ -123,6 +125,9 @@ case $key in
     scoring_function="$2"
     shift # past argument
     ;;
+    -p|--purge)
+    purge="true"
+    ;;
     -b|--base)
     pb_method="$2"
     shift # past argument
@@ -153,10 +158,6 @@ case $key in
     ;;
     -t|--time)
     md_time="$2"
-    shift
-    ;;
-    -im/--model)
-    gb_model="$2"
     shift
     ;;
     -w|--water)
@@ -243,8 +244,6 @@ lig_mask=\"$lig_mask\"
   gpu=\"$gpu\"
   # Length of the production, in ps
   md_time=\"$md_time\"
-  # GB model used for implicit solvation : 1,5,8
-  gb_model=\"$gb_model\"
 
 #######################################################################################################################
 # Optionnal input
@@ -363,7 +362,6 @@ elif [ "${rescore_method}" = "mmpbsa" ]; then
 
   elif [ "${pb_method}" = "MD" ]; then
     if [ -z "${md_time}" ];  then error "the length of the production"; fi
-    if [ -z "${gb_model}" ]; then error "the GB model used for implicit solvation"; fi
   fi
 
 else
