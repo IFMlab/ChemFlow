@@ -1,0 +1,4 @@
+ChemFlow.config
+*.py[cod]
+ReportFlow/.ipynb_checkpoints
+test_files
