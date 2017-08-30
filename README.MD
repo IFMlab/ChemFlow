@@ -18,7 +18,8 @@ git clone https://github.com/IFMlab/ChemFlow.git
 cd ChemFlow
 ./install.sh
 ```
-It will create a `CHEMFLOW_HOME` variable, and add the necessary executables to your path.
+It will create a `CHEMFLOW_HOME` variable, and add the necessary executables to your path.  
+ Once this is done, you should check the `ChemFlow.config` file for missing paths or to change default behaviour.
 
 # :warning: Requirements
 
