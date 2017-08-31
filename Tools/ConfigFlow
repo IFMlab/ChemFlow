@@ -537,7 +537,7 @@ case $? in
   0)
       echo "> $md_time <"
       if [ ! -z "$md_time" ]; then
-        GB_MODEL
+        SF_MODE
       else
         zenity --error --title "SF : MD production length" --text "Cannot be empty."
         MD_TIME
@@ -552,33 +552,6 @@ case $? in
 esac
 }
 
-GB_MODEL() {
-gb_model=$(zenity \
---list --radiolist --title "SF : Implicit solvation GB model" \
---text "Select the GB model used for implicit solvation :" \
---ok-label "Next" --cancel-label "Previous" \
---separator "|" \
---column "Choice" \
---column "Method" \
-FALSE '1' \
-FALSE '5' \
-FALSE '8')
-case $? in
-  0)
-      if [ ! -z "$gb_model" ]; then
-        SF_MODE
-      else
-        zenity --error --title "SF : Implicit solvation GB model" --text "You must select a model."
-        GB_MODEL
-      fi;;
-  1)
-      MD_TIME
-      ;;
-  -1)
-      echo "Unexpected error."
-      ;;
-esac
-}
 
 MINIMIZE() {
 minimize=$(zenity --cancel-label "Previous" --ok-label "Next" \
@@ -862,8 +835,6 @@ min_energy=\"${min_energy}\"
   gpu=""
   # Length of the production, in ps
   md_time=\"$md_time\"
-  # GB model used for implicit solvation : 1,5,8
-  gb_model=\"$gb_model\"
 
 #######################################################################################################################
 # Optionnal input

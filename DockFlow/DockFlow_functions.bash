@@ -186,12 +186,17 @@ plants_cmd" >> plants.pbs
 reorganize_plants() {
 # Append the scores to a unique csv file, and reorganize files
 if [ -f docking/ranking.csv ]; then
-  cd docking
-  mv protein_bindingsite_fixed.mol2 ${run_folder}/docking/
+  # create folders for concatenating the results
+  mkdir -p ${run_folder}/docking/ranking
+  mkdir -p ${run_folder}/docking/features
+
+  # Move the protein bindingsite residues file
+  mv docking/protein_bindingsite_fixed.mol2 ${run_folder}/docking/
   # the command tail -n +2 skip the first line (containing the header), and starts printing at the 2nd line of the file
-  tail -n +2 features.csv >> ${run_folder}/docking/features.csv
-  tail -n +2 ranking.csv  >> ${run_folder}/docking/ranking.csv
-  cd ..
+  tail -n +2 docking/features.csv >> ${run_folder}/docking/features/${lig}.csv
+  tail -n +2 docking/ranking.csv  >> ${run_folder}/docking/ranking/${lig}.csv
+  
+  # Move docking poses
   mv docking/*.mol2 .
   rm -rf docking
 else

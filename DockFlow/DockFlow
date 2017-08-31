@@ -54,6 +54,11 @@ prepare_docking
 # Run plants with the options
 time run_plants
 
+# Concatenate final results, serial instead of parallel
+cat ${run_folder}/docking/ranking/*.csv  >> ${run_folder}/docking/ranking.csv
+cat ${run_folder}/docking/features/*.csv >> ${run_folder}/docking/features.csv
+rm -rf ${run_folder}/docking/{ranking,features}/
+
 # copy config file to output folder
 cp ${run_folder}/DockFlow.config ${run_folder}/docking/
 
