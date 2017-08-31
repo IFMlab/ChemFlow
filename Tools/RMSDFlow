@@ -358,7 +358,6 @@ def output_rmsd(outputfile, rmsd_list):
                 myString = '\n{},{},{:.6f},{},{}'.format(line[0], line[1], line[2], line[3], line[4])
                 f.write(myString)
         f.closed
-    print("CSV table created :", my_file)
     
     
 def rmsd_plot(rmsd_list):
@@ -401,7 +400,6 @@ def rmsd_plot(rmsd_list):
     ax.set_title('RMSD between reference and input molecules'.format(ref))
     plt.grid(axis='y', linestyle='--', linewidth=1)
     ax.set_axisbelow(True)
-    print('Saved figure rmsd_plot.png')
     plt.savefig('rmsd_plot.png',bbox_inches='tight')
     plt.tight_layout()
     plt.gcf().subplots_adjust(right=0.9)

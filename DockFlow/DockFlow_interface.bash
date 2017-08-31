@@ -131,8 +131,6 @@ done
 
 # write config file for DockFLow from CLI
 write_DF_config() {
-# Save the old config file
-if [ -f DockFlow.config ]; then cp DockFlow.config DockFlow.${datetime}.config ; fi
 
 # Overwrite. This only works because we used the same variable names in the interface and the config file.
 source temp.config

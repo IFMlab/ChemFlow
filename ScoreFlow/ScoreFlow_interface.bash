@@ -13,7 +13,7 @@ echo -e "\
 ||                       ${GREEN}ScoreFlow${NC}                       ||
 || Laboratoire d'Ingenierie des Fonctions Moleculaires   ||
 || Institut de Science et d'Ingenierie Supramoleculaires ||
-|| Cedric Bouysset - cedric.bouysset@etu.unistra.fr      ||
+|| Cedric Bouysset - cbouysset@unistra.fr                ||
 || Diego E.B. Gomes - dgomes@pq.cnpq.br                  ||
 \\\\\=======================================================//
 "
@@ -59,6 +59,10 @@ For calculations on implicit solvent MD :
 _________________________________________________________________________________
 For parallel :
                   -cn/--corenumber    : Number of cores for parallel
+_________________________________________________________________________________
+For mazinger :
+                  --resume            : Resume after job submission
+                  --kill              : Kill ScoreFlow jobs
 _________________________________________________________________________________
 Optionnal :
                   -w/--water          : Path to the structural water molecule
@@ -178,6 +182,12 @@ case $key in
     -cn|--corenumber)
     core_number="$2"
     shift # past argument
+    ;;
+    --resume)
+    mazinger_resume="true"
+    ;;
+    --kill)
+    mazinger_kill="true"
     ;;
     *)
     unknown="$1" # unknown option

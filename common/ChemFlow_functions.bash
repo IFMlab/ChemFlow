@@ -29,5 +29,6 @@ extract_mol_from_mol2() {
 molecule="$1"
 mol2_file="$2"
 
-awk -v mol="^${molecule}$" '$0 ~ mol {f=1;print "@<TRIPOS>MOLECULE"};/@<TRIPOS>MOLECULE/{f=0}f{print $0}' ${mol2_file}
+awk -v mol="^${molecule}$" '$0 ~ mol {f=1;print "@<TRIPOS>MOLECULE"};/@<TRIPOS>MOLECULE/{f=0}f{print $0}' ${mol2_file} \
+| awk 'BEGIN {count=0} /@<TRIPOS>MOLECULE/{f=1; count+=1}; {if (count <= 1) {print $0}}'
 }

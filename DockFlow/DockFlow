@@ -63,19 +63,19 @@ rm -rf ${run_folder}/docking/{ranking,features}/
 cp ${run_folder}/DockFlow.config ${run_folder}/docking/
 
 # Sort results
-if [ -f docking/ranking.csv ]; then
+if [ -f ${run_folder}/docking/ranking.csv ]; then
   # copy header
-  header=$(head -1 docking/ranking.csv)
+  header=$(head -1 ${run_folder}/docking/ranking.csv)
   # sort
   # The LC_ALL=C is needed to get an accurate sorting
-  tail -n +2 docking/ranking.csv | LC_ALL=C sort -t, -g -k2 -o docking/ranking_sorted.csv
+  tail -n +2 ${run_folder}/docking/ranking.csv | LC_ALL=C sort -t, -g -k2 -o ${run_folder}/docking/ranking_sorted.csv
   # insert header back into sorted file
-  sed -i "1s/^/$header\n/" docking/ranking_sorted.csv
+  sed -i "1s/^/$header\n/" ${run_folder}/docking/ranking_sorted.csv
 fi
 
 # If some results are missing, count how many and output it
-if [ -f docking/errors.csv ]; then
-  errorcount=$(cat docking/errors.csv | wc -l)
+if [ -f ${run_folder}/docking/errors.csv ]; then
+  errorcount=$(cat ${run_folder}/docking/errors.csv | wc -l)
   echo -e "${RED}ERRORS detected${NC} : ${errorcount}"
   echo "See docking/errors.csv for more info"
 fi
