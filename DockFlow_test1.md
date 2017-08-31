@@ -77,3 +77,8 @@ A full table of results is available at the notebook as dataframe **XXX**. The d
 Graphs show 
 * RMSD by Energy
 *
+
+# Part II - Comparing protocols.
+There is no **right** way to perform a docking. Several because the of the different complexity of each well receptor and or ligand, the default search function may be insuficient, also, since most search functions are stocastic there is no garantee that a global minima would be found, so multiple docking runs with different inital conditions (random seed) may be necessary. The **scoring functions** are also a big issue. To date, they've been designed to distinguish *actives* from *inactives*, so they're aren't entirely mature to rank compounds (that's a job for **ScoreFlow**!).  
+
+  By now all we want is address if we can improve the outcome of a docking campaign by tunning the parameters. This is extremely important when benchmarking methods. DockFlow was designed (with a trick so far) to address this scenario, with a great ReportFlow notebook. 
