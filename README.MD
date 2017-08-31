@@ -6,7 +6,8 @@ The workflows allow the user to spend more time **thinking**, i.e. running bench
 It consists of *BASH* and *PYTHON* scripts that can be launched locally (serial or with GNU parallel) or on a compute cluster via PBS.
 * **DockFlow** : Docking and Virtual Screening
 * **ScoreFlow** : Rescoring using PLANTS, Vina, or MM(PB,GB)SA
-* **ReportFlow** : Extensive data analysis and reporting tool  
+* **ReportFlow** : Extensive data analysis and reporting tool
+* **MDFlow** : Molecular dynamics of multiple systems on SLURM cluster (PBS soon) 
 * and other usefull tools !
 
 # :package: Installation
@@ -21,7 +22,7 @@ cd ChemFlow
 It will create a `CHEMFLOW_HOME` variable, and add the necessary executables to your path.  
  Once this is done, you should check the `ChemFlow.config` file for missing paths or to change default behaviour.
 
-# :warning: Requirements
+# :warning: Requirements for ReportFlow
 
 We do not provide any of the licensed softwares used by ChemFlow. It is up to the user to acquire and install PLANTS, Vina, Amber, Python 3 and the other softwares that might be added in future releases of ChemFlow.
 
@@ -35,6 +36,10 @@ ReportFlow makes heavy uses of [Python 3](https://www.python.org/) through Jupyt
 * **scipy**
 * **seaborn**
 
+# :package: Installation of Required packages
+```
+pip install jupyter matplotlib numpy pandas scikit-learn scipy seaborn
+```
 A tutorial on how to install python packages with PIP is available [here](https://pip.pypa.io/en/stable/installing/)
 We strongly advise the user to install [jupyter_contrib_nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) to improve the functionality of the notebooks. 
 
