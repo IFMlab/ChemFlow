@@ -1,5 +1,5 @@
 # ChemFlow
-<img src="https://user-images.githubusercontent.com/27850535/29564754-6b07a548-8743-11e7-9463-8626675b9481.png" alt="Logo" align="left" width=132/>ChemFlow is a series of computational chemistry workflow's designed to automatize and simplify the drug discovery pipeline and scoring function benchmarking.
+<img src="https://user-images.githubusercontent.com/27850535/29564754-6b07a548-8743-11e7-9463-8626675b9481.png" alt="Logo" align="left" width=132/>ChemFlow is a series of computational chemistry workflows designed to automatize and simplify the drug discovery pipeline and scoring function benchmarking.
 
 The workflows allow the user to spend more time **thinking**, i.e. running benchmarks or experiments, analyzing the data, and taking decisions, rather than programming/testing/debugging their own scripts.
 
