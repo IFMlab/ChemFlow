@@ -42,6 +42,6 @@ done
 
 
 list_incomplete
-#resubmit_incomplete
+resubmit_incomplete
 
 # Sit back and relax.
