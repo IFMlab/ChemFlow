@@ -13,6 +13,7 @@ source $CHEMFLOW_HOME/ScoreFlow/ScoreFlow_functions.bash
 source $CHEMFLOW_HOME/common/mazinger_functions.bash
 source $CHEMFLOW_HOME/common/ProgressBar.bash
 source $CHEMFLOW_HOME/common/ChemFlow_functions.bash
+source $CHEMFLOW_HOME/common/colors.bash
 
 # Welcome user
 welcome

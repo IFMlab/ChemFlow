@@ -14,6 +14,7 @@ source $CHEMFLOW_HOME/DockFlow/DockFlow_functions.bash
 source $CHEMFLOW_HOME/common/mazinger_functions.bash
 source $CHEMFLOW_HOME/common/ProgressBar.bash
 source $CHEMFLOW_HOME/common/ChemFlow_functions.bash
+source $CHEMFLOW_HOME/common/colors.bash
 
 # Welcome user
 welcome
@@ -39,7 +40,7 @@ else
     source DockFlow.config
   # if no config file was specified and doesn't exist in the current directory
   else
-    echo "${RED}FATAL ERROR${NC} : No configuration file found for DockFlow"
+    echo -e "${RED}FATAL ERROR${NC} : No configuration file found for DockFlow"
     usage
     exit 1
   fi
@@ -51,13 +52,19 @@ write_DF_config
 # Prepare folders and input file to run
 prepare_docking
 
-# Run plants with the options
-time run_plants
+#######################
+# Run docking
+#######################
+if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
+  # Run plants with the options
+  time run_plants
+  # Concatenate final results, serial instead of parallel
+  cat ${run_folder}/docking/ranking/*.csv  >> ${run_folder}/docking/ranking.csv
+  cat ${run_folder}/docking/features/*.csv >> ${run_folder}/docking/features.csv
+  rm -rf ${run_folder}/docking/{ranking,features}/
 
-# Concatenate final results, serial instead of parallel
-cat ${run_folder}/docking/ranking/*.csv  >> ${run_folder}/docking/ranking.csv
-cat ${run_folder}/docking/features/*.csv >> ${run_folder}/docking/features.csv
-rm -rf ${run_folder}/docking/{ranking,features}/
+# insert other scoring functions here
+fi
 
 # copy config file to output folder
 cp ${run_folder}/DockFlow.config ${run_folder}/docking/

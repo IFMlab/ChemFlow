@@ -9,13 +9,6 @@
 # Main
 #################
 
-# Color output
-RED="\e[0;31m"
-BLUE="\e[0;34m"
-GREEN="\e[0;32m"
-PURPLE="\e[0;35m"
-NC="\033[0m"
-
 # Time format
 TIMEFORMAT='Execution time : %1lR'
 
@@ -28,6 +21,7 @@ source $CHEMFLOW_HOME/common/LigFlow_functions.bash
 source $CHEMFLOW_HOME/common/mazinger_functions.bash
 source $CHEMFLOW_HOME/common/ProgressBar.bash
 source $CHEMFLOW_HOME/common/ChemFlow_functions.bash
+source $CHEMFLOW_HOME/common/colors.bash
 
 # Run interface
 LigFlow_CLI "$@"

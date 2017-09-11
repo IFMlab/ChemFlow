@@ -365,39 +365,52 @@ def rmsd_plot(rmsd_list):
     fig, ax = plt.subplots(figsize=(20,10))
 
     yval = {}
-    xlabels = []
     ref_list = []
     g = {}
-    
+    subset = {}
+    sorted_subset = {}
+
+    # Initialize lists and dictionnaries
     for line in rmsd_list:
         ref = line[0]
-        mol = line[1]
         if ref not in ref_list:
             ref_list.append(ref)
             yval[ref] = []
             g[ref] = []
-        yval[ref].append(float(line[2]))
-        if mol not in xlabels:
-            xlabels.append(mol)
+            subset[ref] = []
+            sorted_subset[ref] = []
+        subset[ref].append(line)
 
-    index = np.arange(len(xlabels))
+    # sort by rmsd values for the first reference given by the user
+    init = ref_list[0]
+    sorted_subset[init] = sorted(subset[init], key=lambda rmsd: rmsd[2])
+    # reorganize the results for the other references to match the same order as previous sort
+    labels = [mol[1] for mol in sorted_subset[init]]
+    for ref in ref_list[1:]:
+        for mol in labels:
+            sorted_subset[ref].append(next(data for data in subset[ref] if data[1] == mol))
+
+    # create variables for the bar plot
+    index = np.arange(len(labels))
     number_of_plots = len(ref_list)
     color=iter(plt.cm.rainbow(np.linspace(0,1,number_of_plots)))
-    
     bar_width = 0.9/number_of_plots
     opacity = 0.85
+
+    # Plot
     for i,ref in enumerate(ref_list):      
         c=next(color)
-        g[ref] = ax.bar(index + i*bar_width, yval[ref],
+        g[ref] = ax.bar(index + i*bar_width, [rmsd[2] for rmsd in sorted_subset[ref]],
                         label=ref, color=c, alpha=opacity,
                         width=bar_width, linewidth=0)
-        
+    
+    # Set legend, axis titles, ticks...
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),title="Reference(s) :")
     ax.set_ylabel('RMSD')
     ax.set_xlabel('Input molecules')
-    plt.xticks(index + i*bar_width/number_of_plots, xlabels)
-    ax.set_xticklabels(xlabels, rotation=90, rotation_mode="anchor", ha="right", va="center", fontsize='small')
-    ax.set_title('RMSD between reference and input molecules'.format(ref))
+    plt.xticks(index + i*bar_width/number_of_plots, labels)
+    ax.set_xticklabels(labels, rotation=90, rotation_mode="anchor", ha="right", va="center", fontsize='small')
+    ax.set_title('RMSD between reference and input molecules')
     plt.grid(axis='y', linestyle='--', linewidth=1)
     ax.set_axisbelow(True)
     plt.savefig('rmsd_plot.png',bbox_inches='tight')

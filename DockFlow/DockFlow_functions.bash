@@ -1,3 +1,7 @@
+###############################################
+# Functions common to all scoring functions
+###############################################
+
 # Execute plants
 prepare_docking() {
 
@@ -28,15 +32,61 @@ fi
 for lig in ${lig_list} ; do
   mkdir -p ${run_folder}/docking/${lig}
 
-  # And write the plants config file there.
+  # And write the config file there.
   cd ${run_folder}/docking/${lig}
-  write_plants_config
+  if [ "${docking_program}" = "plants" ]; then
+    write_plants_config
+  # insert other docking programs here
+  fi
 done
 
 echo -e "\rFinished preparing files... Running"
 # Kill the spinner
 { kill $! && wait $!; } 2>/dev/null
 
+}
+
+
+begin_run() {
+# function containing the basic commands that are common at the begining of the run_* functions
+
+# Progress Bar
+length=$(echo ${lig_list} | wc -w)
+progress_count=0
+
+# Print a spinner on the screen while preparing the commands for parallel
+if [ "${run_mode}" = "parallel" ]; then
+  # Run a spinner in the background
+  (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
+elif [ "${run_mode}" = "mazinger" ]; then
+  # create pbs_script folder
+  mkdir -p ${run_folder}/pbs_scripts/
+fi
+}
+
+end_run() {
+# function containing the basic commands that are common at the end of the run_* functions
+
+# Kill the spinner when the preparation of parallel is done, and run it !
+if [ "${run_mode}" = "parallel" ]; then
+  echo -e "\rFinished preparing parallel... Running"
+  { kill $! && wait $!; } 2>/dev/null
+  # Run the progress bar
+  touch ${run_folder}/docking/.progress.dat
+  (while :; do progress_count=$(cat ${run_folder}/docking/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
+  # Run parallel
+  ${parallel} -j ${core_number} < ${run_folder}/docking/VS_${datetime}.parallel \
+  > ${run_folder}/docking/parallel.job 2>&1
+  # Kill the progress bar when parallel is done
+  { printf '\rProgress : [########################################] 100%\n'; kill $! && wait $!; } 2>/dev/null
+  rm -f ${run_folder}/docking/.progress.dat
+
+# If running on mazinger, wait untill all jobs are finished
+elif [ "${run_mode}" = "mazinger" ]; then
+  mazinger_progress_bar ${run_folder}/docking/jobs_list_${datetime}.mazinger
+elif [ "${run_mode}" = "local" ]; then
+  echo -ne "\rProgress : [########################################] 100%\n"
+fi
 }
 
 #######################################################################
@@ -53,15 +103,8 @@ SCORE_RB_PEN_NORM_CRT_HEVATOMS,SCORE_NORM_CONTACT,PLPtotal,PLPparthbond,PLPparts
 LIG_NUM_CLASH,LIG_NUM_CONTACT,LIG_NUM_NO_CONTACT,CHEMpartmetal,CHEMparthbond,CHEMparthbondCHO,DON,ACC,UNUSED_DON,UNUSED_ACC,\
 CHEMPLP_CLASH2,TRIPOS_TORS,ATOMS_OUTSIDE_BINDINGSITE">${run_folder}/docking/features.csv
 
-# Progress Bar
-length=$(echo ${lig_list} | wc -w)
-progress_count=0
-
-# Print a spinner on the screen while preparing the commands for parallel
-if [ "${run_mode}" = "parallel" ]; then
-  # Run a spinner in the background
-  (while :; do for s in / - \\ \|; do printf "\rPreparing parallel $s";sleep .2; done; done) &
-fi
+# Initialization procedure, common to all scoring functions
+begin_run
 
 # Iterate through each ligand file
 for lig in ${lig_list} ; do
@@ -89,31 +132,14 @@ for lig in ${lig_list} ; do
   # If running on mazinger
   elif [ "${run_mode}" = "mazinger" ] ; then 
     write_pbs
-    jobid=$(qsub plants.pbs )
+    jobid=$(qsub ${run_folder}/pbs_scripts/plants_${lig}.pbs)
     echo "$jobid" >> ${run_folder}/docking/jobs_list_${datetime}.mazinger
     echo -ne "Running ${PURPLE}${lig}${NC} on ${BLUE}${jobid}${NC}              \r"
   fi
 done
 
-# Kill the spinner when the preparation of parallel is done, and run it !
-if [ "${run_mode}" = "parallel" ]; then
-  echo -e "\rFinished preparing parallel... Running"
-  { kill $! && wait $!; } 2>/dev/null
-  # Run the progress bar
-  touch ${run_folder}/docking/.progress.dat
-  (while :; do progress_count=$(cat ${run_folder}/docking/.progress.dat | wc -c); ProgressBar ${progress_count} ${length}; sleep 1; done) &
-  # Run parallel
-  ${parallel} -j ${core_number} < ${run_folder}/docking/VS_${datetime}.parallel > ${run_folder}/docking/parallel.job 2>&1
-  # Kill the progress bar when parallel is done
-  { printf '\rProgress : [########################################] 100%\n'; kill $! && wait $!; } 2>/dev/null
-  rm -f ${run_folder}/docking/.progress.dat
-  
-# If running on mazinger, wait untill all jobs are finished
-elif [ ${run_mode} = "mazinger" ]; then 
-  mazinger_progress_bar ${run_folder}/docking/jobs_list_${datetime}.mazinger
-elif [ "${run_mode}" = "local" ]; then
-  echo -ne "\rProgress : [########################################] 100%\n"
-fi
+# End procedure, common to all scoring functions
+end_run
 }
 
 plants_cmd() {
@@ -127,7 +153,7 @@ reorganize_plants
 write_plants_config() {
 echo "
 # scoring function and search settings
-scoring_function chemplp
+scoring_function ${scoring_function}
 search_speed speed1
 
 # input
@@ -164,9 +190,9 @@ write_protein_conformations 0
 
 
 # Write PBS script --------------------------------------------------
-write_pbs() {
+write_plants_pbs() {
 echo "#!/bin/bash
-#PBS -N VS_${lig}
+#PBS -N docking_${lig}
 #PBS -l nodes=1:ppn=1,walltime=24:00:00.00
 #PBS -o ${lig}.o
 #PBS -e ${lig}.e
@@ -178,10 +204,10 @@ cd \$PBS_O_WORKDIR
 
 source ${CHEMFLOW_HOME}/DockFlow/DockFlow_functions.bash
 
-"> plants.pbs
-print_vars >> plants.pbs
+"> ${run_folder}/pbs_scripts/plants_${lig}.pbs
+print_vars >> ${run_folder}/pbs_scripts/plants_${lig}.pbs
 echo "
-plants_cmd" >> plants.pbs
+plants_cmd" >> ${run_folder}/pbs_scripts/plants_${lig}.pbs
 }
 
 
@@ -205,3 +231,16 @@ else
   echo "${lig},no ranking.csv" >> ${run_folder}/docking/errors.csv
 fi
 }
+
+#########################
+# Other docking software
+#########################
+
+# insert the programs name :
+# * in the list_docking function here
+# * in DockFlow under the "Run docking" comment
+# * in DockFlow_interface under the "Scoring function" comment in check_input function
+# then copy and paste what was done for plants, and modify accordingly.
+# Don't forget to add the scoring function :
+# * in usage function in DockFlow_interface
+# * in ConfigFlow

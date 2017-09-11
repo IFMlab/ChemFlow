@@ -1,10 +1,4 @@
-# Color output
-RED="\e[0;31m"
-BLUE="\e[0;34m"
-GREEN="\e[0;32m"
-PURPLE="\e[0;35m"
-NC="\033[0m"
-
+# Welcome message
 welcome() {
 echo -e "\
 //=======================================================\\\\\\
@@ -17,6 +11,7 @@ echo -e "\
 "
 }
 
+# Exit message
 exit_message() {
 echo "Thank you for using DockFlow !
 The ChemFlow team @IFMlab"
@@ -31,6 +26,8 @@ Usage : DockFlow
                  -f/--file           : Path to DockFlow configuration file
                  -r/--receptor       : Path to the receptor's mol2 file
                  -l/--ligand         : Path to the ligand folder
+                 -sf/--function      : chemplp, plp, plp95
+                                       Default : chemplp.
                  -bsc/--center       : xyz coordinates of the center of the 
                                        spheric binding site, separated by a space
                  -bsr/--radius       : Radius of the spheric binding site
@@ -38,7 +35,7 @@ Usage : DockFlow
                  --run               : local, parallel, mazinger
 _________________________________________________________________________________
 For parallel :
-                 -c/--core_number    : Number of cores for parallel
+                 -c/--corenumber    : Number of cores for parallel
 _________________________________________________________________________________
 Optionnal :
                  -w/--water          : Path to the structural water molecule
@@ -92,6 +89,10 @@ case $key in
     lig_folder="$2"
     shift # past argument
     ;;
+    -sf|--function)
+    scoring_function="$2"
+    shift
+    ;;
     -bsc|--center)
     bs_center="$2 $3 $4"
     shift 3 # past argument
@@ -116,7 +117,7 @@ case $key in
     run_mode="$2"
     shift # past argument
     ;;
-    -c|--core_number)
+    -c|--corenumber)
     core_number="$2"
     shift # past argument
     ;;
@@ -135,12 +136,15 @@ write_DF_config() {
 # Overwrite. This only works because we used the same variable names in the interface and the config file.
 source temp.config
 
-echo "# Config file generated from CLI
+echo "# Config file for DockFlow
 # Absolute path to receptor's mol2 file
 rec=\"$rec\"
 
 # Absolute path to ligands folder
 lig_folder=\"$lig_folder\"
+
+# Scoring function
+scoring_function=\"$scoring_function\"
 
 # Binding site :
 # xyz coordinates of the center of the sphere, separated by a space
@@ -190,7 +194,20 @@ if [ -z "${bs_center}" ]    ; then error "the definition of binding site center 
 if [ -z "${bs_radius}" ]    ; then error "the binding site radius"                           ; fi
 if [ -z "${poses_number}" ] ; then error "the number of docking poses to create"             ; fi
 if [ -z "${plants_exec}" ] && [ ! "${run_mode}" = "mazinger" ] ; then error "the location of PLANTS's executable"  ; fi
-echo -e "${GREEN}Successfully read all mandatory parameters${NC}"
+# Scoring function
+# default is chemplp for PLANTS
+if [ -z "${scoring_function}" ]; then scoring_function="chemplp"; fi
+# recognize which program to use
+if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
+  docking_program="plants"
+#  elif $(list_include_item "insert_new_function_here" "${scoring_function}"); then
+#    docking_program="insert_program_name_here"
+# Error if scoring function not recognized
+else
+  echo -e "Scoring function ${RED}\"${scoring_function}\"${NC} not recognized"
+  exit 1
+fi  
+echo -e "${GREEN}Successfully read all mandatory parameters for docking with ${docking_program}${NC}"
 
 # Optionnal parameters
 ## Water
@@ -208,7 +225,6 @@ then
   echo -e "${RED}ERROR${NC} : ${BLUE}water${NC} parameters incomplete (water molecule missing)"
   exit 1
 else
-  echo -e "${BLUE}Docking without water${NC}"
   dock_water=""
 fi
 
@@ -244,7 +260,7 @@ fi
 ## Check for an already existing rescoring with the same scoring function, and make backup if necessary
 if [ -d "${run_folder}/docking" ]; then
   mv ${run_folder}/docking ${run_folder}/docking.${datetime}.bak
-  echo "Made a backup of an already existing docking campaign"
+  echo "Made a backup of an already existing docking folder, as docking.${datetime}.bak"
 fi
 }
 
