@@ -250,8 +250,10 @@ then
 # if set to mazinger
 elif [ "${run_mode}" = "mazinger" ]
 then
-  module load plants/1.2
-  plants_exec=$(which plants)
+  if [ "${docking_program}" = "plants" ]; then
+    module load plants/1.2
+    plants_exec=$(which plants)
+  fi
 else
   echo -e "${RED}ERROR${NC} : ${RED}Running mode${NC} not recognized"
 fi
