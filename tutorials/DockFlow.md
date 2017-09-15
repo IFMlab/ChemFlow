@@ -56,6 +56,7 @@ Run **ConfigFlow** and fill the forms to create required configuration files.
 
 ### Docking Results
 Results will be placed in the **docking/** folder.
+
 | File | Description | 
 | --- | --- | 
 | ranking.csv | Energies | 
