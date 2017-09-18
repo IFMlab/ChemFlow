@@ -108,14 +108,18 @@ $spores_exec --mode complete tmp.pdb receptor.mol2
 The DUD-E library came in isomeric smiles which is great. However the proper generation of an initial conformer, near the bioactive conformation has major impacts on the docking (CITE). Another major issue is the proper tautomer selection. For the sake of simplicity none of this subjects will be covered here.
 
 To run this tutorial in a reasonable time, we choose to use only a subset of 10 actives and 10 inactives and merge into a single SMILES file, then generate the 3D conformations and assign Gasteiger charges, saving all in the **compounds** folder.
+Since it's a small library you will split into individual files, for large libraries it is more efficient to split into groups of compounds in big .mol2 files and let the docking program handles it.
+
 ```bash
 mkdir compounds
 cd compounds
-head -10 ../actives_final.ism  > compounds.ism
+# A little awk trick normalize the output format.
+head -10 ../actives_final.ism | awk '{print $1,$3}' > compounds.ism
 head -10 ../decoys_final.ism  >> compounds.ism
-babel -ismi compounds.ism -omol2 compounds.mol2 --gen3D
+babel -ismi compounds.ism -omol2 compounds.mol2 --gen3D --split
 cd ../
 ```
+Compounds will be named based on the molecule name (eg CHEMBL359756.mol2) 
 Done we're ready for docking!
 
 ## Configuring & Running Dock*Flow*
