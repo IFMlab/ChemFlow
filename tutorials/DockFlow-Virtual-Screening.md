@@ -118,7 +118,50 @@ cd ../
 ```
 Done we're ready for docking!
 
-## Configuring DockFlow
+## Configuring & Running Dock*Flow*
+There are two ways to configure & run **Dock*Flow*** through a simple graphical interface, and a direct command line for automation. Let's first see the command line options, just type "**DockFlow -h**".
+
+```bash
+dgomes@ifm-cc11:~/hivpr$ DockFlow -h
+//=======================================================\\
+||                        DockFlow                       ||
+|| Laboratoire d'Ingenierie des Fonctions Moleculaires   ||
+|| Institut de Science et d'Ingenierie Supramoleculaires ||
+|| Cedric Bouysset - cbouysset@unistra.fr                ||
+|| Diego E.B. Gomes - dgomes@pq.cnpq.br                  ||
+\\=======================================================//
+
+Usage : DockFlow
+                 -h/--help           : Show this help message and quit
+                 -hh/--fullhelp      : Show a more detailed help
+                 -f/--file           : Path to DockFlow configuration file
+                 -r/--receptor       : Path to the receptor's mol2 file
+                 -l/--ligand         : Path to the ligand folder
+                 -sf/--function      : chemplp, plp, plp95
+                                       Default : chemplp.
+                 -bsc/--center       : xyz coordinates of the center of the 
+                                       spheric binding site, separated by a space
+                 -bsr/--radius       : Radius of the spheric binding site
+                 -n/--number         : Number of poses to generate, per ligand
+                 --run               : local, parallel, mazinger
+_________________________________________________________________________________
+For parallel :
+                 -c/--corenumber    : Number of cores for parallel
+_________________________________________________________________________________
+Optionnal :
+                 -w/--water          : Path to the structural water molecule
+                 -wxyzr/--water_xyzr : xyz coordinates and radius of the water
+                                       sphere, separated by a space
+```
+To run its simple 
+```bash
+# Direct run
+dgomes@ifm-cc11:~/hivpr$ DockFlow -r receptor.mol2 -l compounds -bsc 20.209 -2.783  17.924 -bsr 16 -n 8 --run parallel
+
+# Or, with a previous configured file
+dgomes@ifm-cc11:~/hivpr$ DockFlow -f DockFlow.config
+```
+## Configuring DockFlow using the graphical interface.
 Your docking can be easily configured with our tool **ConfigFlow**, just follow the instructions.  
 * Select either **DockFlow** or **ScoreFlow**  
 ![ChemFlow1](ConfigFlow1.png)
