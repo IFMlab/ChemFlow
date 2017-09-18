@@ -163,22 +163,31 @@ dgomes@ifm-cc11:~/hivpr$ DockFlow -f DockFlow.config
 ```
 ## Configuring DockFlow using the graphical interface.
 Your docking can be easily configured with our tool **ConfigFlow**, just follow the instructions.  
+
 * Select either **DockFlow** or **ScoreFlow**  
 ![ChemFlow1](ConfigFlow1.png)
+
 * Select the .mol2 prepared for the **receptor**.  
 ![ChemFlow2](ConfigFlow2.png)
+
 * Select the folder containing the **compounds** to dock.  
 ![ChemFlow3](ConfigFlow3.png)
+
 * Fill up with the **center** and **boundaries**.  
 ![ChemFlow4](ConfigFlow4.png)
+
 * Choose the number of docking poses, these may affect your success rate.   
 ![ChemFlow5](ConfigFlow5.png)
+
 * In case you have extra parameters, feel free to include them.  
 ![ChemFlow6](ConfigFlow6.png)
+
 * Choose how you will run the calculation, local, parallel or on a PBS cluster. (SLURM is comming to config)  
 ![ChemFlow7](ConfigFlow7.png)
+
 * If parallel, choose how many compute cores do want to use each time.  
 ![ChemFlow8](ConfigFlow8.png)
+
 * You are done !  
 ![ChemFlow9](ConfigFlow9.png)
 
