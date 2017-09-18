@@ -107,10 +107,36 @@ $spores_exec --mode complete tmp.pdb receptor.mol2
 ## Prepare the ligand library
 The DUD-E library came in isomeric smiles which is great. However the proper generation of an initial conformer, near the bioactive conformation has major impacts on the docking (CITE). Another major issue is the proper tautomer selection. For the sake of simplicity none of this subjects will be covered here.
 
-To run this tutorial in a reasonable time, we choose to use only a subset of 10 actives and 10 inactives and merge into a single SMILES file, then generate the 3D conformations, saving all in the **compounds** folder.
+To run this tutorial in a reasonable time, we choose to use only a subset of 10 actives and 10 inactives and merge into a single SMILES file, then generate the 3D conformations and assign Gasteiger charges, saving all in the **compounds** folder.
 ```bash
 mkdir compounds
-head -10 actives_final.ism     >  compounds/compounds.ism
-head -10 decoys_final.ism      >> compounds/compounds.ism
-babel -ismi compounds.ism -omol2  compounds/compounds.mol2 --gen3D
+cd compounds
+head -10 ../actives_final.ism  > compounds.ism
+head -10 ../decoys_final.ism  >> compounds.ism
+babel -ismi compounds.ism -omol2 compounds.mol2 --gen3D
+cd ../
 ```
+Done we're ready for docking!
+
+## Configuring DockFlow
+Your docking can be easily configured with our tool **ConfigFlow**, just follow the instructions.  
+* Select either **DockFlow** or **ScoreFlow**  
+![ChemFlow1](ConfigFlow1.png)
+* Select the .mol2 prepared for the **receptor**.  
+![ChemFlow2](ConfigFlow2.png)
+* Select the folder containing the **compounds** to dock.  
+![ChemFlow3](ConfigFlow3.png)
+* Fill up with the **center** and **boundaries**.  
+![ChemFlow4](ConfigFlow4.png)
+* Choose the number of docking poses, these may affect your success rate.   
+![ChemFlow5](ConfigFlow5.png)
+* In case you have extra parameters, feel free to include them.  
+![ChemFlow6](ConfigFlow6.png)
+* Choose how you will run the calculation, local, parallel or on a PBS cluster. (SLURM is comming to config)  
+![ChemFlow7](ConfigFlow7.png)
+* If parallel, choose how many compute cores do want to use each time.  
+![ChemFlow8](ConfigFlow8.png)
+* You are done !  
+![ChemFlow9](ConfigFlow9.png)
+
+
