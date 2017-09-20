@@ -1,0 +1,8 @@
+GBSA using GB8
+&general
+verbose=2, keep_files=0,
+/
+&gb
+igb=8, saltcon=0.150,
+/
+

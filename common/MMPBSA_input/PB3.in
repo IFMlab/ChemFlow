@@ -1,0 +1,12 @@
+PBSA using PB3
+&general
+verbose=2, keep_files=0,
+/
+&pb
+inp=1,                     
+radiopt=0,                
+istrng=0.15,              
+cavity_surften=0.00542,   
+cavity_offset=0.92,        
+/
+
