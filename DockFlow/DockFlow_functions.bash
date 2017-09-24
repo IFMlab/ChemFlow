@@ -164,7 +164,7 @@ ligand_file  ${lig_folder}/${lig}.mol2
 output_dir docking
 
 # write mol2 files as a single (0) or multiple (1) files
-write_multi_mol2 0
+write_multi_mol2 1
 
 # binding site definition
 bindingsite_center ${bs_center}
