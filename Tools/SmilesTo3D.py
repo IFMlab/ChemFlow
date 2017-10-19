@@ -2,14 +2,13 @@
 # coding: utf8
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from rdkit.Chem import Draw
-from time import sleep
-import argparse, textwrap, sys
+from concurrent import futures
+import argparse, textwrap
 # Download progressbar2 from https://pypi.python.org/pypi/progressbar2
 import progressbar
 
 def InputSmiles(fileInput, args):
-	supplier = Chem.SmilesMolSupplier(fileInput, titleLine=args.header, delimiter=args.delimiter, smilesColumn=args.smilesCol, nameColumn=args.namesCol)
+	supplier = Chem.SmilesMolSupplier(fileInput, titleLine=args.header, delimiter=args.delimiter, smilesColumn=args.smilesCol, nameColumn=args.namesCol, sanitize=True)
 	smiles = []
 	for i,mol in enumerate(supplier):
 		if mol:
@@ -30,6 +29,7 @@ def Generate3D(mol):
 		# if it failed
 		if returnedVal == -1:
 			# try with another method
+			print("Failed to generate 3D structure for", m_H.GetProp('_Name'), "- Switching to RandomCoords method.")
 			returnedVal = AllChem.EmbedMolecule(m_H, useRandomCoords=True)
 			# if it failed again, print error
 			if returnedVal == -1:
@@ -39,8 +39,13 @@ def Generate3D(mol):
 			# Minimize with force field
 			if   args.method == 'uff' : AllChem.UFFOptimizeMolecule(m_H)
 			elif args.method == 'mmff': AllChem.MMFFOptimizeMolecule(m_H)
+		else:
+			return None
 	elif args.method == 'etkdg':
 		returnedVal = AllChem.EmbedMolecule(m_H, AllChem.ETKDG())
+		if returnedVal == -1:
+			print("Failed to generate 3D structure for", m_H.GetProp('_Name'), "with ETKDG.")
+			return None
 	# Keep hydrogens or not
 	if args.hydrogen:
 		m = m_H
@@ -48,30 +53,50 @@ def Generate3D(mol):
 		m = Chem.RemoveHs(m_H)
 	return m
 
-def AsynchronousJobs(executor, args):
-	# Submit a set of asynchronous jobs
-	jobs = []
-	structures = []
-	for mol in smiles:
-		job = executor.submit(Generate3D, mol)
-		jobs.append(job)
-	# Progress bar
+def GenerateProgessBar(array):
 	widgets = ["Generating 3D - [", progressbar.ETA(format='Remaining:  %(eta)s'), "] ", progressbar.Bar(), " ", progressbar.Percentage()]
-	pbar = progressbar.ProgressBar(widgets=widgets, max_value=len(jobs))
-	# Get results as they are completed
-	for job in pbar(futures.as_completed(jobs)):
-		structures.append(job.result())
+	return progressbar.ProgressBar(widgets=widgets, max_value=len(array))
+
+def ExThreadSubmit(smiles, args):
+	# uses a pool of threads to execute calls asynchronously
+	with futures.ThreadPoolExecutor(max_workers=args.nthreads) as executor:
+		jobs = []
+		structures = []
+		# Submit jobs
+		for mol in smiles:
+			job = executor.submit(Generate3D, mol)
+			jobs.append(job)
+		pbar = GenerateProgessBar(jobs)
+		# Get results (with progress bar) as they are completed
+		for job in pbar(futures.as_completed(jobs)):
+			# If result is not None
+			if job.result():
+				structures.append(job.result())
+	return structures
+
+def ExMpiSubmit(smiles, args):
+	from mpi4py import futures
+	with futures.MPIPoolExecutor(max_workers=args.nthreads) as executor:
+		# Submit a set of asynchronous jobs
+		jobs = []
+		structures = []
+		# Submit jobs
+		for mol in smiles:
+			job = executor.submit(Generate3D, mol)
+			jobs.append(job)
+		pbar = GenerateProgessBar(jobs)
+		# Get results (with progress bar) as they are completed
+		for job in pbar(futures.as_completed(jobs)):
+			# If result is not None
+			if job.result():
+				structures.append(job.result())
 	return structures
 
 def RunCPU(smiles, args):
 	if args.mpi:
-		from mpi4py import futures
-		with futures.MPIPoolExecutor(max_workers=args.nthreads) as executor:
-			return AsynchronousJobs(executor, args)
+		return ExMpiSubmit(smiles, args)
 	else:	
-		from concurrent import futures
-		with futures.ProcessPoolExecutor(max_workers=args.nthreads) as executor:
-			return AsynchronousJobs(executor, args)
+		return ExThreadSubmit(smiles, args)
 
 def RunGPU(smiles, args):
 	pass
@@ -80,7 +105,9 @@ def OutputSDF(structures, args):
 	file = Chem.SDWriter(args.output)
 	for mol in structures:
 		file.write(mol)
-	print("Wrote", len(structures), "molecules to", args.output)
+		if args.verbose:
+			print("Writing: ", mol.GetPropsAsDict(includePrivate=True))
+	print("Wrote {}/{} molecules to {}".format(len(structures), len(smiles), args.output))
 
 ########
 # Main #
@@ -94,7 +121,7 @@ if __name__ == '__main__':
 	group_input.add_argument("-i", "--input", metavar='filename', type=str, required=True, help="Path to your SMILES file")
 	group_input.add_argument("-sc", "--smilesCol", metavar='int', type=int, default=0, help="Index of the column containing the SMILES. Default: 0")
 	group_input.add_argument("-nc","--namesCol", metavar='int', type=int, default=1, help="Index of the column containing the names. Default: 1")
-	group_input.add_argument("-d", "--delimiter", metavar="'char'", default='\t', help="If your SMILES file contains several columns: delimiter for the columns. Default: -d '\t'")
+	group_input.add_argument("-d", "--delimiter", metavar="'char'", default='\t', help="If your SMILES file contains several columns: delimiter for the columns. Default: -d '\\t'")
 	group_input.add_argument("--header", action="store_true", help="Presence of a header in the input file")
 	
 	group_output = parser.add_argument_group('OUTPUT arguments')
