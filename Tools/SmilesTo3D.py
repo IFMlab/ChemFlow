@@ -48,39 +48,33 @@ def Generate3D(mol):
 		m = Chem.RemoveHs(m_H)
 	return m
 
-def RunCPU(smiles, args):
-	from concurrent import futures
-	with futures.ProcessPoolExecutor(max_workers=args.nthreads) as executor:
-		# Submit a set of asynchronous jobs
-		jobs = []
-		structures = []
-		for mol in smiles:
-			job = executor.submit(Generate3D, mol)
-			jobs.append(job)
-		# Progress bar
-		widgets = ["Generating 3D - [", progressbar.ETA(format='Remaining:  %(eta)s'), "] ", progressbar.Bar(), " ", progressbar.Percentage()]
-		pbar = progressbar.ProgressBar(widgets=widgets, max_value=len(jobs))
-		# Get results as they are completed
-		for job in pbar(futures.as_completed(jobs)):
-			structures.append(job.result())
+def AsynchronousJobs(executor, args):
+	# Submit a set of asynchronous jobs
+	jobs = []
+	structures = []
+	for mol in smiles:
+		job = executor.submit(Generate3D, mol)
+		jobs.append(job)
+	# Progress bar
+	widgets = ["Generating 3D - [", progressbar.ETA(format='Remaining:  %(eta)s'), "] ", progressbar.Bar(), " ", progressbar.Percentage()]
+	pbar = progressbar.ProgressBar(widgets=widgets, max_value=len(jobs))
+	# Get results as they are completed
+	for job in pbar(futures.as_completed(jobs)):
+		structures.append(job.result())
 	return structures
 
+def RunCPU(smiles, args):
+	if args.mpi:
+		from mpi4py import futures
+		with futures.MPIPoolExecutor(max_workers=args.nthreads) as executor:
+			return AsynchronousJobs(executor, args)
+	else:	
+		from concurrent import futures
+		with futures.ProcessPoolExecutor(max_workers=args.nthreads) as executor:
+			return AsynchronousJobs(executor, args)
+
 def RunGPU(smiles, args):
-	from mpi4py import futures
-	with futures.MPIPoolExecutor(max_workers=args.nthreads) as executor:
-		# Submit a set of asynchronous jobs
-		jobs = []
-		structures = []
-		for mol in smiles:
-			job = executor.submit(Generate3D, mol)
-			jobs.append(job)
-		# Progress bar
-		widgets = ["Generating 3D - [", progressbar.ETA(format='Remaining:  %(eta)s'), "] ", progressbar.Bar(), " ", progressbar.Percentage()]
-		pbar = progressbar.ProgressBar(widgets=widgets, max_value=len(jobs))
-		# Get results as they are completed
-		for job in pbar(futures.as_completed(jobs)):
-			structures.append(job.result())
-	return structures
+	pass
 
 def OutputSDF(structures, args):
 	file = Chem.SDWriter(args.output)
@@ -113,7 +107,8 @@ if __name__ == '__main__':
 * uff   : distance geometry + force field minimization with UFF
 * mmff  : distance geometry + force field minimization with MMFF
 * etkdg : distance geometry with experimental torsion angles knowledge from the CSD. Used by default'''))
-	group_args.add_argument("--gpu", action="store_true", help="Run on GPU using MPI")
+	group_args.add_argument("--mpi", action="store_true", help="Run using MPI")
+	group_args.add_argument("--gpu", action="store_true", help="Run on GPU (not implemented yet)")
 	group_args.add_argument("-nt", "--nthreads", metavar='int', type=int, default=1, help="Specify the number of CPU threads to be used. Default: -nt 1")
 	
 	# Parse arguments from command line
