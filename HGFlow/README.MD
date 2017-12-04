@@ -1,24 +1,25 @@
 # HG<i>Flow</i> - Host-Guest Molecular Dynamics Workflow 
-# ... and Toy System Playground !!!
-#
+... and Toy System Playground !!!
 Copyright (c) 2017 Diego Enry B. Gomes and Marco Cecchini
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
- 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
- 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+HG<i>Flow</i> is a complete workflow to investigate Host/Guest systems. 
 
+The workflows are divided in 4 parts:
+1 Setup
+(* Docking - future relase, using Dock<i>Flow</i>)
+* Parametrization
+* Simulation setup
+
+2 Simulation - A single complex simulation or 3 independent simulations (complex, host, guest)
+* Minimization
+* Heating and Equilibration
+* Production
+
+3 Analysis
+* Post-processing, imaging, RMSD, RMSF, Radgyr...
+* Linear Interaction Energy (LIE) using Cecchini's model. 
+* Molecular Mechanics - Poisson-Boltzman + Solvation Area
+* Molecular Mechanics - Generalized Born + Solvation Area
+
+4 Reporting ( offered by Report<i>Flow</i> ) 
+Energies, Center of Mass, Correlations, requires minimal user intervention.
