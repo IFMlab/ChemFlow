@@ -38,3 +38,10 @@ The workflows are divided in 4 parts:
 * Center of Mass
 * Correlation with experiment
 (requires little user intervention)
+
+# Getting started 
+Go to www.ambermd.org, download and install AmberTools14 or latter.
+
+Run ./HGFlow and follow instructions.
+
+Hurray !!
