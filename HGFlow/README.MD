@@ -22,4 +22,7 @@ The workflows are divided in 4 parts:
 * Molecular Mechanics - Generalized Born + Solvation Area
 
 4 Reporting ( offered by Report<i>Flow</i> ) 
-Energies, Center of Mass, Correlations, requires minimal user intervention.
+* Energies, 
+* Center of Mass
+* Correlation with experiment
+(requires little user intervention)
