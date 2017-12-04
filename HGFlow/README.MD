@@ -12,12 +12,13 @@ Diego E. B. Gomes(1,2,3) - dgomes@pq.cnpq.br ; Paulina Pacack (3,4) - ppacak@uni
 4 - Novartis Institutes for BioMedical Research, Basel - Switzerland; 
 
 
-HG<i>Flow</i> is a complete workflow to investigate Host/Guest systems using AmberTools14 (or latter)
+HG<i>Flow</i> is a complete workflow to investigate Host/Guest systems using AmberTools14 (or latter) and either SLURM or PBS schedullers in supercomputers.
 
 The workflows are divided in 4 parts:
 1) Setup
 * Docking (future relase, using Dock<i>Flow</i>)
-* Parametrization
+* Parametrization to the General Amber Forcefield.
+* Charger from AM1-bcc, or RESP ( requires a Gaussian 09 licence)
 * Simulation setup
 
 2) Simulation - A single complex simulation or 3 independent simulations (complex, host, guest)
