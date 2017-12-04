@@ -205,34 +205,45 @@ pmemd_cpu
 
 }
 
+get_energies(){
+a=$(awk 'f{print $2;f=0} /NSTEP/{f=1}' ${system}/min_host.mdout | head -1)
+a="($(sed 's/[eE]+\{0,1\}/*10^/g' <<<"$a"))"
+
+b=$(awk 'f{print $2;f=0} /NSTEP/{f=1}' ${system}/min_host.mdout | tail -1)
+b="($(sed 's/[eE]+\{0,1\}/*10^/g' <<<"$b"))"
+
+c=$(echo ${a} - ${b} | bc)
+echo "${system},"None",${c}"
+
+a=$(awk 'f{print $2;f=0} /NSTEP/{f=1}' ${system}/min_gbsa_host.mdout | head -1)
+a="($(sed 's/[eE]+\{0,1\}/*10^/g' <<<"$a"))"
+
+b=$(awk 'f{print $2;f=0} /NSTEP/{f=1}' ${system}/min_gbsa_host.mdout | tail -1)
+b="($(sed 's/[eE]+\{0,1\}/*10^/g' <<<"$b"))"
+
+c=$(echo ${a} - ${b} | bc)
+echo "${system},"GBSA1",${c}"
+}
+
 
 # COPY FILES HERE - THIS WAS VERY SPECIFIC TO ME
 workdir=$PWD
 
-copy_CB7_CXX() {
-for i in $(seq -w 14) ; do
-  echo "CB7-C$i"
-  cd ${workdir}
-  if [ ! -d CB7-C${i} ] ; then mkdir CB7-C${i} ; fi
-  cd CB7-C${i}
-  cp /data/dgomes/toy_systems/complex-sampl4/CB7-C${i}/solution/complex/{complex_box.prmtop,prod.rst7} .
-done
-}
+# List with names of all system folders
+system_list=$(ls -d */ | cut -d/ -f1)
 
-copy_OAH_OXX() {
-for i in $(seq -w 09) ; do
-  echo "OAH-O${i}"
-  cd ${workdir}
-  if [ ! -d OAH-O${i} ] ; then mkdir OAH-O${i} ; fi
-  cd OAH-O${i}
-  cp /data/dgomes/toy_systems/complex-sampl4/OAH_charged/OAH-O${i}/solution/complex/{complex_box.prmtop,prod.rst7} .
-done
-}
+echo "Host-Guest,Solvation,Delta"
+for system in ${system_list} ; do
 
-#copy_CB7_CXX
-#copy_OAH_OXX
+  if [ -f ${system}/min_gbsa_host.mdout ] ; then
+    get_energies
+  fi
+
+done
+
 
 for system in ${system_list} ; do
   cd ${workdir}/${system}
   compute_strain_energy  
 done
+
