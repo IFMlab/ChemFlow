@@ -215,7 +215,7 @@ if [ ! -z "${water}" ] && [ ! -z "${water_xyzr}" ]
 then
   echo -e "${BLUE}Docking with water${NC}"
   dock_water="water_molecule ${water_xyzr}
-              water_molecule_definition ${water}"
+water_molecule_definition ${water}"
 elif [ ! -z "${water}" ] && [ -z "${water_xyzr}" ]
 then
   echo -e "${RED}ERROR${NC} : ${BLUE}water${NC} parameters incomplete (coordinates missing)"
