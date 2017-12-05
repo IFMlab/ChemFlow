@@ -12,6 +12,10 @@ Diego E. B. Gomes(1,2,3) - dgomes@pq.cnpq.br ; Paulina Pacack (3,4) - ppacak@uni
 4 - Novartis Institutes for BioMedical Research, Basel - Switzerland; 
 
 
+
+# WORK IN PROGRESS
+HGFlow5.1 has resume features that HGFlow6 (slurm+SAMPL6) does not.
+
 HG<i>Flow</i> is a complete workflow to investigate Host/Guest systems using AmberTools14 (or latter) and either SLURM or PBS schedullers in supercomputers.
 
 The workflows are divided in 4 parts:
