@@ -172,6 +172,7 @@ bindingsite_radius ${bs_radius}
 
 # water molecule centered on a sphere of coord x y z and can move in radius r
 ${dock_water}
+${dock_water2}
 
 # Other user-defined parameters
 ${PLANTS_user_parameters}
