@@ -4,8 +4,11 @@ from PyQt5.QtWidgets import QWidget, QFileDialog, QMainWindow, QDialog, QMessage
 from forceFieldMin.UImindialog import *
 from dialogSaveRestore import *
 
+execDir = os.path.dirname(os.path.abspath(__file__))
+iniParameters = os.path.realpath(os.path.join(execDir, "ini/parameters.ini"))
+
 class DialogMin(QDialog, Ui_minDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
+    settings = QSettings("iniParameters", QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)

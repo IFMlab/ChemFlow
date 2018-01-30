@@ -6,9 +6,14 @@ from dockPlants.UIdockplantsdialog import *
 from waterPlants.UIwaterplantsdialog import *
 from dialogSaveRestore import *
 
+# Absolute paths to files
+execDir = os.path.dirname(os.path.realpath(sys.argv[0]))
+iniParameters = os.path.realpath(os.path.join(execDir, "ini/parameters.ini"))
+iniPaths = os.path.realpath(os.path.join(execDir, "ini/paths.ini"))
+
 class DialogDockVina(QDialog, Ui_dockVinaDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
-    globalSettings = QSettings("ini/paths.ini", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
+    globalSettings = QSettings(iniPaths, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -79,8 +84,8 @@ class DialogDockVina(QDialog, Ui_dockVinaDialog):
             self.close()
 
 class DialogDockPlants(QDialog, Ui_dockPlantsDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
-    globalSettings = QSettings("ini/paths.ini", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
+    globalSettings = QSettings(iniPaths, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -175,7 +180,7 @@ class DialogDockPlants(QDialog, Ui_dockPlantsDialog):
             self.close()
 
 class DialogWaterPlants(QDialog, Ui_waterPlantsDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)

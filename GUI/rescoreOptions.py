@@ -8,9 +8,13 @@ from rescoreMmpbsa.UIrescoremmpbsadialog import *
 from MD.UImddialog import *
 from dialogSaveRestore import *
 
+execDir = os.path.dirname(os.path.abspath(__file__))
+iniParameters = os.path.realpath(os.path.join(execDir, "ini/parameters.ini"))
+iniPaths = os.path.realpath(os.path.join(execDir, "ini/paths.ini"))
+
 class DialogRescoreVina(QDialog, Ui_rescoreVinaDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
-    globalSettings = QSettings("ini/paths.ini", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
+    globalSettings = QSettings(iniPaths, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -79,8 +83,8 @@ class DialogRescoreVina(QDialog, Ui_rescoreVinaDialog):
             self.close()
 
 class DialogRescorePlants(QDialog, Ui_rescorePlantsDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
-    globalSettings = QSettings("ini/paths.ini", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
+    globalSettings = QSettings(iniPaths, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -167,8 +171,8 @@ class DialogRescorePlants(QDialog, Ui_rescorePlantsDialog):
             self.close()
 
 class DialogRescoreMmpbsa(QDialog, Ui_rescoreMmpbsaDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
-    globalSettings = QSettings("ini/paths.ini", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
+    globalSettings = QSettings(iniPaths, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -243,7 +247,7 @@ class DialogRescoreMmpbsa(QDialog, Ui_rescoreMmpbsaDialog):
             self.close()
 
 class DialogMD(QDialog, Ui_MDDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)

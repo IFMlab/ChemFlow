@@ -14,8 +14,12 @@ def defaultRunParameters(runOption):
     elif runOption == 'Slurm':
         return {'numberNodes':1,'numberPpn':1,'walltime':'24:00:00'}
 
+execDir = os.path.dirname(os.path.abspath(__file__))
+iniParameters = os.path.realpath(os.path.join(execDir, "ini/parameters.ini"))
+iniPaths = os.path.realpath(os.path.join(execDir, "ini/paths.ini"))
+
 class DialogRunLocally(QDialog, Ui_RunLocallyDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -37,7 +41,7 @@ class DialogRunLocally(QDialog, Ui_RunLocallyDialog):
         self.close()
 
 class DialogRunPBS(QDialog, Ui_RunPBSDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -61,7 +65,7 @@ class DialogRunPBS(QDialog, Ui_RunPBSDialog):
         self.close()
 
 class DialogRunSlurm(QDialog, Ui_RunSlurmDialog):
-    settings = QSettings("ini/parameters.ini", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)

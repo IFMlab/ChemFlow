@@ -2,6 +2,15 @@ import sys, os, inspect
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.environ.get("_MEIPASS2", os.path.abspath("."))
+    return os.path.join(base_path, relative_path)
+
 def guiSave(ui, settings):
     for name, obj in inspect.getmembers(ui):
         if isinstance(obj, QComboBox):
@@ -135,8 +144,7 @@ def restoreUsefullPaths(ui, settings):
                 value = settings.value(name)
                 obj.setPlainText(value)
 
-def cleanParameters():
-    fileName = 'parameters'
-    iniFile = 'ini/{}.ini'.format(fileName)
+def cleanParameters(dirName):
+    iniFile = '{}/ini/parameters.ini'.format(dirName)
     if os.path.isfile(iniFile):
         os.remove(iniFile)

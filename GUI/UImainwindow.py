@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/UI/ChemFlow/mainwindow.ui'
+# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/GUI/mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.9.2
 #
@@ -96,7 +96,7 @@ class Ui_MainWindow(object):
         self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line_2.setObjectName("line_2")
         self.pushButton_writeConfig = QtWidgets.QPushButton(self.centralWidget)
-        self.pushButton_writeConfig.setGeometry(QtCore.QRect(100, 490, 161, 29))
+        self.pushButton_writeConfig.setGeometry(QtCore.QRect(103, 490, 121, 29))
         self.pushButton_writeConfig.setObjectName("pushButton_writeConfig")
         self.comboBox_dockingSoftware = QtWidgets.QComboBox(self.centralWidget)
         self.comboBox_dockingSoftware.setGeometry(QtCore.QRect(100, 290, 221, 21))
@@ -221,7 +221,7 @@ class Ui_MainWindow(object):
         self.pushButton_output.setGeometry(QtCore.QRect(480, 240, 86, 21))
         self.pushButton_output.setObjectName("pushButton_output")
         self.pushButton_readConfig = QtWidgets.QPushButton(self.centralWidget)
-        self.pushButton_readConfig.setGeometry(QtCore.QRect(250, 490, 171, 29))
+        self.pushButton_readConfig.setGeometry(QtCore.QRect(221, 490, 121, 29))
         self.pushButton_readConfig.setObjectName("pushButton_readConfig")
         self.line_10 = QtWidgets.QFrame(self.centralWidget)
         self.line_10.setGeometry(QtCore.QRect(10, 420, 20, 61))
