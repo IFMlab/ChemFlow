@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>330</width>
+    <width>345</width>
     <height>219</height>
    </rect>
   </property>
@@ -16,7 +16,7 @@
   <widget class="QPushButton" name="pushButton_cancel">
    <property name="geometry">
     <rect>
-     <x>184</x>
+     <x>190</x>
      <y>180</y>
      <width>86</width>
      <height>29</height>
@@ -31,7 +31,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>151</width>
+     <width>181</width>
      <height>17</height>
     </rect>
    </property>
@@ -48,7 +48,7 @@
   <widget class="QPushButton" name="pushButton_ok">
    <property name="geometry">
     <rect>
-     <x>54</x>
+     <x>60</x>
      <y>180</y>
      <width>86</width>
      <height>29</height>
@@ -61,14 +61,17 @@
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>33</x>
+     <x>15</x>
      <y>76</y>
-     <width>111</width>
-     <height>17</height>
+     <width>121</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
     <string>Number of steps</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
   </widget>
   <widget class="Line" name="line_2">
@@ -87,9 +90,9 @@
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>160</x>
+     <x>190</x>
      <y>10</y>
-     <width>161</width>
+     <width>141</width>
      <height>20</height>
     </rect>
    </property>
@@ -100,7 +103,7 @@
   <widget class="QSpinBox" name="spinBox_steps">
    <property name="geometry">
     <rect>
-     <x>140</x>
+     <x>150</x>
      <y>71</y>
      <width>91</width>
      <height>27</height>
@@ -124,7 +127,7 @@
     <rect>
      <x>10</x>
      <y>160</y>
-     <width>311</width>
+     <width>321</width>
      <height>21</height>
     </rect>
    </property>
@@ -138,7 +141,7 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>15</x>
      <y>108</y>
      <width>121</width>
      <height>20</height>
@@ -147,11 +150,14 @@
    <property name="text">
     <string>BackBone restraint</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
   </widget>
   <widget class="QDoubleSpinBox" name="doubleSpinBox_restraint">
    <property name="geometry">
     <rect>
-     <x>140</x>
+     <x>150</x>
      <y>101</y>
      <width>91</width>
      <height>27</height>
@@ -167,27 +173,27 @@
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>240</x>
+     <x>250</x>
      <y>110</y>
-     <width>71</width>
+     <width>101</width>
      <height>17</height>
     </rect>
    </property>
    <property name="text">
-    <string>kcal/mol/Å</string>
+    <string>kcal/mol/Å^2</string>
    </property>
   </widget>
   <widget class="QComboBox" name="comboBox_run">
    <property name="geometry">
     <rect>
-     <x>140</x>
+     <x>150</x>
      <y>40</y>
      <width>121</width>
      <height>25</height>
     </rect>
    </property>
    <property name="currentText">
-    <string>Sander</string>
+    <string>Minab</string>
    </property>
    <item>
     <property name="text">
@@ -213,51 +219,39 @@
   <widget class="QLabel" name="label_5">
    <property name="geometry">
     <rect>
-     <x>105</x>
+     <x>95</x>
      <y>40</y>
-     <width>31</width>
+     <width>41</width>
      <height>20</height>
     </rect>
    </property>
    <property name="text">
     <string>Run</string>
    </property>
-  </widget>
-  <widget class="QLabel" name="label_6">
-   <property name="geometry">
-    <rect>
-     <x>301</x>
-     <y>105</y>
-     <width>16</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>6</pointsize>
-    </font>
-   </property>
-   <property name="text">
-    <string>2</string>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
   </widget>
   <widget class="QLabel" name="label_7">
    <property name="geometry">
     <rect>
-     <x>70</x>
+     <x>65</x>
      <y>140</y>
-     <width>56</width>
-     <height>17</height>
+     <width>71</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
     <string>GB model</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
   </widget>
   <widget class="QComboBox" name="comboBox_gb">
    <property name="geometry">
     <rect>
-     <x>140</x>
+     <x>150</x>
      <y>137</y>
      <width>69</width>
      <height>25</height>

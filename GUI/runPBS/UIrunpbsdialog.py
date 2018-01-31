@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/UI/ChemFlow/runPBS/runpbsdialog.ui'
+# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/GUI/runPBS/runpbsdialog.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.10
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,16 +11,16 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_RunPBSDialog(object):
     def setupUi(self, RunPBSDialog):
         RunPBSDialog.setObjectName("RunPBSDialog")
-        RunPBSDialog.resize(281, 199)
+        RunPBSDialog.resize(292, 199)
         self.label = QtWidgets.QLabel(RunPBSDialog)
-        self.label.setGeometry(QtCore.QRect(10, 10, 81, 17))
+        self.label.setGeometry(QtCore.QRect(10, 10, 101, 17))
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
         self.label.setFont(font)
         self.label.setObjectName("label")
         self.spinBox_nodes = QtWidgets.QSpinBox(RunPBSDialog)
-        self.spinBox_nodes.setGeometry(QtCore.QRect(160, 40, 61, 27))
+        self.spinBox_nodes.setGeometry(QtCore.QRect(170, 40, 61, 27))
         self.spinBox_nodes.setMinimum(1)
         self.spinBox_nodes.setMaximum(10000)
         self.spinBox_nodes.setObjectName("spinBox_nodes")
@@ -33,10 +33,11 @@ class Ui_RunPBSDialog(object):
         self.pushButton_cancel.setGeometry(QtCore.QRect(160, 160, 86, 29))
         self.pushButton_cancel.setObjectName("pushButton_cancel")
         self.label_2 = QtWidgets.QLabel(RunPBSDialog)
-        self.label_2.setGeometry(QtCore.QRect(46, 43, 101, 20))
+        self.label_2.setGeometry(QtCore.QRect(39, 43, 121, 20))
+        self.label_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_2.setObjectName("label_2")
         self.line = QtWidgets.QFrame(RunPBSDialog)
-        self.line.setGeometry(QtCore.QRect(100, 10, 181, 20))
+        self.line.setGeometry(QtCore.QRect(120, 10, 161, 20))
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
         self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line.setObjectName("line")
@@ -49,18 +50,20 @@ class Ui_RunPBSDialog(object):
         self.pushButton_ok.setGeometry(QtCore.QRect(40, 160, 86, 29))
         self.pushButton_ok.setObjectName("pushButton_ok")
         self.spinBox_ppn = QtWidgets.QSpinBox(RunPBSDialog)
-        self.spinBox_ppn.setGeometry(QtCore.QRect(160, 74, 61, 27))
+        self.spinBox_ppn.setGeometry(QtCore.QRect(170, 74, 61, 27))
         self.spinBox_ppn.setMinimum(1)
         self.spinBox_ppn.setMaximum(1024)
         self.spinBox_ppn.setObjectName("spinBox_ppn")
         self.label_3 = QtWidgets.QLabel(RunPBSDialog)
-        self.label_3.setGeometry(QtCore.QRect(30, 80, 131, 20))
+        self.label_3.setGeometry(QtCore.QRect(19, 80, 141, 20))
+        self.label_3.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_3.setObjectName("label_3")
         self.label_4 = QtWidgets.QLabel(RunPBSDialog)
-        self.label_4.setGeometry(QtCore.QRect(25, 110, 131, 27))
+        self.label_4.setGeometry(QtCore.QRect(18, 110, 141, 27))
+        self.label_4.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_4.setObjectName("label_4")
         self.comboBox = QtWidgets.QComboBox(RunPBSDialog)
-        self.comboBox.setGeometry(QtCore.QRect(160, 110, 91, 25))
+        self.comboBox.setGeometry(QtCore.QRect(170, 110, 94, 25))
         self.comboBox.setObjectName("comboBox")
         self.comboBox.addItem("")
         self.comboBox.addItem("")

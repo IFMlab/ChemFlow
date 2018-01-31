@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/UI/ChemFlow/runLocally/runlocallydialog.ui'
+# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/GUI/runLocally/runlocallydialog.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.10
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -19,14 +19,14 @@ class Ui_RunLocallyDialog(object):
         self.pushButton_cancel.setGeometry(QtCore.QRect(160, 100, 86, 29))
         self.pushButton_cancel.setObjectName("pushButton_cancel")
         self.label = QtWidgets.QLabel(RunLocallyDialog)
-        self.label.setGeometry(QtCore.QRect(10, 10, 71, 17))
+        self.label.setGeometry(QtCore.QRect(10, 10, 81, 17))
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
         self.label.setFont(font)
         self.label.setObjectName("label")
         self.line = QtWidgets.QFrame(RunLocallyDialog)
-        self.line.setGeometry(QtCore.QRect(80, 10, 201, 20))
+        self.line.setGeometry(QtCore.QRect(90, 10, 191, 20))
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
         self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line.setObjectName("line")
@@ -36,7 +36,7 @@ class Ui_RunLocallyDialog(object):
         self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line_2.setObjectName("line_2")
         self.label_2 = QtWidgets.QLabel(RunLocallyDialog)
-        self.label_2.setGeometry(QtCore.QRect(40, 46, 101, 21))
+        self.label_2.setGeometry(QtCore.QRect(40, 46, 121, 21))
         self.label_2.setObjectName("label_2")
         self.spinBox = QtWidgets.QSpinBox(RunLocallyDialog)
         self.spinBox.setGeometry(QtCore.QRect(156, 43, 71, 27))

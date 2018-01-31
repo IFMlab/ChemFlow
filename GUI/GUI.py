@@ -44,6 +44,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.pushButton_writeConfig.clicked.connect(self.writeConfig)
         self.pushButton_readConfig.clicked.connect(self.readConfig)
         self.pushButton_cancel.clicked.connect(self.cancel)
+        self.comboBox_analyse.currentIndexChanged.connect(self.checkAnalyse)
+        self.pushButton_configureExp.clicked.connect(self.configureExp)
         # dic for ligand, receptor and output files
         self.userInput = {}
 
@@ -158,6 +160,16 @@ class Main(QMainWindow, Ui_MainWindow):
         else:
             self.rescoringParameters = rescoringDialog.values
         self.rescoringSoftware = rescoringSoftware
+
+    def checkAnalyse(self):
+        analysis = self.comboBox_analyse.currentText()
+        if analysis == 'Current experiment':
+            self.pushButton_configureExp.setEnabled(False)
+        else:
+            self.pushButton_configureExp.setEnabled(True)
+
+    def configureExp(self):
+        pass
 
     def run(self):
         self.writeConfig()

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>454</width>
+    <width>452</width>
     <height>239</height>
    </rect>
   </property>
@@ -16,9 +16,9 @@
   <widget class="QLabel" name="label_5">
    <property name="geometry">
     <rect>
-     <x>74</x>
+     <x>100</x>
      <y>87</y>
-     <width>41</width>
+     <width>36</width>
      <height>26</height>
     </rect>
    </property>
@@ -29,9 +29,9 @@
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>74</x>
+     <x>100</x>
      <y>57</y>
-     <width>41</width>
+     <width>36</width>
      <height>26</height>
     </rect>
    </property>
@@ -42,20 +42,23 @@
   <widget class="QLabel" name="label_10">
    <property name="geometry">
     <rect>
-     <x>64</x>
+     <x>47</x>
      <y>147</y>
-     <width>41</width>
+     <width>61</width>
      <height>26</height>
     </rect>
    </property>
    <property name="text">
     <string>Radius</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
   </widget>
   <widget class="QDoubleSpinBox" name="doubleSpinBox_cy">
    <property name="geometry">
     <rect>
-     <x>114</x>
+     <x>134</x>
      <y>87</y>
      <width>131</width>
      <height>27</height>
@@ -77,7 +80,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_cx">
    <property name="geometry">
     <rect>
-     <x>114</x>
+     <x>134</x>
      <y>57</y>
      <width>131</width>
      <height>27</height>
@@ -99,7 +102,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_radius">
    <property name="geometry">
     <rect>
-     <x>114</x>
+     <x>134</x>
      <y>147</y>
      <width>131</width>
      <height>27</height>
@@ -121,7 +124,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_cz">
    <property name="geometry">
     <rect>
-     <x>114</x>
+     <x>134</x>
      <y>117</y>
      <width>131</width>
      <height>27</height>
@@ -143,9 +146,9 @@
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
-     <x>74</x>
+     <x>100</x>
      <y>117</y>
-     <width>41</width>
+     <width>36</width>
      <height>26</height>
     </rect>
    </property>
@@ -156,7 +159,7 @@
   <widget class="QPushButton" name="pushButton_cancel">
    <property name="geometry">
     <rect>
-     <x>250</x>
+     <x>260</x>
      <y>197</y>
      <width>86</width>
      <height>29</height>
@@ -195,7 +198,7 @@
   <widget class="QPushButton" name="pushButton_ok">
    <property name="geometry">
     <rect>
-     <x>120</x>
+     <x>130</x>
      <y>197</y>
      <width>86</width>
      <height>29</height>
@@ -210,7 +213,7 @@
     <rect>
      <x>10</x>
      <y>7</y>
-     <width>141</width>
+     <width>151</width>
      <height>17</height>
     </rect>
    </property>
@@ -227,9 +230,9 @@
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>140</x>
+     <x>160</x>
      <y>7</y>
-     <width>301</width>
+     <width>281</width>
      <height>20</height>
     </rect>
    </property>
@@ -240,9 +243,9 @@
   <widget class="QTextBrowser" name="textBrowser_water">
    <property name="geometry">
     <rect>
-     <x>115</x>
+     <x>135</x>
      <y>30</y>
-     <width>241</width>
+     <width>211</width>
      <height>21</height>
     </rect>
    </property>
@@ -260,7 +263,7 @@
     <rect>
      <x>20</x>
      <y>30</y>
-     <width>91</width>
+     <width>111</width>
      <height>20</height>
     </rect>
    </property>
@@ -271,7 +274,7 @@
   <widget class="QPushButton" name="pushButton_water">
    <property name="geometry">
     <rect>
-     <x>360</x>
+     <x>350</x>
      <y>30</y>
      <width>86</width>
      <height>21</height>

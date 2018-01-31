@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>563</width>
-    <height>279</height>
+    <width>587</width>
+    <height>302</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <rect>
      <x>13</x>
      <y>10</y>
-     <width>161</width>
+     <width>191</width>
      <height>17</height>
     </rect>
    </property>
@@ -35,7 +35,7 @@
   <widget class="QPushButton" name="pushButton_amber">
    <property name="geometry">
     <rect>
-     <x>466</x>
+     <x>486</x>
      <y>40</y>
      <width>86</width>
      <height>21</height>
@@ -49,8 +49,8 @@
    <property name="geometry">
     <rect>
      <x>13</x>
-     <y>220</y>
-     <width>541</width>
+     <y>240</y>
+     <width>561</width>
      <height>21</height>
     </rect>
    </property>
@@ -61,8 +61,8 @@
   <widget class="QPushButton" name="pushButton_ok">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>240</y>
+     <x>180</x>
+     <y>260</y>
      <width>86</width>
      <height>29</height>
     </rect>
@@ -75,9 +75,9 @@
    <property name="geometry">
     <rect>
      <x>80</x>
-     <y>198</y>
+     <y>217</y>
      <width>86</width>
-     <height>21</height>
+     <height>24</height>
     </rect>
    </property>
    <property name="toolTip">
@@ -103,7 +103,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>198</y>
+     <y>218</y>
      <width>41</width>
      <height>21</height>
     </rect>
@@ -115,8 +115,8 @@
   <widget class="QPushButton" name="pushButton_cancel">
    <property name="geometry">
     <rect>
-     <x>300</x>
-     <y>240</y>
+     <x>310</x>
+     <y>260</y>
      <width>86</width>
      <height>29</height>
     </rect>
@@ -128,7 +128,7 @@
   <widget class="QTextBrowser" name="textBrowser_amber">
    <property name="geometry">
     <rect>
-     <x>111</x>
+     <x>125</x>
      <y>40</y>
      <width>351</width>
      <height>21</height>
@@ -143,14 +143,14 @@
   <widget class="QLabel" name="label_exec">
    <property name="geometry">
     <rect>
-     <x>23</x>
+     <x>27</x>
      <y>40</y>
-     <width>121</width>
+     <width>101</width>
      <height>20</height>
     </rect>
    </property>
    <property name="text">
-    <string>amber.sh file</string>
+    <string>amber.sh File</string>
    </property>
   </widget>
   <widget class="Line" name="line_2">
@@ -159,7 +159,7 @@
      <x>3</x>
      <y>30</y>
      <width>20</width>
-     <height>201</height>
+     <height>221</height>
     </rect>
    </property>
    <property name="orientation">
@@ -169,9 +169,9 @@
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>173</x>
+     <x>203</x>
      <y>10</y>
-     <width>381</width>
+     <width>371</width>
      <height>20</height>
     </rect>
    </property>
@@ -182,10 +182,10 @@
   <widget class="QPushButton" name="pushButton_MD">
    <property name="geometry">
     <rect>
-     <x>460</x>
-     <y>197</y>
+     <x>486</x>
+     <y>216</y>
      <width>86</width>
-     <height>21</height>
+     <height>24</height>
     </rect>
    </property>
    <property name="text">
@@ -195,9 +195,9 @@
   <widget class="QCheckBox" name="checkBox_MD">
    <property name="geometry">
     <rect>
-     <x>310</x>
-     <y>197</y>
-     <width>141</width>
+     <x>325</x>
+     <y>217</y>
+     <width>161</width>
      <height>22</height>
     </rect>
    </property>
@@ -211,10 +211,10 @@
   <widget class="QTableWidget" name="tableWidget">
    <property name="geometry">
     <rect>
-     <x>45</x>
+     <x>30</x>
      <y>70</y>
-     <width>476</width>
-     <height>117</height>
+     <width>541</width>
+     <height>137</height>
     </rect>
    </property>
    <property name="sizeAdjustPolicy">

@@ -44,7 +44,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>71</width>
+     <width>81</width>
      <height>17</height>
     </rect>
    </property>
@@ -61,9 +61,9 @@
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>80</x>
+     <x>90</x>
      <y>10</y>
-     <width>201</width>
+     <width>191</width>
      <height>20</height>
     </rect>
    </property>
@@ -89,7 +89,7 @@
     <rect>
      <x>40</x>
      <y>46</y>
-     <width>101</width>
+     <width>121</width>
      <height>21</height>
     </rect>
    </property>

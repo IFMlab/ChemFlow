@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/UI/ChemFlow/MD/mddialog.ui'
+# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/GUI/MD/mddialog.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.10
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MDDialog(object):
     def setupUi(self, MDDialog):
         MDDialog.setObjectName("MDDialog")
-        MDDialog.resize(328, 185)
+        MDDialog.resize(333, 185)
         self.pushButton_cancel = QtWidgets.QPushButton(MDDialog)
         self.pushButton_cancel.setGeometry(QtCore.QRect(184, 150, 86, 29))
         self.pushButton_cancel.setObjectName("pushButton_cancel")
@@ -21,7 +21,7 @@ class Ui_MDDialog(object):
         self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line_2.setObjectName("line_2")
         self.label = QtWidgets.QLabel(MDDialog)
-        self.label.setGeometry(QtCore.QRect(10, 10, 91, 17))
+        self.label.setGeometry(QtCore.QRect(10, 10, 111, 17))
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
@@ -36,12 +36,13 @@ class Ui_MDDialog(object):
         self.pushButton_ok.setGeometry(QtCore.QRect(54, 150, 86, 29))
         self.pushButton_ok.setObjectName("pushButton_ok")
         self.line = QtWidgets.QFrame(MDDialog)
-        self.line.setGeometry(QtCore.QRect(110, 10, 211, 20))
+        self.line.setGeometry(QtCore.QRect(120, 10, 201, 20))
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
         self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line.setObjectName("line")
         self.label_2 = QtWidgets.QLabel(MDDialog)
-        self.label_2.setGeometry(QtCore.QRect(33, 70, 111, 17))
+        self.label_2.setGeometry(QtCore.QRect(10, 70, 114, 17))
+        self.label_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_2.setObjectName("label_2")
         self.spinBox_time = QtWidgets.QSpinBox(MDDialog)
         self.spinBox_time.setGeometry(QtCore.QRect(140, 65, 91, 27))
@@ -54,7 +55,8 @@ class Ui_MDDialog(object):
         self.label_3.setGeometry(QtCore.QRect(240, 70, 31, 17))
         self.label_3.setObjectName("label_3")
         self.label_4 = QtWidgets.QLabel(MDDialog)
-        self.label_4.setGeometry(QtCore.QRect(105, 30, 31, 20))
+        self.label_4.setGeometry(QtCore.QRect(83, 30, 41, 20))
+        self.label_4.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_4.setObjectName("label_4")
         self.comboBox_run = QtWidgets.QComboBox(MDDialog)
         self.comboBox_run.setGeometry(QtCore.QRect(140, 30, 121, 25))
@@ -69,7 +71,8 @@ class Ui_MDDialog(object):
         self.comboBox_gb.addItem("")
         self.comboBox_gb.addItem("")
         self.label_7 = QtWidgets.QLabel(MDDialog)
-        self.label_7.setGeometry(QtCore.QRect(70, 107, 56, 17))
+        self.label_7.setGeometry(QtCore.QRect(43, 107, 81, 20))
+        self.label_7.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_7.setObjectName("label_7")
 
         self.retranslateUi(MDDialog)

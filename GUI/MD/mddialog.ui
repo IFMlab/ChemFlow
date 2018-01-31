@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>328</width>
+    <width>333</width>
     <height>185</height>
    </rect>
   </property>
@@ -44,7 +44,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>91</width>
+     <width>111</width>
      <height>17</height>
     </rect>
    </property>
@@ -87,9 +87,9 @@
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>110</x>
+     <x>120</x>
      <y>10</y>
-     <width>211</width>
+     <width>201</width>
      <height>20</height>
     </rect>
    </property>
@@ -100,14 +100,17 @@
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>33</x>
+     <x>10</x>
      <y>70</y>
-     <width>111</width>
+     <width>114</width>
      <height>17</height>
     </rect>
    </property>
    <property name="text">
     <string>Production length</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
   </widget>
   <widget class="QSpinBox" name="spinBox_time">
@@ -148,14 +151,17 @@
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>105</x>
+     <x>83</x>
      <y>30</y>
-     <width>31</width>
+     <width>41</width>
      <height>20</height>
     </rect>
    </property>
    <property name="text">
     <string>Run</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
   </widget>
   <widget class="QComboBox" name="comboBox_run">
@@ -211,14 +217,17 @@
   <widget class="QLabel" name="label_7">
    <property name="geometry">
     <rect>
-     <x>70</x>
+     <x>43</x>
      <y>107</y>
-     <width>56</width>
-     <height>17</height>
+     <width>81</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
     <string>GB model</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
   </widget>
  </widget>

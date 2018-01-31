@@ -16,9 +16,9 @@
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>190</x>
+     <x>210</x>
      <y>10</y>
-     <width>281</width>
+     <width>261</width>
      <height>20</height>
     </rect>
    </property>
@@ -29,7 +29,7 @@
   <widget class="QPushButton" name="pushButton_ok">
    <property name="geometry">
     <rect>
-     <x>130</x>
+     <x>132</x>
      <y>290</y>
      <width>86</width>
      <height>29</height>
@@ -57,7 +57,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>181</width>
+     <width>201</width>
      <height>17</height>
     </rect>
    </property>
@@ -87,7 +87,7 @@
   <widget class="QPushButton" name="pushButton_cancel">
    <property name="geometry">
     <rect>
-     <x>260</x>
+     <x>262</x>
      <y>290</y>
      <width>86</width>
      <height>29</height>
@@ -115,7 +115,7 @@
     <rect>
      <x>20</x>
      <y>40</y>
-     <width>91</width>
+     <width>121</width>
      <height>20</height>
     </rect>
    </property>
@@ -126,9 +126,9 @@
   <widget class="QTextBrowser" name="textBrowser_vinaExec">
    <property name="geometry">
     <rect>
-     <x>120</x>
+     <x>140</x>
      <y>40</y>
-     <width>261</width>
+     <width>241</width>
      <height>21</height>
     </rect>
    </property>
@@ -291,7 +291,7 @@
     <rect>
      <x>20</x>
      <y>70</y>
-     <width>91</width>
+     <width>121</width>
      <height>20</height>
     </rect>
    </property>
@@ -318,9 +318,9 @@
   <widget class="QTextBrowser" name="textBrowser_adtFolder">
    <property name="geometry">
     <rect>
-     <x>120</x>
+     <x>140</x>
      <y>70</y>
-     <width>261</width>
+     <width>241</width>
      <height>21</height>
     </rect>
    </property>
@@ -338,7 +338,7 @@
     <rect>
      <x>70</x>
      <y>148</y>
-     <width>111</width>
+     <width>131</width>
      <height>20</height>
     </rect>
    </property>
@@ -357,7 +357,7 @@
     <rect>
      <x>300</x>
      <y>148</y>
-     <width>101</width>
+     <width>121</width>
      <height>20</height>
     </rect>
    </property>
@@ -431,9 +431,9 @@
   <widget class="QLabel" name="label_10">
    <property name="geometry">
     <rect>
-     <x>75</x>
+     <x>60</x>
      <y>110</y>
-     <width>91</width>
+     <width>111</width>
      <height>20</height>
     </rect>
    </property>
@@ -460,7 +460,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_energyRange">
    <property name="geometry">
     <rect>
-     <x>340</x>
+     <x>350</x>
      <y>107</y>
      <width>65</width>
      <height>27</height>

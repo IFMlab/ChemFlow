@@ -8,7 +8,7 @@ execDir = os.path.dirname(os.path.abspath(__file__))
 iniParameters = os.path.realpath(os.path.join(execDir, "ini/parameters.ini"))
 
 class DialogMin(QDialog, Ui_minDialog):
-    settings = QSettings("iniParameters", QSettings.IniFormat)
+    settings = QSettings(iniParameters, QSettings.IniFormat)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)

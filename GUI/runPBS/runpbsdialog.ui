@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>281</width>
+    <width>292</width>
     <height>199</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>81</width>
+     <width>101</width>
      <height>17</height>
     </rect>
    </property>
@@ -35,7 +35,7 @@
   <widget class="QSpinBox" name="spinBox_nodes">
    <property name="geometry">
     <rect>
-     <x>160</x>
+     <x>170</x>
      <y>40</y>
      <width>61</width>
      <height>27</height>
@@ -77,22 +77,25 @@
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>46</x>
+     <x>39</x>
      <y>43</y>
-     <width>101</width>
+     <width>121</width>
      <height>20</height>
     </rect>
    </property>
    <property name="text">
     <string>Number of nodes</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
   </widget>
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>100</x>
+     <x>120</x>
      <y>10</y>
-     <width>181</width>
+     <width>161</width>
      <height>20</height>
     </rect>
    </property>
@@ -129,7 +132,7 @@
   <widget class="QSpinBox" name="spinBox_ppn">
    <property name="geometry">
     <rect>
-     <x>160</x>
+     <x>170</x>
      <y>74</y>
      <width>61</width>
      <height>27</height>
@@ -145,35 +148,41 @@
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
-     <x>30</x>
+     <x>19</x>
      <y>80</y>
-     <width>131</width>
+     <width>141</width>
      <height>20</height>
     </rect>
    </property>
    <property name="text">
     <string>Processors per node</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
   </widget>
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>25</x>
+     <x>18</x>
      <y>110</y>
-     <width>131</width>
+     <width>141</width>
      <height>27</height>
     </rect>
    </property>
    <property name="text">
     <string>Walltime (HH:mm:ss)</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
   </widget>
   <widget class="QComboBox" name="comboBox">
    <property name="geometry">
     <rect>
-     <x>160</x>
+     <x>170</x>
      <y>110</y>
-     <width>91</width>
+     <width>94</width>
      <height>25</height>
     </rect>
    </property>

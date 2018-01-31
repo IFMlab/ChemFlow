@@ -7,85 +7,12 @@
     <x>0</x>
     <y>0</y>
     <width>514</width>
-    <height>216</height>
+    <height>221</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>PLANTS Rescoring Parameters</string>
   </property>
-  <widget class="QPushButton" name="pushButton_PlantsExec">
-   <property name="geometry">
-    <rect>
-     <x>400</x>
-     <y>40</y>
-     <width>86</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Browse</string>
-   </property>
-  </widget>
-  <widget class="QCheckBox" name="checkBox_water">
-   <property name="geometry">
-    <rect>
-     <x>27</x>
-     <y>134</y>
-     <width>221</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="text">
-    <string>Include structural water molecule</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="comboBox_scoringFunction">
-   <property name="geometry">
-    <rect>
-     <x>136</x>
-     <y>110</y>
-     <width>131</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="toolTip">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;- plp95: Piecewise Linear Potential from Gehlhaar DK et al&lt;/p&gt;&lt;p&gt;- plp: PLANTS version of the Piecewise Linear Potential&lt;/p&gt;&lt;p&gt;- chemplp: PLANTS version of the Piecewise Linear Potential implementing GOLD's terms&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-   <item>
-    <property name="text">
-     <string>chemplp</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>plp</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>plp95</string>
-    </property>
-   </item>
-  </widget>
-  <widget class="QLabel" name="label_exec">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>40</y>
-     <width>121</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>PLANTS Executable</string>
-   </property>
-  </widget>
   <widget class="Line" name="line_3">
    <property name="geometry">
     <rect>
@@ -99,77 +26,17 @@
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
-  <widget class="QTextBrowser" name="textBrowser_SporesExec">
-   <property name="geometry">
-    <rect>
-     <x>138</x>
-     <y>70</y>
-     <width>261</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>8</pointsize>
-    </font>
-   </property>
-   <property name="toolTip">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Folder containing python scripts to convert receptor and ligand files in PDBQT format.&lt;/p&gt;&lt;p&gt;Usually contained in 'MGLTools-{&lt;span style=&quot; font-style:italic;&quot;&gt;version&lt;/span&gt;}/MGLToolsPckgs/' directory.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_water">
-   <property name="geometry">
-    <rect>
-     <x>247</x>
-     <y>140</y>
-     <width>86</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Configure</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_SporesExec">
-   <property name="geometry">
-    <rect>
-     <x>400</x>
-     <y>70</y>
-     <width>86</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="toolTip">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Folder containing python scripts to convert receptor and ligand files in PDBQT format.&lt;/p&gt;&lt;p&gt;Usually contained in 'MGLTools-{&lt;span style=&quot; font-style:italic;&quot;&gt;version&lt;/span&gt;}/MGLToolsPckgs/' directory.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-   <property name="text">
-    <string>Browse</string>
-   </property>
-  </widget>
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>160</x>
+     <x>180</x>
      <y>10</y>
-     <width>341</width>
+     <width>321</width>
      <height>20</height>
     </rect>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_exec_2">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>70</y>
-     <width>121</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>SPORES Executable</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_cancel">
@@ -203,7 +70,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>151</width>
+     <width>171</width>
      <height>17</height>
     </rect>
    </property>
@@ -217,34 +84,6 @@
     <string>Rescoring with PLANTS</string>
    </property>
   </widget>
-  <widget class="QTextBrowser" name="textBrowser_PlantsExec">
-   <property name="geometry">
-    <rect>
-     <x>138</x>
-     <y>40</y>
-     <width>261</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>8</pointsize>
-    </font>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_4">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>110</y>
-     <width>111</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Scoring Function</string>
-   </property>
-  </widget>
   <widget class="Line" name="line_2">
    <property name="geometry">
     <rect>
@@ -256,6 +95,170 @@
    </property>
    <property name="orientation">
     <enum>Qt::Vertical</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_SporesExec">
+   <property name="geometry">
+    <rect>
+     <x>399</x>
+     <y>70</y>
+     <width>86</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Folder containing python scripts to convert receptor and ligand files in PDBQT format.&lt;/p&gt;&lt;p&gt;Usually contained in 'MGLTools-{&lt;span style=&quot; font-style:italic;&quot;&gt;version&lt;/span&gt;}/MGLToolsPckgs/' directory.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="text">
+    <string>Browse</string>
+   </property>
+  </widget>
+  <widget class="QTextBrowser" name="textBrowser_PlantsExec">
+   <property name="geometry">
+    <rect>
+     <x>157</x>
+     <y>40</y>
+     <width>241</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="comboBox_scoringFunction">
+   <property name="geometry">
+    <rect>
+     <x>156</x>
+     <y>105</y>
+     <width>106</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;- plp95: Piecewise Linear Potential from Gehlhaar DK et al&lt;/p&gt;&lt;p&gt;- plp: PLANTS version of the Piecewise Linear Potential&lt;/p&gt;&lt;p&gt;- chemplp: PLANTS version of the Piecewise Linear Potential implementing GOLD's terms&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <item>
+    <property name="text">
+     <string>chemplp</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>plp</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>plp95</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QPushButton" name="pushButton_PlantsExec">
+   <property name="geometry">
+    <rect>
+     <x>399</x>
+     <y>40</y>
+     <width>86</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Browse</string>
+   </property>
+  </widget>
+  <widget class="QTextBrowser" name="textBrowser_SporesExec">
+   <property name="geometry">
+    <rect>
+     <x>157</x>
+     <y>70</y>
+     <width>241</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Folder containing python scripts to convert receptor and ligand files in PDBQT format.&lt;/p&gt;&lt;p&gt;Usually contained in 'MGLTools-{&lt;span style=&quot; font-style:italic;&quot;&gt;version&lt;/span&gt;}/MGLToolsPckgs/' directory.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_exec">
+   <property name="geometry">
+    <rect>
+     <x>19</x>
+     <y>40</y>
+     <width>141</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>PLANTS Executable</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_exec_2">
+   <property name="geometry">
+    <rect>
+     <x>19</x>
+     <y>70</y>
+     <width>141</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>SPORES Executable</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox_water">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>136</y>
+     <width>241</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Include structural water molecule</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_water">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>140</y>
+     <width>86</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Configure</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
+    <rect>
+     <x>9</x>
+     <y>106</y>
+     <width>121</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Scoring Function</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
   </widget>
  </widget>
