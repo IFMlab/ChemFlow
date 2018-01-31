@@ -158,12 +158,6 @@ poses_number=\"$poses_number\"
 
 # Optionnal input ------------------------------------------------------------------------------------------------------
 
-# Add a structural water molecule, centered on an xyz sphere and moving in a radius
-# Absolute path to water molecule
-water=\"$water\"
-# xyz coordinates and radius of the sphere, separated by a space
-water_xyzr=\"$water_xyzr\"
-
 # Add any other parameter here
 PLANTS_user_parameters=\"\"
 
@@ -174,6 +168,15 @@ run_mode=\"$run_mode\"
 # If parallel is chosen, please specify the number of cores available
 core_number=\"$core_number\"
 " > DockFlow.config
+if [ ! -z "${water}" ] ; then
+echo "
+# Add a structural water molecule, centered on an xyz sphere and moving in a radius
+# Absolute path to water molecule
+water_molecule=\"$water\"
+# xyz coordinates and radius of the sphere, separated by a space
+water_molecule_definition=\"$water_xyzr\"
+">>DockFlow.config
+fi
 
 # remove temporary file
 rm -f temp.config
@@ -209,13 +212,13 @@ else
 fi  
 echo -e "${GREEN}Successfully read all mandatory parameters for docking with ${docking_program}${NC}"
 
-# Optionnal parameters
+# Optional parameters
 ## Water
 if [ ! -z "${water}" ] && [ ! -z "${water_xyzr}" ]
 then
   echo -e "${BLUE}Docking with water${NC}"
-  dock_water="water_molecule ${water_xyzr}
-water_molecule_definition ${water}"
+  dock_water="water_molecule ${water_xyzr}"
+  dock_water2="water_molecule_definition ${water}"
 elif [ ! -z "${water}" ] && [ -z "${water_xyzr}" ]
 then
   echo -e "${RED}ERROR${NC} : ${BLUE}water${NC} parameters incomplete (coordinates missing)"
@@ -226,6 +229,7 @@ then
   exit 1
 else
   dock_water=""
+  dock_water2=""
 fi
 
 ## Running mode
