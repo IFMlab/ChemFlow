@@ -34,16 +34,9 @@ if [ ! -z "$CONFIG_FILE" ]; then
   source "$CONFIG_FILE"
 else
 # if a config file was not specified
-  # if a config file exists in the current directory
-  if [ -f DockFlow.config ]; then
-    # Use this one instead
-    source DockFlow.config
-  # if no config file was specified and doesn't exist in the current directory
-  else
-    echo -e "${RED}FATAL ERROR${NC} : No configuration file found for DockFlow"
-    usage
-    exit 1
-  fi
+  echo -e "${RED}FATAL ERROR${NC} : No configuration file found for DockFlow"
+  usage
+  exit 1
 fi
 
 # Overwrite parameters in config files with user parameters

@@ -4,7 +4,6 @@ source ~/.bashrc
 
 if [ -z "$CHEMFLOW_HOME" ]
 then
-
   # Create environment variable
   echo -e "\n# ChemFlow\nexport CHEMFLOW_HOME=\"$PWD\"\nexport PATH=\$PATH:\$CHEMFLOW_HOME/DockFlow:\$CHEMFLOW_HOME/ScoreFlow:\$CHEMFLOW_HOME/Tools" >> ~/.bashrc
 
@@ -15,6 +14,8 @@ else
   echo "ChemFlow is already installed on your session. Check ~/.bashrc for more info.
 Overwriting ChemFlow.config"
 fi
+
+CHEMFLOW_HOME="$PWD"
 
 # Autofill the ChemFlow.config
 plants_exec=$(which PLANTS1.2_64bit)

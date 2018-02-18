@@ -25,17 +25,17 @@ Usage : DockFlow
                  -hh/--fullhelp      : Show a more detailed help
                  -f/--file           : Path to DockFlow configuration file
                  -r/--receptor       : Path to the receptor's mol2 file
-                 -l/--ligand         : Path to the ligand folder
+                 -l/--ligand         : Path to the ligands input file/folder
                  -sf/--function      : chemplp, plp, plp95
                                        Default : chemplp.
-                 -bsc/--center       : xyz coordinates of the center of the 
-                                       spheric binding site, separated by a space
+                 -bsc/--center       : xyz coordinates of the center of the
+                                       binding site, separated by a space
                  -bsr/--radius       : Radius of the spheric binding site
                  -n/--number         : Number of poses to generate, per ligand
                  --run               : local, parallel, mazinger
 _________________________________________________________________________________
 For parallel :
-                 -c/--corenumber    : Number of cores for parallel
+                 -c/--corenumber    : Number of cores to run in parallel
 _________________________________________________________________________________
 Optionnal :
                  -w/--water          : Path to the structural water molecule
@@ -45,16 +45,13 @@ Optionnal :
 
 requirements() {
 echo "\
-###################################### Requirements ##########################################
-This script is designed to work with PLANTS (for now).
+################################# Requirements #################################
+This script is designed to work with PLANTS or Vina.
 It can perform an automatic VS based on information given by the user :
 ligands, receptor, binding site info, and extra options.
-PLANTS only accepts mol2 files as input (1 or more compounds per file).
-Ligands in the mol2 format should be all put in the same directory.
 All paths given must be absolute paths.
-DockFlow will try to read a DockFlow.config file in the current directory.
-If such file doesn't exist, please run ConfigFlow to guide you,
-or copy $CHEMFLOW_HOME/config_files/DockFlow.config here.
+DockFlow needs a configuration file, an example can be found in:
+$CHEMFLOW_HOME/config_files/DockFlow.config
 If you already have an existing config file and wish to rerun DockFlow
 only modifying some options, see the help below.
 "
@@ -86,7 +83,7 @@ case $key in
     shift # past argument
     ;;
     -l|--ligand)
-    lig_folder="$2"
+    lig_input="$2"
     shift # past argument
     ;;
     -sf|--function)
@@ -140,8 +137,8 @@ echo "# Config file for DockFlow
 # Absolute path to receptor's mol2 file
 rec=\"$rec\"
 
-# Absolute path to ligands folder
-lig_folder=\"$lig_folder\"
+# Absolute path to ligands file/folder
+lig_input=\"$lig_input\"
 
 # Scoring function
 scoring_function=\"$scoring_function\"
@@ -191,8 +188,8 @@ exit 1
 check_input() {
 # Verify user input
 # exit if fatal error, otherwise, continue
-if [ -z "${rec}" ]          ; then error "the receptor's mol2 file"                          ; fi 
-if [ -z "${lig_folder}" ]   ; then error "the ligands folder"                                ; fi
+if [ -z "${rec}" ]          ; then error "the receptor's mol2 file"                          ; fi
+if [ -z "${lig_input}" ]   ; then error "the ligands input"                                ; fi
 if [ -z "${bs_center}" ]    ; then error "the definition of binding site center coordinates" ; fi
 if [ -z "${bs_radius}" ]    ; then error "the binding site radius"                           ; fi
 if [ -z "${poses_number}" ] ; then error "the number of docking poses to create"             ; fi
@@ -209,7 +206,7 @@ if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
 else
   echo -e "Scoring function ${RED}\"${scoring_function}\"${NC} not recognized"
   exit 1
-fi  
+fi
 echo -e "${GREEN}Successfully read all mandatory parameters for docking with ${docking_program}${NC}"
 
 # Optional parameters
@@ -269,4 +266,3 @@ if [ -d "${run_folder}/docking" ]; then
   echo "Made a backup of an already existing docking folder, as docking.${datetime}.bak"
 fi
 }
-

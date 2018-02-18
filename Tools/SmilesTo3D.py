@@ -4,11 +4,9 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from concurrent import futures
 import argparse, textwrap
-# Download progressbar2 from https://pypi.python.org/pypi/progressbar2
-import progressbar
 
 def InputSmiles(fileInput, args):
-	supplier = Chem.SmilesMolSupplier(fileInput, titleLine=args.header, delimiter=args.delimiter, smilesColumn=args.smilesCol, nameColumn=args.namesCol, sanitize=True)
+	supplier = Chem.SmilesMolSupplier(fileInput, titleLine=args.header, delimiter=args.delimiter, smilesColumn=args.smilesCol -1, nameColumn=args.namesCol -1, sanitize=True)
 	smiles = []
 	for i,mol in enumerate(supplier):
 		if mol:
@@ -53,10 +51,6 @@ def Generate3D(mol):
 		m = Chem.RemoveHs(m_H)
 	return m
 
-def GenerateProgessBar(array):
-	widgets = ["Generating 3D - [", progressbar.ETA(format='Remaining:  %(eta)s'), "] ", progressbar.Bar(), " ", progressbar.Percentage()]
-	return progressbar.ProgressBar(widgets=widgets, max_value=len(array))
-
 def ExThreadSubmit(smiles, args):
 	# uses a pool of threads to execute calls asynchronously
 	with futures.ThreadPoolExecutor(max_workers=args.nthreads) as executor:
@@ -66,9 +60,8 @@ def ExThreadSubmit(smiles, args):
 		for mol in smiles:
 			job = executor.submit(Generate3D, mol)
 			jobs.append(job)
-		pbar = GenerateProgessBar(jobs)
-		# Get results (with progress bar) as they are completed
-		for job in pbar(futures.as_completed(jobs)):
+		# Get results as they are completed
+		for job in futures.as_completed(jobs):
 			# If result is not None
 			if job.result():
 				structures.append(job.result())
@@ -84,9 +77,8 @@ def ExMpiSubmit(smiles, args):
 		for mol in smiles:
 			job = executor.submit(Generate3D, mol)
 			jobs.append(job)
-		pbar = GenerateProgessBar(jobs)
-		# Get results (with progress bar) as they are completed
-		for job in pbar(futures.as_completed(jobs)):
+		# Get results as they are completed
+		for job in futures.as_completed(jobs):
 			# If result is not None
 			if job.result():
 				structures.append(job.result())
@@ -95,7 +87,7 @@ def ExMpiSubmit(smiles, args):
 def RunCPU(smiles, args):
 	if args.mpi:
 		return ExMpiSubmit(smiles, args)
-	else:	
+	else:
 		return ExThreadSubmit(smiles, args)
 
 def RunGPU(smiles, args):
@@ -116,28 +108,28 @@ def OutputSDF(structures, args):
 if __name__ == '__main__':
 	# Argparse
 	parser = argparse.ArgumentParser(description='Generates 3D structures in SDF format from SMILES, using RDKIT', formatter_class=argparse.RawTextHelpFormatter)
-	
+
 	group_input = parser.add_argument_group('INPUT arguments')
 	group_input.add_argument("-i", "--input", metavar='filename', type=str, required=True, help="Path to your SMILES file")
-	group_input.add_argument("-sc", "--smilesCol", metavar='int', type=int, default=0, help="Index of the column containing the SMILES. Default: 0")
-	group_input.add_argument("-nc","--namesCol", metavar='int', type=int, default=1, help="Index of the column containing the names. Default: 1")
+	group_input.add_argument("-sc", "--smilesCol", metavar='int', type=int, default=1, help="Index of the column containing the SMILES. Default: 1")
+	group_input.add_argument("-nc","--namesCol", metavar='int', type=int, default=2, help="Index of the column containing the names. Default: 2")
 	group_input.add_argument("-d", "--delimiter", metavar="'char'", default='\t', help="If your SMILES file contains several columns: delimiter for the columns. Default: -d '\\t'")
 	group_input.add_argument("--header", action="store_true", help="Presence of a header in the input file")
-	
+
 	group_output = parser.add_argument_group('OUTPUT arguments')
 	group_output.add_argument("-o", "--output", metavar='filename', required=True, type=str, help="Path to the output SDF file")
 	group_output.add_argument("--hydrogen", action="store_true", help="Output with all hydrogen atoms" )
 	group_output.add_argument("-v", "--verbose", action="store_true", help="Increase terminal output verbosity")
 
 	group_args = parser.add_argument_group('Other arguments')
-	group_args.add_argument("-m", "--method", choices=['uff','mmff','etkdg'], default='etkdg', help=textwrap.dedent('''Use one of these algorithm : 
+	group_args.add_argument("-m", "--method", choices=['uff','mmff','etkdg'], default='etkdg', help=textwrap.dedent('''Use one of these algorithm :
 * uff   : distance geometry + force field minimization with UFF
 * mmff  : distance geometry + force field minimization with MMFF
 * etkdg : distance geometry with experimental torsion angles knowledge from the CSD. Used by default'''))
 	group_args.add_argument("--mpi", action="store_true", help="Run using MPI")
 	group_args.add_argument("--gpu", action="store_true", help="Run on GPU (not implemented yet)")
-	group_args.add_argument("-nt", "--nthreads", metavar='int', type=int, default=1, help="Specify the number of CPU threads to be used. Default: -nt 1")
-	
+	group_args.add_argument("-nt", "--nthreads", metavar='int', type=int, default=1, help="Specify the number of CPU threads to be used. Default: 1")
+
 	# Parse arguments from command line
 	args = parser.parse_args()
 	# Read SMILES file

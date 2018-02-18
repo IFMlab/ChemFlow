@@ -16,6 +16,36 @@ list_ligands
 # List ligands
 list_ligands() {
 
+# check if input is a directory
+if [ -d "${lig_input}" ]; then
+  lig_folder="${lig_input}"
+else
+  # convert file to a single mol2 per molecule, all in one directory
+  filename=$(basename "${lig_input}")
+  extension="${filename##*.}"
+  lig_path=$(echo "${lig_input}" | sed "s/.${extension}//g")
+  if   [ "${extension}" = "mol2" ]; then
+    # split to 1 file per ligand
+    $CHEMFLOW_HOME/Tools/splitmol2.bash ${lig_input} ${lig_path}
+  elif [ "${extension}" = "sdf" ]; then
+    # convert to mol2
+    babel -isdf ${lig_input} -omol2 ${lig_path}.mol2 >> babel.job 2>&1
+    # if no names are present, babel will use "*****" as ligand name
+    # --> replace with "ligand_1" and so on if necessary
+    awk 'BEGIN {count=1} {if ($0 == "*****") {sub(/\*\*\*\*\*/, "ligand_" count);count+=1}};{print}' ${lig_path}.mol2
+    # split to 1 file per ligand
+    $CHEMFLOW_HOME/Tools/splitmol2.bash ${lig_path}.mol2 ${lig_path}
+  elif [ "${extension}" = "smi" ]; then
+    # convert to sdf
+    python $CHEMFLOW_HOME/Tools/SmilesTo3D.py -i ${lig_input} -o ${lig_path}.sdf -nt $(nproc)
+    # split to 1 file per ligand
+    babel -isdf ${lig_path}.sdf -omol2 ${lig_path}.mol2 >> babel.job 2>&1
+    $CHEMFLOW_HOME/Tools/splitmol2.bash ${lig_path}.mol2 ${lig_path}
+  else
+    echo -e "${RED}ERROR${NC} : Could not find mol2 files in ${lig_folder}"
+    exit 1
+fi
+
 # list all mol2 files in the ligand folder.
 lig_list=$(cd ${lig_folder} ; \ls -v *.mol2 | sed s/.mol2//g)
 
@@ -109,7 +139,7 @@ begin_run
 # Iterate through each ligand file
 for lig in ${lig_list} ; do
   cd ${run_folder}/docking/${lig}
-  
+
   # If running locally
   if [ "${run_mode}" = "local" ]    ; then
     # Progress
@@ -128,9 +158,9 @@ for lig in ${lig_list} ; do
     CFvars=$(print_vars | sed ':a;N;$!ba;s/\n/; /g'); echo -n "${CFvars}" >> ${run_folder}/docking/VS_${datetime}.parallel
     echo "; plants_cmd; \
     echo -n 0 >>${run_folder}/docking/.progress.dat" >> ${run_folder}/docking/VS_${datetime}.parallel
-  
+
   # If running on mazinger
-  elif [ "${run_mode}" = "mazinger" ] ; then 
+  elif [ "${run_mode}" = "mazinger" ] ; then
     write_pbs
     jobid=$(qsub ${run_folder}/pbs_scripts/plants_${lig}.pbs)
     echo "$jobid" >> ${run_folder}/docking/jobs_list_${datetime}.mazinger
@@ -181,7 +211,7 @@ ${PLANTS_user_parameters}
 cluster_structures ${poses_number}
 cluster_rmsd 2.0
 
-# write 
+# write
 write_ranking_links 0
 write_protein_bindingsite 1
 write_protein_conformations 0
@@ -224,7 +254,7 @@ if [ -f docking/ranking.csv ]; then
   # the command tail -n +2 skip the first line (containing the header), and starts printing at the 2nd line of the file
   tail -n +2 docking/features.csv >> ${run_folder}/docking/features/${lig}.csv
   tail -n +2 docking/ranking.csv  >> ${run_folder}/docking/ranking/${lig}.csv
-  
+
   # Move docking poses
   mv docking/*.mol2 .
   rm -rf docking

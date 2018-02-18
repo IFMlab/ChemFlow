@@ -74,23 +74,33 @@ error_count=0
 splitmol_CLI "$@"
 
 # Count # of molecules
-end=$(grep "TRIPOS>MOLECULE" ${input} |wc -l)
+filename=$(basename "${input}")
+extension="${filename##*.}"
+if [ "${extension}" = "mol2" ]; then
+  end=$(grep "TRIPOS>MOLECULE" ${input} |wc -l)
+elif  [ "${extension}" = "sdf" ]; then
+  end=$(grep "M  END" ${input} |wc -l)
+else
+  echo -e "${RED}ERROR${NC} : not a mol2 or sdf file"
+  exit 1
+fi
 
-# Split 
+# Split
 for ((i=1;i<=${end};i=$i+${maxmol}))
 do
   let finish=${i}+${maxmol}-1
-  if [ ${finish} -gt ${end} ] ; then finish=${end} ; fi 
+  if [ ${finish} -gt ${end} ] ; then finish=${end} ; fi
+  echo -ne "\rSplitting file ${i}/${end}         "
   babel ${input} ${output}_${i}_${finish}.${format_o} -f ${i} -l ${finish} >> babel.job 2>&1
 
   # check
-  if [ -f ${output}_${i}_${finish}.${format_o} ]; then 
-    rm -f babel.job
-  else
+  if [ ! -f ${output}_${i}_${finish}.${format_o} ]; then
     let error_count+=1
   fi
 done
-
-if [ $error_count -gt 0 ]; then
+# check for errors
+if [ "${error_count}" -eq 0 ]; then
+  rm -f babel.job
+else
   echo "$error_count error(s) detected. Check babel.job for more info"
 fi
