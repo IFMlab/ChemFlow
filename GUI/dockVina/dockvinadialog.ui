@@ -296,10 +296,10 @@
     </rect>
    </property>
    <property name="text">
-    <string>AutoDockTools</string>
+    <string>MGLTools</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton_adtFolder">
+  <widget class="QPushButton" name="pushButton_MGLFolder">
    <property name="geometry">
     <rect>
      <x>382</x>
@@ -309,13 +309,13 @@
     </rect>
    </property>
    <property name="toolTip">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Folder containing python scripts to convert receptor and ligand files in PDBQT format.&lt;/p&gt;&lt;p&gt;Usually contained in 'MGLTools-{&lt;span style=&quot; font-style:italic;&quot;&gt;version&lt;/span&gt;}/MGLToolsPckgs/' directory.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Installation folder for MGLtools. Contains MGLToolsPckgs directory among others.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="text">
     <string>Browse</string>
    </property>
   </widget>
-  <widget class="QTextBrowser" name="textBrowser_adtFolder">
+  <widget class="QTextBrowser" name="textBrowser_MGLFolder">
    <property name="geometry">
     <rect>
      <x>140</x>
@@ -330,7 +330,7 @@
     </font>
    </property>
    <property name="toolTip">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Folder containing python scripts to convert receptor and ligand files in PDBQT format.&lt;/p&gt;&lt;p&gt;Usually contained in 'MGLTools-{&lt;span style=&quot; font-style:italic;&quot;&gt;version&lt;/span&gt;}/MGLToolsPckgs/' directory.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Installation folder for MGLtools. Contains MGLToolsPckgs directory among others.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">

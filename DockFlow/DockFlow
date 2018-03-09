@@ -52,30 +52,35 @@ if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
   # Run plants with the options
   time run_plants
   # Concatenate final results, serial instead of parallel
-  cat ${run_folder}/docking/ranking/*.csv  >> ${run_folder}/docking/ranking.csv
-  cat ${run_folder}/docking/features/*.csv >> ${run_folder}/docking/features.csv
-  rm -rf ${run_folder}/docking/{ranking,features}/
-
+  cat ${output_folder}/ranking/*.csv  >> ${output_folder}/ranking.csv
+  cat ${output_folder}/features/*.csv >> ${output_folder}/features.csv
+  rm -rf ${output_folder}/{ranking,features}/
+elif [ "${scoring_function}" = "vina" ]; then
+  # Run vina
+  time run_vina
+  # Concatenate final results, serial instead of parallel
+  cat ${output_folder}/ranking/*.csv  >> ${output_folder}/ranking.csv
+  rm -rf ${output_folder}/ranking/
 # insert other scoring functions here
 fi
 
 # copy config file to output folder
-cp ${run_folder}/DockFlow.config ${run_folder}/docking/
+cp ${run_folder}/DockFlow.config ${output_folder}/
 
 # Sort results
-if [ -f ${run_folder}/docking/ranking.csv ]; then
+if [ -f ${output_folder}/ranking.csv ]; then
   # copy header
-  header=$(head -1 ${run_folder}/docking/ranking.csv)
+  header=$(head -1 ${output_folder}/ranking.csv)
   # sort
   # The LC_ALL=C is needed to get an accurate sorting
-  tail -n +2 ${run_folder}/docking/ranking.csv | LC_ALL=C sort -t, -g -k2 -o ${run_folder}/docking/ranking_sorted.csv
+  tail -n +2 ${output_folder}/ranking.csv | LC_ALL=C sort -t, -g -k2 -o ${output_folder}/ranking_sorted.csv
   # insert header back into sorted file
-  sed -i "1s/^/$header\n/" ${run_folder}/docking/ranking_sorted.csv
+  sed -i "1s/^/$header\n/" ${output_folder}/ranking_sorted.csv
 fi
 
 # If some results are missing, count how many and output it
-if [ -f ${run_folder}/docking/errors.csv ]; then
-  errorcount=$(cat ${run_folder}/docking/errors.csv | wc -l)
+if [ -f ${output_folder}/errors.csv ]; then
+  errorcount=$(cat ${output_folder}/errors.csv | wc -l)
   echo -e "${RED}ERRORS detected${NC} : ${errorcount}"
   echo "See docking/errors.csv for more info"
 fi

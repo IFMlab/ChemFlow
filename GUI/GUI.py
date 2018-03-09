@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys, os
+import sys, os, subprocess, re
 from inspect import getsourcefile
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget, QFileDialog, QMainWindow
@@ -51,17 +51,17 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def selectLigand(self):
         if self.checkBox_lig.isChecked():
-            self.userInput['ligandFolder'] = QFileDialog.getExistingDirectory(None, "Select directory of ligands", os.getcwd())
-            if self.userInput['ligandFolder']:
-                self.textBrowser_lig.setPlainText(self.userInput['ligandFolder'])
+            self.userInput['ligandInput'] = QFileDialog.getExistingDirectory(None, "Select directory of ligands", os.getcwd())
+            if self.userInput['ligandInput']:
+                self.textBrowser_lig.setPlainText(self.userInput['ligandInput'])
         else:
-            filetypes = "Mol2 Files (*.mol2);;PDB Files (*.pdb);;SDF Files (*.sdf);;SMILES Files (*.smi);;All Files (*)"
-            self.userInput['ligandFile'], _ = QFileDialog.getOpenFileName(None,"Select ligand(s) file", os.getcwd(), filetypes)
-            if self.userInput['ligandFile']:
-                self.textBrowser_lig.setPlainText(self.userInput['ligandFile'])
+            filetypes = "Mol2 Files (*.mol2);;SDF Files (*.sdf);;SMILES Files (*.smi);;All Files (*)"
+            self.userInput['ligandInput'], _ = QFileDialog.getOpenFileName(None,"Select ligand(s) file", os.getcwd(), filetypes)
+            if self.userInput['ligandInput']:
+                self.textBrowser_lig.setPlainText(self.userInput['ligandInput'])
 
     def selectReceptor(self):
-        filetypes = "PDB Files (*.pdb);;All Files (*)"
+        filetypes = "Mol2 Files (*.mol2);;PDB Files (*.pdb);;All Files (*)"
         self.userInput['receptorFile'], _ = QFileDialog.getOpenFileName(None,"Select receptor file", os.getcwd(), filetypes)
         if self.userInput['receptorFile']:
             self.textBrowser_rec.setPlainText(self.userInput['receptorFile'])
@@ -173,16 +173,25 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def run(self):
         self.writeConfig()
-        print("My developper is too lazy to implement this yet...")
+        # run
+        with subprocess.Popen("DockFlow -f DockFlow.config".split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True) as process:
+            # write output as it runs
+            for line in process.stdout:
+                # fix progress bar and spinner printed every second without carriage return
+                if ('Progress' in line) or ('Preparing' in line):
+                    print('\r'+line.replace('\n',''), end='')
+                # Fix no \n after the last print from the progress bar or spinner
+                elif ('Execution time' in line) or ('Finished preparing' in line):
+                    print('\n'+line, end='')
+                else:
+                    print(line, end='')
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(process.returncode, process.args)
 
     def writeConfig(self):
         self.values = {}
         missing = []
-        missing_files = ['receptorFile', 'outputFolder']
-        if self.checkBox_lig.isChecked():
-            missing_files.append('ligandFolder')
-        else:
-            missing_files.append('ligandFile')
+        missing_files = ['receptorFile', 'ligandInput', 'outputFolder']
         for i in missing_files:
             try:
                 self.userInput[i]
@@ -264,9 +273,191 @@ class Main(QMainWindow, Ui_MainWindow):
         for value in self.values:
             print('{:{space}} --> {}'.format(value, self.values[value], space=space))
         print('-'*10)
+        # Write Docking
+        if 'Docking' in self.values['protocolPreset']:
+            with open('{}/DockFlow.config'.format(os.getcwd()),'w') as f:
+                # Make variables compatible with dockflow
+                if self.values['runOption'] == 'Locally':
+                    self.values['runMode'] = 'local' if self.values['numberCores'] == 1 else 'parallel'
+                else:
+                    self.values['runMode'] = self.values['runOption']
+                for i in ['PlantsExec','VinaExec','MGLFolder',
+                'DockRadius','DockSizeX','DockSizeY','DockSizeZ',
+                'SearchSpeed','Ants','EvaporationRate','IterationScaling',
+                'Exhaustiveness','EnergyRange',
+                'WaterFile','WaterCenterX','WaterCenterY','WaterCenterZ','WaterRadius']:
+                    try:
+                        self.values[i]
+                    except KeyError:
+                        self.values[i] = ''
+                if not self.values['DockSizeX']:
+                    self.values['DockSize'] = ''
+                else:
+                    self.values['DockSize'] = '{} {} {}'.format(self.values['DockSizeX'],
+                                                                self.values['DockSizeY'],
+                                                                self.values['DockSizeZ'])
+                if not self.values['WaterCenterX']:
+                    self.values['WaterPosition'] = ''
+                else:
+                    self.values['WaterPosition'] = '{} {} {} {}'.format(self.values['WaterCenterX'],
+                                                                        self.values['WaterCenterY'],
+                                                                        self.values['WaterCenterZ'],
+                                                                        self.values['WaterRadius'])
+                if self.values['dockingSoftware'] == 'AutoDock Vina':
+                    self.values['ScoringFunction'] = 'vina'
+                toWrite = '''# Config file for DockFlow
+# Absolute path to receptor's mol2 file
+rec=\"{receptorFile}\"
+# Absolute path to ligands file/folder
+lig_input=\"{ligandInput}\"
+# Output folder
+output_folder=\"{outputFolder}\"
+# Number of docking poses to generate
+poses_number=\"{dockingPoses}\"
+# Scoring function: vina, chemplp, plp or plp95
+scoring_function=\"{ScoringFunction}\"
+# xyz coordinates of the center of the sphere/grid binding site, separated by a space
+bs_center=\"{DockCenterX} {DockCenterY} {DockCenterZ}\"
+
+##########
+# PLANTS #
+##########
+plants_exec=\"{PlantsExec}\"
+# Radius of the spheric binding site in Angstrom
+bs_radius=\"{DockRadius}\"
+# Search speed : 1, 2 or 4. Default: 1
+speed=\"{SearchSpeed}\"
+# Number of ants. Default : 20
+ants=\"{Ants}\"
+# Evaporation rate of pheromones. Default : 0.15
+evap_rate=\"{EvaporationRate}\"
+# Iteration scaling factor. Default : 1.00
+iteration_scaling=\"{IterationScaling}\"
+
+########
+# Vina #
+########
+vina_exec=\"{VinaExec}\"
+mgltools_folder=\"{MGLFolder}\"
+# Size of the sphere along the x, y and z axis in Angstrom, separated by a space
+bs_size=\"{DockSize}\"
+# Exhaustiveness of the global search. Default : 8
+exhaustiveness=\"{Exhaustiveness}\"
+# Max energy difference (kcal/mol) between the best and worst poses displayed. Default : 3.00
+energy_range=\"{EnergyRange}\"
+
+###################
+# Optionnal input #
+###################
+# Run on this machine (default), in parallel, or on mazinger
+# local, parallel, mazinger
+run_mode=\"{runMode}\"
+# If parallel is chosen, please specify the number of cores to use
+core_number=\"{numberCores}\"
+# Add a structural water molecule for PLANTS, centered on an xyz sphere and moving in a radius
+# Absolute path to water molecule
+water_molecule=\"{WaterFile}\"
+# xyz coordinates and radius of the sphere, separated by a space
+water_molecule_definition=\"{WaterPosition}\"
+'''.format(
+receptorFile=self.values['receptorFile'],
+ligandInput=self.values['ligandInput'],
+outputFolder=self.values['outputFolder'],
+dockingPoses=self.values['dockingPoses'],
+ScoringFunction=self.values['ScoringFunction'],
+DockCenterX=self.values['DockCenterX'],
+DockCenterY=self.values['DockCenterY'],
+DockCenterZ=self.values['DockCenterZ'],
+PlantsExec=self.values['PlantsExec'],
+DockRadius=self.values['DockRadius'],
+SearchSpeed=self.values['SearchSpeed'],
+Ants=self.values['Ants'],
+EvaporationRate=self.values['EvaporationRate'],
+IterationScaling=self.values['IterationScaling'],
+VinaExec=self.values['VinaExec'],
+MGLFolder=self.values['MGLFolder'],
+DockSize=self.values['DockSize'],
+Exhaustiveness=self.values['Exhaustiveness'],
+EnergyRange=self.values['EnergyRange'],
+runMode=self.values['runMode'],
+numberCores=self.values['numberCores'],
+WaterFile=self.values['WaterFile'],
+WaterPosition=self.values['WaterPosition'])
+                f.write(toWrite)
+
+        if 'Rescoring' in self.values['protocolPreset']:
+            pass
 
     def readConfig(self):
-        pass
+        '''Just prints the parameters for now...'''
+        d = {}
+        filetypes = "Config Files (*.config);;Text Files (*.txt);;All Files (*)"
+        configFile, _ = QFileDialog.getOpenFileName(None,"Select configuration file", os.getcwd(), filetypes)
+        with open(configFile, 'r') as f:
+            lines = f.readlines()
+        for line in lines:
+            if '=' in line:
+                temp = line.split('=')
+                var = str(temp[0])
+                val = str(temp[1]).replace('"','').strip('\n')
+                if val == '':
+                    continue
+                if var == 'rec':
+                    d['receptorFile'] = val
+                elif var == 'lig_input':
+                    d['ligandInput'] = val
+                elif var == 'output_folder':
+                    d['outputFolder'] = val
+                elif var == 'poses_number':
+                    d['dockingPoses'] = val
+                elif var == 'scoring_function':
+                    d['ScoringFunction'] = val
+                elif var == 'bs_center':
+                    val = val.split()
+                    d['DockCenterX'] = val[0]
+                    d['DockCenterY'] = val[1]
+                    d['DockCenterZ'] = val[2]
+                elif var == 'plants_exec':
+                    d['PlantsExec'] = val
+                elif var == 'bs_radius':
+                    d['DockRadius'] = val
+                elif var == 'speed':
+                    d['SearchSpeed'] = val
+                elif var == 'ants':
+                    d['Ants'] = val
+                elif var == 'evap_rate':
+                    d['EvaporationRate'] = val
+                elif var == 'iteration_scaling':
+                    d['IterationScaling'] = val
+                elif var == 'vina_exec':
+                    d['VinaExec'] = val
+                elif var == 'mgltools_folder':
+                    d['MGLFolder'] = val
+                elif var == 'bs_size':
+                    val = val.split()
+                    d['DockSizeX'] = val[0]
+                    d['DockSizeY'] = val[1]
+                    d['DockSizez'] = val[2]
+                elif var == 'exhaustiveness':
+                    d['Exhaustiveness'] = val
+                elif var == 'energy_range':
+                    d['EnergyRange'] = val
+                elif var == 'run_mode':
+                    d['runMode'] = val
+                elif var == 'core_number':
+                    d['numberCores'] = val
+                elif var == 'water_molecule':
+                    d['WaterFile'] = val
+                elif var == 'water_molecule_definition':
+                    val = val.split()
+                    d['WaterCenterX'] = val[0]
+                    d['WaterCenterY'] = val[1]
+                    d['WaterCenterZ'] = val[2]
+                    d['WaterRadius'] = val[3]
+        space = len(max(d, key=len))
+        for var in d:
+            print('{:{space}} --> {}'.format(var, d[var], space=space))
+        print('-'*10)
 
     def cancel(self):
         cleanParameters(execDir)

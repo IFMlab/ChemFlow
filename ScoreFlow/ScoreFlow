@@ -38,10 +38,10 @@ else
 
   # If the user doesn't use the --resume flag for mazinger
   if [ ! "${mazinger_resume}" = "true" ]; then
-  
+
     # Write user parameters to a temporary file
     print_vars > temp.config
-    
+
     # if config file specified using the -f flag
     if [ ! -z "$CONFIG_FILE" ]; then
       echo "Reading configuration from $CONFIG_FILE"
@@ -61,15 +61,15 @@ else
     fi
     # Overwrite parameters in config files with user parameters
     write_SF_config
-    
+
     # Empty the input_files/com directory for new MD or 1F simulations
     if [ "${purge}" = "true" ]; then
       rm -rf ${run_folder}/input_files/com
     fi
-    
+
     # Check input file and make list of poses to rescore
     prepare_rescoring
-    
+
     # Identify which program to use, and run it
     if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
       rescore_method="plants"
@@ -78,14 +78,14 @@ else
       cat ${run_folder}/rescoring/${scoring_function}/ranking/*.csv >> ${run_folder}/rescoring/${scoring_function}/ranking.csv
       cat ${run_folder}/rescoring/${scoring_function}/features/*.csv >> ${run_folder}/rescoring/${scoring_function}/features.csv
       rm -rf ${run_folder}/rescoring/${scoring_function}/{ranking,features}/
-    
+
     elif [ "${scoring_function}" == "vina" ]; then
       rescore_method="vina"
       time run_vina
       # Concatenate final results, serial instead of parallel
       cat ${run_folder}/rescoring/${scoring_function}/ranking/*.csv >> ${run_folder}/rescoring/${scoring_function}/ranking.csv
-      rm -rf ${run_folder}/rescoring/${scoring_function}/{ranking}/
-    
+      rm -rf ${run_folder}/rescoring/${scoring_function}/ranking/
+
     elif $(list_include_item "PB3 GB5 GB8" "${scoring_function}"); then
       rescore_method="mmpbsa"
       time run_mmpbsa
@@ -97,27 +97,27 @@ else
         fi
       done
     fi
-  
+
   # At this point, calculations and file reorganization should be done.
   # Might not be exact if the calculations were submitted to mazinger.
-  
+
   # If the user only wants to resume mazinger's progress
   else
     # Read config file
     source ScoreFlow.config
     # Resume progress bar
     mazinger_progress_bar ${run_folder}/rescoring/${scoring_function}/jobs_list_*.mazinger
-  
+
     # concatenate final results in serial
     if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
       cat ${run_folder}/rescoring/${scoring_function}/ranking/*.csv >> ${run_folder}/rescoring/${scoring_function}/ranking.csv
       cat ${run_folder}/rescoring/${scoring_function}/features/*.csv >> ${run_folder}/rescoring/${scoring_function}/features.csv
       rm -rf ${run_folder}/rescoring/${scoring_function}/{ranking,features}/
-    
+
     elif [ "${scoring_function}" == "vina" ]; then
       cat ${run_folder}/rescoring/${scoring_function}/ranking/*.csv >> ${run_folder}/rescoring/${scoring_function}/ranking.csv
       rm -rf ${run_folder}/rescoring/${scoring_function}/{ranking}/
-    
+
     elif $(list_include_item "PB3 GB5 GB8" "${scoring_function}"); then
       for result in 1F_min MD_min MD_prod ranking; do
         if [ -d ${run_folder}/rescoring/${scoring_function}/${result} ]; then
@@ -127,15 +127,15 @@ else
       done
     fi
   fi
-  
+
   # copy config file to output folder
   cp ${run_folder}/ScoreFlow.config ${run_folder}/rescoring/${scoring_function}/
-  
+
   # Remove empty directories
   cd ${run_folder}/rescoring/${scoring_function}/
   rmdir --ignore-fail-on-non-empty * &> /dev/null
   cd ${run_folder}
-  
+
   # If some results are missing, count how many and output it
   if [ -f rescoring/${scoring_function}/errors.csv ]; then
     errorcount=$(cat rescoring/${scoring_function}/errors.csv | wc -l)

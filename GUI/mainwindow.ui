@@ -679,7 +679,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Cancel</string>
+       <string>Quit</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_docking">

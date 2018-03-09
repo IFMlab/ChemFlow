@@ -347,7 +347,7 @@ class Ui_MainWindow(object):
         self.label_dockingKeep.setText(_translate("MainWindow", "Keep"))
         self.pushButton_run.setText(_translate("MainWindow", "Run"))
         self.label_rescoringSoftware.setText(_translate("MainWindow", "Software"))
-        self.pushButton_cancel.setText(_translate("MainWindow", "Cancel"))
+        self.pushButton_cancel.setText(_translate("MainWindow", "Quit"))
         self.label_docking.setText(_translate("MainWindow", "Docking"))
         self.pushButton_output.setText(_translate("MainWindow", "Browse"))
         self.label_rec.setText(_translate("MainWindow", "Receptor"))

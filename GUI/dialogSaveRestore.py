@@ -19,47 +19,47 @@ def guiSave(ui, settings):
             text = obj.itemText(index)
             settings.setValue(name, text)
 
-        if isinstance(obj, QLineEdit):
+        elif isinstance(obj, QLineEdit):
             name = obj.objectName()
             value = obj.text()
             settings.setValue(name, value)
 
-        if isinstance(obj, QLineEdit):
+        elif isinstance(obj, QLineEdit):
             name = obj.objectName()
             value = obj.text()
             settings.setValue(name, value)
 
-        if isinstance(obj, QPlainTextEdit):
+        elif isinstance(obj, QPlainTextEdit):
             name = obj.objectName()
             value = obj.toPlainText()
             settings.setValue(name, value)
 
-        if isinstance(obj, QTextBrowser):
+        elif isinstance(obj, QTextBrowser):
             name = obj.objectName()
             value = obj.toPlainText()
             settings.setValue(name, value)
 
-        if isinstance(obj, QCheckBox):
+        elif isinstance(obj, QCheckBox):
             name = obj.objectName()
             state = obj.isChecked()
             settings.setValue(name, state)
 
-        if isinstance(obj, QRadioButton):
+        elif isinstance(obj, QRadioButton):
             name = obj.objectName()
             value = obj.isChecked()
             settings.setValue(name, value)
 
-        if isinstance(obj, QSpinBox):
+        elif isinstance(obj, QSpinBox):
             name = obj.objectName()
             value = obj.value()
             settings.setValue(name, value)
 
-        if isinstance(obj, QDoubleSpinBox):
+        elif isinstance(obj, QDoubleSpinBox):
             name = obj.objectName()
             value = obj.value()
             settings.setValue(name, value)
 
-        if isinstance(obj, QSlider):
+        elif isinstance(obj, QSlider):
             name  = obj.objectName()
             value = obj.value()
             settings.setValue(name, value)
@@ -79,46 +79,46 @@ def guiRestore(ui, settings):
             else:
                 obj.setCurrentIndex(index)
 
-        if isinstance(obj, QLineEdit):
+        elif isinstance(obj, QLineEdit):
             name = obj.objectName()
             value = settings.value(name)
             obj.setText(value)
 
-        if isinstance(obj, QPlainTextEdit):
+        elif isinstance(obj, QPlainTextEdit):
             name = obj.objectName()
             value = settings.value(name)
             obj.setPlainText(value)
 
-        if isinstance(obj, QTextBrowser):
+        elif isinstance(obj, QTextBrowser):
             name = obj.objectName()
             value = settings.value(name)
             obj.setPlainText(value)
 
-        if isinstance(obj, QCheckBox):
+        elif isinstance(obj, QCheckBox):
             name = obj.objectName()
             value = settings.value(name)
             if value is not None:
                 obj.setChecked(bool(value))
 
-        if isinstance(obj, QRadioButton):
+        elif isinstance(obj, QRadioButton):
             name = obj.objectName()
             value = settings.value(name)
             if value is not None:
                 obj.setChecked(bool(value))
 
-        if isinstance(obj, QSlider):
+        elif isinstance(obj, QSlider):
             name = obj.objectName()
             value = settings.value(name)
             if value is not None:
                 obj.setValue(int(value))
 
-        if isinstance(obj, QSpinBox):
+        elif isinstance(obj, QSpinBox):
             name = obj.objectName()
             value = settings.value(name)
             if value is not None:
                 obj.setValue(int(value))
 
-        if isinstance(obj, QDoubleSpinBox):
+        elif isinstance(obj, QDoubleSpinBox):
             name = obj.objectName()
             value = settings.value(name)
             if value is not None:
@@ -126,7 +126,7 @@ def guiRestore(ui, settings):
 
 def saveUsefullPaths(ui, settings):
     usefullPathNames =  ['textBrowser_PlantsExec', 'textBrowser_SporesExec',
-    'textBrowser_vinaExec', 'textBrowser_adtFolder', 'textBrowser_amber']
+    'textBrowser_vinaExec', 'textBrowser_MGLFolder', 'textBrowser_amber']
     for name, obj in inspect.getmembers(ui):
         if isinstance(obj, QTextBrowser):
             name = obj.objectName()
@@ -136,7 +136,7 @@ def saveUsefullPaths(ui, settings):
 
 def restoreUsefullPaths(ui, settings):
     usefullPathNames =  ['textBrowser_PlantsExec', 'textBrowser_SporesExec',
-    'textBrowser_vinaExec', 'textBrowser_adtFolder', 'textBrowser_amber']
+    'textBrowser_vinaExec', 'textBrowser_MGLFolder', 'textBrowser_amber']
     for name, obj in inspect.getmembers(ui):
         if isinstance(obj, QTextBrowser):
             name = obj.objectName()

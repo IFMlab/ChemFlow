@@ -21,7 +21,7 @@ class DialogRescoreVina(QDialog, Ui_rescoreVinaDialog):
         self.pushButton_ok.clicked.connect(self.ok)
         self.pushButton_cancel.clicked.connect(self.cancel)
         self.pushButton_exec.clicked.connect(self.selectVinaExec)
-        self.pushButton_adtFolder.clicked.connect(self.selectADTFolder)
+        self.pushButton_MGLFolder.clicked.connect(self.selectMGLFolder)
         self.values = {}
         guiRestore(self, self.settings)
         restoreUsefullPaths(self, self.globalSettings)
@@ -39,9 +39,9 @@ class DialogRescoreVina(QDialog, Ui_rescoreVinaDialog):
         self.values['RescoreSizeY'] = self.spinBox_sy.value()
         self.values['RescoreSizeZ'] = self.spinBox_sz.value()
         self.values['VinaExec'] = self.textBrowser_vinaExec.toPlainText()
-        self.values['ADTFolder'] = self.textBrowser_adtFolder.toPlainText()
+        self.values['MGLFolder'] = self.textBrowser_MGLFolder.toPlainText()
         missing = []
-        for i in ['VinaExec', 'ADTFolder']:
+        for i in ['VinaExec', 'MGLFolder']:
             try:
                 self.values[i]
             except KeyError:
@@ -64,10 +64,10 @@ class DialogRescoreVina(QDialog, Ui_rescoreVinaDialog):
         if value:
             self.textBrowser_vinaExec.setPlainText(value)
 
-    def selectADTFolder(self):
+    def selectMGLFolder(self):
         value = QFileDialog.getExistingDirectory(None, "Select directory of AutoDockTools", '/')
         if value:
-            self.textBrowser_adtFolder.setPlainText(value)
+            self.textBrowser_MGLFolder.setPlainText(value)
 
     def missingParameters(self, missing):
         msg = QMessageBox()

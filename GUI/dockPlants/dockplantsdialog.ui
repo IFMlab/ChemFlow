@@ -438,17 +438,17 @@
    </property>
    <item>
     <property name="text">
-     <string>speed1</string>
+     <string>1</string>
     </property>
    </item>
    <item>
     <property name="text">
-     <string>speed2</string>
+     <string>2</string>
     </property>
    </item>
    <item>
     <property name="text">
-     <string>speed4</string>
+     <string>4</string>
     </property>
    </item>
   </widget>
