@@ -13,6 +13,14 @@
 # Universite de Strasbourg - UNISTRA - France
 #
 
+# Color output
+RED="\e[0;31m"
+BLUE="\e[0;34m"
+GREEN="\e[0;32m"
+PURPLE="\e[0;35m"
+NC="\033[0m"
+
+
 help() {
   echo -e "\
 //=======================================================\\\\\\
@@ -26,7 +34,7 @@ help() {
 \\\\\=======================================================//
 
 Splits a single mol2 file into multiple mol2 files. Usage:
-./splitmol2 input_file.mol2 output_folder
+./splitmol2 input_file.mol2 10
 
 SplitMol2 is part of ChemFlow Tools, developed by
 Cedric Bouysset(1)
@@ -41,8 +49,6 @@ Diego Enry Barreto Gomes(1,2,3)
 "
 }
 
-# Color output
-source $CHEMFLOW_HOME/common/colors.bash
 
 splitmol2() {
 # check input and output
@@ -50,19 +56,34 @@ if [ ! -f "$1" ];then
   echo -e "${RED}ERROR${NC} : Ligand input file doesn't exists"
   exit 1
 fi
-if [ ! -d "$2" ];then
-  mkdir -p "$2"
+
+#Basename for output
+mol=$(echo $1 | cut -d. -f1)
+maxmol=$2
+if [ "$maxmol" == "" ] ; then
+  echo "[NOTE] Using 10 molecules as output"
 fi
 
+j=0
 n=0
 # keep leading whitespaces
 OLD_IFS="$IFS"
 IFS=""
 while read line ; do
+
   if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
     let n=$n+1
   fi
-  echo -e "${line}" >> ${2}/lig_${n}.mol2
+
+  if [ "${n}" == "${maxmol}" ] ; then
+    n=0
+    echo -e "${line}" >> ${mol}_${j}.mol2
+    let j+=1
+  else
+    echo -e "${line}" >> ${mol}_${j}.mol2
+  fi
+
+
 done < "$1"
 IFS="$OLD_IFS"
 }
