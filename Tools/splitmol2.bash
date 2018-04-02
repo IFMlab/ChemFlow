@@ -2,7 +2,8 @@
 #
 # ChemFlow  - Computational Chemistry WorkFlows (awesome)
 #
-# SplitMol2 - a simple tool to split mol2 files.
+# SplitMol2 - Splits a single mol2 file with multiple moleculs into multiple mol2 files with a single molecule.
+# To split a mol2 or sdf file containing multiple ligands in batches, see splitmol
 #
 # Diego Enry B. Gomes
 # dgomes@pq.cnpq.br
@@ -12,14 +13,6 @@
 #
 # Universite de Strasbourg - UNISTRA - France
 #
-
-# Color output
-RED="\e[0;31m"
-BLUE="\e[0;34m"
-GREEN="\e[0;32m"
-PURPLE="\e[0;35m"
-NC="\033[0m"
-
 
 help() {
   echo -e "\
@@ -33,8 +26,8 @@ help() {
 || Diego E.B. Gomes - dgomes@pq.cnpq.br                  ||
 \\\\\=======================================================//
 
-Splits a single mol2 file into multiple mol2 files. Usage:
-./splitmol2 input_file.mol2 10
+Splits a single mol2 file with multiple moleculs into multiple mol2 files with a single molecule. Usage:
+./splitmol2 input_file.mol2 output_folder
 
 SplitMol2 is part of ChemFlow Tools, developed by
 Cedric Bouysset(1)
@@ -49,6 +42,8 @@ Diego Enry Barreto Gomes(1,2,3)
 "
 }
 
+# Color output
+source $CHEMFLOW_HOME/common/colors.bash
 
 splitmol2() {
 # check input and output
@@ -56,34 +51,19 @@ if [ ! -f "$1" ];then
   echo -e "${RED}ERROR${NC} : Ligand input file doesn't exists"
   exit 1
 fi
-
-#Basename for output
-mol=$(echo $1 | cut -d. -f1)
-maxmol=$2
-if [ "$maxmol" == "" ] ; then
-  echo "[NOTE] Using 10 molecules as output"
+if [ ! -d "$2" ];then
+  mkdir -p "$2"
 fi
 
-j=0
 n=0
 # keep leading whitespaces
 OLD_IFS="$IFS"
 IFS=""
 while read line ; do
-
   if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
     let n=$n+1
   fi
-
-  if [ "${n}" == "${maxmol}" ] ; then
-    n=0
-    echo -e "${line}" >> ${mol}_${j}.mol2
-    let j+=1
-  else
-    echo -e "${line}" >> ${mol}_${j}.mol2
-  fi
-
-
+  echo -e "${line}" >> ${2}/lig_${n}.mol2
 done < "$1"
 IFS="$OLD_IFS"
 }

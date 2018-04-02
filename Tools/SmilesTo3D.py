@@ -1,21 +1,29 @@
 #!/usr/bin/python3
 # coding: utf8
-from rdkit import Chem
+from rdkit import Chem, RDLogger
+lg = RDLogger.logger()
 from rdkit.Chem import AllChem
 from concurrent import futures
-import argparse, textwrap
+import argparse, textwrap, sys
 
 def InputSmiles(fileInput, args):
-	supplier = Chem.SmilesMolSupplier(fileInput, titleLine=args.header, delimiter=args.delimiter, smilesColumn=args.smilesCol -1, nameColumn=args.namesCol -1, sanitize=True)
+	supplier = Chem.SmilesMolSupplier(fileInput, titleLine=args.header, delimiter=args.delimiter, smilesColumn=args.smilesCol -1, nameColumn=args.namesCol -1, sanitize=False)
 	smiles = []
+	lg.setLevel(RDLogger.CRITICAL)
 	for i,mol in enumerate(supplier):
 		if mol:
-			# Give name based on line if none was found
-			if not mol.HasProp('_Name'):
-				mol.SetProp('_Name', str(i+1))
-			# Make an iterable list of molecules
-			smiles.append(mol)
+			try:
+				Chem.SanitizeMol(mol)
+			except ValueError as e:
+				sys.stderr.write('Molecule {} - {}\n'.format(i+1,e))
+			else:
+				# Give name based on line if none was found
+				if not mol.HasProp('_Name'):
+					mol.SetProp('_Name', str(i+1))
+				# Make an iterable list of molecules
+				smiles.append(mol)
 	print("Read {}/{} molecules".format(len(smiles), len(supplier)))
+	lg.setLevel(RDLogger.ERROR)
 	return smiles
 
 def Generate3D(mol):
@@ -27,23 +35,30 @@ def Generate3D(mol):
 		# if it failed
 		if returnedVal == -1:
 			# try with another method
-			print("Failed to generate 3D structure for", m_H.GetProp('_Name'), "- Switching to RandomCoords method.")
+			print("Problem generating 3D structure for", m_H.GetProp('_Name'), "- Switching to RandomCoords method.")
 			returnedVal = AllChem.EmbedMolecule(m_H, useRandomCoords=True)
 			# if it failed again, print error
 			if returnedVal == -1:
-				print("Failed to generate 3D structure for", m_H.GetProp('_Name'), "in AllChem.EmbedMolecule")
+				print("Failed to generate 3D structure for", m_H.GetProp('_Name'))
+				return None
 		# if the generation of a 3D structure was successfull
-		if returnedVal != -1:
+		else:
 			# Minimize with force field
 			if   args.method == 'uff' : AllChem.UFFOptimizeMolecule(m_H)
 			elif args.method == 'mmff': AllChem.MMFFOptimizeMolecule(m_H)
-		else:
-			return None
 	elif args.method == 'etkdg':
 		returnedVal = AllChem.EmbedMolecule(m_H, AllChem.ETKDG())
 		if returnedVal == -1:
-			print("Failed to generate 3D structure for", m_H.GetProp('_Name'), "with ETKDG.")
-			return None
+			print("Problem generating 3D structure for", m_H.GetProp('_Name'), "with ETKDG. Trying to be more permissive.")
+			returnedVal = AllChem.EmbedMolecule(m_H, ignoreSmoothingFailures=True, useExpTorsionAnglePrefs=True, useBasicKnowledge=True)
+			if returnedVal == -1:
+				print("Problem generating 3D structure for", m_H.GetProp('_Name'), "with ETKDG. Switching to MMFF.")
+				returnedVal = AllChem.EmbedMolecule(m_H)
+				if returnedVal == -1:
+					print("Failed to generate 3D structure for", m_H.GetProp('_Name'))
+					return None
+				else:
+					AllChem.MMFFOptimizeMolecule(m_H)
 	# Keep hydrogens or not
 	if args.hydrogen:
 		m = m_H
@@ -94,9 +109,9 @@ def RunGPU(smiles, args):
 	pass
 
 def OutputSDF(structures, args):
-	file = Chem.SDWriter(args.output)
+	output = Chem.SDWriter(args.output)
 	for mol in structures:
-		file.write(mol)
+		output.write(mol)
 		if args.verbose:
 			print("Writing: ", mol.GetPropsAsDict(includePrivate=True))
 	print("Wrote {}/{} molecules to {}".format(len(structures), len(smiles), args.output))
