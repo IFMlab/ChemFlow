@@ -40,10 +40,10 @@ for com in ${com_list} ; do
   # Separate the complex in protein, ligand(s) and water mol2 files
   cd ${pdb_folder} # otherwise spores will add the path to the ligand name inside the file, which causes some bugs with PLANTS
   ${spores_exec} --mode splitpdb ${com}.pdb > ${run_folder}/rescoring/${scoring_function}/${com}/spores.job 2>&1
- 
+
   # Output is ${pdb_folder}, so we need to move it
   mv ${pdb_folder}/*.mol2 ${run_folder}/rescoring/${scoring_function}/${com}/
-  
+
   # path to ligand and receptor
   lig=$(ls ${run_folder}/rescoring/${scoring_function}/${com}/ligand*.mol2 | sed s/.mol2//g)
   rec=$(ls ${run_folder}/rescoring/${scoring_function}/${com}/protein.mol2 | sed s/.mol2//g)
@@ -62,9 +62,9 @@ for com in ${com_list} ; do
   cd ${run_folder}/rescoring/${scoring_function}/${com}
   echo -ne "Configuring ${PURPLE}${com}${NC}    \r"
   if [ "${rescore_method}" = "plants" ]; then
-    sphere_list=$(python ${CHEMFLOW_HOME}/common/bounding_sphere.py ${lig}.mol2)
-    bs_center=$(echo "${sphere_list}" | cut -d";" -f1)
-    bs_radius=$(echo "${sphere_list}" | cut -d";" -f2)
+    sphere_list=$(python ${CHEMFLOW_HOME}/Tools/bounding_sphere.py ${lig}.mol2)
+    bs_center=$(echo "${sphere_list}" | cut -d" " -f"1,2,3")
+    bs_radius=$(echo "${sphere_list}" | cut -d" " -f4)
     write_plants_config
   elif [ "${rescore_method}" = "vina" ]; then
     write_vina_config
@@ -83,7 +83,7 @@ fi
 echo "Rescoring configuration finished                                               "
 
 if [ -z "${com_list}" ]; then
-  echo -e "${RED}ERROR${NC} : Could not find pdb files in ${pdb_folder}"    
+  echo -e "${RED}ERROR${NC} : Could not find pdb files in ${pdb_folder}"
   exit 1
 fi
 }
@@ -106,24 +106,24 @@ dock_list=$(cd ${folder} ; \ls -l | grep "^d" | awk '{print $9}')
 pose_list=""
 for dock_folder in ${dock_list}; do
     poses_list=$(cd ${folder}/${dock_folder}/; \ls *conf*.${pose_extension} 2>/dev/null | sed s/.${pose_extension}//g )
-  
+
   if [ ! -z "$poses_list" ]; then
     for pose in ${poses_list}
     do
       lig_name=$(echo ${pose} | cut -d_ -f1)
       pose_list+=" ${lig_name}/${pose}/${dock_folder}"
-  
+
       # And write the plants config file there.
       mkdir -p ${run_folder}/rescoring/${scoring_function}/${lig_name}/${pose}
       cd ${run_folder}/rescoring/${scoring_function}/${lig_name}/${pose}
       lig="${folder}/${dock_folder}/${pose}"
-      
+
       echo -ne "Configuring ${PURPLE}${pose}${NC} from ${PURPLE}${lig_name}${NC}   \r"
       if [ "${rescore_method}" = "plants" ]; then
         # Compute the binding-site center (average on coordinates) and radius
-        sphere_list=$(python ${CHEMFLOW_HOME}/common/bounding_sphere.py ${lig}.mol2)
-        bs_center=$(echo "${sphere_list}" | cut -d";" -f1)
-        bs_radius=$(echo "${sphere_list}" | cut -d";" -f2)
+        sphere_list=$(python ${CHEMFLOW_HOME}/Tools/bounding_sphere.py ${lig}.mol2)
+        bs_center=$(echo "${sphere_list}" | cut -d" " -f"1,2,3")
+        bs_radius=$(echo "${sphere_list}" | cut -d" " -f4)
         write_plants_config
       elif [ "${rescore_method}" = "vina" ]; then
         lig="${run_folder}/input_files/lig/${lig_name}/${pose}"
@@ -146,7 +146,7 @@ echo "Rescoring configuration finished                                          
 
 if [ -z "${pose_list}" ]
 then
-  echo -e "${RED}ERROR${NC} : Could not find ${pose_extension} docking poses in ${folder} sub-folders"    
+  echo -e "${RED}ERROR${NC} : Could not find ${pose_extension} docking poses in ${folder} sub-folders"
   exit 1
 fi
 }
@@ -302,7 +302,7 @@ do
 
   # Go to the rescoring folder
   cd ${run_folder}/rescoring/${scoring_function}/${common_folder}
-  
+
   # Run
   if [ "${run_mode}" = "local" ]    ; then
     # Progress
@@ -334,7 +334,7 @@ do
       pbs_count=$( echo "${mazinger_current}" | cut -d, -f1)
       identifier=$(echo "${mazinger_current}" | cut -d, -f2)
       test_jobid=$(echo "${mazinger_current}" | cut -d, -f3)
-      if [ ! -z "${test_jobid}" ]; then 
+      if [ ! -z "${test_jobid}" ]; then
         jobid=${test_jobid}
         echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
         echo -ne "Running ${PURPLE}PBS script #${identifier}${NC} on ${BLUE}${jobid}${NC}              \r"
@@ -442,7 +442,7 @@ echo "Ligand,Affinity,gauss_1,gauss_2,repulsion,hydrophobic,Hydrogen" > ${run_fo
 begin_run
 
 # Convert receptor if it's not already done
-if $(list_include_item "ALL BEST" "${mode}") && [ ! -f ${rec}.pdbqt ]; then 
+if $(list_include_item "ALL BEST" "${mode}") && [ ! -f ${rec}.pdbqt ]; then
   cd $(dirname ${rec}.${extension})
   ${adt_u24}/prepare_receptor4.py -r ${rec}.${extension} > convert2pdbqt.job
 fi
@@ -503,7 +503,7 @@ do
       pbs_count=$( echo "${mazinger_current}" | cut -d, -f1)
       identifier=$(echo "${mazinger_current}" | cut -d, -f2)
       test_jobid=$(echo "${mazinger_current}" | cut -d, -f3)
-      if [ ! -z "${test_jobid}" ]; then 
+      if [ ! -z "${test_jobid}" ]; then
         jobid=${test_jobid}
         echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
         echo -ne "Running ${PURPLE}PBS script #${identifier}${NC} on ${BLUE}${jobid}${NC}              \r"
@@ -623,7 +623,7 @@ fi
 
 # Exit status
 # prmtop is created even if tleap fails, so check if it's empty instead of checking for the presence of the file
-if [ ! -z "$(cat ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop)" ]; then 
+if [ ! -z "$(cat ${run_folder}/input_files/com/${lig_name}/${pose_name}.prmtop)" ]; then
   continue_running="true"
 else
   continue_running="false"
@@ -675,11 +675,11 @@ echo "PBSA using PB3
 verbose=2, keep_files=0,
 /
 &pb
-inp=1,                     
-radiopt=0,                
-istrng=0.15,              
-cavity_surften=0.00542,   
-cavity_offset=0.92,        
+inp=1,
+radiopt=0,
+istrng=0.15,
+cavity_surften=0.00542,
+cavity_offset=0.92,
 /
 "> PB3.in
 fi
@@ -814,7 +814,7 @@ if [ "$continue_running" = "true" ]; then
       continue_running='true'
     fi
   fi
-  
+
   mmpbsa_traj="${run_folder}/input_files/com/${lig_name}/${pose_name}_MD_prod.mdcrd"
 fi
 
@@ -845,7 +845,7 @@ if [ "$continue_running" = "true" ]; then
               -cp com.top -rp rec.top -lp lig.top \
               -y ${mmpbsa_traj} &> mmpbsa.job
   fi
-  
+
   # Check if output was created
   if [ ! -f MM${scoring_function::2}SA.csv ]; then
     echo "${pose_name},${dock_folder},mmpbsa results,${continue_running},${mmpbsa_traj}" >> ${run_folder}/rescoring/${scoring_function}/errors.csv
@@ -948,15 +948,15 @@ if [ -f MM${scoring_function::2}SA.csv ]; then
   # Complex Energy Terms
   # Frame #,BOND,ANGLE,DIHED,UB,IMP,CMAP,VDWAALS,EEL,1-4 VDW,1-4 EEL,EGB,ESURF,G gas,G solv,TOTAL
   # 0,1084.2011,1632.7714,2456.3263,0.0,0.0,0.0,-1427.0694,-13621.3645,653.7996,7967.7268,-2427.8025,85.378788,-1253.6086999999989,-2342.423712,-3596.0324119999987
-  # 
+  #
   # Receptor Energy Terms
   # Frame #,BOND,ANGLE,DIHED,UB,IMP,CMAP,VDWAALS,EEL,1-4 VDW,1-4 EEL,EGB,ESURF,G gas,G solv,TOTAL
   # 0,1060.7625,1599.903,2429.7444,0.0,0.0,0.0,-1386.9484,-13721.0535,638.1646,8312.9529,-2386.7304,85.60304135999999,-1066.4745000000003,-2301.12735864,-3367.60185864
-  # 
+  #
   # Ligand Energy Terms
   # Frame #,BOND,ANGLE,DIHED,UB,IMP,CMAP,VDWAALS,EEL,1-4 VDW,1-4 EEL,EGB,ESURF,G gas,G solv,TOTAL
   # 0,23.4386,32.8685,26.582,0.0,0.0,0.0,-3.455,95.3726,15.635,-345.2261,-52.6417,5.146031519999999,-154.78439999999998,-47.49566848,-202.28006847999995
-  # 
+  #
   # DELTA Energy Terms
   # Frame #,BOND,ANGLE,DIHED,UB,IMP,CMAP,VDWAALS,EEL,1-4 VDW,1-4 EEL,EGB,ESURF,DELTA G gas,DELTA G solv,DELTA TOTAL
   # 0,-4.973799150320701e-14,-9.999999993226538e-05,-9.999999986831654e-05,0.0,0.0,0.0,-36.666000000000096,4.3164000000003,1.0480505352461478e-13,1.1368683772161603e-13,11.569600000000136,-5.370284879999991,-32.34979999999862,6.199315119999987,-26.150484879998658
@@ -1095,7 +1095,7 @@ do
       pbs_count=$( echo "${mazinger_current}" | cut -d, -f1)
       identifier=$(echo "${mazinger_current}" | cut -d, -f2)
       test_jobid=$(echo "${mazinger_current}" | cut -d, -f3)
-      if [ ! -z "${test_jobid}" ]; then 
+      if [ ! -z "${test_jobid}" ]; then
         jobid=${test_jobid}
         echo "$jobid" >> ${run_folder}/rescoring/${scoring_function}/jobs_list_${datetime}.mazinger
         echo -ne "Running ${PURPLE}PBS script #${identifier}${NC} on ${BLUE}${jobid}${NC}              \r"
