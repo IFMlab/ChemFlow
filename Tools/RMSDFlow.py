@@ -23,7 +23,7 @@ def mol2_reader(user_file):
     molecules       = []
     num_atoms_lines = []
     first_lines     = []
-    
+
     # Read file
     with open(user_file, "r") as f:
         lines = f.readlines()
@@ -89,9 +89,9 @@ def rmsd_standard(atompos1, atompos2, ignoreH, cutOff, ignoreOutliers):
                 delta_x = atompos1[1][line1][0] - atompos2[1][line2][0]
                 delta_y = atompos1[1][line1][1] - atompos2[1][line2][1]
                 delta_z = atompos1[1][line1][2] - atompos2[1][line2][2]
-                
+
                 sq_sum = delta_x**2 + delta_y**2 + delta_z**2
-                
+
                 if sq_sum > cutOff**2:  # if the distance is superior to the cut-off
                     if not ignoreOutliers:  # append to the list only if we do not ignore outliers
                         delta_squared_sum.append(sq_sum)
@@ -164,9 +164,9 @@ def rmsd_MDA(atompos1, atompos2, cutOff, ignoreOutliers, ignoreH ):
                             delta_x = atompos1[1][line1][0] - atompos2[1][line3][0]
                             delta_y = atompos1[1][line1][1] - atompos2[1][line3][1]
                             delta_z = atompos1[1][line1][2] - atompos2[1][line3][2]
-                            
+
                             sq_sum_temp = delta_x**2 + delta_y**2 + delta_z**2
-                            
+
                             if sq_sum_temp <= min_distance**2:
                                 # if this atom seems like a good candidate
                                 # maybe it would still be more interesting to keep this atom
@@ -177,9 +177,9 @@ def rmsd_MDA(atompos1, atompos2, cutOff, ignoreOutliers, ignoreH ):
                                         delta_x = atompos1[1][line4][0] - atompos2[1][line3][0]
                                         delta_y = atompos1[1][line4][1] - atompos2[1][line3][1]
                                         delta_z = atompos1[1][line4][2] - atompos2[1][line3][2]
-                                        
+
                                         sq_sum_temp2 = delta_x**2 + delta_y**2 + delta_z**2
-                                        
+
                                         if sq_sum_temp2 >= sq_sum_temp:
                                             # distance between atoms of the same type but not the same name is better
                                             min_distance = sq_sum_temp
@@ -284,9 +284,9 @@ def rmsd_HA(atompos1, atompos2, ignoreH):
                 delta_x = atompos1[1][line1][0] - atompos2[1][line2][0]
                 delta_y = atompos1[1][line1][1] - atompos2[1][line2][1]
                 delta_z = atompos1[1][line1][2] - atompos2[1][line2][2]
-                
+
                 sq_sum = delta_x**2 + delta_y**2 + delta_z**2
-                
+
                 Ai_vector.append(sq_sum)
         M[atompos1[0][line1][1]].append(Ai_vector)
         # In the end, each row of a submatrix is an iteration of Ai, and each column is an iteration of Bj
@@ -349,13 +349,13 @@ def output_rmsd(outputfile, rmsd_list):
         with open(my_file, 'w') as f:
             f.write(header)
             for line in rmsd_list:
-                myString = '\n{},{},{:.6f},{},{}'.format(line[-2], line[-1], line[2], line[3], line[4])
+                myString = '\n{},{},{:.3f},{},{}'.format(line[-2], line[-1], line[0], line[1], line[2])
                 f.write(myString)
         f.closed
     else:
         with open(my_file, 'a') as f:
             for line in rmsd_list:
-                myString = '\n{},{},{:.6f},{},{}'.format(line[-2], line[-1], line[2], line[3], line[4])
+                myString = '\n{},{},{:.3f},{},{}'.format(line[-2], line[-1], line[0], line[1], line[2])
                 f.write(myString)
         f.closed
 
@@ -383,7 +383,7 @@ def rmsd_plot(rmsd_list):
 
     # sort by rmsd values for the first reference given by the user
     init = ref_list[0]
-    sorted_subset[init] = sorted(subset[init], key=lambda rmsd: rmsd[2])
+    sorted_subset[init] = sorted(subset[init], key=lambda data: data[0])
     # reorganize the results for the other references to match the same order as previous sort
     labels = [mol[-1] for mol in sorted_subset[init]]
     for ref in ref_list[1:]:
@@ -400,7 +400,7 @@ def rmsd_plot(rmsd_list):
     # Plot
     for i,ref in enumerate(ref_list):
         c=next(color)
-        g[ref] = ax.bar(index + i*bar_width, [rmsd[2] for rmsd in sorted_subset[ref]],
+        g[ref] = ax.bar(index + i*bar_width, [data[0] for data in sorted_subset[ref]],
                         label=ref, color=c, alpha=opacity,
                         width=bar_width, linewidth=0)
 
@@ -430,50 +430,50 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Computes the RMSD between 2 (or more) molecules inside mol2 files.',
                                      epilog=textwrap.dedent('''\
     Each MOL2 files can contain multiple molecules.\n\
-    MANDATORY ARGUMENTS : -r -i -a'''), formatter_class=argparse.RawTextHelpFormatter)
+    MANDATORY ARGUMENTS : -r -i'''), formatter_class=argparse.RawTextHelpFormatter)
 
     group_input = parser.add_argument_group(terminal_sep,'INPUT arguments')
-    
+
     group_input.add_argument("-r", "--reference", nargs='+', required=True,
                              help="Path to 1 or several reference mol2 file(s).")
-                             
-    group_input.add_argument("-i", "--input",     nargs='+', required=True, 
+
+    group_input.add_argument("-i", "--input",     nargs='+', required=True,
                              help="Path to 1 or several input mol2 file(s).")
-                             
-    group_input.add_argument("-nt", "--nthreads", metavar='int', type=int, default=1,
-                             help="Specify the number of CPU threads to be used. Default: 1")
+
+    group_input.add_argument("--cpu", metavar='int', type=int, default=1,
+                             help="Specify the number of CPU cores to be used. Default: 1")
 
 
     group_args = parser.add_argument_group(terminal_sep,'ALGORITHM arguments')
 
-    group_args.add_argument("-hy","--hydrogen", action="store_false", default=True, 
+    group_args.add_argument("-hy","--hydrogen", action="store_false", default=True,
                             help="Read hydrogen atoms." )
 
     group_args.add_argument("-a", "--algorithm", choices=['std', 'ha', 'mda'], default='ha',
                             help=textwrap.dedent('''\
     Use one of these algorithm :
-    * ha : Hungarian Algorithm (Recommended)
+    * ha : Hungarian Algorithm (Default)
     * std : Standard, matches atom names. Compatible with --cutoff and --outliers
     * mda : Minimal Distance Algorithm.   Compatible with --cutoff and --outliers'''))
 
 
     group_std_mda = parser.add_argument_group(terminal_sep,'SPECIFIC ARGUMENTS FOR STANDARD AND MINIMAL DISTANCE ALGORITHM')
 
-    group_std_mda.add_argument("--cutoff", action='store', dest='distance', type=float, default=2.0, 
+    group_std_mda.add_argument("--cutoff", action='store', dest='distance', type=float, default=2.0,
                                help="Atomic distance cut-off. Used to ignore outliers and do MDA optimization. Default : 2.0")
-                               
-    group_std_mda.add_argument("--outliers", action="store_true", default=False, 
+
+    group_std_mda.add_argument("--outliers", action="store_true", default=False,
                                help="Ignore outliers : atoms that cannot find a match while having a pairwise distance below CUTOFF." )
 
-    
+
     group_output = parser.add_argument_group(terminal_sep,'OUTPUT arguments')
-    
-    group_output.add_argument("-o", "--output", dest='filename', 
+
+    group_output.add_argument("-o", "--output", dest='filename',
                                help="Output a CSV file 'FILENAME' containing RMSD between reference and input molecules.")
-                              
-    group_output.add_argument("-p", "--plot", action="store_true", 
+
+    group_output.add_argument("-p", "--plot", action="store_true",
                                help="Plot RMSD by input molecule, show the plot and save as a PNG image.")
-                              
+
     group_output.add_argument("-v", "--verbose", action="store_true",
                                help="Increase output verbosity : 'RMSD (atoms read / atoms in file) reference file - input file : RMSD value'")
     group_output.add_argument("-s", "--silent", action="store_true",
@@ -482,7 +482,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # uses a pool of threads to execute calls asynchronously
-    with futures.ThreadPoolExecutor(max_workers=args.nthreads) as executor:
+    with futures.ProcessPoolExecutor(max_workers=args.cpu) as executor:
         jobs = []
         rmsd_list = []
 
@@ -501,11 +501,10 @@ if __name__ == '__main__':
                         job = executor.submit(rmsd, arguments)
                         jobs.append(job)
 
-    # Get results as they are completed
-    for job in futures.as_completed(jobs):
-
-        # If result is not None
-        if job.result():
+    # Get results in order of submission
+    for job in jobs:
+        # If calculation is done
+        if job.done():
             answer = job.result()
             rmsd_list.append(answer)
 
