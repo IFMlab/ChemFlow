@@ -10,19 +10,20 @@
 # The advanced mode optimizes the RMSD by finding atoms pairs with high RMSD.
 
 import argparse, textwrap, re, os.path, shutil
-from concurrent import futures
+from   concurrent import futures
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import linear_sum_assignment
+from   scipy.optimize import linear_sum_assignment
 
 ## Documentation for the mol2_reader function
 # Reads the content of a mol2 file and adapts it for the rmsd function
 # @param : file path and name, passed as a string
 # @return : list of atom informations (name and type), and coordinates (x,y and z)
 def mol2_reader(user_file):
-    molecules = []
+    molecules       = []
     num_atoms_lines = []
-    first_lines = []
+    first_lines     = []
+    
     # Read file
     with open(user_file, "r") as f:
         lines = f.readlines()
@@ -30,7 +31,8 @@ def mol2_reader(user_file):
     # Search for the line where the number of atoms is, and the first line where atom coordinates are readable
     for i, line in enumerate(lines):
         search_molecule = re.search(r'@<TRIPOS>MOLECULE', line)
-        search_atom = re.search(r'@<TRIPOS>ATOM', line)
+        search_atom     = re.search(r'@<TRIPOS>ATOM', line)
+
         if search_molecule:
             # line with the number of atoms
             num_atoms_lines.append(i+2)
@@ -39,7 +41,7 @@ def mol2_reader(user_file):
             first_lines.append(i+1)
 
     for num_atoms_line, first_line in zip(num_atoms_lines, first_lines):
-        mol = get_mol_from_mol2(num_atoms_line, first_line, lines)
+        mol  = get_mol_from_mol2(num_atoms_line, first_line, lines)
         name = lines[num_atoms_line - 1].replace("\n","")
         molecules.append([name,mol])
 
@@ -47,7 +49,7 @@ def mol2_reader(user_file):
 
 def get_mol_from_mol2(num_atoms_line, first_line, lines):
     # Read number of atoms directly from the corresponding line
-    data = lines[num_atoms_line].split()
+    data      = lines[num_atoms_line].split()
     num_atoms = int(data[0])
 
     POS = [] # List containing atomic coordinates
@@ -72,9 +74,9 @@ def rmsd_standard(atompos1, atompos2, ignoreH, cutOff, ignoreOutliers):
     # atompos[1] = list of coordinates
 
     # Compute the sum of squared differences between atomic coordinates
-    nb_atoms = len(atompos1[0])
-    nb_skipped_H = 0
-    delta_squared_sum = []
+    nb_atoms            = len(atompos1[0])
+    nb_skipped_H        = 0
+    delta_squared_sum   = []
 
     for line1 in range(nb_atoms):
         if ignoreH == True:
@@ -87,7 +89,9 @@ def rmsd_standard(atompos1, atompos2, ignoreH, cutOff, ignoreOutliers):
                 delta_x = atompos1[1][line1][0] - atompos2[1][line2][0]
                 delta_y = atompos1[1][line1][1] - atompos2[1][line2][1]
                 delta_z = atompos1[1][line1][2] - atompos2[1][line2][2]
+                
                 sq_sum = delta_x**2 + delta_y**2 + delta_z**2
+                
                 if sq_sum > cutOff**2:  # if the distance is superior to the cut-off
                     if not ignoreOutliers:  # append to the list only if we do not ignore outliers
                         delta_squared_sum.append(sq_sum)
@@ -124,10 +128,10 @@ def rmsd_MDA(atompos1, atompos2, cutOff, ignoreOutliers, ignoreH ):
     # atompos[1] = list of coordinates
 
     # Compute the difference between each coordinates------------------------------------------------
-    delta_squared_sum = []
-    atoms_read = []
-    nb_atoms = len(atompos1[0])
-    nb_skipped_H = 0
+    delta_squared_sum   = []
+    atoms_read          = []
+    nb_atoms            = len(atompos1[0])
+    nb_skipped_H        = 0
 
 
     for line1 in range(nb_atoms):
@@ -160,7 +164,9 @@ def rmsd_MDA(atompos1, atompos2, cutOff, ignoreOutliers, ignoreH ):
                             delta_x = atompos1[1][line1][0] - atompos2[1][line3][0]
                             delta_y = atompos1[1][line1][1] - atompos2[1][line3][1]
                             delta_z = atompos1[1][line1][2] - atompos2[1][line3][2]
+                            
                             sq_sum_temp = delta_x**2 + delta_y**2 + delta_z**2
+                            
                             if sq_sum_temp <= min_distance**2:
                                 # if this atom seems like a good candidate
                                 # maybe it would still be more interesting to keep this atom
@@ -171,7 +177,9 @@ def rmsd_MDA(atompos1, atompos2, cutOff, ignoreOutliers, ignoreH ):
                                         delta_x = atompos1[1][line4][0] - atompos2[1][line3][0]
                                         delta_y = atompos1[1][line4][1] - atompos2[1][line3][1]
                                         delta_z = atompos1[1][line4][2] - atompos2[1][line3][2]
+                                        
                                         sq_sum_temp2 = delta_x**2 + delta_y**2 + delta_z**2
+                                        
                                         if sq_sum_temp2 >= sq_sum_temp:
                                             # distance between atoms of the same type but not the same name is better
                                             min_distance = sq_sum_temp
@@ -249,9 +257,9 @@ def rmsd_HA(atompos1, atompos2, ignoreH):
     # Each matrix element corresponds to the sum of the squared differences between atomic coordinates.
     # The pairwise atomic distance can be obtain by taking the squared root of this matrix element. Such value is not needed here.
 
-    M = {} # Dictionnary of atom types. Each atom type will be a matrix that will be used by the scipy module to solve the problem. can only contain numbers
-    nb_atoms = len(atompos1[0]) # number of atoms in molecule A (should be the same as molecule B)
-    nb_skipped_H = 0 # number of hydrogen atotms skipped
+    M               = {} # Dictionnary of atom types. Each atom type will be a matrix that will be used by the scipy module to solve the problem. can only contain numbers
+    nb_atoms        = len(atompos1[0]) # number of atoms in molecule A (should be the same as molecule B)
+    nb_skipped_H    = 0 # number of hydrogen atotms skipped
 
     # Iterate through reference molecule : A
     for line1 in range(nb_atoms):
@@ -276,7 +284,9 @@ def rmsd_HA(atompos1, atompos2, ignoreH):
                 delta_x = atompos1[1][line1][0] - atompos2[1][line2][0]
                 delta_y = atompos1[1][line1][1] - atompos2[1][line2][1]
                 delta_z = atompos1[1][line1][2] - atompos2[1][line2][2]
+                
                 sq_sum = delta_x**2 + delta_y**2 + delta_z**2
+                
                 Ai_vector.append(sq_sum)
         M[atompos1[0][line1][1]].append(Ai_vector)
         # In the end, each row of a submatrix is an iteration of Ai, and each column is an iteration of Bj
@@ -309,14 +319,14 @@ def rmsd_HA(atompos1, atompos2, ignoreH):
 ## Documentation for the rmsd function
 # Interface to the actual rmsd_HA function
 def rmsd(arguments):
-    reference_mol = arguments[0]
-    mol = arguments[1]
-    algorithm = arguments[2]
-    cut_off = arguments[3]
+    reference_mol   = arguments[0]
+    mol             = arguments[1]
+    algorithm       = arguments[2]
+    cut_off         = arguments[3]
     ignore_outliers = arguments[4]
-    ignore_H = arguments[5]
-    ref_name = arguments[6]
-    input_name = arguments[7]
+    ignore_H        = arguments[5]
+    ref_name        = arguments[6]
+    input_name      = arguments[7]
 
     if algorithm == 'std':
         return rmsd_standard(reference_mol, mol, cutOff=cut_off, ignoreOutliers=ignore_outliers, ignoreH=ignore_H ) + (ref_name, input_name,)
@@ -332,7 +342,7 @@ def rmsd(arguments):
 
 def output_rmsd(outputfile, rmsd_list):
     my_file = outputfile
-    header = "Reference,Input,RMSD,Number of atoms read,Number of atoms in molecule"
+    header  = "Reference,Input,RMSD,Number of atoms read,Number of atoms in molecule"
 
     # if file doesn't exists
     if not os.path.exists(my_file):
@@ -423,28 +433,51 @@ if __name__ == '__main__':
     MANDATORY ARGUMENTS : -r -i -a'''), formatter_class=argparse.RawTextHelpFormatter)
 
     group_input = parser.add_argument_group(terminal_sep,'INPUT arguments')
-    group_input.add_argument("-r", "--reference", nargs='+', required=True, help="Path to 1 or several reference mol2 file(s).")
-    group_input.add_argument("-i", "--input", nargs='+', required=True, help="Path to 1 or several input mol2 file(s).")
-    group_input.add_argument("-nt", "--nthreads", metavar='int', type=int, default=1, help="Specify the number of CPU threads to be used. Default: 1")
+    
+    group_input.add_argument("-r", "--reference", nargs='+', required=True,
+                             help="Path to 1 or several reference mol2 file(s).")
+                             
+    group_input.add_argument("-i", "--input",     nargs='+', required=True, 
+                             help="Path to 1 or several input mol2 file(s).")
+                             
+    group_input.add_argument("-nt", "--nthreads", metavar='int', type=int, default=1,
+                             help="Specify the number of CPU threads to be used. Default: 1")
+
 
     group_args = parser.add_argument_group(terminal_sep,'ALGORITHM arguments')
-    group_args.add_argument("-a", "--algorithm", choices=['std', 'ha', 'mda'], required=True, help=textwrap.dedent('''\
+
+    group_args.add_argument("-hy","--hydrogen", action="store_false", default=True, 
+                            help="Read hydrogen atoms." )
+
+    group_args.add_argument("-a", "--algorithm", choices=['std', 'ha', 'mda'], default='ha',
+                            help=textwrap.dedent('''\
     Use one of these algorithm :
     * ha : Hungarian Algorithm (Recommended)
     * std : Standard, matches atom names. Compatible with --cutoff and --outliers
-    * mda : Minimal Distance Algorithm. Compatible with --cutoff and --outliers'''))
+    * mda : Minimal Distance Algorithm.   Compatible with --cutoff and --outliers'''))
 
-    group_args.add_argument("--hydrogen", action="store_false", default=True, help="Read hydrogen atoms." )
 
     group_std_mda = parser.add_argument_group(terminal_sep,'SPECIFIC ARGUMENTS FOR STANDARD AND MINIMAL DISTANCE ALGORITHM')
-    group_std_mda.add_argument("--cutoff", action='store', dest='distance', type=float, default=2.0, help="Atomic distance cut-off. Used to ignore outliers and do MDA optimization. Default : 2.0")
-    group_std_mda.add_argument("--outliers", action="store_true", default=False, help="Ignore outliers : atoms that cannot find a match while having a pairwise distance below CUTOFF." )
 
+    group_std_mda.add_argument("--cutoff", action='store', dest='distance', type=float, default=2.0, 
+                               help="Atomic distance cut-off. Used to ignore outliers and do MDA optimization. Default : 2.0")
+                               
+    group_std_mda.add_argument("--outliers", action="store_true", default=False, 
+                               help="Ignore outliers : atoms that cannot find a match while having a pairwise distance below CUTOFF." )
+
+    
     group_output = parser.add_argument_group(terminal_sep,'OUTPUT arguments')
-    group_output.add_argument("-o", "--output", dest='filename', help="Output a CSV file 'FILENAME' containing RMSD between reference and input molecules.")
-    group_output.add_argument("-p", "--plot", action="store_true", help="Plot RMSD by input molecule, show the plot and save as a PNG image.")
-    group_output.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity : 'RMSD (atoms read / atoms in file) reference file - input file : RMSD value'")
-    group_output.add_argument("-s", "--silent", action="store_true", help="Don't output RMSD results on the terminal.")
+    
+    group_output.add_argument("-o", "--output", dest='filename', 
+                               help="Output a CSV file 'FILENAME' containing RMSD between reference and input molecules.")
+                              
+    group_output.add_argument("-p", "--plot", action="store_true", 
+                               help="Plot RMSD by input molecule, show the plot and save as a PNG image.")
+                              
+    group_output.add_argument("-v", "--verbose", action="store_true",
+                               help="Increase output verbosity : 'RMSD (atoms read / atoms in file) reference file - input file : RMSD value'")
+    group_output.add_argument("-s", "--silent", action="store_true",
+                               help="Don't output RMSD results on the terminal.")
 
     args = parser.parse_args()
 
@@ -452,12 +485,16 @@ if __name__ == '__main__':
     with futures.ThreadPoolExecutor(max_workers=args.nthreads) as executor:
         jobs = []
         rmsd_list = []
+
         for reference_file in args.reference:
             references = mol2_reader(reference_file)
+
             for iref, reference in enumerate(references):
                 ref = reference[0]
+
                 for input_file in args.input:
                     inputs = mol2_reader(input_file)
+
                     for imol,molecule in enumerate(inputs):
                         inp = molecule[0]
                         arguments = [reference[1], molecule[1], args.algorithm, args.distance, args.outliers, args.hydrogen, ref, inp]
@@ -466,10 +503,12 @@ if __name__ == '__main__':
 
     # Get results as they are completed
     for job in futures.as_completed(jobs):
+
         # If result is not None
         if job.result():
             answer = job.result()
             rmsd_list.append(answer)
+
             # print results
             if args.verbose:
                 verbose(answer[-2],answer[-1],answer[:-2])
