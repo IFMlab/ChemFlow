@@ -62,7 +62,7 @@ for com in ${com_list} ; do
   cd ${run_folder}/rescoring/${scoring_function}/${com}
   echo -ne "Configuring ${PURPLE}${com}${NC}    \r"
   if [ "${rescore_method}" = "plants" ]; then
-    sphere_list=$(python ${CHEMFLOW_HOME}/Tools/bounding_sphere.py ${lig}.mol2)
+    sphere_list=$(python ${CHEMFLOW_HOME}/Tools/bounding_shape.py ${lig}.mol2 --sphere)
     bs_center=$(echo "${sphere_list}" | cut -d" " -f"1,2,3")
     bs_radius=$(echo "${sphere_list}" | cut -d" " -f4)
     write_plants_config
@@ -121,7 +121,7 @@ for dock_folder in ${dock_list}; do
       echo -ne "Configuring ${PURPLE}${pose}${NC} from ${PURPLE}${lig_name}${NC}   \r"
       if [ "${rescore_method}" = "plants" ]; then
         # Compute the binding-site center (average on coordinates) and radius
-        sphere_list=$(python ${CHEMFLOW_HOME}/Tools/bounding_sphere.py ${lig}.mol2)
+        sphere_list=$(python ${CHEMFLOW_HOME}/Tools/bounding_shape.py ${lig}.mol2 --sphere)
         bs_center=$(echo "${sphere_list}" | cut -d" " -f"1,2,3")
         bs_radius=$(echo "${sphere_list}" | cut -d" " -f4)
         write_plants_config
