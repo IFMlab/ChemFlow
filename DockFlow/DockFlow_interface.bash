@@ -5,7 +5,7 @@ echo -e "\
 ||                        ${RED}DockFlow${NC}                       ||
 || Laboratoire d'Ingenierie des Fonctions Moleculaires   ||
 || Institut de Science et d'Ingenierie Supramoleculaires ||
-|| Cedric Bouysset - cbouysset@unistra.fr                ||
+|| Cedric Bouysset - cbouysset@unice.fr                  ||
 || Diego E.B. Gomes - dgomes@pq.cnpq.br                  ||
 \\\\\=======================================================//
 "
@@ -99,11 +99,11 @@ case $key in
     shift # past argument
     ;;
     -r|--receptor)
-    rec="$2"
+    rec=$(readlink -f "$2")
     shift # past argument
     ;;
     -l|--ligand)
-    lig_input="$2"
+    lig_input=$(readlink -f "$2")
     shift # past argument
     ;;
     -o|--output)
@@ -353,6 +353,8 @@ else
   echo -e "${RED}ERROR${NC} : ${RED}Running mode${NC} not recognized"
 fi
 
-## Create folder if it doesn't exist
+## Create output folder if it doesn't exist
 if [ ! -d "${output_folder}" ]; then mkdir -p ${output_folder}; fi
+## get absolute path to it
+output_folder=$(readlink -f "${output_folder}")
 }

@@ -6,7 +6,7 @@ echo -e "\
 ||                       ${GREEN}ScoreFlow${NC}                       ||
 || Laboratoire d'Ingenierie des Fonctions Moleculaires   ||
 || Institut de Science et d'Ingenierie Supramoleculaires ||
-|| Cedric Bouysset - cbouysset@unistra.fr                ||
+|| Cedric Bouysset - cbouysset@unice.fr                  ||
 || Diego E.B. Gomes - dgomes@pq.cnpq.br                  ||
 \\\\\=======================================================//
 "
@@ -30,18 +30,18 @@ ________________________________________________________________________________
 For MM-PB/GB-SA :
                   -p/--purge          : Empty the \"input_files/com\" folder before calculations.
                                         Used to run new simulations.
-                  -b/--base           : Base calculations on 1 frame (1F) or 
+                  -b/--base           : Base calculations on 1 frame (1F) or
                                         on a quick implicit solvent (GB) MD simulation
-                  -sm/--stripmask     : Amber mask of atoms needed to be stripped from the 
+                  -sm/--stripmask     : Amber mask of atoms needed to be stripped from the
                                         solvated complex to make the dry complex topology file
-                  -lm/--ligmask       : Amber mask of atoms needed to be stripped 
+                  -lm/--ligmask       : Amber mask of atoms needed to be stripped
                                         from COMPLEX to create LIGAND
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 For calculations on 1 frame :
-                  -ms/--minsteps      : Number of steps for minimization 
+                  -ms/--minsteps      : Number of steps for minimization
                                         Use \"\" for no minimization
                   -mr/--restraint     : Restraint applied to your selection, in kcal/mol/A2
-                  -mt/--mintype       : apply a simple backbone restriction, 
+                  -mt/--mintype       : apply a simple backbone restriction,
                                         or use a custom mask : backbone, custom
                   -mm/--minmask       : If backbone, for resid x to y, write x-y.
                                         If custom, use NAB atom expression
@@ -198,7 +198,7 @@ write_SF_config() {
 source temp.config
 
 echo "# Config file generated from CLI
-# Type of rescoring : 
+# Type of rescoring :
   # Virtual Screening results from DockFlow : ALL
   # A selection of ligands from DockFlow's VS results : BEST
   # Crystal structure from a PDB file : PDB
@@ -219,7 +219,7 @@ pdb_folder=\"${pdb_folder}\"
 rec=\"$rec\"
 
 # By default, ScoreFlow will assume that you are running from the same folder that contains your lig, rec and docking results directories.
-# This way, depending on the mode you chose (ALL or BEST ), it will automatically find the location of your mol2 files. 
+# This way, depending on the mode you chose (ALL or BEST ), it will automatically find the location of your mol2 files.
 # If necessary, you can overwrite the path to a custom \"docking\" or \"input_files/lig\" folder here.
 folder=\"$folder\"
 
@@ -308,7 +308,7 @@ if [ "${rescore_method}" = "plants" ]; then
   # search for mol2 files in list_docking
   pose_extension="mol2"
 
-  if [ -z "${rec}" ] && [ ! "$mode" = "PDB" ]; then 
+  if [ -z "${rec}" ] && [ ! "$mode" = "PDB" ]; then
     error "the location of the receptor MOL2 file";
   else
     filename=$(basename "$rec")
@@ -323,9 +323,9 @@ elif [ "${rescore_method}" = "vina" ]; then
   # search for mol2 files in list_docking
   pose_extension="mol2"
 
-  if [ -z "${rec}" ] && [ ! "$mode" = "PDB" ]; then 
+  if [ -z "${rec}" ] && [ ! "$mode" = "PDB" ]; then
     error "the location of the receptor MOL2 or PDB file";
-  else 
+  else
     filename=$(basename "$rec")
     extension="${filename##*.}"
     if [ ! "${extension}" = "mol2" ] && [ ! "${extension}" = "pdb" ]; then echo -e "${RED}ERROR${NC} : your receptor is ${RED}not a MOL2 or PDB file${NC}"; exit 1; fi
@@ -339,15 +339,15 @@ elif [ "${rescore_method}" = "mmpbsa" ]; then
   # search for pdb files in list_docking
   pose_extension="pdb"
 
-  if [ -z "${rec}" ] && [ ! "$mode" = "PDB" ]; then 
+  if [ -z "${rec}" ] && [ ! "$mode" = "PDB" ]; then
     error "the location of the receptor PDB file";
-  else 
+  else
     filename=$(basename "$rec")
     extension="${filename##*.}"
     if [ ! "${extension}" = "pdb" ]; then echo -e "${RED}ERROR${NC} : your receptor is ${RED}not a PDB file${NC}"; exit 1; fi
   fi
 
-  if ! $(list_include_item "1F MD" "${pb_method}"); then 
+  if ! $(list_include_item "1F MD" "${pb_method}"); then
     echo -e "${RED}FATAL ERROR${NC} : ${RED}MMPBSA calculations method${NC} not recognized (1F or MD : ${pb_method})"; exit 1; fi
   if [ -z "$amber" ]     ;  then error "the path to amber.sh"; fi
   if [ -z "$strip_mask" ];  then error "the amber strip mask to create the dry complex from the solvated system"; fi
@@ -395,7 +395,7 @@ elif [ "${rescore_method}" = "plants" ] && [ -z "${water}" ] && [ ! -z "${water_
 
 elif [ "${rescore_method}" = "mmpbsa" ] && [ ! -z "${water}" ]; then
   echo -e "${BLUE}Rescoring with structural water molecule${NC}"
- 
+
 else
   dock_water=""
 fi
@@ -441,7 +441,7 @@ fi
 # amber_MD : sander or pmemd
 if [ -z "${amber_md}" ]; then amber_md=sander; fi
 if [ "${amber_md}" = "pmemd" ]; then
-  if [ "${gpu}" = "true" ] ; then 
+  if [ "${gpu}" = "true" ] ; then
     amber_md=pmemd.cuda
   else
     amber_md="mpirun -n 16 pmemd.MPI"
@@ -460,5 +460,3 @@ echo "
 Thank you for using ScoreFlow !
 The ChemFlow team @IFMlab"
 }
-
-

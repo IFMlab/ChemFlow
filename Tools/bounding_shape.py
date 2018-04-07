@@ -8,9 +8,10 @@ import sys, re
 # This script will read a mol2 file and return the center and radius of the smallest sphere containing all the atoms
 
 def help():
-	print("Usage: python bounding_shape.py file.mol2 --box/--sphere")
+	print("Usage: python bounding_shape.py file.mol2 --box/--sphere padding")
 	print("--sphere returns 4 values separated by a space: x, y, z coordinates of the center and radius of the sphere")
 	print("--box returns 6 values: x, y, z coordinates of the center, and size along the x, y, z dimensions")
+	print("padding is a number added to the radius/sizes of the shape to avoid having a too small binding site")
 
 def distance(a,b):
 	'''Euclidian distance between 2 points'''
@@ -24,7 +25,7 @@ def get_center(points):
 	'''Centroid for finite number of points'''
 	return [sum([point[i] for point in points])/len(points) for i in range(len(points[0]))]
 
-def average_bs(XYZ):
+def average_bs(XYZ, padding=0.3):
 	'''Bounding sphere where the center is the centroid of the molecule, and the
 	 radius is incremented until all atoms fit inside the sphere'''
 	# Compute the center of the sphere as the average over x, y and z coordinates
@@ -46,9 +47,10 @@ def average_bs(XYZ):
 				if i == len(XYZ)-1:
 					found = True
 					break
+	radius += padding
 	return center, radius
 
-def ritter_bs(XYZ):
+def ritter_bs(XYZ, padding=0.3):
 	"""Bounding sphere using Ritter's algorithm"""
 	# start by picking a point p1
 	i1 = 0
@@ -93,9 +95,10 @@ def ritter_bs(XYZ):
 				if i == len(XYZ)-1:
 					found = True
 					break
+	radius += padding
 	return center, radius
 
-def bounding_box(XYZ):
+def bounding_box(XYZ, padding=0.5):
 	# get center
 	center = get_center(XYZ)
 	# get furthest point for each axis
@@ -106,24 +109,30 @@ def bounding_box(XYZ):
 			d = distance_along_axis(center, point, axis=axis)
 			if d > dmax:
 				dmax = d
+		dmax += padding
 		size.append(dmax)
 	return center, size
 
 if __name__ == '__main__':
-	if len(sys.argv) != 3:
+	if len(sys.argv) < 4:
 		help()
 		sys.exit()
 	elif any(h in sys.argv for h in ['-h','--help']):
 		help()
 		sys.exit()
 
-	# print commands to show bounding box on pymol
-	pymol = False
+	inputfile = sys.argv[1]
+	choice = sys.argv[2]
+	padding = float(sys.argv[3])
+	# print commands to show bounding box on pymol, for debugging
+	try:
+		pymol = True if sys.argv[4] == 'pymol' else False
+	except IndexError:
+		pymol = False
 
 	# Read file
-	this_file = open(sys.argv[1], "r")
-	lines = this_file.readlines()
-	this_file.close()
+	with open(inputfile, "r") as f:
+		lines = f.readlines()
 
 	# Search for the line where the number of atoms is, and the first line where atom coordinates are readable
 	for i, line in enumerate(lines):
@@ -147,8 +156,8 @@ if __name__ == '__main__':
 	    XYZ.append([ float(data[i]) for i in [2,3,4] ])
 
 	# compute bounding shape
-	if sys.argv[2] == '--box':
-		center, size = bounding_box(XYZ)
+	if choice == '--box':
+		center, size = bounding_box(XYZ, padding)
 		print(' '.join(['{:.3f}'.format(x) for x in center + size]))
 		if pymol:
 			print('pseudoatom a1, pos={}'.format([center[0]+size[0],center[1]+size[1],center[2]+size[2]]))
@@ -171,8 +180,13 @@ if __name__ == '__main__':
 			print('distance d72, a7, a2')
 			print('distance d54, a5, a4')
 			print('distance d63, a3, a6')
-	elif sys.argv[2] == '--sphere':
-		center, radius = average_bs(XYZ)
+	elif choice == '--sphere':
+		center, radius = average_bs(XYZ, padding)
 		print(' '.join(['{:.3f}'.format(x) for x in center + [radius]]))
+		if pymol:
+			print('pseudoatom boundingsphere, pos={}, vdw={}'.format(center, radius))
+			print('show spheres, boundingsphere')
+			print('set sphere_quality, 4')
+			print('set sphere_transparency, 0.6')
 	else:
 		help()

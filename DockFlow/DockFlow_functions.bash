@@ -32,13 +32,9 @@ else
     $CHEMFLOW_HOME/Tools/splitmol2.bash ${lig_input} ${lig_path}
   elif [ "${extension}" = "sdf" ]; then
     # convert to mol2
-    babel -isdf ${lig_input} -omol2 ${lig_path}_temp.mol2 >> prepare_ligands.job 2>&1
-    # if no names are present, babel will use "*****" as ligand name
-    # --> replace with "ligand_1" and so on if necessary
-    awk 'BEGIN {count=1} {if ($0 == "*****") {sub(/\*\*\*\*\*/, "ligand_" count);count+=1}};{print}' ${lig_path}_temp.mol2 > ${lig_path}.mol2
+    babel -isdf ${lig_input} -omol2 ${lig_path}.mol2 >> prepare_ligands.job 2>&1
     # split to 1 file per ligand
     $CHEMFLOW_HOME/Tools/splitmol2.bash ${lig_path}.mol2 ${lig_path}
-    rm -f ${lig_path}_temp.mol2
   elif [ "${extension}" = "smi" ]; then
     # convert to sdf
     python $CHEMFLOW_HOME/Tools/SmilesTo3D.py -i ${lig_input} -o ${lig_path}.sdf -nt $(nproc) >> prepare_ligands.job
@@ -195,7 +191,7 @@ write_plants_config() {
 echo "
 # scoring function and search settings
 scoring_function ${scoring_function}
-search_speed speed${search_speed}
+search_speed speed${speed}
 aco_ants ${ants}
 aco_evap ${evap_rate}
 aco_sigma ${iteration_scaling}
@@ -389,7 +385,7 @@ reorganize_vina() {
 if [ -f output.log ]; then
   mkdir -p ${output_folder}/ranking
   awk -v lig=${lig} '/-----/{f=1;next};/Writing output ... done./{f=0}f{print lig"_"$1","$2","$3","$4}' output.log >> ${output_folder}/ranking/${lig}.csv
-
+  babel -ipdbqt ${lig}_out.pdbqt -omol2 docked_ligands.mol2 -h > babel.job 2>&1
 else
   echo "${lig},no ranking.csv" >> ${output_folder}/errors.csv
 fi

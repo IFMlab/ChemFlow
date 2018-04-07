@@ -16,7 +16,7 @@ then
  
 else
   echo "ChemFlow is already installed on your session. Check ~/.bashrc for more info.
-Overwriting ChemFlow.config"
+Writing ChemFlow.config"
 fi
  
 # Autofill the ChemFlow.config
@@ -43,7 +43,7 @@ vina_exec=\"$vina_exec\"
 # Command to load Vina on PBS server
 load_vina_PBS=\"module load vina\"
  
-# Path to Utilities24 folder of AutoDockTools (in MGLTools)
+# Path to MGLTools folder (contains MGLToolsPckgs, bin, and other directories)
 mgltools_folder=\"\"
  
 # Path to GNU Parallel executable, needed to run procedures in parallel locally.

@@ -55,6 +55,7 @@ if $(list_include_item "chemplp plp plp95" "${scoring_function}"); then
   cat ${output_folder}/ranking/*.csv  >> ${output_folder}/ranking.csv
   cat ${output_folder}/features/*.csv >> ${output_folder}/features.csv
   rm -rf ${output_folder}/{ranking,features}/
+  
 elif [ "${scoring_function}" = "vina" ]; then
   # Run vina
   time run_vina

@@ -2,7 +2,7 @@
 #
 # ChemFlow  - Computational Chemistry WorkFlows (awesome)
 #
-# SplitMol2 - Splits a single mol2 file with multiple moleculs into multiple mol2 files with a single molecule.
+# SplitMol2 - Splits a single mol2 file with multiple molecules into multiple mol2 files with a single molecule.
 # To split a mol2 or sdf file containing multiple ligands in batches, see splitmol
 #
 # Diego Enry B. Gomes
@@ -26,7 +26,7 @@ help() {
 || Diego E.B. Gomes - dgomes@pq.cnpq.br                  ||
 \\\\\=======================================================//
 
-Splits a single mol2 file with multiple moleculs into multiple mol2 files with a single molecule. Usage:
+Splits a single mol2 file with multiple molecules into multiple mol2 files with a single molecule. Usage:
 ./splitmol2 input_file.mol2 output_folder
 
 SplitMol2 is part of ChemFlow Tools, developed by
@@ -55,15 +55,28 @@ if [ ! -d "$2" ];then
   mkdir -p "$2"
 fi
 
-n=0
+count=0
 # keep leading whitespaces
 OLD_IFS="$IFS"
 IFS=""
 while read line ; do
   if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-    let n=$n+1
+    n=0
+    let count+=1
+    start="${line}"
   fi
-  echo -e "${line}" >> ${2}/lig_${n}.mol2
+  if [ ${n} == 1 ]; then
+    lig_name="${line}"
+    # some files converted by babel have "******" as nae inside the mol2 file --> replace by ligand_$count
+    if [ "${lig_name}" == '*****' ]; then
+      lig_name="ligand_${count}"
+    fi
+    echo -e "${start}" > ${2}/${lig_name}.mol2
+    echo -e "${lig_name}" >> ${2}/${lig_name}.mol2
+  elif [ ${n} -gt 1 ]; then
+    echo -e "${line}" >> ${2}/${lig_name}.mol2
+  fi
+  let n+=1
 done < "$1"
 IFS="$OLD_IFS"
 }

@@ -10,7 +10,7 @@ from minOptions import *
 from rescoreOptions import *
 from dialogSaveRestore import *
 
-# directory where the binary is beign decompressed and executed, usually /tmp/_MEIxxxxxx
+# directory where the binary is being decompressed and executed, usually /tmp/_MEIxxxxxx
 tempDir = os.path.dirname(resource_path(__file__))
 # directory where the binary that was launched is
 execDir = os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -174,19 +174,29 @@ class Main(QMainWindow, Ui_MainWindow):
     def run(self):
         self.writeConfig()
         # run
-        with subprocess.Popen("DockFlow -f DockFlow.config".split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True) as process:
-            # write output as it runs
-            for line in process.stdout:
-                # fix progress bar and spinner printed every second without carriage return
-                if ('Progress' in line) or ('Preparing' in line):
-                    print('\r'+line.replace('\n',''), end='')
-                # Fix no \n after the last print from the progress bar or spinner
-                elif ('Execution time' in line) or ('Finished preparing' in line):
-                    print('\n'+line, end='')
-                else:
-                    print(line, end='')
-        if process.returncode != 0:
-            raise subprocess.CalledProcessError(process.returncode, process.args)
+        if 'Docking' in self.values['protocolPreset']:
+            with subprocess.Popen("DockFlow -f DockFlow.config".split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True) as process:
+                # write output as it runs
+                self.showOutput(process)
+            if process.returncode != 0:
+                raise subprocess.CalledProcessError(process.returncode, process.args)
+        if 'Rescoring' in self.values['protocolPreset']:
+            with subprocess.Popen("ScoreFlow -f ScoreFlow.config".split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True) as process:
+                # write output as it runs
+                self.showOutput(process)
+            if process.returncode != 0:
+                raise subprocess.CalledProcessError(process.returncode, process.args)
+
+    def showOutput(self, process):
+        for line in process.stdout:
+            # fix progress bar and spinner printed every second without carriage return
+            if ('Progress' in line) or ('Preparing' in line):
+                print('\r'+line.replace('\n',''), end='')
+            # Fix no \n after the last print from the progress bar or spinner
+            elif ('Execution time' in line) or ('Finished preparing' in line):
+                print('\n'+line, end='')
+            else:
+                print(line, end='')
 
     def writeConfig(self):
         self.values = {}

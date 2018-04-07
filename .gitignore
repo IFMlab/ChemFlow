@@ -114,9 +114,10 @@ venv.bak/
 *.pdb
 *.pdbqt
 
-# big files
-*.tar.gz
+# test folders
+test/*/
+*.log
 
-# config
-ChemFlow.config
+# config files for chemflow and GUI
+*.config
 *.ini
