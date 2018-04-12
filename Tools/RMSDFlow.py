@@ -342,20 +342,22 @@ def rmsd(arguments):
 
 def output_rmsd(outputfile, rmsd_list):
     my_file = outputfile
-    header  = "Reference,Input,RMSD,Number of atoms read,Number of atoms in molecule"
+    header  = "Reference,Input,RMSD" #,Number of atoms read,Number of atoms in molecule"
 
     # if file doesn't exists
     if not os.path.exists(my_file):
         with open(my_file, 'w') as f:
             f.write(header)
             for line in rmsd_list:
-                myString = '\n{},{},{:.3f},{},{}'.format(line[-2], line[-1], line[0], line[1], line[2])
+                #myString = '\n{},{},{:.3f},{},{}'.format(line[-2], line[-1], line[0], line[1], line[2])
+                myString = '\n{},{},{:.3f}'.format(line[-2], line[-1], line[0])
                 f.write(myString)
         f.closed
     else:
         with open(my_file, 'a') as f:
             for line in rmsd_list:
-                myString = '\n{},{},{:.3f},{},{}'.format(line[-2], line[-1], line[0], line[1], line[2])
+               #myString = '\n{},{},{:.3f},{},{}'.format(line[-2], line[-1], line[0], line[1], line[2])
+                myString = '\n{},{},{:.3f}'.format(line[-2], line[-1], line[0])
                 f.write(myString)
         f.closed
 
