@@ -120,4 +120,5 @@ test/*/
 
 # config files for chemflow and GUI
 *.config
+!config_files/*
 *.ini

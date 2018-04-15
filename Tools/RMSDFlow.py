@@ -1,13 +1,11 @@
 #!/usr/bin/python3
 # coding: utf8
 
-## @package rmsd
 # @author Cedric Bouysset <bouysset.cedric@gmail.com>
 # @author Diego Enry Barreto Gomes <dgomes@pq.cnpq.br>
-# @brief Computes RMSD between two mol2 files, advanced use considers outliers in RMSD.
-# @details So far it only computes RMSD between two mol2 files, and you know how mol2 files are
-# totally not regular.
-# The advanced mode optimizes the RMSD by finding atoms pairs with high RMSD.
+# @brief Computes RMSD between several references and several inputs in MOL2 files
+# @details Different algorithms are available to find optimal atom pairs to account
+# for molecules related by symmetry operations.
 
 import argparse, textwrap, re, os.path, shutil
 from   concurrent import futures
@@ -15,17 +13,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from   scipy.optimize import linear_sum_assignment
 
-## Documentation for the mol2_reader function
-# Reads the content of a mol2 file and adapts it for the rmsd function
-# @param : file path and name, passed as a string
-# @return : list of atom informations (name and type), and coordinates (x,y and z)
-def mol2_reader(user_file):
+def mol2_reader(mol2_file, ignoreH):
+    '''A simple MOL2 file reader. Can read files with multiple molecules.
+    Returns a list of molecules. Each molecule is a list of atoms, where an atom
+    is a dictionnary containing atom informations (name and type),
+    and coordinates (x,y and z).'''
     molecules       = []
     num_atoms_lines = []
     first_lines     = []
 
     # Read file
-    with open(user_file, "r") as f:
+    with open(mol2_file, "r") as f:
         lines = f.readlines()
 
     # Search for the line where the number of atoms is, and the first line where atom coordinates are readable
@@ -41,358 +39,304 @@ def mol2_reader(user_file):
             first_lines.append(i+1)
 
     for num_atoms_line, first_line in zip(num_atoms_lines, first_lines):
-        mol  = get_mol_from_mol2(num_atoms_line, first_line, lines)
+        mol  = get_mol_from_mol2(num_atoms_line, first_line, lines, ignoreH)
         name = lines[num_atoms_line - 1].replace("\n","")
         molecules.append([name,mol])
 
     return molecules
 
-def get_mol_from_mol2(num_atoms_line, first_line, lines):
+def get_mol_from_mol2(num_atoms_line, first_line, lines, ignoreH):
+    '''Extracts a molecule from a mol2 file.
+    num_atoms_line: index of the line containing the number of atoms, bonds...etc.
+    first_line: index of the first line of the molecule to be extracted
+    Returns a molecule as a list of atoms. An atom is a dictionnary containing
+    atom informations (name and type), and coordinates (x,y and z).'''
     # Read number of atoms directly from the corresponding line
     data      = lines[num_atoms_line].split()
     num_atoms = int(data[0])
 
-    POS = [] # List containing atomic coordinates
-    ATOM = [] # List containing atom name and type
-
-    # Fill the table containing the atoms coordinates--------------------------------------------
+    # create molecule containing a list of atoms
+    MOL = []
+    # Fill the list with atomic parameters and coordinates
     for line in range(first_line, first_line + num_atoms):
         data = lines[line].split()
-        ATOM.append([data[1],data[5]])
-        POS.append([float(data[2]),float(data[3]),float(data[4])])
+        if ignoreH: # if ignore H
+            if data[5] == 'H': # if the atom read is an H
+                continue # skip this atom
+        # if it's not an H, or we don't ignore H, add this atom
+        MOL.append(
+        {
+            'prm': {
+                'atom': data[1],
+                'type': data[5],
+            },
+            'crd': [float(data[2]),float(data[3]),float(data[4])],
+        },)
+    return MOL
 
-    return [ATOM,POS]
-
-
-## Documentation for the standard RMSD function.
-# @param atompos1 : list of atom information and position returned by the mol2_reader function for the reference file
-# @param atompos2 : list of atom information and position returned by the mol2_reader function for the target file
-# @param ignoreH : Boolean, ignore hydrogen atoms
-def rmsd_standard(atompos1, atompos2, ignoreH, cutOff, ignoreOutliers):
-    # atompos1 = reference, atompos2 = target
-    # atompos[0] = list of atom name and atom type
-    # atompos[1] = list of coordinates
+# classical RMSD function
+def rmsd_standard(ref, mol, cutOff, ignoreOutliers):
+    '''Classical RMSD function that compares atoms of the same name.
+    ref : list of dictionnaries containing atom information and position for the reference molecule
+    mol : list of dictionnaries containing atom information and position for the target molecule
+    cutOff : float, cutOff to ignore outliers
+    ignoreOutliers: Boolean, ignore outliers'''
 
     # Compute the sum of squared differences between atomic coordinates
-    nb_atoms            = len(atompos1[0])
-    nb_skipped_H        = 0
-    delta_squared_sum   = []
+    nb_atoms = len(ref)
+    rss_list = []
 
-    for line1 in range(nb_atoms):
-        if ignoreH == True:
-            if atompos1[0][line1][0][0] == "H":
-                nb_skipped_H += 1
-                continue
+    for ref_atom in ref:
+        for mol_atom in mol:
+            # if same atom names
+            if ref_atom['prm']['atom'] == mol_atom['prm']['atom']:
+                # residual sum of squares, or distance^2
+                rss = sum([(ref_atom['crd'][i] - mol_atom['crd'][i])**2 for i in range(3)])
 
-        for line2 in range(nb_atoms):
-            if atompos1[0][line1][0] == atompos2[0][line2][0]: # if same atom names
-                delta_x = atompos1[1][line1][0] - atompos2[1][line2][0]
-                delta_y = atompos1[1][line1][1] - atompos2[1][line2][1]
-                delta_z = atompos1[1][line1][2] - atompos2[1][line2][2]
-
-                sq_sum = delta_x**2 + delta_y**2 + delta_z**2
-
-                if sq_sum > cutOff**2:  # if the distance is superior to the cut-off
+                if rss > cutOff**2:  # if the euclidian distance (sqrt(rss)) is superior to the cut-off
                     if not ignoreOutliers:  # append to the list only if we do not ignore outliers
-                        delta_squared_sum.append(sq_sum)
+                        rss_list.append(rss)
                 else:
-                    delta_squared_sum.append(sq_sum)
-                break
-
-    # Compute the sum of sq_sum for all atoms
-    sum_d2 = 0
-    nb_atoms_read = len(delta_squared_sum)
-
-    for line in range(nb_atoms_read):
-        sum_d2 += delta_squared_sum[line]
+                    rss_list.append(rss)
+                break # get out of the mol loop since we found the atom of the same name
 
     # Compute the RMSD
-    if nb_atoms_read == 0:
+    nb_atoms_used = len(rss_list)
+    if nb_atoms_used == 0:
         rmsd = np.nan
     else:
-        rmsd = np.sqrt(1/nb_atoms_read * sum_d2)
+        rmsd = np.sqrt(1/nb_atoms_used * sum(rss_list))
 
-    return rmsd, nb_atoms_read, nb_atoms
-
-
-
-## Documentation for the RMSD function based on the custom Minimal Distance Algorithm.
-# @param atompos1 : list of atom information and position returned by the mol2_reader function for the reference file
-# @param atompos2 : list of atom information and position returned by the mol2_reader function for the target file
-# @param ignoreH : Boolean, ignore hydrogen atoms
-# @param cutOff : Atomic distance cut-off. Used to ignore outliers and/or optimize results.
-# @param ignoreOutliers : if an atom in the input molecule cannot be paired with a reference atom with a distance below cutOff, ignore it.
-def rmsd_MDA(atompos1, atompos2, cutOff, ignoreOutliers, ignoreH ):
-    # atompos1 = reference, atompos2 = target
-    # atompos[0] = list of atom name and atom type
-    # atompos[1] = list of coordinates
-
-    # Compute the difference between each coordinates------------------------------------------------
-    delta_squared_sum   = []
-    atoms_read          = []
-    nb_atoms            = len(atompos1[0])
-    nb_skipped_H        = 0
+    # return RMSD, number of atoms used to compute RMSD, number of atoms in the molecule
+    return rmsd, len(rss_list), nb_atoms
 
 
-    for line1 in range(nb_atoms):
-        if ignoreH == True:
-            if atompos1[0][line1][0][0] == "H":
-                # ignore hydrogen atoms
-                nb_skipped_H += 1
-                # go back to the for loop, don't search for corresponding atom in the target file
-                continue
+def rmsd_MDA(ref, mol, cutOff, ignoreOutliers):
+    '''A minimal distance algorithm to compute the RMSD. For an atom of the reference
+    molecule, search for an atom of the same type in the target molecule with the
+    minimal distance possible. Once such atom is found, check that the target atom would
+    not be better assigned to another reference atom of the same type. If its the case,
+    take the second best candidate and check again. Do this until the reference
+    atom and the target atom are both good assignments for each other.'''
 
-        for line2 in range(nb_atoms):
-            # Search for similar atom name
-            if atompos1[0][line1][0] == atompos2[0][line2][0]:
-                # if both atoms have the same name
-                delta_x = atompos1[1][line1][0] - atompos2[1][line2][0]
-                delta_y = atompos1[1][line1][1] - atompos2[1][line2][1]
-                delta_z = atompos1[1][line1][2] - atompos2[1][line2][2]
+    nb_atoms = len(ref)
+    M        = {}
 
-                sq_sum = delta_x**2 + delta_y**2 + delta_z**2
+    for ref_atom in ref:
+        # create a dictionnary of atom types
+        atom_type = ref_atom['prm']['type']
+        rss_list = []
+        if atom_type not in M:
+            M[atom_type] = []
+        # fill each atom_type with a matrix of RSS between atoms of reference and
+        # molecule of the same type
+        for mol_atom in mol:
+             if ref_atom['prm']['type'] == mol_atom['prm']['type']:
+                 # residual sum of squares, or distance^2
+                 rss = sum([(ref_atom['crd'][i] - mol_atom['crd'][i])**2 for i in range(3)])
+                 rss_list.append(rss)
+        M[atom_type].append(rss_list)
 
-                if sq_sum > cutOff**2:
-                    # Can we find an atom of the same type below the cut-off distance ?
-                    # if the target atom is over the cut-off distance.
-                    found = False
-                    min_distance = cutOff
-                    for line3 in range(nb_atoms):
-                        # Search for similar atom type in target file
-                        if atompos1[0][line1][1] == atompos2[0][line3][1] and atompos2[0][line3][0] not in atoms_read:
-                            # if both atoms are of the same type
-                            delta_x = atompos1[1][line1][0] - atompos2[1][line3][0]
-                            delta_y = atompos1[1][line1][1] - atompos2[1][line3][1]
-                            delta_z = atompos1[1][line1][2] - atompos2[1][line3][2]
-
-                            sq_sum_temp = delta_x**2 + delta_y**2 + delta_z**2
-
-                            if sq_sum_temp <= min_distance**2:
-                                # if this atom seems like a good candidate
-                                # maybe it would still be more interesting to keep this atom
-                                # for its equivalent in the reference file.
-                                # thus : compute this other distance and keep the one giving the best result
-                                for line4 in range(nb_atoms):
-                                    if atompos2[0][line3][0] == atompos1[0][line4][0]:
-                                        delta_x = atompos1[1][line4][0] - atompos2[1][line3][0]
-                                        delta_y = atompos1[1][line4][1] - atompos2[1][line3][1]
-                                        delta_z = atompos1[1][line4][2] - atompos2[1][line3][2]
-
-                                        sq_sum_temp2 = delta_x**2 + delta_y**2 + delta_z**2
-
-                                        if sq_sum_temp2 >= sq_sum_temp:
-                                            # distance between atoms of the same type but not the same name is better
-                                            min_distance = sq_sum_temp
-                                            best_sq_sum = sq_sum_temp
-                                            best_atom = atompos2[0][line3][0]
-                                        else:
-                                            min_distance = sq_sum_temp2
-                                            best_sq_sum = sq_sum_temp2
-                                            best_atom = atompos1[0][line4][0]
-                                        found = True
-                                        break
-                                        # out of the 4th for loop
-
-                    if found == True:
-                        # Once we've looped through all atoms of the same type, add the one giving the best distance
-                        delta_squared_sum.append(best_sq_sum)
-                        atoms_read.append(best_atom)
-
+    rss_list = []
+    for atom_type in M:
+        ref_read    = []
+        target_read = []
+        # convert to numpy array
+        matrix = np.array(M[atom_type])
+        # set the max number of iterations
+        max_iterations = len(matrix)
+        # get target atom with min rss to ref atom
+        for i_ref in range(len(matrix)):
+            target_indices = np.where(matrix[i_ref] == matrix[i_ref].min())[0]
+            for i_target in target_indices:
+                found = False
+                iteration = 0
+                while not found:
+                    if iteration < max_iterations:
+                        iteration += 1
+                        pair = search_best_rss(matrix, i_ref, i_target, cutOff, ignoreOutliers)
+                        if pair:
+                            i_ref, i_target = pair
+                            if (i_ref not in ref_read) and (i_target not in target_read):
+                                rss = matrix[i_ref][i_target]
+                                rss_list.append(rss)
+                                ref_read.append(i_ref)
+                                target_read.append(i_target)
+                                found = True
+                            else:
+                                matrix[i_ref][i_target] = 1e5
                     else:
-                        # if the distance was over cutOff and no better atom was found
-                        if (not ignoreOutliers) and atompos2[0][line2][0] not in atoms_read:
-                            delta_squared_sum.append(sq_sum)
-                            atoms_read.append(atompos2[0][line2][0])
+                        break
 
-                elif sq_sum <= cutOff**2 and atompos2[0][line2][0] not in atoms_read:
-                    # if the distance is below cutOff and this atom haven't already been used
-                    delta_squared_sum.append(sq_sum)
-                    atoms_read.append(atompos2[0][line2][0])
-
-                break
-                # Once a distance has been added between an atom from the reference and the target atom,
-                # break out of the second for loop, and continue with the next reference atom
-                # in other terms, don't continue searching for a target atom with the same name
-
-    # Compute the sum of squared deltas sum----------------------------------------------------------
-    sum_d2 = 0
-    nb_atoms_read = len(delta_squared_sum)
-
-    for line in range(nb_atoms_read):
-        sum_d2 += delta_squared_sum[line]
-
-    # Compute the RMSD-------------------------------------------------------------------------------
-    if nb_atoms_read == 0:
+    # Compute the RMSD
+    nb_atoms_used = len(rss_list)
+    if nb_atoms_used == 0:
         rmsd = np.nan
     else:
-        rmsd = np.sqrt(1/nb_atoms_read * sum_d2)
+        rmsd = np.sqrt(1/nb_atoms_used * sum(rss_list))
 
-    return rmsd, nb_atoms_read, nb_atoms
+    # return RMSD, number of atoms used to compute RMSD, number of atoms in the molecule
+    return rmsd, len(rss_list), nb_atoms
+
+def search_best_rss(matrix, i_ref, i_target, cutOff, ignoreOutliers):
+    # check if target atom doesn't have a better assignment than the ref atom
+    ref_indices = np.where(matrix.T[i_target] < matrix[i_ref][i_target])[0]
+    if len(ref_indices): # if there's a better ref candidate for the current target candidate
+        return None
+    else: # if the ref-target is the best match
+        if matrix[i_ref][i_target] > cutOff**2: # if distance larger than cutOff
+            if not ignoreOutliers: # if outliers are not ignored
+                return i_ref, i_target
+            else: # if we don't ignore outliers
+                return None
+        else: # distance below cutoff
+            return i_ref, i_target
 
 
+def rmsd_HA(ref, mol):
+    '''RMSD algorithm where the matching between reference and target atoms is done
+    by the Hungarian Algorithm. More efficient than the Minimal distance algorithm,
+    and the solution includes all the atoms of the molecules.'''
 
-## Documentation for the RMSD function based on the Hungarian Algorithm.
-# @param atompos1 : list of atom information and position returned by the mol2_reader function for the reference file
-# @param atompos2 : list of atom information and position returned by the mol2_reader function for the target file
-# @param ignoreH : Boolean, ignore hydrogen atoms
-def rmsd_HA(atompos1, atompos2, ignoreH):
-    # atompos1 = reference, atompos2 = target
-    # atompos[0] = list of atom name and atom type
-    # atompos[1] = list of coordinates
-
-    '''
-    Explanation of the problem :
-    We have 2 versions, A (reference) and B (target), of the same molecule, and N atoms in each molecule.
-    The pairwise atomic distance rij between atom i of target molecule B, and atom j of reference molecule A, can be used as
-    a performance rating of the assignment of atom Bj to atom Ai.
-    We need to find the optimal assignment of N atoms in target molecule B to N atoms in reference molecule A.
-    An algorithm to obtain this optimal assignment has been given by H. Kuhn to solve this problem.
-    We will use a variant of this algorithm, presented by J. Munkres, the "Hungarian algorithm":
-    "Munkres J. Algorithms for the Assignment and Transportation Problems. J. Soc. Indust. Appl. Math. 1957, 5, 32–38"
-    Since we don't want to match atom of different type, we will start by dividing the initial matrix of all atom-types pairwise distances into several atom-type dependant matrices.
-    The problem will then be solved as mentionned in the paper above, using a function present in the scipy library, originally written by Brian M. Clapper.
-    '''
+    # Explanation of the problem :
+    # We have 2 versions, A (reference) and B (target), of the same molecule, and N atoms in each molecule.
+    # The pairwise atomic distance rij between atom i of target molecule B, and atom j of reference molecule A, can be used as
+    # a performance rating of the assignment of atom Bj to atom Ai.
+    # We need to find the optimal assignment of N atoms in target molecule B to N atoms in reference molecule A.
+    # An algorithm to obtain this optimal assignment has been given by H. Kuhn to solve this problem.
+    # We will use a variant of this algorithm, presented by J. Munkres, the "Hungarian algorithm":
+    # "Munkres J. Algorithms for the Assignment and Transportation Problems. J. Soc. Indust. Appl. Math. 1957, 5, 32–38"
+    # Since we don't want to match atom of different type, we will start by dividing the initial matrix of all atom-types pairwise distances into several atom-type dependant matrices.
+    # The problem will then be solved as mentionned in the paper above, using a function present in the scipy library, originally written by Brian M. Clapper.
 
     ## Create matrices according to atom-type
     # Each matrix element corresponds to the sum of the squared differences between atomic coordinates.
     # The pairwise atomic distance can be obtain by taking the squared root of this matrix element. Such value is not needed here.
 
-    M               = {} # Dictionnary of atom types. Each atom type will be a matrix that will be used by the scipy module to solve the problem. can only contain numbers
-    nb_atoms        = len(atompos1[0]) # number of atoms in molecule A (should be the same as molecule B)
-    nb_skipped_H    = 0 # number of hydrogen atotms skipped
+    nb_atoms = len(ref)
+    M        = {}
 
-    # Iterate through reference molecule : A
-    for line1 in range(nb_atoms):
+    for ref_atom in ref:
+        # Create an atom-type submatrix
+        atom_type = ref_atom['prm']['type']
+        rss_list = []
+        if atom_type not in M:
+            M[atom_type] = []
+        # fill each atom_type with a matrix of RSS between atoms of reference and
+        # molecule of the same type
+        for mol_atom in mol:
+             if ref_atom['prm']['type'] == mol_atom['prm']['type']:
+                 # residual sum of squares, or distance^2
+                 rss = sum([(ref_atom['crd'][i] - mol_atom['crd'][i])**2 for i in range(3)])
+                 rss_list.append(rss)
+        M[atom_type].append(rss_list)
 
-        # Ignore hydrogen atoms
-        if ignoreH == True:
-            if atompos1[0][line1][0][0] == "H":
-                nb_skipped_H += 1
-                # go back to the for loop, don't search for corresponding atom in the target file
-                continue
-
-        # Create an atom-type submatrice if it doesn't already exist
-        if atompos1[0][line1][1] not in M:
-            M[atompos1[0][line1][1]] = []
-
-        # Create a vector that will contain all sum of squared differences between atomic coordinates (sq_sum) of each Bj atom for a given Ai atom
-        Ai_vector = []
-        # Iterate through target molecule B
-        for line2 in range(nb_atoms):
-            # Search for similar atom type and compute the sq_sum
-            if atompos1[0][line1][1] == atompos2[0][line2][1]: # if both atoms have the same type
-                delta_x = atompos1[1][line1][0] - atompos2[1][line2][0]
-                delta_y = atompos1[1][line1][1] - atompos2[1][line2][1]
-                delta_z = atompos1[1][line1][2] - atompos2[1][line2][2]
-
-                sq_sum = delta_x**2 + delta_y**2 + delta_z**2
-
-                Ai_vector.append(sq_sum)
-        M[atompos1[0][line1][1]].append(Ai_vector)
-        # In the end, each row of a submatrix is an iteration of Ai, and each column is an iteration of Bj
-
-    # Create a dictionnary of atom types for the solutions. Each atom type will be a matrix containing the row and columns of optimal sq_sum
+    # Create a dictionnary of atom types for the solutions.
+    # Each atom type will be a matrix containing the row and columns of optimal RSS
     sol = {}
-    for at_type in M:
-        sol[at_type] = linear_sum_assignment(M[at_type])
+    for atom_type in M:
+        sol[atom_type] = linear_sum_assignment(M[atom_type])
 
-    # Make the rows and columns in the solution matrix correspond to the initial cost-matrix M, extract the corresponding sq_sum, and compute the sum of each sq_sum (sum_d2).
-    sum_d2 = 0
-    nb_atoms_read = 0
-    for at_type in M:
-        for i in range(len(M[at_type])):
-            row = sol[at_type][0][i]
-            col = sol[at_type][1][i]
-            sq_sum = M[at_type][row][col]
-            sum_d2 += sq_sum
-        nb_atoms_read += len(M[at_type])
+    # Make the rows and columns in the solution matrix correspond to the
+    # initial cost-matrix M, extract the corresponding sq_sum, and compute the sum of each sq_sum (sum_d2).
+    rss_list = []
+    for atom_type in M:
+        for i in range(len(M[atom_type])):
+            row = sol[atom_type][0][i]
+            col = sol[atom_type][1][i]
+            rss = M[atom_type][row][col]
+            rss_list.append(rss)
 
     # Compute the RMSD
-    if nb_atoms_read == 0:
+    nb_atoms_used = len(rss_list)
+    if nb_atoms_used == 0:
         rmsd = np.nan
     else:
-        rmsd = np.sqrt(1/nb_atoms_read * sum_d2)
+        rmsd = np.sqrt(1/nb_atoms_used * sum(rss_list))
 
-    return rmsd, nb_atoms_read, nb_atoms
+    # return RMSD, number of atoms used to compute RMSD, number of atoms in the molecule
+    return rmsd, len(rss_list), nb_atoms
 
 
-## Documentation for the rmsd function
-# Interface to the actual rmsd_HA function
-def rmsd(arguments):
-    reference_mol   = arguments[0]
-    mol             = arguments[1]
-    algorithm       = arguments[2]
-    cut_off         = arguments[3]
-    ignore_outliers = arguments[4]
-    ignore_H        = arguments[5]
-    ref_name        = arguments[6]
-    input_name      = arguments[7]
+def rmsd(reference, molecule, algorithm, cut_off, ignore_outliers):
+    '''Interface function to compute the RMSD with the submit function of concurrent.futures.
+    Returns ref_name, mol_name, rmsd, atoms_used, atoms_read.'''
+    ref_name        = reference[0]
+    ref             = reference[1]
+    mol_name        = molecule[0]
+    mol             = molecule[1]
 
     if algorithm == 'std':
-        return rmsd_standard(reference_mol, mol, cutOff=cut_off, ignoreOutliers=ignore_outliers, ignoreH=ignore_H ) + (ref_name, input_name,)
+        rmsd, atoms_used, atoms_read = rmsd_standard(ref, mol, cutOff=cut_off, ignoreOutliers=ignore_outliers)
 
     elif algorithm == 'ha':
-        if cut_off != 2.0 or ignore_outliers != False:
-            print("--cutoff and --outliers are not used by the Hungarian Algorithm. Ignoring these arguments...")
-        return rmsd_HA(reference_mol, mol, ignoreH=ignore_H ) + (ref_name, input_name,)
+        rmsd, atoms_used, atoms_read = rmsd_HA(ref, mol)
 
     elif algorithm == 'mda':
-        return rmsd_MDA(reference_mol, mol, cutOff=cut_off, ignoreOutliers=ignore_outliers, ignoreH=ignore_H ) + (ref_name, input_name,)
+        rmsd, atoms_used, atoms_read = rmsd_MDA(ref, mol, cutOff=cut_off, ignoreOutliers=ignore_outliers)
+
+    return ref_name, mol_name, rmsd, atoms_used, atoms_read
 
 
-def output_rmsd(outputfile, rmsd_list):
-    my_file = outputfile
+def output_rmsd(outputfile, rmsd_list, overwrite):
+    '''Outputs the RMSD to a file. Can append or overwrite.
+    rmsd_list: list where each element is a list containing the reference name,
+     input_name, and RMSD'''
     header  = "Reference,Input,RMSD" #,Number of atoms read,Number of atoms in molecule"
 
     # if file doesn't exists
-    if not os.path.exists(my_file):
-        with open(my_file, 'w') as f:
+    if not os.path.exists(outputfile):
+        with open(outputfile, 'w') as f:
             f.write(header)
             for line in rmsd_list:
-                #myString = '\n{},{},{:.3f},{},{}'.format(line[-2], line[-1], line[0], line[1], line[2])
-                myString = '\n{},{},{:.3f}'.format(line[-2], line[-1], line[0])
+                myString = '\n{},{},{:.3f}'.format(line[0],line[1],line[2])
                 f.write(myString)
-        f.closed
     else:
-        with open(my_file, 'a') as f:
-            for line in rmsd_list:
-               #myString = '\n{},{},{:.3f},{},{}'.format(line[-2], line[-1], line[0], line[1], line[2])
-                myString = '\n{},{},{:.3f}'.format(line[-2], line[-1], line[0])
-                f.write(myString)
-        f.closed
+        if overwrite:
+            with open(outputfile, 'w') as f:
+                f.write(header)
+                for line in rmsd_list:
+                    myString = '\n{},{},{:.3f}'.format(line[0],line[1],line[2])
+                    f.write(myString)
+        else:
+            with open(outputfile, 'a') as f:
+                for line in rmsd_list:
+                    myString = '\n{},{},{:.3f}'.format(line[0],line[1],line[2])
+                    f.write(myString)
 
+def rmsd_plot(rmsd_list, save):
+    '''Barplot of the RMSD, colored by reference and sorted by RMSD to the first given reference'''
+    fig, ax = plt.subplots(figsize=(10,8))
 
-def rmsd_plot(rmsd_list):
-
-    fig, ax = plt.subplots(figsize=(20,10))
-
-    yval = {}
-    ref_list = []
-    g = {}
-    subset = {}
+    ref_list      = []
+    g             = {}
+    subset        = {}
     sorted_subset = {}
 
     # Initialize lists and dictionnaries
     for line in rmsd_list:
-        ref = line[-2]
+        ref = line[0]
         if ref not in ref_list:
             ref_list.append(ref)
-            yval[ref] = []
-            g[ref] = []
-            subset[ref] = []
-            sorted_subset[ref] = []
+            g[ref]             = []
+            subset[ref]        = []
+            sorted_subset[ref] = None
         subset[ref].append(line)
 
     # sort by rmsd values for the first reference given by the user
-    init = ref_list[0]
-    sorted_subset[init] = sorted(subset[init], key=lambda data: data[0])
-    # reorganize the results for the other references to match the same order as previous sort
-    labels = [mol[-1] for mol in sorted_subset[init]]
-    for ref in ref_list[1:]:
-        for mol in labels:
-            sorted_subset[ref].append(next(data for data in subset[ref] if data[-1] == mol))
+    sorted_list = list(zip(*sorted(zip(*[subset[ref] for ref in subset]), key=lambda x: x[0][2])))
+    # *[subset[ref] for ref in subset] unpacks the dictionnary as tuples
+    # zip links each Nth element of each tuple together
+    # sorted(..., key=lambda x: x[0][2]) performs the sorting according to the RMSD on the first reference
+    # *sorted unpacks the results as tuples
+    # zip(*sorted) links each Nth elements of the tuples together
+    # list(zip) makes the zip object iterable
+    for tup,ref in zip(sorted_list, ref_list):
+        # create a dictionnary with the sorted values
+        sorted_subset[ref] = tup
 
     # create variables for the bar plot
+    labels = [line[1] for line in sorted_subset[ref_list[0]]]
     index = np.arange(len(labels))
     number_of_plots = len(ref_list)
     color=iter(plt.cm.rainbow(np.linspace(0,1,number_of_plots)))
@@ -402,7 +346,7 @@ def rmsd_plot(rmsd_list):
     # Plot
     for i,ref in enumerate(ref_list):
         c=next(color)
-        g[ref] = ax.bar(index + i*bar_width, [data[0] for data in sorted_subset[ref]],
+        g[ref] = ax.bar(index + i*bar_width, [data[2] for data in sorted_subset[ref]],
                         label=ref, color=c, alpha=opacity,
                         width=bar_width, linewidth=0)
 
@@ -415,13 +359,15 @@ def rmsd_plot(rmsd_list):
     ax.set_title('RMSD between reference and input molecules')
     plt.grid(axis='y', linestyle='--', linewidth=1)
     ax.set_axisbelow(True)
-    plt.savefig('rmsd_plot.png',bbox_inches='tight')
-    plt.tight_layout()
-    plt.gcf().subplots_adjust(right=0.9)
-    plt.show()
+    if save:
+        plt.savefig('rmsd_barplot.png', bbox_inches='tight')
+    else:
+        plt.tight_layout()
+        plt.gcf().subplots_adjust(right=0.9)
+        plt.show()
 
-def verbose(ref,inp,answer):
-    print("RMSD ({}/{} atoms) {} - {} : {:.6f}".format(answer[1], answer[2], ref, inp, answer[0]))
+def verbose(results):
+    print("RMSD ({}/{} atoms) {} - {} : {:.3f}".format(results[3],results[4],results[0],results[1],results[2]))
 
 
 if __name__ == '__main__':
@@ -448,7 +394,7 @@ if __name__ == '__main__':
 
     group_args = parser.add_argument_group(terminal_sep,'ALGORITHM arguments')
 
-    group_args.add_argument("-hy","--hydrogen", action="store_false", default=True,
+    group_args.add_argument("--hydrogen", action="store_false", default=True,
                             help="Read hydrogen atoms." )
 
     group_args.add_argument("-a", "--algorithm", choices=['std', 'ha', 'mda'], default='ha',
@@ -461,27 +407,39 @@ if __name__ == '__main__':
 
     group_std_mda = parser.add_argument_group(terminal_sep,'SPECIFIC ARGUMENTS FOR STANDARD AND MINIMAL DISTANCE ALGORITHM')
 
-    group_std_mda.add_argument("--cutoff", action='store', dest='distance', type=float, default=2.0,
+    group_std_mda.add_argument("--cutoff", action='store', metavar='distance', type=float, default=2.0,
                                help="Atomic distance cut-off. Used to ignore outliers and do MDA optimization. Default : 2.0")
 
     group_std_mda.add_argument("--outliers", action="store_true", default=False,
-                               help="Ignore outliers : atoms that cannot find a match while having a pairwise distance below CUTOFF." )
+                               help="Ignore atoms that cannot find a match while having a pairwise distance below CUTOFF." )
 
 
     group_output = parser.add_argument_group(terminal_sep,'OUTPUT arguments')
 
-    group_output.add_argument("-o", "--output", dest='filename',
+    group_output.add_argument("-o", "--output", metavar='filename',
                                help="Output a CSV file 'FILENAME' containing RMSD between reference and input molecules.")
 
+    group_output.add_argument("-O", dest='overwrite', action="store_true", default=False,
+                               help="Overwrite output file if it exists.")
+
     group_output.add_argument("-p", "--plot", action="store_true",
-                               help="Plot RMSD by input molecule, show the plot and save as a PNG image.")
+                               help="Show an interactive barplot of the RMSD, sorted and colored by reference molecule.")
+
+    group_output.add_argument("--saveplot", action="store_true", default=False,
+                               help="Save a barplot of the RMSD, sorted and colored by reference molecule, without showing it.")
 
     group_output.add_argument("-v", "--verbose", action="store_true",
-                               help="Increase output verbosity : 'RMSD (atoms read / atoms in file) reference file - input file : RMSD value'")
+                               help="Increase output verbosity : 'RMSD (atoms used / atoms read) reference file - input file : RMSD value'")
+
     group_output.add_argument("-s", "--silent", action="store_true",
                                help="Don't output RMSD results on the terminal.")
 
     args = parser.parse_args()
+
+    # warning about the cutoff and outliers parameters for Hungarian algorithm
+    if (args.cutoff != 2.0 or args.outliers != False) and (args.algorithm == 'ha'):
+        if not args.silent:
+            print("--cutoff and --outliers are not used by the Hungarian Algorithm. Ignoring these arguments...")
 
     # uses a pool of threads to execute calls asynchronously
     with futures.ProcessPoolExecutor(max_workers=args.cpu) as executor:
@@ -489,37 +447,32 @@ if __name__ == '__main__':
         rmsd_list = []
 
         for reference_file in args.reference:
-            references = mol2_reader(reference_file)
-
-            for iref, reference in enumerate(references):
-                ref = reference[0]
-
+            references = mol2_reader(reference_file, args.hydrogen)
+            for reference in references:
                 for input_file in args.input:
-                    inputs = mol2_reader(input_file)
-
-                    for imol,molecule in enumerate(inputs):
-                        inp = molecule[0]
-                        arguments = [reference[1], molecule[1], args.algorithm, args.distance, args.outliers, args.hydrogen, ref, inp]
-                        job = executor.submit(rmsd, arguments)
+                    inputs = mol2_reader(input_file, args.hydrogen)
+                    for molecule in inputs:
+                        arguments = [reference, molecule, args.algorithm, args.cutoff, args.outliers]
+                        job = executor.submit(rmsd, *arguments)
                         jobs.append(job)
 
     # Get results in order of submission
     for job in jobs:
         # If calculation is done
         if job.done():
-            answer = job.result()
-            rmsd_list.append(answer)
+            results = job.result()
+            rmsd_list.append(results)
 
             # print results
             if args.verbose:
-                verbose(answer[-2],answer[-1],answer[:-2])
+                verbose(results)
             elif args.silent:
                 pass
             else:
-                print(answer[0])
+                print('{:.3f}'.format(results[2]))
 
-    if args.filename:
-        output_rmsd(args.filename, rmsd_list)
+    if args.output:
+        output_rmsd(args.output, rmsd_list, overwrite=args.overwrite)
 
-    if args.plot:
-        rmsd_plot(rmsd_list)
+    if args.plot or args.saveplot:
+        rmsd_plot(rmsd_list, save=args.saveplot)
