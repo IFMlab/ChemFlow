@@ -1,0 +1,25 @@
+# For the Bioinformatics 2018 we'll demonstrate DockFlow and ScoreFlow for at least 100 protein-ligand complexes.
+
+## This dataset was obtained from Didier Rognan, and used many times, noticeably in Kellenberber2004.
+
+## Protein and ligand structures were carefully prepared using Sybyl
+* I'm concerned about protonation states since I noticed ASP25 of HIV-1 protease (1aaq) are not properly protonated.
+* However, I double checked with Schrodinger Maestro 2018.1, which uses PropKa and sidechain flips, and it's optimized protonation suggests the same state as Sybyl.
+
+# The structure database used as input, is like that:
+DATASET/${receptor}
+where ${receptor} is the PDBid
+
+* Each folder contains: 
+
+| File | Description | 
+| ligandX.mol2 | Ligand from crystal structure |
+| ligandr.mol2 | Ligand with randomized dihedrals | 
+|  protein.pdb | Protein structure from PDB |
+| protein.mol2 | Protein prepared with Sybyl |
+|     site.pdb | Binding site |
+
+# Top comply with ChemFlow standards we should keep the proposed:
+${project}.chemflow/${ChemFlow_module}/${protocol}/${receptor}/${ligand}/
+
+# BUUUUUT for this I'd keep the SAME structure, because we did not agree on a final structure.
