@@ -58,9 +58,9 @@
      workdir=$PWD
      project=benchmark  # your choice
       action=rescore    # "rescore" instead of ScoreFlow 
-    protocol=gbsa       # vina, plants, gbsa, md_gbsa
+    protocol=md         # vina, plants, gbsa, md_gbsa, md
 
-input_folder="/home/dgomes/Desktop/DockFlow_Kellemberger_Benchmark/docking/"
+input_folder="${PWD}/docking/"
  folder_list=$(cat ${input_folder}/docking.lst)
 
 # Configure Amber16
@@ -69,9 +69,9 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-8.0/lib64
 
 
 # Advanced control
-OVERWRITE_parameters='yes' 
-  OVERWRITE_min_gbsa='yes'
-   OVERWRITE_md_gbsa='yes'
+#OVERWRITE_parameters='yes' 
+#  OVERWRITE_min_gbsa='yes'
+#   OVERWRITE_md_gbsa='yes'
 
 
 
@@ -265,7 +265,7 @@ ScoreFlow_gbsa() {
         run_folder=${workdir}/${project}.chemflow/${action}/${protocol}/${receptor}/ 
         cd ${run_folder}
    
-        if [ ! -f receptor_b4amber.pdb ] || [ ! -f ligand_bcc.mol2 ] || [ ${OVERWRITE_parameters} == 'yes' ]  ; then
+        if [ ! -f receptor_b4amber.pdb ] || [ ! -f ligand_bcc.mol2 ] || [ "${OVERWRITE_parameters}" == 'yes' ]  ; then
             echo "Preparing ${receptor}"
             cp ${input_folder}/${receptor}/protein.pdb protein.pdb
             cp ${input_folder}/${receptor}/ligandX.mol2 ligand.mol2
@@ -278,7 +278,7 @@ ScoreFlow_gbsa() {
         fi
     }
     
-    ScoreFlow_tleap() {
+    ScoreFlow_gbsa_tleap() {
         run_folder=${workdir}/${project}.chemflow/${action}/${protocol}/${receptor}/ 
         cd ${run_folder}
         
@@ -420,7 +420,7 @@ wait
 i=0; waitevery=8; 
 for receptor in ${folder_list} ; do 
     (( i++%waitevery==0 )) && wait;
-    ScoreFlow_tleap &
+    ScoreFlow_gbsa_tleap &
 done
 wait
 
@@ -440,6 +440,174 @@ fi
 # 
 
 
+
+
+
+ScoreFlow_md() {
+    ScoreFlow_prepare_md() {
+
+        run_folder=${workdir}/${project}.chemflow/${action}/${protocol}/${receptor}/
+        cd ${run_folder}
+
+        if [ ! -f receptor_b4amber.pdb ] || [ ! -f ligand_bcc.mol2 ] || [ "${OVERWRITE_parameters}" == 'yes' ]  ; then
+            echo "Preparing ${receptor}"
+            cp ${input_folder}/${receptor}/protein.pdb protein.pdb
+            cp ${input_folder}/${receptor}/ligandX.mol2 ligand.mol2
+
+            pdb4amber   -i protein.pdb     -o receptor_b4amber.pdb --reduce --add-missing-atoms --prot
+            antechamber -i ligand.mol2     -o ligand_bcc.mol2 -c bcc -eq 2 -s 2 -fi mol2 -fo mol2 -at gaff2 -dr no -rn MOL
+            parmchk2    -i ligand_bcc.mol2 -o ligand.frcmod -f mol2
+        else
+            echo "${receptor} already prepared"
+        fi
+    }
+
+    ScoreFlow_md_tleap() {
+        run_folder=${workdir}/${project}.chemflow/${action}/${protocol}/${receptor}/
+        cd ${run_folder}
+
+        if [ -f ligand_bcc.mol2 ] && [ ! -f ionized_solvated.prmtop ] ; then
+
+echo "#tleap
+source leaprc.protein.ff14SB
+source leaprc.water.tip3p
+source leaprc.gaff2
+
+set default PBradii mbondi2
+set default nocenter on
+
+receptor = loadpdb receptor_b4amber.pdb
+saveAmberParm receptor receptor.prmtop receptor.rst7
+savePDB receptor receptor.pdb
+
+loadAmberParams ligand.frcmod
+ligand = loadmol2 ligand_bcc.mol2
+saveAmberParm ligand ligand.prmtop ligand.rst7
+savePDB ligand ligand.pdb
+
+complex = combine {receptor,ligand}
+saveAmberParm complex complex.prmtop complex.rst7
+savePDB complex complex.pdb
+
+# Add enough ions to neutralize
+AddIons2 complex Cl- 0
+AddIons2 complex Na+ 0
+
+# Solvate with at least 12 Angtron buffer region
+solvateOct complex TIP3PBOX 12
+
+# Save solvated complex: topology and coordinates
+saveamberparm complex ionized_solvated.prmtop ionized_solvated.rst7
+savePDB complex ionized_solvated.pdb
+
+quit " >tleap.in
+
+            tleap -f tleap.in
+
+        fi
+    }
+
+    ScoreFlow_md_write_input() {
+
+        run_folder=${workdir}/${project}.chemflow/${action}/${protocol}/${receptor}/
+        cd ${run_folder}
+echo "Minimize
+  &cntrl
+  imin=1,maxcyc=5000,
+  irest=0,ntx=1,
+  cut=8, 
+! Frozen or restrained atoms
+!----------------------------------------------------------------------
+ ntr=1,
+ restraintmask='@CA,C,N,O', 
+ restraint_wt=1.0,
+/
+" > min.in
+
+echo "Heat NVT
+MD heating
+&cntrl
+  imin=0,irest=1,ntx=5,
+  nstlim=50000,dt=0.002,ntb=1,
+  ntf=2,ntc=2,
+  ntpr=1000, ntwx=1000, ntwr=3000,
+  cut=8.0,
+  ntt=3,gamma_ln=1.0
+  tempi=10,temp0=300.0,
+! Frozen or restrained atoms
+!----------------------------------------------------------------------
+! ibelly,
+! bellymask,
+ ntr=1,
+ restraintmask='@CA,C,N,O',
+ restraint_wt=1.0,
+&end
+&wt type='REST', istep1=0, istep2=0, value1=1.0, value2=1.0, &end
+&wt type='TEMP0', istep1=0, istep2=2500, value1=10.0, value2=300, &end
+&wt type='END' &end
+/
+" > heat.in
+
+echo "MD equilibration
+&cntrl
+  imin=0,irest=1,ntx=5,
+  nstlim=50000,dt=0.002,ntb=2,
+  ntf=2,ntc=2,
+  ntpr=1000, ntwx=1000, ntwr=3000,
+  cut=8.0,
+  ntt=3,gamma_ln=1.0
+  temp0=300.0,
+! Frozen or restrained atoms
+!----------------------------------------------------------------------
+! ibelly,
+! bellymask,
+ ntr=1,
+ restraintmask='@CA,C,N,O',
+ restraint_wt=1.0,
+/
+" > equil.in
+
+echo "MD
+&cntrl
+  imin=0,irest=1,ntx=5,
+  nstlim=500000,dt=0.002,ntb=2,
+  ntf=2,ntc=2,
+  ntpr=1000, ntwx=1000, ntwr=3000,
+  cut=8.0,
+  ntt=3,gamma_ln=1.0
+  temp0=300.0,
+! Frozen or restrained atoms
+!----------------------------------------------------------------------
+! ibelly,
+! bellymask,
+ ntr=1,
+ restraintmask='@CA,C,N,O',
+ restraint_wt=1.0,
+/
+" > md.in
+    }
+
+
+i=0; waitevery=8;
+for receptor in ${folder_list} ; do
+    (( i++%waitevery==0 )) && wait
+    ScoreFlow_prepare_md &
+done
+wait
+
+i=0; waitevery=8;
+for receptor in ${folder_list} ; do
+    (( i++%waitevery==0 )) && wait;
+    ScoreFlow_md_tleap &
+done
+wait
+
+for receptor in ${folder_list} ; do
+    ScoreFlow_md_write_input
+    ScoreFlow_md_run
+done
+
+}
 
 
 
@@ -464,6 +632,10 @@ ScoreFlow_gbsa
 "md_gbsa")
 echo "[${protocol} ${action}] selected"
 ScoreFlow_gbsa
+;;
+"md_gbsa")
+echo "[${protocol} ${action}] selected"
+ScoreFlow_md
 ;;
 *) 
 echo "[Error] ${protocol} ${action} is not implemented"
