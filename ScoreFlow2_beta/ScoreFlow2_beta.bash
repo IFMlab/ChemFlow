@@ -61,7 +61,8 @@
     protocol=md         # vina, plants, gbsa, md_gbsa, md
 
 input_folder="${PWD}/docking/"
- folder_list=$(cat ${input_folder}/docking.lst)
+folder_list=$(cat ${input_folder}/docking.lst)
+#folder_list="1aaq"
 
 # Configure Amber16
 source /home/dgomes/software/amber16/amber.sh
@@ -209,7 +210,7 @@ ScoreFlow_vina() {
         
         ScoreFlow_write_vina_input
         
-        vina --score_only --config dock_input.in &> vina.log
+        vina --local_only --config dock_input.in &> vina.log
 
     }
 
@@ -473,9 +474,6 @@ source leaprc.protein.ff14SB
 source leaprc.water.tip3p
 source leaprc.gaff2
 
-set default PBradii mbondi2
-set default nocenter on
-
 receptor = loadpdb receptor_b4amber.pdb
 saveAmberParm receptor receptor.prmtop receptor.rst7
 savePDB receptor receptor.pdb
@@ -513,8 +511,10 @@ quit " >tleap.in
         cd ${run_folder}
 echo "Minimize
   &cntrl
-  imin=1,maxcyc=5000,
-  irest=0,ntx=1,
+  imin=1,
+  maxcyc=1000,
+  irest=0,
+  ntx=1,
   cut=8, 
 ! Frozen or restrained atoms
 !----------------------------------------------------------------------
@@ -524,69 +524,224 @@ echo "Minimize
 /
 " > min.in
 
-echo "Heat NVT
-MD heating
+echo "MD heating, NVT
 &cntrl
-  imin=0,irest=1,ntx=5,
-  nstlim=50000,dt=0.002,ntb=1,
-  ntf=2,ntc=2,
-  ntpr=1000, ntwx=1000, ntwr=3000,
-  cut=8.0,
-  ntt=3,gamma_ln=1.0
-  tempi=10,temp0=300.0,
-! Frozen or restrained atoms
 !----------------------------------------------------------------------
-! ibelly,
-! bellymask,
- ntr=1,
- restraintmask='@CA,C,N,O',
- restraint_wt=1.0,
-&end
-&wt type='REST', istep1=0, istep2=0, value1=1.0, value2=1.0, &end
-&wt type='TEMP0', istep1=0, istep2=2500, value1=10.0, value2=300, &end
-&wt type='END' &end
-/
-" > heat.in
+!General flags
+  imin=0,          ! (0 = molecular dynamics, 1 = energy minimization)
 
-echo "MD equilibration
-&cntrl
-  imin=0,irest=1,ntx=5,
-  nstlim=50000,dt=0.002,ntb=2,
-  ntf=2,ntc=2,
-  ntpr=1000, ntwx=1000, ntwr=3000,
-  cut=8.0,
-  ntt=3,gamma_ln=1.0
-  temp0=300.0,
-! Frozen or restrained atoms
 !----------------------------------------------------------------------
-! ibelly,
-! bellymask,
- ntr=1,
- restraintmask='@CA,C,N,O',
- restraint_wt=1.0,
-/
-" > equil.in
+!Energy Minimization
+! maxcyc=1
+! ncyc=10 
+! ntmin=0
+! dx0=0.01 !default
 
-echo "MD
-&cntrl
-  imin=0,irest=1,ntx=5,
-  nstlim=500000,dt=0.002,ntb=2,
-  ntf=2,ntc=2,
-  ntpr=1000, ntwx=1000, ntwr=3000,
-  cut=8.0,
-  ntt=3,gamma_ln=1.0
-  temp0=300.0,
-! Frozen or restrained atoms
 !----------------------------------------------------------------------
-! ibelly,
-! bellymask,
+!Nature and format of the input
+ irest=0,         ! restart md (0 no, 1 yes)
+ ntx=1,           ! coordinates & velocities (0 = coor only, 5 = restart MD)
+
+!----------------------------------------------------------------------
+!Run control options
+ nstlim=2500,   ! nsteps  5ps
+ dt=0.002,       ! time step
+ cut=8.0,        !
+
+!----------------------------------------------------------------------
+!Constraints
+ ntc=2,           ! (SHAKE 2 = bonds involving hydrogen)
+ ntf=2,           ! (2 = bond inter involving H-atoms omitted SHAKE)
+
+!----------------------------------------------------------------------
+!Frozen or restrained atoms
+! ibelly
+! bellymask
  ntr=1,
- restraintmask='@CA,C,N,O',
- restraint_wt=1.0,
+ restraintmask='@CA,N,C,O',  ! Backbone.
+ restraint_wt=1.0,           ! Force constant for restraint kcal/mol A^2
+
+!----------------------------------------------------------------------
+!Temperature coupling
+ ntt=3,           ! Langevin
+ gamma_ln=2.0,    !
+! tempi=0.0,      ! Start temperature
+! temp0=298.15,    ! Target temperature
+
+!----------------------------------------------------------------------
+!Ensemble
+ ntb=1            ! (PBC for constant 1 = VOLUME 2 = PRESSURE) 
+!ntp=1,           ! (1 = isotropic scaling)
+!barostat=1       ! (1 = Berendsen)
+ taup=0.5,        !
+
+!----------------------------------------------------------------------
+!Nature and format of the output 
+ ntxo=2           ! Write Final coor, vel & box to 'restr' as (1 ASCII, 2 NetCDF)
+ ntpr=1000        ! Write energy to 'mdout' and 'mdinfo'
+ ntwr=1000        ! Write restart to 'rst'
+ ntwx=1000        ! Write coordinates to 'mdcrd'
+!ntwf=1000        ! Write force to 'mfrc'
+ ntwe=100         ! Write energy to 'mden'
+ iwrap=1          ! Wrap (off not to mess up with diffusion) 
+ ioutfm=1         ! Format of coor, vel & traj files (0 ASCII, 1 NetCDF)
 /
-" > md.in
+&wt type='TEMP0', istep1=0, istep2=25000, value1=10.0, value2=300,
+&wt type='END'
+/ " > heat.in
+ 
+
+echo "MD equilibration, NPT
+&cntrl
+!----------------------------------------------------------------------
+!General flags
+  imin=0,          ! (0 = molecular dynamics, 1 = energy minimization)
+
+!----------------------------------------------------------------------
+!Energy Minimization
+! maxcyc=1
+! ncyc=10 
+! ntmin=0
+! dx0=0.01 !default
+
+!----------------------------------------------------------------------
+!Nature and format of the input
+ irest=1,         ! restart md (0 no, 1 yes)
+ ntx=5,           ! coordinates & velocities (0 = coor only, 5 = restart MD)
+
+!----------------------------------------------------------------------
+!Run control options
+ nstlim=2500,   ! nsteps  5ps
+ dt=0.002,       ! time step
+ cut=8.0,        !
+
+!----------------------------------------------------------------------
+!Constraints
+ ntc=2,           ! (SHAKE 2 = bonds involving hydrogen)
+ ntf=2,           ! (2 = bond inter involving H-atoms omitted SHAKE)
+
+!----------------------------------------------------------------------
+!Frozen or restrained atoms
+! ibelly
+! bellymask
+ ntr=1,
+ restraintmask='@CA,N,C,O',  ! Backbone.
+ restraint_wt=1.0,           ! Force constant for restraint kcal/mol A^2
+
+!----------------------------------------------------------------------
+!Temperature coupling
+ ntt=3,           ! Langevin
+ gamma_ln=2.0,    !
+! tempi=0.0,      ! Start temperature
+ temp0=298.15,    ! Target temperature
+
+!----------------------------------------------------------------------
+!Ensemble
+ ntb=2            ! (PBC for constant 1 = VOLUME 2 = PRESSURE) 
+ ntp=1,           ! (1 = isotropic scaling)
+ barostat=1       ! (1 = Berendsen)
+ taup=0.5,        !
+
+!----------------------------------------------------------------------
+!Nature and format of the output 
+ ntxo=2           ! Write Final coor, vel & box to 'restr' as (1 ASCII, 2 NetCDF)
+ ntpr=1000        ! Write energy to 'mdout' and 'mdinfo'
+ ntwr=1000        ! Write restart to 'rst'
+ ntwx=1000        ! Write coordinates to 'mdcrd'
+!ntwf=1000        ! Write force to 'mfrc'
+ ntwe=100         ! Write energy to 'mden'
+ iwrap=1          ! Wrap (off not to mess up with diffusion) 
+ ioutfm=1         ! Format of coor, vel & traj files (0 ASCII, 1 NetCDF)
+ / " > equil.in
+
+echo "MD production, NPT, 1ns, 298.15 K
+&cntrl
+!----------------------------------------------------------------------
+!General flags
+  imin=0,          ! (0 = molecular dynamics, 1 = energy minimization)
+
+!----------------------------------------------------------------------
+!Energy Minimization
+! maxcyc=1
+! ncyc=10 
+! ntmin=0
+! dx0=0.01 !default
+
+!----------------------------------------------------------------------
+!Nature and format of the input
+ irest=1,         ! restart md (0 no, 1 yes)
+ ntx=5,           ! coordinates & velocities (0 = coor only, 5 = restart MD)
+
+!----------------------------------------------------------------------
+!Run control options
+ nstlim=2500,  ! nsteps  5ps
+ dt=0.002,       ! time step
+ cut=8.0,        !
+
+!----------------------------------------------------------------------
+!Constraints
+ ntc=2,           ! (SHAKE 2 = bonds involving hydrogen)
+ ntf=2,           ! (2 = bond inter involving H-atoms omitted SHAKE)
+
+!----------------------------------------------------------------------
+!Frozen or restrained atoms
+! ibelly
+! bellymask
+ ntr=1,
+ restraintmask='@CA,N,C,O',  ! Backbone.
+ restraint_wt=1.0,           ! Force constant for restraint kcal/mol A^2
+
+!----------------------------------------------------------------------
+!Temperature coupling
+ ntt=3,           ! Langevin
+ gamma_ln=2.0,    !
+! tempi=0.0,      ! Start temperature
+ temp0=298.15,    ! Target temperature
+
+!----------------------------------------------------------------------
+!Ensemble
+ ntb=2            ! (PBC for constant 1 = VOLUME 2 = PRESSURE) 
+ ntp=1,           ! (1 = isotropic scaling)
+ barostat=2       ! (1 = Berendsen | 2 = Monte Carlo)
+ taup=0.5,        !
+
+!----------------------------------------------------------------------
+!Nature and format of the output 
+ ntxo=2           ! Write Final coor, vel & box to 'restr' as (1 ASCII, 2 NetCDF)
+ ntpr=1000        ! Write energy to 'mdout' and 'mdinfo'
+ ntwr=1000        ! Write restart to 'rst'
+ ntwx=1000        ! Write coordinates to 'mdcrd'
+!ntwf=1000        ! Write force to 'mfrc'
+ ntwe=100         ! Write energy to 'mden'
+ iwrap=1          ! Wrap (off not to mess up with diffusion) 
+ ioutfm=1         ! Format of coor, vel & traj files (0 ASCII, 1 NetCDF)
+ / " > md.in
+
     }
 
+
+    ScoreFlow_md_run() {
+    
+        #OVERWRITE=true
+    
+        if [ ! -z $IMPLICIT_SOLVENT ] ; then
+          init=complex
+        else
+          init=ionized_solvated
+        fi 
+
+
+        prev=${init}
+        for run in min heat equil md ; do
+          if [ -f ${prev}.rst7 ] ; then 
+            if [ ! -f ${run}.rst7 ] || [ "${OVERWRITE}" == "true" ]  ; then
+              pmemd.cuda -O -i ${run}.in  -p ${init}.prmtop -c ${prev}.rst7 -r ${run}.rst7  -x ${run}.nc  -ref ${prev}.rst7 -o ${run}.mdout -inf ${run}.mdinfo  &> ${run}.job
+              prev=${run}
+            fi
+          fi
+        done
+       
+    }
 
 i=0; waitevery=8;
 for receptor in ${folder_list} ; do
@@ -633,7 +788,7 @@ ScoreFlow_gbsa
 echo "[${protocol} ${action}] selected"
 ScoreFlow_gbsa
 ;;
-"md_gbsa")
+"md")
 echo "[${protocol} ${action}] selected"
 ScoreFlow_md
 ;;
