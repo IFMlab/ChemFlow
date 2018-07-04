@@ -55,7 +55,7 @@ ScoreFlow_summary        # User Validation
 ScoreFlow_organize       # Organize to ChemFlow Standard
 ScoreFlow_rescore        # Run the Rescoring.
 
-if [ ${ARCHIVE} == 'yes' ] ; then 
+if [ ! -z ${ARCHIVE} ] ; then 
   ScoreFlow_archive
 fi
 echo "

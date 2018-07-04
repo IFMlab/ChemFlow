@@ -46,6 +46,7 @@ DockFlow_set_defaults    # Set default values for docking parameters.
 DockFlow_CLI "$@"        # Read the command line.
 DockFlow_validate_input  # Sanity check. (parameters and input files)
 
+
 if [ ! -z ${ARCHIVE} ] ; then
   DockFlow_archive
 else
