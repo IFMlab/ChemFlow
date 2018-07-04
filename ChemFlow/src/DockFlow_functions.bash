@@ -61,23 +61,7 @@ ${RUNDIR}/docked_folder.tar.gz
   "y"|"yes"|"Yes"|"Y"|"YES")
     rm -rf */ 
 
-  echo "
-Apaguei tudo !! 
-
- ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄       ▄▄▄▄▄▄▄▄▄▄▄  ▄         ▄  ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄         ▄       ▄ 
-▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌     ▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░▌       ▐░▌     ▐░▌
-▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀      ▐░█▀▀▀▀▀▀▀▀▀ ▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░▌       ▐░▌     ▐░▌
-▐░▌          ▐░▌               ▐░▌          ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌          ▐░▌       ▐░▌     ▐░▌
-▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄▄▄      ▐░█▄▄▄▄▄▄▄▄▄ ▐░▌       ▐░▌▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░▌       ▐░▌     ▐░▌
-▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌     ▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░▌       ▐░▌     ▐░▌
- ▀▀▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀▀▀      ▐░█▀▀▀▀▀▀▀▀▀ ▐░▌       ▐░▌▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░▌       ▐░▌     ▐░▌
-          ▐░▌▐░▌               ▐░▌          ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌          ▐░▌       ▐░▌      ▀ 
- ▄▄▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄      ▐░▌          ▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌      ▄ 
-▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌     ▐░▌          ▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌     ▐░▌
- ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀       ▀            ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀       ▀ 
-                                                                                                    
-
-"
+  echo "Done."
 
   ;;
   esac
@@ -336,6 +320,7 @@ cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow
 
 # Retreive avaible protocols
 PROTOCOL_LIST=$(ls -d */ | cut -d/ -f1)
+
 # STUPID fix this DIEGO !
 PROTOCOL_LIST=${PROTOCOL}
 PROTOCOL_LIST=($PROTOCOL_LIST)
@@ -623,72 +608,73 @@ echo "[ DockFlow ] Checking input files..."
 # Mandatory parameters --------------------------------------------------------
 if [ -z "${PROJECT}"  ]          ; then ERROR_MESSAGE="No PROJECT name (-p myproject)" ; DockFlow_error ; fi
 if [ -z "${RECEPTOR_NAME}" ]     ; then ERROR_MESSAGE="No RECEPTOR Name"               ; DockFlow_error ; fi
-if [ -z "${RECEPTOR_FILE}" ]     ; then ERROR_MESSAGE="No RECEPTOR Filename"           ; DockFlow_error ; fi
-if [ -z "${LIGAND_FILE}"   ]     ; then ERROR_MESSAGE="No LIGAND filename"             ; DockFlow_error ; fi
-if [ -z "${DOCK_CENTER}" ]       ; then ERROR_MESSAGE="No DOCKING CENTER defined"      ; DockFlow_error ; fi
-if [ -z "${SCORING_FUNCTION}" ]  ; then ERROR_MESSAGE="No SCORING_FUNCTION defined"    ; DockFlow_error ; fi
 
-# Sanity check for implemented options parameters -----------------------------
-case "${SCORING_FUNCTION}" in 
-"vina"|"chemplp"|"plp"|"plp95") 
-;;
-*) echo "[ ERROR ] SCORING_FUNCTION ${SCORING_FUNCTION} not implemented" ; exit 0 
-esac
+if [ -z "${POSTDOCK}" ] && [ -z "${ARCHIVE}" ] ; then
 
-if [ "${SCORING_FUNCTION}" == "vina" ] ; then DOCK_PROGRAM="VINA" ; fi
+  if [ -z "${RECEPTOR_FILE}" ]     ; then ERROR_MESSAGE="No RECEPTOR Filename"           ; DockFlow_error ; fi
+  if [ -z "${LIGAND_FILE}"   ]     ; then ERROR_MESSAGE="No LIGAND filename"             ; DockFlow_error ; fi
+  if [ -z "${DOCK_CENTER}" ]       ; then ERROR_MESSAGE="No DOCKING CENTER defined"      ; DockFlow_error ; fi
+  if [ -z "${SCORING_FUNCTION}" ]  ; then ERROR_MESSAGE="No SCORING_FUNCTION defined"    ; DockFlow_error ; fi
 
-case "${DOCK_PROGRAM}" in
-"VINA"|"PLANTS")
-;;
-*) echo "[ ERROR ] DOCK_PROGRAM ${DOCK_PROGRAM} not implemented" ; exit 0
-esac
+  #Sanity check for implemented options parameters -----------------------------
+	case "${SCORING_FUNCTION}" in 
+	"vina"|"chemplp"|"plp"|"plp95") 
+	;;
+	*) echo "[ ERROR ] SCORING_FUNCTION ${SCORING_FUNCTION} not implemented" ; exit 0 
+	esac
+
+	if [ "${SCORING_FUNCTION}" == "vina" ] ; then DOCK_PROGRAM="VINA" ; fi
+
+	case "${DOCK_PROGRAM}" in
+	"VINA"|"PLANTS")
+	;;
+	*) echo "[ ERROR ] DOCK_PROGRAM ${DOCK_PROGRAM} not implemented" ; exit 0
+	esac
+
+	# Verify program locations
+	if [ "${DOCK_PROGRAM}" == "PLANTS" ] && [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
+	  echo "[ERROR ] PLANTS is not installed or on PATH" ; exit 0
+	fi
+
+	if [ "${DOCK_PROGRAM}" == "VINA" ] && [ "$(command -v vina)" == "" ] ; then
+	  echo "[ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
+	fi
 
 
-# Verify program locations
-if [ "${DOCK_PROGRAM}" == "PLANTS" ] && [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
-  echo "[ERROR ] PLANTS is not installed or on PATH" ; exit 0
+
+	# Adjustments  on names
+	# Set receptor NAME
+	## deprecated RECEPTOR=$(echo ${RECEPTOR} | cut -d. -f1)
+
+	# Get all molecule names in the .mol2 file and save into an array
+	LIGAND_LIST=$(awk 'f{print;f=0} /MOLECULE/{f=1}' ${LIGAND_FILE})
+	LIGAND_LIST=($LIGAND_LIST)  # transform a list into an array
+	NLIGANDS=${#LIGAND_LIST[@]}
+
+	# HPC adjustments
+
+	case ${JOB_SCHEDULLER} in
+	"None"|"PBS"|"SLURM") ;;
+	*) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" 
+	   DockFlow_error 
+	   ;;
+	esac
+
+
+	# Safety check
+	if [ "${OVERWRITE}" == "yes" ] ; then
+	  read -p "
+	Are you sure you want to OVERWRITE your dockings? : " opt
+	  
+	  case ${opt} in 
+		"Y"|"YES"|"Yes"|"yes"|"y")  ;;
+		*)  echo "Safe decison. Rerun without '--overwrite'" ; exit 0 ;;
+	  esac
+	  
+	fi
+
 fi
 
-if [ "${DOCK_PROGRAM}" == "VINA" ] && [ "$(command -v vina)" == "" ] ; then
-  echo "[ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
-fi
-
-
-
-# Adjustments  on names
-# Set receptor NAME
-## deprecated RECEPTOR=$(echo ${RECEPTOR} | cut -d. -f1)
-
-# Get all molecule names in the .mol2 file and save into an array
-LIGAND_LIST=$(awk 'f{print;f=0} /MOLECULE/{f=1}' ${LIGAND_FILE})
-LIGAND_LIST=($LIGAND_LIST)  # transform a list into an array
-NLIGANDS=${#LIGAND_LIST[@]}
-
-
-
-
-
-# HPC adjustments
-
-case ${JOB_SCHEDULLER} in
-"None"|"PBS"|"SLURM") ;;
-*) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" 
-   DockFlow_error 
-   ;;
-esac
-
-
-# Safety check
-if [ "${OVERWRITE}" == "yes" ] ; then
-  read -p "
-Are you sure you want to OVERWRITE your dockings? : " opt
-  
-  case ${opt} in 
-    "Y"|"YES"|"Yes"|"yes"|"y")  ;;
-    *)  echo "Safe decison. Rerun without '--overwrite'" ; exit 0 ;;
-  esac
-  
-fi
 
 }
 
@@ -723,6 +709,7 @@ unset RUNDIR       # Folder where the calculations will actually run.
                    # RUNDIR=$WORKDIR/$PROJECT/$WORKFLOW/$PROTOCOL
 
 unset POSTDOCK     # Either just post-process dockings
+unset ARCHIVE      # Either just post-process dockings
 }
 
 DockFlow_set_defaults() {
@@ -867,11 +854,8 @@ case $key in
       shift # past argument
     ;;
     -r|--receptor)
-      RECEPTOR_NAME="$2"
-      shift # past argument
-    ;;
-    -rf|--receptor-file)
       RECEPTOR_FILE="$2"
+      RECEPTOR_NAME="$(basename -s .mol2 $RECEPTOR_FILE)"
       shift # past argument
     ;;
     -l|--ligand)

@@ -14,16 +14,17 @@
 #
 #===============================================================================
 #
-#          FILE:  DockFlow2.bash
+#          FILE:  ScoreFlow2.bash
 #
-#         USAGE: ./DockFlow2.bash -p myproject -r receptor.mol2 -l multilig.mol2 --center 2.2 -4.5 0.75 [-j SLURM] ..
+#         USAGE: ./ScoreFlow2.bash -p myproject -r receptor.mol2 -l multilig.mol2 -sf chemplp [-w SLURM]...
 # 
 #
-#         BRIEF: Main routine for DockFlow
-#   DESCRIPTION: Prepare and run a docking calculation.
+#         BRIEF: Main routine for ScoreFlow
+#   DESCRIPTION: Prepare and run a rescoring calculation.
 #    COMPLIANCY: The ChemFlow standard version 1.0
 #
-#     MANDATORY:  -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z
+#     MANDATORY:  -r receptor.mol2 -l ligand.mol2 -p myproject
+#GBSA MANDATORY:  -pdb receptor.pdb -l ligand.mol2 -p myproject
 #  MAIN OPTIONS: [-protocol default] [-nc 8] [-sf chemplp] [--radius 15] 
 #  REQUIREMENTS:  PLANTS or VINA, [SLURM, PBS]
 #          BUGS:  ---
@@ -31,7 +32,7 @@
 #        AUTHOR:  Diego E. B. Gomes, dgomes@pq.cnpq.br
 #       COMPANY:  Universite de Strasbourg / CAPES
 #       VERSION:  1.0
-#       CREATED:  lundi 28 mai 2018, 16:05:06 (UTC+0200)
+#       CREATED:  mardi 29 mai 2018, 15:49:45 (UTC+0200)
 #      REVISION:  ---
 #===============================================================================
 
@@ -40,26 +41,23 @@ if [ -z ${CHEMFLOW_HOME} ] ; then
   exit 0
 fi
 
+
+# Corrigir o nome do receptor quando usar o PDB
+# Corrigir o SPLIT pois uso o echo " >> "
+# [project].chemflow/[action]/[protocol]/[target]/[query].
+
 # Read out functions
-source ${CHEMFLOW_HOME}/src/DockFlow2_functions.bash
-DockFlow_set_defaults   # Set default values for docking parameters.
-DockFlow_CLI "$@"       # Read the command line.
+source ${CHEMFLOW_HOME}/src/ScoreFlow_functions.bash
+ScoreFlow_set_defaults   # Set default values for docking parameters.
+ScoreFlow_CLI "$@"       # Read the command line.
+ScoreFlow_validate_input # Various Checks
+ScoreFlow_summary        # User Validation
+ScoreFlow_organize       # Organize to ChemFlow Standard
+ScoreFlow_rescore        # Run the Rescoring.
 
-if [ "${ARCHIVE}" == "yes" ] ; then
-  DockFlow_archive
-else
-  if [ "${POSTDOCK}" == "yes" ] ; then 
-    DockFlow_PostDock       # Standardizes the output
-  else
-    DockFlow_validate_input    # Sanity check. (parameters and input files)
-    DockFlow_summary        # Show a summary of actions.
-    DockFlow_organize       # Organizes files
-    DockFlow_Dock           # Runs the docking
-  fi
-
-fi 
-
-#DockFlow_Report          
+if [ ${ARCHIVE} == 'yes' ] ; then 
+  ScoreFlow_archive
+fi
 echo "
-[ DockFlow ] Normal completion.
+[ ScoreFlow ] Normal completion.
 "
