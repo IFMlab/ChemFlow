@@ -48,9 +48,10 @@ fi
 
 # Read out functions
 source ${CHEMFLOW_HOME}/src/ScoreFlow_functions.bash
+source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
 ScoreFlow_set_defaults   # Set default values for docking parameters.
 ScoreFlow_CLI "$@"       # Read the command line.
-ScoreFlow_validate_input # Various Checks
+ChemFlow_validate_input 'ScoreFlow' # Various Checks
 ScoreFlow_summary        # User Validation
 ScoreFlow_organize       # Organize to ChemFlow Standard
 ScoreFlow_rescore        # Run the Rescoring.

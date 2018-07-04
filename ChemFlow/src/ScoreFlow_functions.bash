@@ -484,143 +484,6 @@ case $opt in
 esac
 }
 
-
-
-ScoreFlow_validate_input() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_validate_input
-#   DESCRIPTION: Validates the command line options.                
-#                
-#    PARAMETERS: 
-#       RETURNS: -
-#
-#===============================================================================
-
-echo "[ ScoreFlow ] Checking input files..." 
-
-if [ -d ${PROJECT}.chemflow/DockFlow/${PROTOCOL} ] ; then 
-
-  echo " [ ChemFlow ] Found a project 
-  ${PROJECT}.chemflow/DockFlow/${PROTOCOL}
-  "
-  
-  read -p "[ ChemFlow ] Would you like to continue from your DockFlow project ? [Y/N] :" continue
-  
-  case $continue in
-  "Y|y|YES|Yes|yes")   
-    CHEMFLOW="yes"
-    ;;
-  esac
-
-fi
-
-if [ -d ${PROJECT}.chemflow/ScoreFlow/${PROTOCOL} ] ; then
-
-  echo " [ ChemFlow ] Found a project 
-  ${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}
-  "
-
-  read -p "[ ChemFlow ] Overwrite ScoreFlow ${PROTOCOL} ? [Y/N] :" continue
-
-  case $continue in
-  "Y|y|YES|Yes|yes")
-    OVERWRITE="yes"
-    ;;
-  esac
-
-fi
-
-
-
-# Sanity check for input file
-# 1 - Check if all variables were set, if not, set them as default
-
-# Mandatory parameters --------------------------------------------------------
-if [ -z "${PROJECT}"  ]          ; then ERROR_MESSAGE="No PROJECT name (-p myproject)" ; ScoreFlow_error ; fi
-
-if [ -z "${RECEPTOR}" ] ; then 
-
-  if [ ! -z "${RECEPTOR_FILE}" ]   ; then 
-    ERROR_MESSAGE="No RECEPTOR filename" 
-    ScoreFlow_error
-  fi
-
-fi
-
-if [ -z "${LIGAND_FILE}"   ]     ; then ERROR_MESSAGE="No LIGAND filename"             ; ScoreFlow_error ; fi
-if [ -z "${DOCK_CENTER}" ]  && [ "${SCORING_FUNCTION}" != 'mmgbsa' ]  ; then 
-   ERROR_MESSAGE="No DOCKING CENTER defined"      
-   ScoreFlow_error 
-fi
-if [ -z "${SCORING_FUNCTION}" ]  ; then ERROR_MESSAGE="No SCORING_FUNCTION defined"    ; ScoreFlow_error ; fi
-
-# Sanity check for implemented options parameters -----------------------------
-case "${SCORING_FUNCTION}" in 
-"vina"|"chemplp"|"plp"|"plp95"|"mmgbsa") 
-;;
-*) echo "[ ERROR ] SCORING_FUNCTION ${SCORING_FUNCTION} not implemented" ; exit 0 
-esac
-
-if [ "${SCORING_FUNCTION}" == "vina" ]   ; then SCORE_PROGRAM="VINA" ; fi
-
-if [ "${SCORING_FUNCTION}" == "mmgbsa" ] ; then SCORE_PROGRAM="AMBER" ; fi
-
-case "${SCORE_PROGRAM}" in
-"VINA"|"PLANTS"|"AMBER")
-;;
-*) echo "[ ERROR ] SCORE_PROGRAM ${SCORE_PROGRAM} not implemented" ; exit 0
-esac
-
-
-# Verify program locations
-if [ "${SCORE_PROGRAM}" == "PLANTS" ] && [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
-  echo "[ERROR ] PLANTS is not installed or on PATH" ; exit 0
-fi
-
-if [ "${SCORE_PROGRAM}" == "VINA" ] && [ "$(command -v vina)" == "" ] ; then
-  echo "[ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
-fi
-
-if [ "${SCORE_PROGRAM}" == "AMBER" ] && [ "$(command -v sander)" == "" ] ; then
-  echo "[ERROR ] AmberTools is not installed or on PATH" ; exit 0
-fi
-
-  # Adjustments file on names and lists
-  # Set receptor NAME
-  RECEPTOR=$(echo ${RECEPTOR} | cut -d. -f1)
-
-  if [ "${CHEMFLOW}" == "yes" ] ; then
-    LIGAND_FILE="${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}/docked_ligands.mol2"
-  fi
-
-  # Get all molecule names in the .mol2 file and save into an array
-  LIGAND_LIST=$(awk 'f{print;f=0} /MOLECULE/{f=1}' ${LIGAND_FILE})
-  LIGAND_LIST=($LIGAND_LIST)  # transform a list into an array
-  NLIGANDS=${#LIGAND_LIST[@]}
-
-# HPC adjustments
-case ${JOB_SCHEDULLER} in
-"None"|"PBS"|"SLURM") ;;
-*) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" 
-   ScoreFlow_error 
-   ;;
-esac
-
-
-# Safety check
-if [ "${OVERWRITE}" == "yes" ] ; then
-  read -p "
-Are you sure you want to OVERWRITE your dockings? : " opt
-  
-  case ${opt} in 
-    "Y"|"YES"|"Yes"|"yes"|"y")  ;;
-    *)  echo "Wise decison. Rerun without '--overwrite'" ; exit 0 ;;
-  esac
-  
-fi
-}
-
-
 ScoreFlow_unset() {
 # User variables
 unset PROJECT  	   # Name for the current project, ChemFlow folders go after it
@@ -688,7 +551,7 @@ ScoreFlow -pdb receptor.pdb -l ligand.mol2 -p myproject [-protocol 1] [-n 8] -sf
 
 [Options]
  -h/--help           : Show this help message and quit
--hh/--full-help       : Detailed help
+-hh/--full-help      : Detailed help
  -f/--file           : ScoreFlow configuration file
  -r/--receptor       : Receptor's mol2 file.
  -pdb                : Receptor's PDB file  ( Required for MMGBSA )
@@ -711,7 +574,7 @@ ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf
 
 [Help]
  -h/--help           : Show this help message and quit
--hh/--full-help       : Detailed help
+-hh/--full-help      : Detailed help
 
 [Required]
  -f/--file           : ScoreFlow configuration file
@@ -721,13 +584,13 @@ ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf
  -p/--project        : ChemFlow project name
 
 [Optional]
- --protocol           : Name for this specific protocol [default]
- -sf/--function       : vina, chemplp, plp, plp95, mmgbsa, IFP
+ --protocol          : Name for this specific protocol [default]
+ -sf/--function      : vina, chemplp, plp, plp95, mmgbsa, IFP
 
 [ Charge Scheme ] 
- --gas                : Default Gasteiger-Marsili charges
- --bcc                : BCC charges
- --resp               : RESP charges (require gaussian)
+ --gas               : Default Gasteiger-Marsili charges
+ --bcc               : BCC charges
+ --resp              : RESP charges (require gaussian)
 
 [ Parallel execution ] 
  -nc/--cores         : Number of cores per node
@@ -750,7 +613,7 @@ fi
 while [[ $# -gt 0 ]]; do
 key="$1"
 
-case $key in
+case ${key} in
     "--resume") 
       echo -ne "\nResume not implemented"
       exit 0
@@ -770,7 +633,8 @@ case $key in
       shift # past argument
     ;;
     -r|--receptor)
-      RECEPTOR="$2"
+      RECEPTOR_FILE="$2"
+      RECEPTOR_NAME="$(basename -s .mol2 ${RECEPTOR_FILE})"
       shift # past argument
     ;;
     -pdb)
@@ -805,7 +669,7 @@ case $key in
     ;;
     --size)
       DOCK_LENGTH="$2 $3 $4"
-      DOCK_LENGHT=($DOCK_LENGHT) # Transform into array
+      DOCK_LENGHT=(${DOCK_LENGHT}) # Transform into array
       shift 3
     ;;
     -nc|--cores) # Number of Cores [1] (or cores/node)

@@ -22,7 +22,6 @@
 ###############################################################################
 
 
-
 # DO NOT TOUCH THE PROGRAM, DIEGO IS FIXING BUGS
 
 ChemFlowTools_help() {
@@ -39,7 +38,6 @@ ChemFlowTools -r receptor.mol2 -p myproject [--protocol default]
 "
 exit 0
 }
-
 
 set_filenames() {
 # Default values:
@@ -65,9 +63,6 @@ CSV_OUT='rank_out.csv'   # Output energy file
 LST_IN='list.lst'        # Input list of molecules [Optional]
 LST_OUT='list_out.lst'   # Output list of selected molecules
 }
-
-
-
 
 # Functions -------------------------------------------------------------------
 user_interface() {
@@ -102,9 +97,7 @@ validate_cmd() {
 if [ -f ${MOL2_OUT} ] && [ "${OVERWRITE}" == "no" ] ; then
   echo "${MOL2_OUT} already exists. Remove or rerun using '--overwrite'" ; exit 0
 fi
-
 }
-
 
 list_molecules() {
 # Get the compound list
@@ -265,6 +258,11 @@ case $key in
     --overwrite)
       OVERWRITE="yes"
     ;;
+    "-h"|"--help")
+      ChemFlowTools_help
+      exit 0
+      shift # past argument
+    ;;
     *)
       unknown="$1"        # unknown option
       echo "Unknown flag \"$unknown\""
@@ -277,9 +275,12 @@ done
 
 
 # Program ---------------------------------------------------------------------
-user_interface
+
+source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
+
 ChemFlow_tools_CLI "$@"
 set_filenames
+user_interface
 list_molecules
 #extract_compounds
 

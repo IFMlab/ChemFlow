@@ -59,22 +59,6 @@ else
 fi
  
 }
-DockFlow_error() {
-# $1 is the program, $2 is the error code.
-
-case ${2} in
-"1") ERROR_MESSAGE="File \"${filename}\" does not exist" ;;
-esac
-
-echo "
-[ERROR] ${ERROR_MESSAGE}
-
-For help, type: DockFlow -h 
-"
-exit 0
-}
-
-
 
 DockFlow_summary() {
 echo "
@@ -272,12 +256,6 @@ cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 }
 
 
-
-
-
-
-
-
 DockFlow_PostDock() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_PostDock
@@ -297,9 +275,6 @@ DockFlow_PostDock() {
 #
 #          TODO: A summary of protocols would be interesting
 #===============================================================================
-
-# Mandatory parameters --------------------------------------------------------
-if [ -z "${PROJECT}"  ] ; then ERROR_MESSAGE="No PROJECT name (-p myproject)" ; DockFlow_error ; fi
 
 PROJECT=$(echo ${PROJECT} | cut -d. -f1)
 
@@ -585,88 +560,6 @@ case $rewrite_ligands in
 esac
 }
 
-
-DockFlow_validate_input() {
-
-echo "[ DockFlow ] Checking input files..." 
-
-# Sanity check for input file
-# 1 - Check if all variables were set, if not, set them as default
-
-# Mandatory parameters --------------------------------------------------------
-if [ -z "${PROJECT}"  ]          ; then ERROR_MESSAGE="No PROJECT name (-p myproject)" ; DockFlow_error ; fi
-if [ -z "${RECEPTOR_NAME}" ]     ; then ERROR_MESSAGE="No RECEPTOR Name"               ; DockFlow_error ; fi
-
-if [ -z "${POSTDOCK}" ] && [ -z "${ARCHIVE}" ] ; then
-
-  if [ -z "${RECEPTOR_FILE}" ]     ; then ERROR_MESSAGE="No RECEPTOR Filename"           ; DockFlow_error ; fi
-  if [ -z "${LIGAND_FILE}"   ]     ; then ERROR_MESSAGE="No LIGAND filename"             ; DockFlow_error ; fi
-  if [ -z "${DOCK_CENTER}" ]       ; then ERROR_MESSAGE="No DOCKING CENTER defined"      ; DockFlow_error ; fi
-  if [ -z "${SCORING_FUNCTION}" ]  ; then ERROR_MESSAGE="No SCORING_FUNCTION defined"    ; DockFlow_error ; fi
-
-  #Sanity check for implemented options parameters -----------------------------
-	case "${SCORING_FUNCTION}" in 
-	"vina"|"chemplp"|"plp"|"plp95") 
-	;;
-	*) echo "[ ERROR ] SCORING_FUNCTION ${SCORING_FUNCTION} not implemented" ; exit 0 
-	esac
-
-	if [ "${SCORING_FUNCTION}" == "vina" ] ; then DOCK_PROGRAM="VINA" ; fi
-
-	case "${DOCK_PROGRAM}" in
-	"VINA"|"PLANTS")
-	;;
-	*) echo "[ ERROR ] DOCK_PROGRAM ${DOCK_PROGRAM} not implemented" ; exit 0
-	esac
-
-	# Verify program locations
-	if [ "${DOCK_PROGRAM}" == "PLANTS" ] && [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
-	  echo "[ERROR ] PLANTS is not installed or on PATH" ; exit 0
-	fi
-
-	if [ "${DOCK_PROGRAM}" == "VINA" ] && [ "$(command -v vina)" == "" ] ; then
-	  echo "[ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
-	fi
-
-
-
-	# Adjustments  on names
-	# Set receptor NAME
-	## deprecated RECEPTOR=$(echo ${RECEPTOR} | cut -d. -f1)
-
-	# Get all molecule names in the .mol2 file and save into an array
-	LIGAND_LIST=$(awk 'f{print;f=0} /MOLECULE/{f=1}' ${LIGAND_FILE})
-	LIGAND_LIST=($LIGAND_LIST)  # transform a list into an array
-	NLIGANDS=${#LIGAND_LIST[@]}
-
-	# HPC adjustments
-
-	case ${JOB_SCHEDULLER} in
-	"None"|"PBS"|"SLURM") ;;
-	*) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" 
-	   DockFlow_error 
-	   ;;
-	esac
-
-
-	# Safety check
-	if [ "${OVERWRITE}" == "yes" ] ; then
-	  read -p "
-	Are you sure you want to OVERWRITE your dockings? : " opt
-	  
-	  case ${opt} in 
-		"Y"|"YES"|"Yes"|"yes"|"y")  ;;
-		*)  echo "Safe decison. Rerun without '--overwrite'" ; exit 0 ;;
-	  esac
-	  
-	fi
-
-fi
-
-
-}
-
-
 DockFlow_unset() {
 # User variables
 unset PROJECT  	   # Name for the current project, ChemFlow folders go after it
@@ -822,17 +715,17 @@ fi
 while [[ $# -gt 0 ]]; do
 key="$1"
 
-case $key in
-    "--resume") 
+case ${key} in
+    --resume) 
       echo -ne "\nResume not implemented"
       exit 0
     ;;
-    "-h"|"--help")
+    -h|--help)
       DockFlow_help
       exit 0
       shift # past argument
     ;;
-    "-hh"|"--full-help")
+    -hh|--full-help)
       DockFlow_help_full
       exit 0
       shift
@@ -843,7 +736,7 @@ case $key in
     ;;
     -r|--receptor)
       RECEPTOR_FILE="$2"
-      RECEPTOR_NAME="$(basename -s .mol2 $RECEPTOR_FILE)"
+      RECEPTOR_NAME="$(basename -s .mol2 ${RECEPTOR_FILE})"
       shift # past argument
     ;;
     -l|--ligand)
