@@ -41,7 +41,7 @@ if [ -z ${CHEMFLOW_HOME} ] ; then
 fi
 
 # Read out functions
-source ${CHEMFLOW_HOME}/src/DockFlow2_functions.bash
+source ${CHEMFLOW_HOME}/src/DockFlow_functions.bash
 DockFlow_set_defaults   # Set default values for docking parameters.
 DockFlow_CLI "$@"       # Read the command line.
 
