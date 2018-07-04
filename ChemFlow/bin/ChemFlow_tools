@@ -43,7 +43,7 @@ exit 0
 
 set_filenames() {
 # Default values:
-project="tutorial"
+project="test"
 protocol="default"
 target="1yv3"
 

@@ -44,28 +44,16 @@ ${RUNDIR}/docked_folder.tar.gz
 tar cfz docked_folder.tar.gz */
 
 if [ -f docked_folder.tar.gz ] ; then 
-  echo "[ DockFlow ] Archiving complete, results are in
-${RUNDIR}/docked_folder.tar.gz
-"
+  echo "[ DockFlow ] Archiving complete"
   
   read -p "[ DockFlow ] Remove docking folders in ${RUNDIR} ? " opt
   case $opt in
   "y"|"yes"|"Yes"|"Y"|"YES")
-    REMOVE='yes'
+    rm -rf ${RUNDIR}/*/ 
+    echo "[ DockFlow ] Done removing docking folders."
   ;;
   esac
-
- 
-  read -p "[ DockFlow ] REALLY? Remove all docking folders inside ${RUNDIR} ? " opt
-  case $opt in
-  "y"|"yes"|"Yes"|"Y"|"YES")
-    rm -rf */ 
-
-  echo "Done."
-
-  ;;
-  esac
-
+  
 else
   echo "[ DockFlow ] Archiving failed"
 fi
