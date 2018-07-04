@@ -23,7 +23,7 @@ write(*,*) trim((ADJUSTL(inputfile)))
 open(3,file=trim((ADJUSTL(inputfile))))
 
 opt="N"
-write(*,*) "Is .mol2 sorted list? [N]"
+write(*,*) "Is .mol2 sorted list? [Y/N]"
 read(*,*) opt
 
 !------------------------------------------------
@@ -32,7 +32,7 @@ do
 read(1,"(A128)",err=100,end=100) compound
 write(*,*) "Compound: ",trim(compound)
 
-  if (opt=="N") rewind(2) 
+  if (opt=="N".or.opt=='n'.or.opt=='no'.or.opt=='No'.or.opt=='NO') rewind(2) 
 
   do while ( index(trim(line),trim(compound)) == 0 )
     read(2,'(A128)') line
