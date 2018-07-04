@@ -47,7 +47,7 @@ fi
 # [project].chemflow/[action]/[protocol]/[target]/[query].
 
 # Read out functions
-source ${CHEMFLOW_HOME}/src/ScoreFlow2_functions.bash
+source ${CHEMFLOW_HOME}/src/ScoreFlow_functions.bash
 ScoreFlow_set_defaults   # Set default values for docking parameters.
 ScoreFlow_CLI "$@"       # Read the command line.
 ScoreFlow_validate_input # Various Checks
@@ -55,7 +55,7 @@ ScoreFlow_summary        # User Validation
 ScoreFlow_organize       # Organize to ChemFlow Standard
 ScoreFlow_rescore        # Run the Rescoring.
 
-if [ ${ARCHIVE} == 'yes' ] ; then 
+if [ ! -z ${ARCHIVE} ] ; then 
   ScoreFlow_archive
 fi
 echo "
