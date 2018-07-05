@@ -67,11 +67,11 @@ ScoreFlow_rescore_plants () {
 
 echo "
 # input files
-protein_file ${RECEPTOR}
+protein_file ${RECEPTOR_FILE}
 ligand_file ${LIGAND_FILE} 
 
 # output
-output_dir PLANTS
+output_dir ${RUNDIR}/PLANTS
 
 # scoring function and search settings
 scoring_function ${SCORING_FUNCTION}
@@ -81,14 +81,10 @@ search_speed speed1
 write_multi_mol2 1
 
 # binding site definition
-bindingsite_center ${DOCK_CENTER}
+bindingsite_center ${DOCK_CENTER[@]}
 bindingsite_radius ${DOCK_RADIUS}
 
-# cluster algorithm, save the best DOCK_POSES.
-cluster_structures ${DOCK_POSES}
-cluster_rmsd 2.0
-
-# write 
+# write
 write_ranking_links 0
 write_protein_bindingsite 1
 write_protein_conformations 0
@@ -99,7 +95,19 @@ nlig=$( rgrep -c MOLECULE ${LIGAND_FILE} )
 
 echo "[ ScoreFlow ] Rescoring ${nlig} poses, please wait"
 
+if [ -d ${RUNDIR}/PLANTS ] && [ "${OVERWRITE}" == 'yes' ] ; then
+    rm -rf   ${RUNDIR}/PLANTS
+else
+    ERROR_MESSAGE="PLANTS folder exists. Use --overwrite " ; ChemFlow_error ${PROGRAM} ;
+fi
+
 PLANTS1.2_64bit --mode rescore rescore_input.in &>rescoring.log
+
+# Cleanup
+if [ -f rescoring.log ] ; then
+    rm rescoring.log
+fi
+
 }
 
 
@@ -366,7 +374,6 @@ ScoreFlow_organize() {
 # TODO 
 # Improve extracting mol2 to separate folders.
 # 
-RUNDIR=${WORKDIR}/${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR_NAME}/
 
 
 if [ ${ORGANIZE} == 'yes' ] ; then
@@ -402,11 +409,24 @@ fi
 }
 
 ScoreFlow_postprocess() {
-  for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ -f ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat ] ; then
-      awk -v LIGAND=${LIGAND} '/DELTA TOTAL/{print LIGAND,",",$3}' ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat
-    fi
-  done
+
+echo "
+Scoring function: ${SCORING_FUNCTION}
+         Rundir : ${RUNDIR}
+"
+
+  if [ "${SCORING_FUNCTION}" == 'mmgbsa' ] ; then
+      if [ -f ${RUNDIR}/ScoreFlow.csv ]  ; then
+        rm -rf ${RUNDIR}/ScoreFlow.csv
+      fi
+
+      for LIGAND in ${LIGAND_LIST[@]} ; do
+        if [ -f ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat ] ; then
+          awk -v LIGAND=${LIGAND} 'BEGIN{OFS=",";}/DELTA TOTAL/{print LIGAND,$3}' ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat >> ${RUNDIR}/ScoreFlow.csv
+        fi
+      done
+
+  fi
 }
 
 
@@ -497,7 +517,7 @@ SCORING_FUNCTION="chemplp"
 JOB_SCHEDULLER="None"
         NCORES=$(nproc --all)
         NNODES="1"
-     OVERWRITE="No"    # Don't overwrite stuff. 
+     OVERWRITE="No"    # Don't overwrite stuff.
 }
 
 

@@ -15,7 +15,7 @@ ChemFlow_error() {
 # ${1} is the program
 
 echo "
-[ERROR] ${ERROR_MESSAGE}
+[ ERROR ] ${ERROR_MESSAGE}
 
 For help, type: ${1} -h 
 "
@@ -67,16 +67,12 @@ ChemFlow_validate_input() {
         if [ -z "${LIGAND_FILE}" ] ; then ERROR_MESSAGE="No LIGAND filename (-l ligand_file.mol2)" ; ChemFlow_error ${PROGRAM} ; fi
         ChemFlow_checkfile_ERROR ${LIGAND_FILE}
 
-        if [ -z "${SCORING_FUNCTION}" ]  ; then ERROR_MESSAGE="No SCORING_FUNCTION defined (-sf scoring_function)"	; ChemFlow_error ${PROGRAM} ; fi
-
         if [ -z "${DOCK_CENTER}" ] && [ "${SCORING_FUNCTION}" != "mmgbsa"  ] ; then ERROR_MESSAGE="No DOCKING CENTER defined (--center x y z)"    ; ChemFlow_error ${PROGRAM} ; fi
 
-      #Sanity check for implemented options parameters -----------------------------
-        case "${SCORING_FUNCTION}" in
-        "vina"|"chemplp"|"plp"|"plp95"|"mmgbsa")
-        ;;
-        *) echo "[ ERROR ] SCORING_FUNCTION ${SCORING_FUNCTION} not implemented" ; exit 0
-        esac
+        #Sanity check for implemented options parameters -----------------------------
+        if [ -z "${SCORING_FUNCTION}" ]  ; then ERROR_MESSAGE="No SCORING_FUNCTION defined (-sf scoring_function)"	; ChemFlow_error ${PROGRAM} ; fi
+
+
 
         if [ "${SCORING_FUNCTION}" == "vina" ] ; then DOCK_PROGRAM="VINA" ; fi
 
@@ -89,9 +85,6 @@ ChemFlow_validate_input() {
             fi
         fi
 
-
-
-
         # HPC adjustments
         case ${JOB_SCHEDULLER} in
         "None"|"PBS"|"SLURM") ;;
@@ -99,8 +92,6 @@ ChemFlow_validate_input() {
            ChemFlow_error ${PROGRAM}
            ;;
         esac
-
-
 
         if [ "${PROGRAM}" == "DockFlow" ] ; then
 
@@ -114,15 +105,26 @@ ChemFlow_validate_input() {
             fi
 
             case "${DOCK_PROGRAM}" in
-                "VINA"|"PLANTS"|"AMBER")
+                "VINA"|"PLANTS")
                 ;;
-                *) echo "[ ERROR ] DOCK/SCORE_PROGRAM ${DOCK_PROGRAM} not implemented" ; exit 0
+                *) echo "[ ERROR ] DOCK_PROGRAM ${DOCK_PROGRAM} not implemented" ; exit 0
             esac
 
-            ChemFlow_set_ligand_list ${LIGAND_FILE}
+            case "${SCORING_FUNCTION}" in
+            "vina"|"chemplp"|"plp"|"plp95")
+            ;;
+            *) echo "[ ERROR ] SCORING_FUNCTION ${SCORING_FUNCTION} not implemented" ; exit 0
+            esac
         fi
 
         if [ "${PROGRAM}" == "ScoreFlow" ] ; then
+
+            case "${SCORE_PROGRAM}" in
+                "VINA"|"PLANTS"|"AMBER")
+                ;;
+                *) echo "[ ERROR ] SCORE_PROGRAM ${SCORE_PROGRAM} not implemented" ; exit 0
+            esac
+
             # [ ScoreFlow ] Verify program locations
             if [ "${SCORE_PROGRAM}" == "PLANTS" ] && [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
               echo "[ERROR ] PLANTS is not installed or on PATH" ; exit 0
@@ -135,12 +137,18 @@ ChemFlow_validate_input() {
             if [ "${SCORE_PROGRAM}" == "AMBER" ] && [ "$(command -v sander)" == "" ] ; then
               echo "[ERROR ] AmberTools is not installed or on PATH" ; exit 0
             fi
+
+            case "${SCORING_FUNCTION}" in
+            "vina"|"chemplp"|"plp"|"plp95"|"mmgbsa")
+            ;;
+            *) echo "[ ERROR ] SCORING_FUNCTION ${SCORING_FUNCTION} not implemented" ; exit 0
+            esac
+
         fi
 
         # Safety check
         if [ "${OVERWRITE}" == "yes" ] ; then
-          read -p "
-          Are you sure you want to OVERWRITE your dockings? : " opt
+          read -p "[ Note ] Are you sure you want to OVERWRITE : " opt
 
           case ${opt} in
             "Y"|"YES"|"Yes"|"yes"|"y")  ;;
@@ -149,4 +157,6 @@ ChemFlow_validate_input() {
         fi
 
     fi
+
+    ChemFlow_set_ligand_list ${LIGAND_FILE}
 }

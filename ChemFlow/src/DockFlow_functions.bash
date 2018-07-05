@@ -29,8 +29,6 @@ DockFlow_archive() {
 
 PROJECT=$(echo ${PROJECT} | cut -d. -f1)
 
-RUNDIR=${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/
-
 if [ -z ${RUNDIR} ] ; then 
   echo "RUNDIR = ${RUNDIR}"
   exit 0
@@ -400,14 +398,12 @@ DockFlow_Dock() {
 #                to read but latter it's so much easier to use the LIGAND_LIST[@] array.
 #                I'm not very confident BASH will confortably handle >1million of elemente in the array.
 #                
-#    PARAMETERS: ${WORKDIR
+#    PARAMETERS: ${WORKDIR}
 #                ${PROJECT}
 #                ${RUNDIR}
 #                ${LIGAND}
 #       RETURNS: ${DOCK_LIST} - List of ligands to dock.
 #===============================================================================
-
-RUNDIR=${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/
 
 # Always work here
 cd ${RUNDIR}

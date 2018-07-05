@@ -48,6 +48,8 @@ DockFlow_set_defaults    # Set default values for docking parameters.
 DockFlow_CLI "$@"        # Read the command line.
 ChemFlow_validate_input 'DockFlow'  # Sanity check. (parameters and input files)
 
+RUNDIR=${WORKDIR}/${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR_NAME}/
+
 if [ ! -z ${ARCHIVE} ] ; then
   DockFlow_archive
 else
