@@ -30,7 +30,7 @@ ChemFlow_set_ligand_list() {
 #       RETURNS: -
 #
 #===============================================================================
-    LIGAND_FILE=${1}
+#    LIGAND_FILE=${1}
 
 	LIGAND_LIST=$(awk 'f{print;f=0} /MOLECULE/{f=1}' ${LIGAND_FILE})
 	LIGAND_LIST=(${LIGAND_LIST})  # transform a list into an array
@@ -60,7 +60,7 @@ if [ -z "${PROJECT}"  ]          ; then ERROR_MESSAGE="No PROJECT name (-p mypro
 if [ -z "${RECEPTOR_FILE}" ]     ; then ERROR_MESSAGE="No RECEPTOR file name (-r receptor_file.mol2)"			; ChemFlow_error ${PROGRAM} ; fi
 ChemFlow_checkfile_ERROR ${RECEPTOR_FILE}
 
-if [ "${PROGRAM}" == "DockFlow" ] || [ "${PROGRAM}" = "ScoreFlow" ] ; then
+if [ ! -z ${POSTDOCK} ] && [ ! -z ${ARCHIVE} ] ; then
 
   if [ -z "${LIGAND_FILE}"   ]     ; then ERROR_MESSAGE="No LIGAND filename (-l ligand_file.mol2)"				; ChemFlow_error ${PROGRAM} ; fi
   ChemFlow_checkfile_ERROR ${LIGAND_FILE}
@@ -75,6 +75,8 @@ if [ "${PROGRAM}" == "DockFlow" ] || [ "${PROGRAM}" = "ScoreFlow" ] ; then
 	esac
 
 	if [ "${SCORING_FUNCTION}" == "vina" ] ; then DOCK_PROGRAM="VINA" ; fi
+
+	if [ "${SCORING_FUNCTION}" == "mmgbsa" ] ; then DOCK_PROGRAM="AMBER" ; fi
 
 	case "${DOCK_PROGRAM}" in
 	"VINA"|"PLANTS")
