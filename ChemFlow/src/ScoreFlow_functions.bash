@@ -36,14 +36,6 @@
 #      REVISION:  ---
 #===============================================================================
 
-
-#ScoreFlow_archive() {
-#cd ${RUNDIR}
-#tar cfz docked_folder.tar.gz */ 
-#}
-
-
-
 ScoreFlow_rescore() {
 
 case ${SCORING_FUNCTION} in
@@ -103,7 +95,7 @@ write_protein_conformations 0
 ####
 " > rescore_input.in
 
-nlig=$(rgrep -c MOLECULE docked_ligands.mol2)
+nlig=$( rgrep -c MOLECULE ${LIGAND_FILE} )
 
 echo "[ ScoreFlow ] Rescoring ${nlig} poses, please wait"
 
@@ -386,14 +378,6 @@ fi
 
 }
 
-
-
-
-
-
-
-
-
 ScoreFlow_organize() {
 # TODO 
 # Improve extracting mol2 to separate folders.
@@ -462,7 +446,8 @@ PROTOCOL ${PROTOCOL}
  WORKDIR ${PWD} 
 
 [ Docking setup ]
-RECEPTOR ${RECEPTOR}
+RECEPTOR ${RECEPTOR_NAME}
+RECEPTOR_FILE ${RECEPTOR_FILE}
   LIGAND ${LIGAND_FILE}
   CHARGE ${CHARGE}
 NLIGANDS ${NLIGANDS}
@@ -521,8 +506,6 @@ unset POSTDOCK     # Either just post-process dockings
 ScoreFlow_set_defaults() {
 
  ORGANIZE='yes'
- POSTPROCESS='no'
- ARCHIVE='no'
 
 # General options
   WORKDIR=${PWD}

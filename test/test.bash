@@ -38,36 +38,27 @@
 DEBUG='no'
 
 
-
-
-
-#
-# Functions --------------------------------------------------------------------
-#
-ChemFlow_Checkfile_ERROR() {
-# Checks if file exists. If not, exit with error.
-if [ ! -f "$1" ] ; then
-  echo "[ Error ] File: ${1} not found"
-  exit 1
-fi
-}
-
+# ChemFlow common functions.
+source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
 
 #
 # Program ----------------------------------------------------------------------
 #
 echo "[ ChemFlow ] Initiating test"
-ChemFlow_Checkfile_ERROR hostguest.tar.gz
+ChemFlow_Checkfile_ERROR protein_ligand.tar.gz
 
 # Extracts test data to run "input" folder
-tar xfz hostguest.tar.gz
+#tar xfz protein_ligand.tar.gz
 
 # Go to input data folder.
-cd input
+cd protein_ligand
+
+#
+python $(which SmilesTo3D.py ) -i compounds.smi -o compounds.sdf --hydrogen
+babel -isdf compounds.sdf -omol2 compounds.mol2
 
 # Run DockFlow
-DockFlow --project test -r CB7.mol2 -l AD0.mol2 --center 2.713 1.767 4.858 --radius 12
-
-
-
-
+DockFlow --project test -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 <<EOF
+y
+y
+EOF
