@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ###############################################################################
 ## ChemFlow - Computational Chemistry is Great Again
 ##
@@ -624,12 +625,12 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf 
 
 [Options]
  -h/--help           : Show this help message and quit
--hh/--fullhelp       : Detailed help
+ -hh/--fullhelp      : Detailed help
  -f/--file           : DockFlow configuration file
  -r/--receptor       : Receptor's mol2 file.
  -l/--ligand         : Ligands .mol2 input file.
  -p/--project        : ChemFlow project
---postdock           : Process DockFlow output in a ChemFlow project.
+ --postdock          : Process DockFlow output in a ChemFlow project.
 
 "
 exit 0
@@ -654,7 +655,7 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf 
 
 [Help]
  -h/--help           : Show this help message and quit
--hh/--fullhelp       : Detailed help
+ -hh/--fullhelp      : Detailed help
 
 [ Required ]
  -f/--file           : DockFlow configuration file
@@ -672,15 +673,15 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf 
 [ Optional ]
  --protocol          : Name for this specific protocol [default]
  -n/--number         : Number of poses to generate, per ligand [10]
- -sf/--function       : vina, chemplp, plp, plp95  [chemplp] 
+ -sf/--function      : vina, chemplp, plp, plp95  [chemplp]
 
 [ Parallel execution ] 
  -nc/--cores         : Number of cores per node
-  -w/--workload      : Workload manager, PBS or SLURM 
+ -w/--workload       : Workload manager, PBS or SLURM
  -nn/--nodes         : Number of nodes to use (ony for PBS or SLURM)
 
 [ Additional ] 
---overwrite          : Overwrite results
+ --overwrite          : Overwrite results
 
 [ Options for docking program ] 
 _________________________________________________________________________________
