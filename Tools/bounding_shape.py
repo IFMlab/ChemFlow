@@ -1,11 +1,24 @@
 #!/usr/bin/python
 
+##################################################################### 
+#   ChemFlow  -   Computational Chemistry is great again            #
+#####################################################################
+# Author: cbouy - Cédric Bouysset
+#         cbouysset@unice.fr
+#         Institut de Chimie de Nice - Université Côte d'Azur - France
+# 
+# Brief: This script will read a mol2 file and return the center and radius of the smallest shape containing all the atoms
+#
+# Usage : python bounding_sphere.py file.mol2 --box/--sphere padding
+#         --box will return coordinates and sizes for a cuboid binding site
+#         --sphere will return coordinates and radius for a spheric binding site
+#         padding is a number added to each radius/size of the shape
+#         You can also add 'pymol' as the last argument to print the commands to show the shape on PyMol (just copy/paste them in the pymol console)
+
+
 from __future__ import print_function
 from math import sqrt
 import sys, re
-
-# Usage : python bounding_sphere.py file.mol2 --vina
-# This script will read a mol2 file and return the center and radius of the smallest sphere containing all the atoms
 
 def help():
 	print("Usage: python bounding_shape.py file.mol2 --box/--sphere padding")
