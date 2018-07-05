@@ -123,7 +123,7 @@ if [ "${POSTPROCESS}" != "yes" ] ; then
   ScoreFlow_write_run_tleap
 
   for LIGAND in ${LIGAND_LIST[@]} ; do
-    echo -ne "Computing MMBSA ${RECEPTOR} - ${LIGAND}     \r" 
+    echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r" 
     cd ${RUNDIR}/${LIGAND}
     ScoreFlow_MMGBSA_implicit_write_MIN
     ScoreFlow_MMGBSA_implicit_run_MIN
@@ -238,7 +238,7 @@ ScoreFlow_write_run_tleap() {
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
 
-echo -ne "Preparing complex: ${RECEPTOR} - ${LIGAND}     \r" 
+echo -ne "Preparing complex: ${RECEPTOR_NAME} - ${LIGAND}     \r" 
 cd ${RUNDIR}/${LIGAND}/
 
 echo "
@@ -276,7 +276,7 @@ if [ -f tleap.xargs ] ; then rm -rf tleap.xargs ; fi
  
 for LIGAND in ${LIGAND_LIST[@]} ; do
   if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] ; then
-    echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR} - ${LIGAND}\" ;  tleap -f tleap_gbsa.in &> tleap.job" >> tleap.xargs
+    echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR_NAME} - ${LIGAND}\" ;  tleap -f tleap_gbsa.in &> tleap.job" >> tleap.xargs
   fi
 
 done
@@ -382,19 +382,19 @@ ScoreFlow_organize() {
 # TODO 
 # Improve extracting mol2 to separate folders.
 # 
-RUNDIR=${WORKDIR}/${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR}/
+RUNDIR=${WORKDIR}/${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR_NAME}/
 
 
 if [ ${ORGANIZE} == 'yes' ] ; then
 
-  if [  ! -d ${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR} ] ; then
-    mkdir -p ${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR}
+  if [  ! -d ${RUNDIR} ] ; then
+    mkdir -p ${RUNDIR}
   fi
 
 
   for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [  ! -d ${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR}/${LIGAND}/ ] ; then
-      mkdir -p ${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR}/${LIGAND}/
+    if [  ! -d ${RUNDIR}/${LIGAND}/ ] ; then
+      mkdir -p ${RUNDIR}/${LIGAND}/
     fi
   done
 
@@ -409,8 +409,9 @@ if [ ${ORGANIZE} == 'yes' ] ; then
     while read line ; do
       if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
         let n=$n+1
+        echo -ne "" > ${RUNDIR}/${LIGAND_LIST[$n]}/lig.mol2
       fi
-      echo -e "${line}" >> ${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR}/${LIGAND_LIST[$n]}/lig.mol2
+      echo -e "${line}" >> ${RUNDIR}/${LIGAND_LIST[$n]}/lig.mol2
     done < ${LIGAND_FILE}
 # fi
 fi
