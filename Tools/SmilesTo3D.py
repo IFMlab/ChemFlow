@@ -1,5 +1,22 @@
 #!/usr/bin/python3
 # coding: utf8
+
+##################################################################### 
+#   ChemFlow  -   Computational Chemistry is great again            #
+#####################################################################
+# Authors: 
+#         cbouy - Cédric Bouysset
+#         cbouysset@unice.fr
+#         Institut de Chimie de Nice - Université Côte d'Azur - France
+#
+#         dgomes - Diego E. B. Gomes
+#         dgomes@pq.cnpq.br
+#         Instituto Nacional de Metrologia, Qualidade e Tecnologia - Brazil
+#         Coordenacao Aperfeicoamento de Pessoal de Ensino Superior - CAPES - Brazil.
+#         Université de Strasbourg - France
+#
+# Brief: Generates 3D structures in SDF format from SMILES, using RDKIT
+
 from rdkit import Chem, RDLogger
 lg = RDLogger.logger()
 from rdkit.Chem import AllChem
