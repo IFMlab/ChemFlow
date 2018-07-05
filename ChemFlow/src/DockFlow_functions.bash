@@ -103,9 +103,9 @@ esac
 
 
 
-DockFlow_write_plants() {
+DockFlow_write_plants_config() {
 #===  FUNCTION  ================================================================
-#          NAME: DockFlow_write_plants_input
+#          NAME: DockFlow_write_plants_config_input
 #   DESCRIPTION: Writes the PLANTS input file for each ligand. 
 #                Input/Output filenames are hardcoded to comply with standard.
 #                
@@ -176,8 +176,8 @@ echo "#! /bin/bash
 #SBATCH -n ${NTHREADS}
 #SBATCH -t 0:30:00
 
-#Write the full DockFlow_write_plants function here.
-$(declare -f DockFlow_write_plants)
+#Write the full DockFlow_write_plants_config function here.
+$(declare -f DockFlow_write_plants_config)
 
 RUNDIR=${RUNDIR}
 cd ${RUNDIR}
@@ -192,7 +192,7 @@ if [ -f ${first}.parallel ] ; then rm -rf ${first}.parallel ; fi
 
 for LIGAND in ${DOCK_LIST[@]:$first:$nlig} ; do
 
-  DockFlow_write_plants
+  DockFlow_write_plants_config
 
   echo \"cd ${RUNDIR}/\${LIGAND} ; PLANTS1.2_64bit --mode screen dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${first}.xargs
 
@@ -227,8 +227,8 @@ echo "#! /bin/bash
 #PBS -l nodes=${NNODES}:ppn=${NTHREADS}
 #PBS -l walltime=0:30:00
 
-#Write the full DockFlow_write_plants function here.
-$(declare -f DockFlow_write_plants)
+#Write the full DockFlow_write_plants_config function here.
+$(declare -f DockFlow_write_plants_config)
 
 RUNDIR=${RUNDIR}
 cd ${RUNDIR}
@@ -243,7 +243,7 @@ if [ -f ${first}.parallel ] ; then rm -rf ${first}.parallel ; fi
 
 for LIGAND in ${DOCK_LIST[@]:$first:$nlig} ; do
 
-  DockFlow_write_plants
+  DockFlow_write_plants_config
 
   echo \"cd ${RUNDIR}/\${LIGAND} ; PLANTS1.2_64bit --mode screen dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${first}.xargs
 
@@ -254,97 +254,197 @@ cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 "> plants.pbs
 }
 
+DockFlow_PostDock_PlantsResults() {
+    #===  FUNCTION  ================================================================
+    #          NAME: DockFlow_PostDock_PlantsResults
+    #   DESCRIPTION: Post processing DockFlow runs while using plants.
+    #                Extract results and organize files to ChemFlow standard.
+    #                Each project will have a single RANK.csv
+    #
+    #    PARAMETERS: ${PROJECT}
+    #
+    #          NOTE: Must be run while at "${RUNDIR}
+    #       RETURNS: rank.csv, top.csv
+    #
+    #        Author: Diego E. B. Gomes
+    #                Cedric Bouysset
+    #
+    #        UPDATE: mar. mai 29 14:49:50 CEST 2018
+    #
+    #          TODO: A summary of protocols would be interesting
+    #===============================================================================
 
-DockFlow_PostDock() {
-#===  FUNCTION  ================================================================
-#          NAME: DockFlow_PostDock
-#   DESCRIPTION: Post processing DockFlow runs.
-#                Extract results and organize files to ChemFlow standard.
-#                Each project will have a single RANK.csv
-#                
-#    PARAMETERS: ${PROJECT} 
-#
-#          NOTE: Must be run while at "${RUNDIR}
-#       RETURNS: rank.csv, top.csv
-#
-#        Author: Diego E. B. Gomes
-#                Cedric Bouysset 
-#
-#        UPDATE: mar. mai 29 14:49:50 CEST 2018
-#
-#          TODO: A summary of protocols would be interesting
-#===============================================================================
+    PROJECT=$(echo ${PROJECT} | cut -d. -f1)
 
-PROJECT=$(echo ${PROJECT} | cut -d. -f1)
+    # Start up going to the project folder.
+    DOCKFLOW_FOLDER=${WORKDIR}/${PROJECT}.chemflow/DockFlow
+    cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow
 
-# Start up going to the project folder.
-cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow
+    # Retrieve available protocols
+    PROTOCOL_LIST=$(ls -d */ | cut -d/ -f1)
 
-# Retreive avaible protocols
-PROTOCOL_LIST=$(ls -d */ | cut -d/ -f1)
+    # STUPID fix this DIEGO !
+    PROTOCOL_LIST=${PROTOCOL}
+    PROTOCOL_LIST=(${PROTOCOL_LIST})
+    NPROTOCOLS=${#PROTOCOL_LIST}
 
-# STUPID fix this DIEGO !
-PROTOCOL_LIST=${PROTOCOL}
-PROTOCOL_LIST=($PROTOCOL_LIST)
-NPROTOCOLS=${#PROTOCOL_LIST}
+    for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
 
-for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
-  
-  # Start up going to the project folder.
-  cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
+      # Start up going to the project folder.
+      cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
 
-  RECEPTOR_LIST=$(ls -d */| cut -d/ -f1)
-  RECEPTOR_LIST=($RECEPTOR_LIST)
-  echo "Receptors: ${RECEPTOR_LIST[@]}"
-  
-  
-  for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
-    
-    cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}
-    # Cleanup ------------------------------------------------
-    if [ -f rank.csv ] ; then rm rank.csv ; fi
-    if [ -f docked_ligands.mol2 ] ; then rm docked_ligands.mol2 ; fi
-    
-    LIGAND_LIST=$(ls -d */| cut -d/ -f1)
-    LIGAND_LIST=($LIGAND_LIST)
-    #echo "Ligands: ${LIGAND_LIST[@]}"
-    
-    if [ -f  ${RECEPTOR}/docked_ligands.mol2 ] ; then 
-      rm -rf ${RECEPTOR}/docked_ligands.mol2
-    fi
-  
-    echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > rank.csv
-  
-    # Organize to ChemFlow standard.
-    for LIGAND in ${LIGAND_LIST[@]}; do
-    
-      # PLANTS -----------------------------------------------------------
-      if [ -f ${LIGAND}/PLANTS/docked_ligands.mol2 ] ; then
-        echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}        \r"
-        awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' ${LIGAND}/PLANTS/ranking.csv >> rank.csv
-        cat ${LIGAND}/PLANTS/docked_ligands.mol2 >> docked_ligands.mol2
-      fi
+      RECEPTOR_LIST=$(ls -d */| cut -d/ -f1)
+      RECEPTOR_LIST=(${RECEPTOR_LIST})
+      echo "Receptors: ${RECEPTOR_LIST[@]}"
+
+
+      for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
+
+        cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}
+        # Cleanup ------------------------------------------------
+        if [ -f rank.csv ] ; then rm rank.csv ; fi
+        if [ -f docked_ligands.mol2 ] ; then rm docked_ligands.mol2 ; fi
+
+        LIGAND_LIST=$(ls -d */| cut -d/ -f1)
+        LIGAND_LIST=(${LIGAND_LIST})
+        #echo "Ligands: ${LIGAND_LIST[@]}"
+
+        if [ -f  ${RECEPTOR}/docked_ligands.mol2 ] ; then
+          rm -rf ${RECEPTOR}/docked_ligands.mol2
+        fi
+
+        echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > rank.csv
+
+        # Organize to ChemFlow standard.
+        for LIGAND in ${LIGAND_LIST[@]}; do
+
+          # PLANTS -----------------------------------------------------------
+          if [ -f ${LIGAND}/PLANTS/docked_ligands.mol2 ] ; then
+            echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}        \r"
+            awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' ${LIGAND}/PLANTS/ranking.csv >> rank.csv
+            cat ${LIGAND}/PLANTS/docked_ligands.mol2 >> docked_ligands.mol2
+          fi
+        done
+      done
     done
-  done
-done
 
-#grep -v not rank.tmp > rank.csv
+    #grep -v not rank.tmp > rank.csv
 
-echo "[ DockFlow ] Done with post-processing."
-# Archiving.
-read -p "[ DockFlow ] Archive the docking results (folders) in a TAR file? " opt
-case $opt in
-"y"|"yes"|"Yes"|"Y"|"YES")
-  DockFlow_archive
-;;
-esac
+    echo "[ DockFlow ] Done with post-processing."
+    # Archiving.
+    read -p "[ DockFlow ] Archive the docking results (folders) in a TAR file? " opt
+    case $opt in
+    "y"|"yes"|"Yes"|"Y"|"YES")
+      DockFlow_archive
+    ;;
+    esac
 }
 
+DockFlow_PostDock_VinaResults() {
+    #===  FUNCTION  ================================================================
+    #          NAME: DockFlow_PostDock_VinaResults
+    #   DESCRIPTION: Post processing DockFlow runs while using vina.
+    #                Extract results and organize files to ChemFlow standard.
+    #                Each project will have a single RANK.csv
+    #
+    #    PARAMETERS: ${PROJECT}
+    #
+    #          NOTE: Must be run while at "${RUNDIR}
+    #       RETURNS: rank.csv, top.csv
+    #
+    #        Author: Diego E. B. Gomes
+    #                Cedric Bouysset
+    #
+    #        UPDATE: mar. mai 29 14:49:50 CEST 2018
+    #
+    #          TODO: A summary of protocols would be interesting
+    #===============================================================================
+    exit 0;
+#    PROJECT=$(echo ${PROJECT} | cut -d. -f1)
+#
+#    # Start up going to the project folder.
+#    DOCKFLOW_FOLDER=${WORKDIR}/${PROJECT}.chemflow/DockFlow
+#    cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow
+#
+#    # Retrieve available protocols
+#    PROTOCOL_LIST=$(ls -d */ | cut -d/ -f1)
+#
+#    # STUPID fix this DIEGO !
+#    PROTOCOL_LIST=${PROTOCOL}
+#    PROTOCOL_LIST=(${PROTOCOL_LIST})
+#    NPROTOCOLS=${#PROTOCOL_LIST}
+#
+#    for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
+#
+#      # Start up going to the project folder.
+#      cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
+#
+#      RECEPTOR_LIST=$(ls -d */| cut -d/ -f1)
+#      RECEPTOR_LIST=(${RECEPTOR_LIST})
+#      echo "Receptors: ${RECEPTOR_LIST[@]}"
+#
+#
+#      for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
+#
+#        cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}
+#        # Cleanup ------------------------------------------------
+#        if [ -f rank.csv ] ; then rm rank.csv ; fi
+#        if [ -f docked_ligands.mol2 ] ; then rm docked_ligands.mol2 ; fi
+#
+#        LIGAND_LIST=$(ls -d */| cut -d/ -f1)
+#        LIGAND_LIST=(${LIGAND_LIST})
+#        #echo "Ligands: ${LIGAND_LIST[@]}"
+#
+#        if [ -f  ${RECEPTOR}/docked_ligands.mol2 ] ; then
+#          rm -rf ${RECEPTOR}/docked_ligands.mol2
+#        fi
+#
+#        echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > rank.csv
+#
+#        # Organize to ChemFlow standard.
+#        for LIGAND in ${LIGAND_LIST[@]}; do
+#
+#          # PLANTS -----------------------------------------------------------
+#          if [ -f ${LIGAND}/PLANTS/docked_ligands.mol2 ] ; then
+#            echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}        \r"
+#            awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' ${LIGAND}/PLANTS/ranking.csv >> rank.csv
+#            cat ${LIGAND}/PLANTS/docked_ligands.mol2 >> docked_ligands.mol2
+#          fi
+#        done
+#      done
+#    done
+#
+#    #grep -v not rank.tmp > rank.csv
+#
+#    echo "[ DockFlow ] Done with post-processing."
+#    # Archiving.
+#    read -p "[ DockFlow ] Archive the docking results (folders) in a TAR file? " opt
+#    case $opt in
+#    "y"|"yes"|"Yes"|"Y"|"YES")
+#      DockFlow_archive
+#    ;;
+#    esac
+}
 
-
-
-
-
+DockFlow_PostDock() {
+    #===  FUNCTION  ================================================================
+    #          NAME: DockFlow_PostDock
+    #   DESCRIPTION: Post processing DockFlow runs depending on the dock program used
+    #
+    #    PARAMETERS: ${DOCK_PROGRAM}
+    #
+    #        Author: Diego E. B. Gomes
+    #                Dona de Francquen
+    #
+    #        UPDATE: thur. july 5 14:49:50 CEST 2018
+    #
+    #===============================================================================
+    if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
+        DockFlow_PostDock_PlantsResults
+    elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
+        DockFlow_PostDock_VinaResults
+    fi
+}
 
 DockFlow_write_HPC() {
 #===  FUNCTION  ================================================================
@@ -358,7 +458,6 @@ DockFlow_write_HPC() {
 #                ${NLIGANDS}    - Number of ligands.
 #       RETURNS: -
 #===============================================================================
-
 
 echo "There are $NDOCK ligands to dock"
 read -p "
@@ -425,7 +524,7 @@ fi
 while read LIGAND ; do
 
   # Check again if rewrite ligands was asked
-  case $rewrite_ligands in 
+  case ${rewrite_ligands} in
   "y"|"yes"|"Yes"|"Y"|"YES")
     if [ ! -d   ${LIGAND} ] ; then 
       mkdir -p  ${LIGAND}    
@@ -433,33 +532,44 @@ while read LIGAND ; do
       if [ ! -d ${LIGAND} ] ; then 
         echo "[ ERROR ] could not create ${RUNDIR}. Did you check your quotas ?"
         exit 0
-      fi    
+      fi
+    fi
 
+    if [ ${DOCK_PROGRAM} == "PLANTS" ] ; then
+        if [ ! -f ${LIGAND}/ligand.mol2 ]  || [ ${OVERWRITE} == 'yes' ] ; then
+          cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+        fi
     fi
-  
-    if [ ! -f ${LIGAND}/ligand.mol2 ] ; then
-      cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+
+    if [ ${DOCK_PROGRAM} == "VINA" ] ; then
+         if [ ! -f  ${LIGAND}/ligand.pdbqt ] || [ ${OVERWRITE} == 'yes' ] ; then
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
+            -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
+            -o ${LIGAND}/ligand.pdbqt
+         fi
     fi
-  esac
+
+    esac
 
   # [ Resume or Overwrite ]
   # Check if folder exists, then check if "bestranking.csv" exist, then if user wants to overwrite.
+
   if [ "${OVERWRITE}" == "yes" ] ; then
-      if [ -d ${LIGAND}/PLANTS ] ; then
-        rm -rf ${LIGAND}/PLANTS
+      if [ -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
+        rm -rf ${LIGAND}/${DOCK_PROGRAM}
       fi
   else
     # If the folder exists but there's no "bestranking.csv" its incomplete.
-    if [ -d ${LIGAND}/PLANTS ] && [ ! -s ${LIGAND}/PLANTS/bestranking.csv ] ; then
+    if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -s ${LIGAND}/${DOCK_PROGRAM}/bestranking.csv ] ; then
       echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
       rm -rf ${LIGAND}/PLANTS
     fi
   fi
 
   # Finally, if all goes well create the docking list.
-  if [ ! -d ${LIGAND}/PLANTS ] ; then
+  if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
     DOCK_LIST="${DOCK_LIST} $LIGAND"  # Still unused.
-    echo -ne "Preparing: ${LIGAND}         \r"
+    echo -ne "Preparing: ${LIGAND} \r"
     echo "${LIGAND}" >> todock.lst
   else
     echo "${LIGAND}" >> docked.lst
@@ -468,31 +578,45 @@ while read LIGAND ; do
 done < ${WORKDIR}/${PROJECT}.chemflow/LigFlow/ligands.lst
 
 # Make DOCK_LIST into an array.
-DOCK_LIST=($DOCK_LIST)
+DOCK_LIST=(${DOCK_LIST})
 NDOCK=${#DOCK_LIST[@]}
 
 echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to dock"
 
-# Actually run the the docking -----------------------------------------
+# Actually run the docking --------------------------------------------
 
-## Local docking.
-case ${JOB_SCHEDULLER} in 
-"None")
-  
-  for LIGAND in ${DOCK_LIST[@]} ; do  # Write XARGS file.
-    DockFlow_write_plants
-    echo "cd ${RUNDIR}/${LIGAND} ; echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ;  PLANTS1.2_64bit --mode screen dock_input.in &> PLANTS.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}" >> plants.xargs
-  done
-  
-  if [ ! -f plants.xargs ] ; then
-    echo "All ligands docked, nothing to do here" ; exit 0
-  else
-    echo "[ DockFlow ] Running ${PROTOCOL} ${RECEPTOR_NAME} with ${NCORES} cores"
-    cd ${RUNDIR} ; cat plants.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-  fi
-;;
-"SLURM"|"PBS")
-DockFlow_write_HPC
+## Local docking using PLANTS.
+case ${DOCK_PROGRAM} in
+    "PLANTS")
+        case ${JOB_SCHEDULLER} in
+            "None")
+                for LIGAND in ${DOCK_LIST[@]} ; do  # Write XARGS file.
+                    DockFlow_write_plants_config
+                    echo "cd ${RUNDIR}/${LIGAND} ; echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ;  PLANTS1.2_64bit --mode screen dock_input.in &> PLANTS.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}" >> plants.xargs
+                done
+
+                if [ ! -f plants.xargs ] ; then
+                    echo "All ligands docked, nothing to do here" ; exit 0
+                else
+                    echo "[ DockFlow ] Running ${PROTOCOL} ${RECEPTOR_NAME} with ${NCORES} cores"
+                    # Actually runs PLANTS
+                    cd ${RUNDIR} ; cat plants.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+                fi
+            ;;
+            "SLURM"|"PBS")
+                DockFlow_write_HPC
+        esac
+    ;;
+    "VINA")
+        for LIGAND in ${DOCK_LIST[@]} ; do
+            echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
+                --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
+                --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
+                --out ${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null " >> vina.xargs
+        done
+        # Actually runs VINA
+        cd ${RUNDIR} ; cat vina.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+    ;;
 esac
 }
 
@@ -510,20 +634,29 @@ DockFlow_organize() {
 
 # [ Phase 1 ] - Prepare receptor  --------------------------------------
 
-if [  ! -d ${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/ ] ; then 
-  mkdir -p ${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/
+if [  ! -d ${RUNDIR} ] ; then
+  mkdir -p ${RUNDIR}
 fi
 
-if [             ! -f ${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/receptor.mol2 ] ; then
-  cp ${RECEPTOR_FILE} ${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/receptor.mol2
+# [ Stage 2 ] Prepare receptor and ligand(s) - SplitMOL2 ----------------------------
+
+# Receptor
+if [ ${DOCK_PROGRAM} == 'PLANTS' ] && [ ! -f ${RUNDIR}/receptor.mol2 ] ; then
+  cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 fi
 
-# [ Stage 2 ] Prepare ligand(s) - SplitMOL2 ----------------------------
+if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
+    ${mgltools_folder}/bin/python \
+    /storage/rgimatev/bin/MGLTools-1.5.6/mgltools_x86_64Linux2_1.5.6//MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
+    -r ${RECEPTOR_FILE} \
+    -o ${RUNDIR}/receptor.pdbqt
+fi
 
+# Ligands
 
 read -p "Rewrite ligands [Y/N] ? : " rewrite_ligands
 
-case $rewrite_ligands in 
+case ${rewrite_ligands} in
 "y"|"yes"|"Yes"|"Y"|"YES")
     if [  -d ${PROJECT}.chemflow/LigFlow/original/ ] ; then 
       rm -rf ${PROJECT}.chemflow/LigFlow/original/
@@ -538,7 +671,7 @@ case $rewrite_ligands in
     fi
 
     for i in ${LIGAND_LIST[@]} ; do
-      echo $i >> ${PROJECT}.chemflow/LigFlow/ligands.lst
+      echo ${i} >> ${PROJECT}.chemflow/LigFlow/ligands.lst
     done
 
     n=-1
@@ -640,7 +773,7 @@ It can perform an automatic VS based on information given by the user :
 ligands, receptor, binding site info, and extra options.
 
 DockFlow requires a configuration file named DockFlow.config, if absent, one will be created. 
-A template can be found in: $CHEMFLOW_HOME/config_files/DockFlow.config
+A template can be found in: ${CHEMFLOW_HOME}/config_files/DockFlow.config
 
 If you already have an existing config file and wish to rerun DockFlow
 only modifying some options, see the help below.

@@ -61,6 +61,20 @@ ChemFlow_validate_input() {
     if [ -z "${RECEPTOR_FILE}" ] ; then ERROR_MESSAGE="No RECEPTOR file name (-r receptor_file.mol2)" ; ChemFlow_error ${PROGRAM} ; fi
     ChemFlow_checkfile_ERROR ${RECEPTOR_FILE}
 
+    # Set the docking program or score program
+    if [ "${SCORING_FUNCTION}" == "vina" ] ; then
+            DOCK_PROGRAM="VINA" ;
+            SCORE_PROGRAM="VINA" ;
+        fi
+
+        if [ "${SCORING_FUNCTION}" == "mmgbsa" ] ; then
+            SCORE_PROGRAM="AMBER"
+            RECEPTOR_NAME="$(basename -s .pdb ${RECEPTOR_FILE})"
+            if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "pdb" ] ; then
+                ERROR_MESSAGE="mmgbsa rescoring requires a PDB file as input"; ChemFlow_error ${PROGRAM} ;
+            fi
+        fi
+
     # If we are using the major program (no postprocessing or archiving) ------------
     if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
 
@@ -71,19 +85,6 @@ ChemFlow_validate_input() {
 
         #Sanity check for implemented options parameters -----------------------------
         if [ -z "${SCORING_FUNCTION}" ]  ; then ERROR_MESSAGE="No SCORING_FUNCTION defined (-sf scoring_function)"	; ChemFlow_error ${PROGRAM} ; fi
-
-
-
-        if [ "${SCORING_FUNCTION}" == "vina" ] ; then DOCK_PROGRAM="VINA" ; fi
-
-        if [ "${SCORING_FUNCTION}" == "mmgbsa" ] ; then
-            SCORE_PROGRAM="AMBER"
-            DOCK_PROGRAM="AMBER" # FIX THIS <--------------------
-                    RECEPTOR_NAME="$(basename -s .pdb ${RECEPTOR_FILE})"
-            if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "pdb" ] ; then
-                ERROR_MESSAGE="mmgbsa rescoring requires a PDB file as input"; ChemFlow_error ${PROGRAM} ;
-            fi
-        fi
 
         # HPC adjustments
         case ${JOB_SCHEDULLER} in
@@ -102,6 +103,10 @@ ChemFlow_validate_input() {
 
             if [ "${DOCK_PROGRAM}" == "VINA" ] && [ "$(command -v vina)" == "" ] ; then
               echo "[ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
+            fi
+
+            if [ "${DOCK_PROGRAM}" == "VINA" ] && [ "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" == "" ] ; then
+              echo "[ERROR ] MglTools is not installed or on PATH" ; exit 0
             fi
 
             case "${DOCK_PROGRAM}" in
@@ -133,6 +138,11 @@ ChemFlow_validate_input() {
             if [ "${SCORE_PROGRAM}" == "VINA" ] && [ "$(command -v vina)" == "" ] ; then
               echo "[ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
             fi
+
+            if [ "${SCORE_PROGRAM}" == "VINA" ] && [ "$(command -v prepare_ligand4.py)" == "" ] ; then
+              echo "[ERROR ] MglTools is not installed or on PATH" ; exit 0
+            fi
+
 
             if [ "${SCORE_PROGRAM}" == "AMBER" ] && [ "$(command -v sander)" == "" ] ; then
               echo "[ERROR ] AmberTools is not installed or on PATH" ; exit 0
