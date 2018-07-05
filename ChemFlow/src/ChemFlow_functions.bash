@@ -89,11 +89,7 @@ ChemFlow_validate_input() {
             fi
         fi
 
-        case "${DOCK_PROGRAM}" in
-        "VINA"|"PLANTS"|"AMBER")
-        ;;
-        *) echo "[ ERROR ] DOCK/SCORE_PROGRAM ${DOCK_PROGRAM} not implemented" ; exit 0
-        esac
+
 
 
         # HPC adjustments
@@ -116,6 +112,12 @@ ChemFlow_validate_input() {
             if [ "${DOCK_PROGRAM}" == "VINA" ] && [ "$(command -v vina)" == "" ] ; then
               echo "[ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
             fi
+
+            case "${DOCK_PROGRAM}" in
+                "VINA"|"PLANTS"|"AMBER")
+                ;;
+                *) echo "[ ERROR ] DOCK/SCORE_PROGRAM ${DOCK_PROGRAM} not implemented" ; exit 0
+            esac
 
             ChemFlow_set_ligand_list ${LIGAND_FILE}
         fi

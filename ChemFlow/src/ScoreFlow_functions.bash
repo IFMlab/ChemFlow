@@ -114,12 +114,7 @@ ScoreFlow_rescore_mmgbsa() {
 #       RETURNS: -
 #
 #===============================================================================
-
-
-if [ "${POSTPROCESS}" != "yes" ] ; then
-
   ScoreFlow_compute_charges
-
   ScoreFlow_write_run_tleap
 
   for LIGAND in ${LIGAND_LIST[@]} ; do
@@ -130,18 +125,7 @@ if [ "${POSTPROCESS}" != "yes" ] ; then
     ScoreFlow_MMGBSA_write
     ScoreFlow_MMGBSA_run_MIN
   done
-else
-
-  for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ -f ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat ] ; then
-      awk -v LIGAND=${LIGAND} '/DELTA TOTAL/{print LIGAND,",",$3}' ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat
-    fi
-  done
-fi
-
 }
-
-
 
 
 ScoreFlow_compute_charges() {
@@ -417,21 +401,12 @@ if [ ${ORGANIZE} == 'yes' ] ; then
 fi
 }
 
-
-
-ScoreFlow_error() {
-# $1 is the program, $2 is the error code.
-
-case ${2} in
-"1") ERROR_MESSAGE="File \"${filename}\" does not exist" ;;
-esac
-
-echo "
-[ERROR] ${ERROR_MESSAGE}
-
-For help, type: ScoreFlow -h 
-"
-exit 0
+ScoreFlow_postprocess() {
+  for LIGAND in ${LIGAND_LIST[@]} ; do
+    if [ -f ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat ] ; then
+      awk -v LIGAND=${LIGAND} '/DELTA TOTAL/{print LIGAND,",",$3}' ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat
+    fi
+  done
 }
 
 
@@ -697,9 +672,9 @@ case ${key} in
     --postprocess)
       POSTPROCESS="yes"
     ;;
-    --archive)
-      ARCHIVE='yes' 
-    ;;
+#    --archive)
+#      ARCHIVE='yes'
+#    ;;
     *)
       unknown="$1"        # unknown option
       echo "Unknown flag \"$unknown\""
