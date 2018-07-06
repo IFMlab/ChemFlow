@@ -40,15 +40,16 @@ DEBUG='no'
 
 # ChemFlow common functions.
 source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
+source ${CHEMFLOW_HOME}/test/test_function.sh
 
 #
 # Program ----------------------------------------------------------------------
 #
 echo "[ ChemFlow ] Initiating test"
-ChemFlow_Checkfile_ERROR protein_ligand.tar.gz
+ChemFlow_checkfile_ERROR protein_ligand.tar.gz
 
 # Extracts test data to run "input" folder
-#tar xfz protein_ligand.tar.gz
+tar xfz protein_ligand.tar.gz
 
 # Go to input data folder.
 cd protein_ligand
@@ -57,8 +58,48 @@ cd protein_ligand
 python $(which SmilesTo3D.py ) -i compounds.smi -o compounds.sdf --hydrogen
 babel -isdf compounds.sdf -omol2 compounds.mol2
 
+run_vina1(){
 # Run DockFlow
-DockFlow --project test -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 <<EOF
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina <<EOF
 y
 y
 EOF
+assertFileExits
+}
+
+test_rank_exist(){
+    TEST="test_rank_exist"
+    FILES=("rank.csv" "docked_ligands.mol2")
+    for FILE in ${FILES[@]}; do
+        msg="The file ${FILE} has not been created."
+        assertFileExits
+    done
+}
+
+test_rank_exist
+
+#test_vina2(){
+## Run DockFlow
+#DockFlow --project test --protocol vina2 -r receptor.mol2 -l compounds.mol2 --radius 15 --center 20.259 -2.752 18.203 -sf vina <<EOF
+#y
+#y
+#EOF
+#}
+#
+#
+#test_plants1(){
+## Run DockFlow
+#DockFlow --project test --protocol plants1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 <<EOF
+#y
+#y
+#EOF
+#}
+#
+#
+#test_plants2(){
+## Run DockFlow
+#DockFlow --project test --protocol plants2 -r receptor.mol2 -l compounds.mol2 --radius 15 --center 20.259 -2.752 18.203 <<EOF
+#y
+#y
+#EOF
+#}
