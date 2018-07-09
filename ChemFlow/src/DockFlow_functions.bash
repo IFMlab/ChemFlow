@@ -96,113 +96,167 @@ esac
 
 
 DockFlow_prepare_receptor() {
-    #===  FUNCTION  ================================================================
-    #          NAME: DockFlow_prepare_receptor
-    #   DESCRIPTION: Prepare the receptor for the docking:
-    #                 - PLANTS uses the mol2 file,
-    #                 - VINA uses a pdbqt file. It is converted using AutoDockTools.
-    #
-    #    PARAMETERS: ${DOCK_PROGRAM}
-    #                ${RUNDIR}
-    #                ${RECEPTOR_FILE}
-    #                ${mgltools_folder} (should be in the path)
-    #
-    #        Author: Dona de Francquen
-    #
-    #        UPDATE: fri. july 6 14:49:50 CEST 2018
-    #
-    #===============================================================================
-    if [ ${DOCK_PROGRAM} == 'PLANTS' ] && [ ! -f ${RUNDIR}/receptor.mol2 ] ; then
-        cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
-    fi
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_prepare_receptor
+#   DESCRIPTION: Prepare the receptor for the docking:
+#                 - PLANTS uses the mol2 file,
+#                 - VINA uses a pdbqt file. It is converted using AutoDockTools.
+#
+#    PARAMETERS: ${DOCK_PROGRAM}
+#                ${RUNDIR}
+#                ${RECEPTOR_FILE}
+#                ${mgltools_folder} (should be in the path)
+#
+#        Author: Dona de Francquen
+#
+#        UPDATE: fri. july 6 14:49:50 CEST 2018
+#
+#===============================================================================
+cp ${WORKDIR}/${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 
-    if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
-        ${mgltools_folder}/bin/python \
-        /storage/rgimatev/bin/MGLTools-1.5.6/mgltools_x86_64Linux2_1.5.6//MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
-        -r ${RECEPTOR_FILE} \
-        -o ${RUNDIR}/receptor.pdbqt
-    fi
+
+if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
+    ${mgltools_folder}/bin/python \
+    /storage/rgimatev/bin/MGLTools-1.5.6/mgltools_x86_64Linux2_1.5.6//MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
+    -r ${RUNDIR}/receptor.mol2 \
+    -o ${RUNDIR}/receptor.pdbqt
+fi
 }
 
 
 DockFlow_rewrite_ligands() {
-    #===  FUNCTION  ================================================================
-    #          NAME: DockFlow_rewrite_ligands
-    #   DESCRIPTION: User interface for the rewrite ligands option.
-    #                 - Read all ligand names from the header of a .MOL2 file.
-    #                 - Split each ligand to it's own ".MOL2" file.
-    #                 - Create "ligand.lst" with the list of ligands do dock.
-    #
-    #    PARAMETERS: ${PROJECT}
-    #                ${LIGAND_FILE}
-    #                ${LIGAND_LIST}
-    #
-    #        Author: Dona de Francquen
-    #
-    #        UPDATE: fri. july 6 14:49:50 CEST 2018
-    #
-    #===============================================================================
-    read -p "Rewrite ligands [Y/N] ? : " rewrite_ligands
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_rewrite_ligands
+#   DESCRIPTION: User interface for the rewrite ligands option.
+#                 - Read all ligand names from the header of a .MOL2 file.
+#                 - Split each ligand to it's own ".MOL2" file.
+#               #  - Create "ligand.lst" with the list of ligands do dock.
+#
+#    PARAMETERS: ${PROJECT}
+#                ${LIGAND_LIST}
+#                ${RUNDIR}
+#                ${DOCK_PROGRAM}
+#                ${WORKDIR}
+#                ${OVERWRITE}
+#
+#        Author: Dona de Francquen
+#
+#        UPDATE: fri. july 6 14:49:50 CEST 2018
+#
+#===============================================================================
+read -p "Rewrite ligands [Y/N] ? : " rewrite_ligands
 
-    case ${rewrite_ligands} in
-    "y"|"yes"|"Yes"|"Y"|"YES")
-        if [  -d ${PROJECT}.chemflow/LigFlow/original/ ] ; then
-            rm -rf ${PROJECT}.chemflow/LigFlow/original/
-        fi
+case ${rewrite_ligands} in
+"y"|"yes"|"Yes"|"Y"|"YES")
+    if [  -d ${PROJECT}.chemflow/LigFlow/original/ ] ; then
+        rm -rf ${PROJECT}.chemflow/LigFlow/original/
+    fi
 
-        if [  ! -d ${PROJECT}.chemflow/LigFlow/original/ ] ; then
-            mkdir -p ${PROJECT}.chemflow/LigFlow/original/
-        fi
+    if [  ! -d ${PROJECT}.chemflow/LigFlow/original/ ] ; then
+        mkdir -p ${PROJECT}.chemflow/LigFlow/original/
+    fi
 
-        if [ -f  ${PROJECT}.chemflow/LigFlow/ligands.lst ] ; then
-            rm -rf ${PROJECT}.chemflow/LigFlow/ligands.lst
-        fi
-
-        for i in ${LIGAND_LIST[@]} ; do
-            echo ${i} >> ${PROJECT}.chemflow/LigFlow/ligands.lst
-        done
-
-        n=-1
-        while read line ; do
-            if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-                let n=$n+1
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        if [ ! -d   ${LIGAND} ] ; then
+            mkdir -p  ${LIGAND}
+            if [ ! -d ${LIGAND} ] ; then
+                echo "[ ERROR ] could not create ${LIGAND} directory in ${RUNDIR}. Did you check your quotas ?"
+                exit 0
             fi
-            echo -e "${line}" >> ${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
-        done < ${LIGAND_FILE}
+        fi
+        case ${DOCK_PROGRAM} in
+        "PLANTS")
+            if [ ! -f ${LIGAND}/ligand.mol2 ]  || [ ${OVERWRITE} == 'yes' ] ; then
+                cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+            fi
+        ;;
+        "VINA")
+            if [ ! -f  ${LIGAND}/ligand.pdbqt ] || [ ${OVERWRITE} == 'yes' ] ; then
+                ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
+                -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
+                -o ${LIGAND}/ligand.pdbqt
+            fi
+        ;;
+        esac
+    done
 
-    ;;
-    "n"|"no"|"No"|"N"|"NO")
-    ;;
-    *)
-        echo ${opt} "[ ERROR ] Choose only Y or N" ; exit 0
-    ;;
-    esac
+    if [ -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
+        rm -rf ${LIGAND}/${DOCK_PROGRAM}
+    fi
+
+#        if [ -f  ${PROJECT}.chemflow/LigFlow/ligands.lst ] ; then
+#            rm -rf ${PROJECT}.chemflow/LigFlow/ligands.lst
+#        fi
+
+#        for i in ${LIGAND_LIST[@]} ; do
+#            echo ${i} >> ${PROJECT}.chemflow/LigFlow/ligands.lst
+#        done
+
+#        n=-1
+#        while read line ; do
+#            if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
+#                let n=$n+1
+#            fi
+#            echo -e "${line}" >> ${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
+#        done < ${LIGAND_FILE}
+
+;;
+"n"|"no"|"No"|"N"|"NO")
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        case ${DOCK_PROGRAM} in
+        "PLANTS")
+            # If the folder exists but there's no "bestranking.csv" its incomplete.
+            echo ${LIGAND}/${DOCK_PROGRAM}
+            if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -s ${LIGAND}/${DOCK_PROGRAM}/bestranking.csv ] ; then
+                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+                rm -rf ${LIGAND}/${DOCK_PROGRAM}
+            fi
+        ;;
+        "VINA")
+            # If the folder exists but there's no "bestranking.csv" its incomplete.
+            if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -s ${LIGAND}/${DOCK_PROGRAM}/output.pdbqt ] ; then
+                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+                rm -rf ${LIGAND}/${DOCK_PROGRAM}
+            fi
+        ;;
+        esac
+    done
+;;
+*)
+    echo ${opt} "[ ERROR ] Choose only Y or N" ; exit 0
+;;
+esac
 }
 
 
 DockFlow_prepare_input() {
-# [ Stage 1 ] - Prepare receptor.
-## Create folders within PROJECT.chemflow.
-## Copy receptor to its own folder.
-
-# [ Stage 2 ] - Prepare ligand
-## Read all ligand names from the header of a .MOL2 file.
-## Split each ligand to it's own ".MOL2" file.
-## 2C) Create "ligand.lst" with the list of ligands do dock. (still unused)
-
-
-# [ Phase 1 ] - Prepare receptor  --------------------------------------
-
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_prepare_input
+#   DESCRIPTION: Prepare input for the docking.
+#                1. Creates the RUNDIR folder
+#                2. Copy the receptor to its own folder
+#                3. Copy the ligands into their own folder
+#
+#    PARAMETERS: ${RUNDIR}
+#
+#        Author: Dona de Francquen
+#
+#       RETURNS: -
+#
+#          TODO: Allow "extra PLANTS keywords from cmd line"
+#===============================================================================
+# 1. Folder
 if [  ! -d ${RUNDIR} ] ; then
   mkdir -p ${RUNDIR}
 fi
 
-# [ Stage 2 ] Prepare receptor and ligand(s) - SplitMOL2 ----------------------------
+# Always work here
+cd ${RUNDIR}
 
-# Receptor
+# 2. Receptor
 DockFlow_prepare_receptor
 
-# Ligands
+# 3. Ligands
 DockFlow_rewrite_ligands
 }
 
@@ -210,8 +264,7 @@ DockFlow_rewrite_ligands
 DockFlow_write_plants_config() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_write_plants_config_input
-#   DESCRIPTION: Writes the PLANTS input file for each ligand. 
-#                Input/Output filenames are hardcoded to comply with standard.
+#   DESCRIPTION: Write the dock input for plants (configuration file)
 #                
 #    PARAMETERS: ${RUNDIR}
 #                ${LIGAND}
@@ -439,13 +492,63 @@ cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 }
 
 
+DockFlow_write_HPC() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_write_HPC
+#   DESCRIPTION: Adjusts and submits the calculation to HPC environment.
+#
+#    PARAMETERS: ${RUNDIR}      - ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/
+#                ${PROJECT}
+#                ${RUNDIR}
+#                ${LIGAND_LIST} - List of all ligands do dock.
+#                ${NLIGANDS}    - Number of ligands.
+#       RETURNS: -
+#===============================================================================
+
+echo "There are $NDOCK ligands to dock"
+read -p "
+How many do you want per PBS/SLURM job? : " nlig
+
+read -p "
+How many tasks per node ? : " NCORES
+
+NTHREADS=$(echo "${NNODES} * ${NCORES}" | bc)
+
+for (( first=0;${first}<${NDOCK} ; first=${first}+${nlig} )) ; do
+  echo -ne "Docking $first         \r"
+  jobname="${first}"
+
+  if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
+    if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
+        DockFlow_write_plants_slurm
+    elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
+        DockFlow_write_vina_slurm
+    fi
+    sbatch DockFlow.slurm
+
+  fi
+
+  if [ "${JOB_SCHEDULLER}" == "PBS" ] ; then
+    if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
+        DockFlow_write_plants_pbs
+    elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
+        DockFlow_write_vina_pbs
+    fi
+    qsub DockFlow.pbs
+  fi
+
+done
+
+}
+
+
 DockFlow_dock() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_Dock.
 #   DESCRIPTION: Loop over ligand.lst and dock them to receptor.mol2
 #                The organization if kind of weird because I (dgomes) introduced a "ligand.lst" file
 #                to read but latter it's so much easier to use the LIGAND_LIST[@] array.
-#                I'm not very confident BASH will confortably handle >1million of elemente in the array.
+#                I'm not very confident BASH will confortably handle > 1 million of elemente in the array.
 #
 #    PARAMETERS: ${WORKDIR}
 #                ${PROJECT}
@@ -474,60 +577,9 @@ if [ -f  vina.xargs ] ; then
   rm -rf vina.xargs
 fi
 
-# Loop over ligands and prepare docking folders/checkpoint calculations
-while read LIGAND ; do
-
-    # Check again if rewrite ligands was asked
-    case ${rewrite_ligands} in
-    "y"|"yes"|"Yes"|"Y"|"YES")
-        if [ ! -d   ${LIGAND} ] ; then
-            mkdir -p  ${LIGAND}
-
-            if [ ! -d ${LIGAND} ] ; then
-                echo "[ ERROR ] could not create ${RUNDIR}. Did you check your quotas ?"
-                exit 0
-            fi
-        fi
-
-        if [ ${DOCK_PROGRAM} == "PLANTS" ] ; then
-            if [ ! -f ${LIGAND}/ligand.mol2 ]  || [ ${OVERWRITE} == 'yes' ] ; then
-                cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
-            fi
-        fi
-
-        if [ ${DOCK_PROGRAM} == "VINA" ] ; then
-            if [ ! -f  ${LIGAND}/ligand.pdbqt ] || [ ${OVERWRITE} == 'yes' ] ; then
-                ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
-                -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
-                -o ${LIGAND}/ligand.pdbqt
-            fi
-        fi
-    esac
-
-  # [ Resume or Overwrite ]
-  # Check if folder exists, then check if "bestranking.csv" exist, then if user wants to overwrite.
-
-    if [ "${OVERWRITE}" == "yes" ] ; then
-        if [ -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
-            rm -rf ${LIGAND}/${DOCK_PROGRAM}
-        fi
-    else
-        if [ ${DOCK_PROGRAM} == "PLANTS" ] ; then
-            # If the folder exists but there's no "bestranking.csv" its incomplete.
-            if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -s ${LIGAND}/${DOCK_PROGRAM}/bestranking.csv ] ; then
-                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
-                rm -rf ${LIGAND}/${DOCK_PROGRAM}
-            fi
-        fi
-
-        if [ ${DOCK_PROGRAM} == "VINA" ] ; then
-            # If the folder exists but there's no "bestranking.csv" its incomplete.
-            if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -s ${LIGAND}/${DOCK_PROGRAM}/output.pdbqt ] ; then
-                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
-            fi
-        fi
-    fi
-    # Finally, if all goes well create the docking list.
+# Creation of the docking list, checkpoint calculations.
+DOCK_LIST=""
+for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
         DOCK_LIST="${DOCK_LIST} $LIGAND"  # Still unused.
         echo -ne "Preparing: ${LIGAND} \r"
@@ -535,8 +587,7 @@ while read LIGAND ; do
     else
         echo "${LIGAND}" >> docked.lst
     fi
-
-done < ${WORKDIR}/${PROJECT}.chemflow/LigFlow/ligands.lst
+done
 
 # Make DOCK_LIST into an array.
 DOCK_LIST=(${DOCK_LIST})
@@ -545,10 +596,7 @@ NDOCK=${#DOCK_LIST[@]}
 echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to dock"
 
 # Actually run the docking --------------------------------------------
-
-## Local docking.
 case ${DOCK_PROGRAM} in
-    # Using PLANTS
     "PLANTS")
         case ${JOB_SCHEDULLER} in
             "None")
@@ -569,7 +617,6 @@ case ${DOCK_PROGRAM} in
                 DockFlow_write_HPC
         esac
     ;;
-    # Using VINA
     "VINA")
     case ${JOB_SCHEDULLER} in
             "None")
@@ -849,114 +896,6 @@ fi
 unset FAIL
 }
 
-DockFlow_write_HPC() {
-#===  FUNCTION  ================================================================
-#          NAME: DockFlow_write_HPC
-#   DESCRIPTION: Adjusts and submits the calculation to HPC environment.
-#                
-#    PARAMETERS: ${RUNDIR}      - ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/
-#                ${PROJECT}
-#                ${RUNDIR}
-#                ${LIGAND_LIST} - List of all ligands do dock.
-#                ${NLIGANDS}    - Number of ligands.
-#       RETURNS: -
-#===============================================================================
-
-echo "There are $NDOCK ligands to dock"
-read -p "
-How many do you want per PBS/SLURM job? : " nlig
-
-read -p "
-How many tasks per node ? : " NCORES
-
-NTHREADS=$(echo "${NNODES} * ${NCORES}" | bc)
-
-for (( first=0;${first}<${NDOCK} ; first=${first}+${nlig} )) ; do
-  echo -ne "Docking $first         \r"
-  jobname="${first}"
-  
-  if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
-    if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
-        DockFlow_write_plants_slurm
-    elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
-        DockFlow_write_vina_slurm
-    fi
-    sbatch DockFlow.slurm
-
-  fi
-
-  if [ "${JOB_SCHEDULLER}" == "PBS" ] ; then
-    if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
-        DockFlow_write_plants_pbs
-    elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
-        DockFlow_write_vina_pbs
-    fi
-    qsub DockFlow.pbs
-  fi
-
-done
-
-}
-
-
-DockFlow_unset() {
-#    User variables
-    unset PROJECT  	   # Name for the current project, ChemFlow folders go after it
-    unset PROTOCOL     # Name for the current protocol.
-
-#    ChemFlow internals
-    unset WORKFLOW     # Which ChemFlow protocol to use: DockFlow, ScoreFlow ...
-    ##unset METHOD       # Internal of each workflow ( PLANTS, VINA, gbsa...)
-    ##                   # Method will define which software to use.
-
-#    User input files ------------------------------------------------------------
-    unset RECEPTOR_FILE
-    unset RECEPTOR_NAME
-    #unset RECEPTOR     # Filename (no extension) for the receptor file.
-                       # This can be equivalent to MOL_ID.
-                       # DockFlow requires a .MOL2.
-
-    unset LIGAND_FILE  # Filename .MOL2 for the ligand file.
-                       # An unique .mol2, properly prepared would do the job.
-
-#    Docking Variables
-    unset DOCK_PROGRAM # Program used for docking.
-    unset DOCK_CENTER  # Binding pocket center (X, Y and Z).
-    unset DOCK_LENGHT  # Length of the X, Y and Z axis.
-    unset DOCK_RADIUS  # Radius from the Docking Center.
-
-    unset RUNDIR       # Folder where the calculations will actually run.
-                       # RUNDIR=$WORKDIR/$PROJECT/$WORKFLOW/$PROTOCOL
-
-    unset POSTDOCK     # Either just post-process dockings
-    unset ARCHIVE      # Either just post-process dockings
-}
-
-
-DockFlow_set_defaults() {
-#    General options
-    WORKDIR=${PWD}
-    PROTOCOL="default"
-    WORKFLOW="DockFlow"
-
-#    Docking options
-    DOCK_PROGRAM="PLANTS"
-    DOCK_LENGHT="15 15 15"
-    DOCK_RADIUS="15"
-    DOCK_POSES="10"
-    SCORING_FUNCTION="chemplp"
-
-#    Run options
-    JOB_SCHEDULLER="None"
-    NCORES=$(nproc --all)
-    if [ -z ${NCORES} ] ; then
-        NCORES=4 ;
-    fi
-    NNODES="1"
-    RESUME="No"
-    OVERWRITE="No"    # Don't overwrite stuff.
-}
-
 
 DockFlow_help() {
 echo "Example usage: 
@@ -1097,12 +1036,10 @@ DockFlow_CLI() {
             ;;
             --center)
                 DOCK_CENTER=("$2" "$3" "$4")
-    #            DOCK_CENTER=($DOCK_CENTER) # Transform into array
-              shift 3 # past argument
+                shift 3 # past argument
             ;;
             --size)
                 DOCK_LENGHT=("$2" "$3" "$4")
-    #            DOCK_LENGHT=(${DOCK_LENGHT}) # Transform into array
                 shift 3
             ;;
             --radius)
@@ -1122,7 +1059,7 @@ DockFlow_CLI() {
                 NCORES="$2" # Same as above.
                 shift # past argument
             ;;
-            # HPC options ----------------------------------------------------------
+            # HPC options
             -nn|--nodes) # Number of NODES [1]
                 NNODES="$2" # Same as above.
                 shift # past argument
@@ -1131,7 +1068,7 @@ DockFlow_CLI() {
                 JOB_SCHEDULLER="$2"
                 shift # past argument
             ;;
-            ## PLANTS arguments ----------------------------------------------------
+            ## PLANTS arguments
             --speed)
                 speed="$2"
                 shift
@@ -1152,7 +1089,7 @@ DockFlow_CLI() {
                 water_xyzr="$2 $3 $4 $5"
                 shift 4 # past argument
             ;;
-         ### VINA arguments
+            ### VINA arguments
             --iteration_scaling)
                 iteration_scaling="$2"
                 shift
@@ -1165,14 +1102,14 @@ DockFlow_CLI() {
                 energy_range="$2"
                 shift
             ;;
-        ## Final arguments
+            ## Final arguments
             --overwrite)
                 OVERWRITE="yes"
             ;;
-        ## ADVANCED USER INPUT
-        #    --advanced)
-        #       USER_INPUT="$2"
-        #       shift
+            ## ADVANCED USER INPUT
+            #    --advanced)
+            #       USER_INPUT="$2"
+            #       shift
             --postdock)
                 POSTDOCK="yes"
             ;;

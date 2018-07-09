@@ -37,23 +37,32 @@
 #===============================================================================
 
 ScoreFlow_rescore() {
-
-case ${SCORING_FUNCTION} in
-  "chemplp"|"plp"|"plp95")
-    ScoreFlow_rescore_plants
-  ;;
-  "mmgbsa")
-    ScoreFlow_rescore_mmgbsa
-  ;;
-  esac
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_rescore
+#   DESCRIPTION: call the right function for the rescoring
+#
+#    PARAMETERS: ${SCORE_PROGRAM}
+#
+#        Author: Dona de Francquen
+#===============================================================================
+case ${SCORE_PROGRAM} in
+    "PLANTS")
+        ScoreFlow_rescore_plants
+    ;;
+    "VINA")
+        ScoreFlow_rescore_vina
+    ;;
+    "AMBER")
+        ScoreFlow_rescore_mmgbsa
+    ;;
+esac
 }
 
 
 ScoreFlow_rescore_plants () {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_rescore_plants
-#   DESCRIPTION: Writes the PLANTS input file for each ligand. 
-#                Input/Output filenames are hardcoded to comply with standard.
+#   DESCRIPTION: Rescore docking poses using plants
 #                
 #    PARAMETERS: ${RUNDIR}
 #                ${LIGAND}
@@ -64,14 +73,50 @@ ScoreFlow_rescore_plants () {
 #
 #       COMMENT: It's not worthy to rescore in parallel using VINA or PLANTS
 #===============================================================================
+if [ -d ${RUNDIR}/PLANTS ] ; then
+    case "${OVERWRITE}" in
+    "yes")
+        rm -rf   ${RUNDIR}/PLANTS
+    ;;
+    "no")
+        ERROR_MESSAGE="PLANTS folder exists. Use --overwrite " ; ChemFlow_error ${PROGRAM} ;
+    ;;
+    esac
+fi
+
+cd ${RUNDIR}
+ScoreFlow_write_plants_config
+
+# Run plants
+PLANTS1.2_64bit --mode rescore ${RUNDIR}/rescore_input.in &>rescoring.log
+}
+
+
+ScoreFlow_write_plants_config() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_write_plants_config
+#   DESCRIPTION: Write the dock input for plants (configuration file)
+#
+#        Author: Diego E. B. Gomes
+#                Dona de Francquen
+#
+#    PARAMETERS: ${RUNDIR}
+#                ${SCORING_FUNCTION}
+#                ${DOCK_CENTER}
+#                ${DOCK_RADIUS}
+#                ${DOCK_POSES}
+#       RETURNS: -
+#
+#          TODO: Allow "extra PLANTS keywords from cmd line"
+#===============================================================================
 
 echo "
 # input files
-protein_file ${RECEPTOR_FILE}
-ligand_file ${LIGAND_FILE} 
+protein_file receptor.mol2
+ligand_file  ligand.mol2
 
 # output
-output_dir ${RUNDIR}/PLANTS
+output_dir PLANTS
 
 # scoring function and search settings
 scoring_function ${SCORING_FUNCTION}
@@ -84,38 +129,43 @@ write_multi_mol2 1
 bindingsite_center ${DOCK_CENTER[@]}
 bindingsite_radius ${DOCK_RADIUS}
 
+# cluster algorithm, save the best DOCK_POSES.
+cluster_structures ${DOCK_POSES}
+cluster_rmsd 2.0
+
 # write
 write_ranking_links 0
 write_protein_bindingsite 1
 write_protein_conformations 0
 ####
-" > rescore_input.in
+" > ${RUNDIR}/rescore_input.in
+}
 
-nlig=$( rgrep -c MOLECULE ${LIGAND_FILE} )
 
-echo "[ ScoreFlow ] Rescoring ${nlig} poses, please wait"
-
-if [ -d ${RUNDIR}/PLANTS ] && [ "${OVERWRITE}" == 'yes' ] ; then
-    rm -rf   ${RUNDIR}/PLANTS
-else
-    ERROR_MESSAGE="PLANTS folder exists. Use --overwrite " ; ChemFlow_error ${PROGRAM} ;
-fi
-
-PLANTS1.2_64bit --mode rescore rescore_input.in &>rescoring.log
-
-# Cleanup
-if [ -f rescoring.log ] ; then
-    rm rescoring.log
-fi
-
+ScoreFlow_rescore_vina() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_rescore_plants
+#   DESCRIPTION: Rescore docking poses using vina
+#
+#        Author: Dona de Francquen
+#
+#    PARAMETERS: ${RUNDIR}
+#                ${LIGAND}
+#                ${SCORING_FUNCTION}
+#                ${DOCK_CENTER}
+#                ${DOCK_RADIUS}
+#                ${DOCK_POSES}
+#===============================================================================
+TODO
 }
 
 
 ScoreFlow_rescore_mmgbsa() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_rescore_mmgbsa
-#   DESCRIPTION: 
-#                
+#   DESCRIPTION: Rescore docking poses using mmgbsa
+#
+#        Author: Diego E. B. Gomes
 #                
 #    PARAMETERS: ${RUNDIR}
 #                ${LIGAND_LIST}
@@ -137,100 +187,116 @@ ScoreFlow_rescore_mmgbsa() {
 
 
 ScoreFlow_compute_charges() {
-
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_compute_charges
+#   DESCRIPTION: compute charge to run mmgbsa calculation
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: ${RUNDIR}
+#                ${LIGAND_LIST}
+#                ${CHARGE}
+#                ${NCORES}
+#       RETURNS: -
+#
+#===============================================================================
 # Clean up
 if [  -f ${RUNDIR}/charges.xargs ] ; then
-  rm -rf ${RUNDIR}/charges.xargs
+    rm -rf ${RUNDIR}/charges.xargs
 fi
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
+    echo -ne "Computing ${CHARGE} charges for ${LIGAND}     \r"
+    cd ${RUNDIR}/${LIGAND}
 
-echo -ne "Computing ${CHARGE} charges for ${LIGAND}     \r" 
-cd ${RUNDIR}/${LIGAND}
-
-# Mandatory Gasteiger charges
-if [ ! -f lig_gas.mol2 ] ; then 
-  antechamber -i lig.mol2 -fi mol2 -o lig_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
-fi
-
-case ${CHARGE} in
-#"gas")
-# Compute gasteiger charges
-#    if [ ! -f lig_gas.mol2 ] ; then 
-#      antechamber -i lig.mol2 -fi mol2 -o lig_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
-#    fi
-#    ;;
-"bcc")
-    # Compute am1-bcc charges
-    if [ ! -f lig_bcc.mol2 ] ; then 
-     # Mandatory Gasteiger charges
-     echo "cd ${RUNDIR}/${LIGAND} ; antechamber -i lig_gas.mol2 -fi mol2 -o lig_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> ${RUNDIR}/charges.xargs
+    # Mandatory Gasteiger charges
+    if [ ! -f ligand_gas.mol2 ] ; then
+        antechamber -i ligand.mol2 -fi mol2 -o ligand_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
     fi
-    ;;
-"resp")
-    # Prepare Gaussian
-    if [ ! -f lig_resp.mol2 ] ; then 
-      antechamber -i lig_gas.mol2 -fi mol2 -o lig.gau -fo gcrt -gv 1 -ge lig.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log 
 
-    # Run Gaussian to optimize structure and generate electrostatic potential grid
-      g09 lig.gau > lig.gout
+    case ${CHARGE} in
+    #"gas")
+    # Compute gasteiger charges
+    #    if [ ! -f ligand_gas.mol2 ] ; then
+    #      antechamber -i ligand.mol2 -fi mol2 -o ligand_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
+    #    fi
+    #    ;;
+    "bcc")
+        # Compute am1-bcc charges
+        if [ ! -f ligand_bcc.mol2 ] ; then
+            # Mandatory Gasteiger charges
+            echo "cd ${RUNDIR}/${LIGAND} ; antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> ${RUNDIR}/charges.xargs
+        fi
+        ;;
+    "resp")
+        # Prepare Gaussian
+        if [ ! -f ligand_resp.mol2 ] ; then
+            antechamber -i ligand_gas.mol2 -fi mol2 -o ligand.gau -fo gcrt -gv 1 -ge ligand.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
 
-    # Read Gaussian output and write new optimized ligand with RESP charges
-      antechamber -i lig.gout -fi gout -o lig_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> ${RUNDIR}/antechamber.log
-    fi
+            # Run Gaussian to optimize structure and generate electrostatic potential grid
+            g09 ligand.gau > ligand.gout
+
+            # Read Gaussian output and write new optimized ligand with RESP charges
+            antechamber -i ligand.gout -fi gout -o ligand_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> ${RUNDIR}/antechamber.log
+        fi
     ;;
-esac
+    esac
 done 
 
 if [ -f ${RUNDIR}/charges.xargs ] ; then
-  cat ${RUNDIR}/charges.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+    cat ${RUNDIR}/charges.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 fi
-
-
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
-
-cd ${RUNDIR}/${LIGAND}
-if [ ! -f lig.frcmod ] ; then
-
-case ${CHARGE} in
-"gas")
-    if [ ! -f lig_gas.mol2 ] ;        then 
-      echo >> ${RUNDIR}/antechamber_errors.lst 
-    else
-      parmchk2 -i lig_gas.mol2 -o lig.frcmod -s 2 -f mol2
+    cd ${RUNDIR}/${LIGAND}
+    if [ ! -f ligand.frcmod ] ; then
+        case ${CHARGE} in
+        "gas")
+            if [ ! -f ligand_gas.mol2 ] ;        then
+                echo >> ${RUNDIR}/antechamber_errors.lst
+            else
+                parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
+            fi
+            ;;
+        "bcc")
+            if [ ! -f ligand_bcc.mol2 ] ; then
+                echo >> ${RUNDIR}/antechamber_errors.lst
+            else
+                parmchk2 -i ligand_bcc.mol2 -o ligand.frcmod -s 2 -f mol2
+            fi
+            ;;
+        "resp")
+            if [ ! -f ligand.gau ] ;      then echo >> ${RUNDIR}/antechamber_errors.lst ; fi
+            if [ ! -f ligand_resp.mol2 ]; then
+                echo >> ${RUNDIR}/antechamber_errors.lst
+            else
+                parmchk2 -i ligand_resp.mol2 -o ligand.frcmod -s 2 -f mol2
+            fi
+            ;;
+        esac
     fi
-    ;;
-"bcc")
-    if [ ! -f lig_bcc.mol2 ] ; then 
-      echo >> ${RUNDIR}/antechamber_errors.lst 
-    else
-      parmchk2 -i lig_bcc.mol2 -o lig.frcmod -s 2 -f mol2
-    fi
-    ;;
-"resp")
-    if [ ! -f lig.gau ] ;      then echo >> ${RUNDIR}/antechamber_errors.lst ; fi
-    if [ ! -f lig_resp.mol2 ]; then 
-      echo >> ${RUNDIR}/antechamber_errors.lst 
-    else
-      parmchk2 -i lig_resp.mol2 -o lig.frcmod -s 2 -f mol2
-    fi
-    ;;
-esac
-
-fi
-
 done
-
-
 }
 
 
 ScoreFlow_write_run_tleap() {
-
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_write_run_tleap
+#   DESCRIPTION:
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: ${RUNDIR}
+#                ${RECEPTOR_NAME}
+#                ${LIGAND_LIST}
+#                ${CHARGE}
+#                ${NCORES}
+#       RETURNS: -
+#
+#===============================================================================
 for LIGAND in ${LIGAND_LIST[@]} ; do
 
-echo -ne "Preparing complex: ${RECEPTOR_NAME} - ${LIGAND}     \r" 
+echo -ne "Preparing complex: ${RECEPTOR_NAME} - ${LIGAND}     \r"
 cd ${RUNDIR}/${LIGAND}/
 
 echo "
@@ -239,24 +305,23 @@ source leaprc.gaff
 
 set default pbradii mbondi2 
 
-ptn = loadpdb ../b4amber.pdb
-saveamberparm ptn ptn.prmtop ptn.rst7
-savePDB ptn ptn.pdb
-charge ptn
+ptn = loadpdb ../receptor.pdb
+#saveamberparm ptn ptn.prmtop ptn.rst7
+#savePDB ptn ptn.pdb
+#charge ptn
 
 # Ligand --------------------------------------------------
 # Load ligand parameters
-loadAmberParams lig.frcmod
-lig = loadmol2  lig_${CHARGE}.mol2
-saveamberparm lig lig.prmtop lig.rst7
-savePDB lig lig.pdb
-charge lig
+loadAmberParams ligand.frcmod
+ligand = loadmol2  ligand_${CHARGE}.mol2
+saveamberparm ligand ligand.prmtop ligand.rst7
+#savePDB ligand ligand.pdb
+#charge ligand
 
-complex = combine{ptn,lig}
+complex = combine{ptn,ligand}
 saveamberparm complex complex.prmtop complex.rst7
-savePDB complex complex.pdb
-charge complex
-
+#savePDB complex complex.pdb
+#charge complex
 quit
 " > tleap_gbsa.in
 done
@@ -267,19 +332,28 @@ cd ${RUNDIR}
 if [ -f tleap.xargs ] ; then rm -rf tleap.xargs ; fi
  
 for LIGAND in ${LIGAND_LIST[@]} ; do
-  if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] ; then
-    echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR_NAME} - ${LIGAND}\" ;  tleap -f tleap_gbsa.in &> tleap.job" >> tleap.xargs
-  fi
-
+    if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] ; then
+        echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR_NAME} - ${LIGAND}\" ;  tleap -f tleap_gbsa.in &> tleap.job" >> tleap.xargs
+    fi
 done
-
-if [ -f tleap.xargs ] ; then
-  cat tleap.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+if [ ! -f tleap.xargs ] ; then
+    ERROR_MESSAGE="run tleap impossible (TODO)"
+else
+    cat tleap.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 fi
-
 }
 
 ScoreFlow_MMGBSA_implicit_write_MIN() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_MMGBSA_implicit_write_MIN
+#   DESCRIPTION: Write mmgbsa implicit MIN config
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: -
+#       RETURNS: -
+#
+#===============================================================================
 echo "MD GB2, infinite cut off
 &cntrl
   imin=1,maxcyc=1000,
@@ -297,6 +371,16 @@ echo "MD GB2, infinite cut off
 
 
 ScoreFlow_MMGBSA_implicit_write_MD() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_MMGBSA_implicit_write_MIN
+#   DESCRIPTION: Write mmgbsa implicit config
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: -
+#       RETURNS: -
+#
+#===============================================================================
 echo "MD GB2, infinite cut off
 &cntrl
   imin=0,irest=0,ntx=1,
@@ -318,7 +402,16 @@ echo "MD GB2, infinite cut off
 }
 
 ScoreFlow_MMGBSA_implicit_run_MIN() {
-
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
+#   DESCRIPTION: Run mmgbsa implicit MIN
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: ${OVERWRITE}
+#       RETURNS: -
+#
+#===============================================================================
 init=complex
 input=min_gbsa
 prev=complex
@@ -328,22 +421,30 @@ var=""
 
 # Check if simulations finished
 if [ -f mini.mdout ] ; then 
-  var=$(tail -1 mini.mdout | awk '/Total wall time/{print $1}')
+    var=$(tail -1 mini.mdout | awk '/Total wall time/{print $1}')
 fi
  
 # If empty or simulation finished, (re)run.
 if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
-pmemd.cuda -O  \
--i ${input}.in    -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
--x ${run}.mdcrd   -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
--p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
+    pmemd.cuda -O  \
+    -i ${input}.in    -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
+    -x ${run}.mdcrd   -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
+    -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
 fi
-
 }
 
 
-
 ScoreFlow_MMGBSA_write() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_MMGBSA_write
+#   DESCRIPTION: Write mmgbsa config
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: -
+#       RETURNS: -
+#
+#===============================================================================
 echo "Input file for running GB2
 &general
    verbose=1,keep_files=0,interval=10
@@ -351,26 +452,44 @@ echo "Input file for running GB2
 &gb
   igb=2, saltcon=0.150
 /
-" >GB2.in
+" > GB2.in
 }
 
 
 ScoreFlow_MMGBSA_run_MIN() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
+#   DESCRIPTION: Run mmgbsa
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: ${OVERWRITE}
+#       RETURNS: -
+#
+#===============================================================================
+if [ ! -f MMPBSA_MINI.dat ] || [ "${OVERWRITE}" == 'yes' ] ; then
+    rm -rf com.top rec.top ligand.top
 
-if [ ! -f MMPBSA_MINI.dat ] || [ "${OVERWRITE}" == 'yes' ] ; then 
+    ante-MMPBSA.py -p complex.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job
 
-rm -rf com.top rec.top lig.top
+    MMPBSA.py -O -i GB2.in -cp com.top -rp rec.top -lp ligand.top -o MMPBSA_MINI.dat -eo MMPBSA_MINI.csv -y mini.rst7 &> MMPBSA_MINI.job
 
-ante-MMPBSA.py -p complex.prmtop -c com.top -r rec.top -l lig.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job
-
-MMPBSA.py -O -i GB2.in -cp com.top -rp rec.top -lp lig.top -o MMPBSA_MINI.dat -eo MMPBSA_MINI.csv -y mini.rst7 &> MMPBSA_MINI.job
-
-rm -rf reference.frc
+    rm -rf reference.frc
 fi
 
 }
 
 ScoreFlow_organize() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_organize
+#   DESCRIPTION: Organise folders and files before rescoring
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: ${OVERWRITE}
+#       RETURNS: -
+#
+#===============================================================================
 # TODO 
 # Improve extracting mol2 to separate folders.
 # 
@@ -378,55 +497,83 @@ ScoreFlow_organize() {
 
 if [ ${ORGANIZE} == 'yes' ] ; then
 
-  if [  ! -d ${RUNDIR} ] ; then
-    mkdir -p ${RUNDIR}
-  fi
+   if [  ! -d ${RUNDIR} ] ; then
+      mkdir -p ${RUNDIR}
+   fi
 
-
-  for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [  ! -d ${RUNDIR}/${LIGAND}/ ] ; then
-      mkdir -p ${RUNDIR}/${LIGAND}/
+    if [ ${SCORE_PROGRAM} == "PLANTS" ] ; then
+          for LIGAND in ${LIGAND_LIST[@]} ; do
+            if [  ! -d ${RUNDIR}/${LIGAND}/ ] ; then
+              mkdir -p ${RUNDIR}/${LIGAND}/
+            fi
+          done
     fi
-  done
 
 # if [ ${REWRITE_LIGANDS} == 'yes' ] ; then 
 
     # Copy files to project folder.
-    cp ${RECEPTOR_FILE} ${RUNDIR}/b4amber.pdb
-    cp ${LIGAND_FILE}   ${RUNDIR}/
+    if [ ${SCORING_FUNCTION} == "mmgbsa" ] ; then
+        cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.pdb
+    else
+        cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
+    fi
+        cp ${LIGAND_FILE}   ${RUNDIR}/ligand.mol2
 
-    # Copy each ligand to it's folder.
-    n=-1
-    while read line ; do
-      if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-        let n=$n+1
-        echo -ne "" > ${RUNDIR}/${LIGAND_LIST[$n]}/lig.mol2
-      fi
-      echo -e "${line}" >> ${RUNDIR}/${LIGAND_LIST[$n]}/lig.mol2
-    done < ${LIGAND_FILE}
-# fi
+    if [ ${SCORE_PROGRAM} != "PLANTS" ] ; then
+        # Copy each ligand to it's folder.
+        n=-1
+        while read line ; do
+          if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
+            let n=$n+1
+            echo -ne "" > ${RUNDIR}/${LIGAND_LIST[$n]}/ligand.mol2
+          fi
+          echo -e "${line}" >> ${RUNDIR}/${LIGAND_LIST[$n]}/ligand.mol2
+        done < ${LIGAND_FILE}
+    fi
 fi
 }
 
-ScoreFlow_postprocess() {
 
+ScoreFlow_postprocess() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_postprocess
+#   DESCRIPTION: Post processing ScoreFlow run depending on the dock program used
+#                Each project / receptor will have a ScoreFlow.csv file.
+#
+#        Author: Dona de Francquen
+#
+#    PARAMETERS: ${OVERWRITE}
+#       RETURNS: -
+#
+#===============================================================================
 echo "
 Scoring function: ${SCORING_FUNCTION}
          Rundir : ${RUNDIR}
 "
-
-  if [ "${SCORING_FUNCTION}" == 'mmgbsa' ] ; then
-      if [ -f ${RUNDIR}/ScoreFlow.csv ]  ; then
-        rm -rf ${RUNDIR}/ScoreFlow.csv
-      fi
-
-      for LIGAND in ${LIGAND_LIST[@]} ; do
+if [ -f ${RUNDIR}/ScoreFlow.csv ]  ; then
+    rm -rf ${RUNDIR}/ScoreFlow.csv
+fi
+case ${SCORE_PROGRAM} in
+"PLANTS")
+    if [ ! -f ${RUNDIR}/PLANTS/ranking.csv ] ; then
+        ERROR_MESSAGE="[ ERROR ] Plants results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
+        ChemFlow_error
+    else
+        sed 's/_entry/,/2' ${RUNDIR}/PLANTS/ranking.csv | awk -F, 'BEGIN{OFS=",";}!/LIGAND/{print $1,$3}' > ${RUNDIR}/ScoreFlow.csv
+    fi
+;;
+"AMBER")
+    for LIGAND in ${LIGAND_LIST[@]} ; do
         if [ -f ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat ] ; then
-          awk -v LIGAND=${LIGAND} 'BEGIN{OFS=",";}/DELTA TOTAL/{print LIGAND,$3}' ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat >> ${RUNDIR}/ScoreFlow.csv
+            awk -v LIGAND=${LIGAND} 'BEGIN{OFS=",";}/DELTA TOTAL/{print LIGAND,$3}' ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat >> ${RUNDIR}/ScoreFlow.csv
         fi
-      done
-
-  fi
+    done
+    if [ ! -s ${RUNDIR}/ScoreFlow.csv ] ; then
+         ERROR_MESSAGE="[ ERROR ] Amber results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
+         ChemFlow_error
+    fi
+;;
+esac
 }
 
 
@@ -448,9 +595,18 @@ RECEPTOR_FILE ${RECEPTOR_FILE}
   CHARGE ${CHARGE}
 NLIGANDS ${NLIGANDS}
  PROGRAM ${SCORE_PROGRAM}
- SCORING ${SCORING_FUNCTION}
-  CENTER ${DOCK_CENTER[@]}
-  
+ SCORING ${SCORING_FUNCTION}"
+case ${SCORE_PROGRAM} in
+"VINA")
+    echo "  CENTER ${DOCK_CENTER[@]}
+  SIZE ${DOCK_LENGHT[@]} (X,Y,Z)"
+;;
+"PLANTS")
+    echo "  CENTER ${DOCK_CENTER[@]}
+  RADIUS ${DOCK_RADIUS}"
+;;
+esac
+echo "
 [ Run options ]
 JOB SCHEDULLER: ${JOB_SCHEDULLER}
     CORES/NODE: ${NCORES}
@@ -464,60 +620,6 @@ case $opt in
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
 *)  echo "Exiting" ; exit 0 ;;
 esac
-}
-
-ScoreFlow_unset() {
-# User variables
-unset PROJECT  	   # Name for the current project, ChemFlow folders go after it
-unset PROTOCOL     # Name for the current protocol. 
-
-# ChemFlow internals
-unset WORKFLOW     # Which ChemFlow protocol to use: ScoreFlow, ScoreFlow ...
-##unset METHOD       # Internal of each workflow ( PLANTS, VINA, gbsa...)
-##                   # Method will define which software to use.
-
-# User input files ------------------------------------------------------------
-unset RECEPTOR     # Filename (no extension) for the receptor file. 
-                   # This can be equivalent to MOL_ID. 
-                   # ScoreFlow requires a .MOL2.
-
-unset LIGAND_FILE  # Filename .MOL2 for the ligand file. 
-                   # An unique .mol2, properly prepared would do the job.
-
-# Docking Variables
-unset DOCK_PROGRAM # Program used for docking.
-unset DOCK_CENTER  # Binding pocket center (X, Y and Z). 
-unset DOCK_LENGHT  # Length of the X, Y and Z axis.
-unset DOCK_RADIUS  # Radius from the Docking Center.
-
-# Scoring Variables
-unset SCORE_PROGRAM # Program used for docking.
-
-unset RUNDIR       # Folder where the calculations will actually run. 
-                   # RUNDIR=$WORKDIR/$PROJECT/$WORKFLOW/$PROTOCOL
-
-unset POSTDOCK     # Either just post-process dockings
-}
-
-ScoreFlow_set_defaults() {
-
- ORGANIZE='yes'
-
-# General options
-  WORKDIR=${PWD}
- PROTOCOL="default"
- WORKFLOW="ScoreFlow"
- CHEMFLOW="No"
-
-# Scoring options
-   SCORE_PROGRAM="PLANTS"
-SCORING_FUNCTION="chemplp"
-          CHARGE="gas"
-# Run options
-JOB_SCHEDULLER="None"
-        NCORES=$(nproc --all)
-        NNODES="1"
-     OVERWRITE="No"    # Don't overwrite stuff.
 }
 
 
@@ -534,7 +636,6 @@ ScoreFlow -pdb receptor.pdb -l ligand.mol2 -p myproject [-protocol 1] [-n 8] -sf
 -hh/--full-help      : Detailed help
  -f/--file           : ScoreFlow configuration file
  -r/--receptor       : Receptor's mol2 file.
- -pdb                : Receptor's PDB file  ( Required for MMGBSA )
  -l/--ligand         : Ligands .mol2 input file.
  -p/--project        : ChemFlow project name
 "
@@ -559,7 +660,6 @@ ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf
 [Required]
  -f/--file           : ScoreFlow configuration file
  -r/--receptor       : Receptor's mol2 file
- -pdb                : Receptor's PDB file  ( Required for MMGBSA )
  -l/--ligand         : Ligands .mol2 input file
  -p/--project        : ChemFlow project name
 
@@ -586,120 +686,114 @@ exit 0
 ScoreFlow_CLI() {
 
 if [ "$1" == "" ] ; then
-  echo -ne "\n[ ERROR ] ScoreFlow called without arguments\n\n"
-  ScoreFlow_help
+    echo -ne "\n[ ERROR ] ScoreFlow called without arguments\n\n"
+    ScoreFlow_help
 fi
 
 while [[ $# -gt 0 ]]; do
-key="$1"
+    key="$1"
 
-case ${key} in
-    "--resume") 
-      echo -ne "\nResume not implemented"
-      exit 0
-    ;;
-    "-h"|"--help")
-      ScoreFlow_help
-      exit 0
-      shift # past argument
-    ;;
-    "-hh"|"--full-help")
-      ScoreFlow_help_full
-      exit 0
-      shift
-    ;;
-    -f|--file)
-      CONFIG_FILE="$2"
-      shift # past argument
-    ;;
-    -r|--receptor)
-      RECEPTOR_FILE="$2"
-      RECEPTOR_NAME="$(basename -s .mol2 ${RECEPTOR_FILE})"
-      shift # past argument
-    ;;
-    -pdb)
-      RECEPTOR_FILE="$2"
-      shift # past argument
-    ;;
-
-    -l|--ligand)
-      LIGAND_FILE="$2"
-      shift # past argument
-    ;;
-    -p|--project)
-      PROJECT="$2"
-      shift
-    ;;
-    --protocol)
-      PROTOCOL="$2"
-      shift
-    ;;
-    -sf|--scoring_function)
-      SCORING_FUNCTION="$2"
-      shift
-    ;;
-    --center)
-      DOCK_CENTER="$2 $3 $4"
-      DOCK_CENTER=($DOCK_CENTER) # Transform into array
-      shift 3 # past argument
-    ;;
-    --radius)
-      DOCK_RADIUS="$2"
-      shift # past argument
-    ;;
-    --size)
-      DOCK_LENGTH="$2 $3 $4"
-      DOCK_LENGHT=(${DOCK_LENGHT}) # Transform into array
-      shift 3
-    ;;
-    -nc|--cores) # Number of Cores [1] (or cores/node)
-      NCORES="$2" # Same as above.
-      shift # past argument
-    ;;
-    --cuda)
-      CUDA="yes"
-    ;;    
-# Charge calculation
-    --gas)
-      CHARGE="gas"
-    ;;    
-    --resp)
-      CHARGE="resp"
-    ;;    
-    --bcc)
-      CHARGE="bcc"
-    ;;    
-# HPC options ----------------------------------------------------------
-    -nn|--nodes) # Number of NODES [1]
-      NNODES="$2" # Same as above.
-      shift # past argument
-    ;;
-    -w|--workload) # Workload manager, [SLURM] or PBS
-      JOB_SCHEDULLER="$2"
-      shift # past argument
-    ;;
-## Final arguments
-    --overwrite)
-      OVERWRITE="yes"
-    ;;
-    --no-organize)
-      ORGANIZE="no"
-    ;;
-## ADVANCED USER INPUT
-#    --advanced)
-#      USER_INPUT="$2"
-#      shift
-    --postprocess)
-      POSTPROCESS="yes"
-    ;;
-#    --archive)
-#      ARCHIVE='yes'
-#    ;;
-    *)
-      unknown="$1"        # unknown option
-      echo "Unknown flag \"$unknown\""
-    ;;
-esac
-shift # past argument or value
+    case ${key} in
+        "--resume")
+            echo -ne "\nResume not implemented"
+            exit 0
+        ;;
+        "-h"|"--help")
+            ScoreFlow_help
+            exit 0
+            shift # past argument
+        ;;
+        "-hh"|"--full-help")
+            ScoreFlow_help_full
+            exit 0
+            shift
+        ;;
+        -f|--file)
+            CONFIG_FILE="$2"
+            shift # past argument
+        ;;
+        -r|--receptor)
+            RECEPTOR_FILE="$2"
+            RECEPTOR_NAME="$(basename -s .mol2 ${RECEPTOR_FILE})"
+            shift # past argument
+        ;;
+        -l|--ligand)
+            LIGAND_FILE="$2"
+            shift # past argument
+        ;;
+        -p|--project)
+            PROJECT="$2"
+            shift
+        ;;
+        --protocol)
+            PROTOCOL="$2"
+            shift
+        ;;
+        -sf|--scoring_function)
+            SCORING_FUNCTION="$2"
+            shift
+        ;;
+        --center)
+            DOCK_CENTER=("$2" "$3" "$4")
+            shift 3 # past argument
+        ;;
+        --size)
+            DOCK_LENGHT=("$2" "$3" "$4")
+            shift 3
+        ;;
+        --radius)
+            DOCK_RADIUS="$2"
+            DOCK_LENGHT=("$2" "$2" "$2")
+            shift # past argument
+        ;;
+        -nc|--cores) # Number of Cores [1] (or cores/node)
+            NCORES="$2" # Same as above.
+            shift # past argument
+        ;;
+        --cuda)
+            CUDA="yes"
+        ;;
+        # Charge calculation
+        --gas)
+            CHARGE="gas"
+        ;;
+        --resp)
+            CHARGE="resp"
+        ;;
+        --bcc)
+            CHARGE="bcc"
+        ;;
+        # HPC options
+        -nn|--nodes) # Number of NODES [1]
+            NNODES="$2" # Same as above.
+            shift # past argument
+        ;;
+        -w|--workload) # Workload manager, [SLURM] or PBS
+            JOB_SCHEDULLER="$2"
+            shift # past argument
+        ;;
+        ## Final arguments
+        --overwrite)
+            OVERWRITE="yes"
+        ;;
+        --no-organize)
+            ORGANIZE="no"
+        ;;
+        ## ADVANCED USER INPUT
+        #    --advanced)
+        #      USER_INPUT="$2"
+        #      shift
+        --postprocess)
+            POSTPROCESS="yes"
+        ;;
+        #    --archive)
+        #      ARCHIVE='yes'
+        #    ;;
+        *)
+            unknown="$1"        # unknown option
+            echo "Unknown flag \"$unknown\""
+        ;;
+    esac
+    shift # past argument or value
 done
 }
