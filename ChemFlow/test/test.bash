@@ -42,29 +42,151 @@ DEBUG='no'
 source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
 source ${CHEMFLOW_HOME}/test/test_function.sh
 
+clean_project(){
+    cd ${CHEMFLOW_HOME}/test/
+    rm -rf protein_ligand
+}
 
-run_vina1(){
+
+# Vina =============================================================================================================
+run_vina_no_continue(){
+# Run DockFlow
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina <<EOF
+n
+EOF
+}
+
+run_vina_overwrite_no_continue(){
 # Run DockFlow
 DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina --overwrite <<EOF
 Y
+n
+EOF
+}
+
+run_vina_continue_no_rewrite_ligand(){
+# Run DockFlow
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina <<EOF
+y
+n
+EOF
+}
+
+run_vina_continue_rewrite_ligand(){
+# Run DockFlow
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina <<EOF
 y
 y
 EOF
-assertFileExits
 }
 
-postdock_vina1(){
-DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina --overwrite --postdock <<EOF
+postdock_vina_no_archive(){
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina --postdock<<EOF
+n
+EOF
+}
+
+postdock_vina_archive_no_remove(){
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina --postdock<<EOF
+y
+n
+EOF
+}
+
+postdock_vina_archive_remove(){
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina --postdock<<EOF
+y
+y
+EOF
+}
+
+archive_vina_archive_no_remove(){
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina --archive<<EOF
+y
+n
+EOF
+}
+
+archive_vina_archive_remove(){
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 -sf vina --archive<<EOF
+y
+y
+EOF
+}
+
+# Plants (default) =============================================================================================================
+run_plants_no_continue(){
+# Run DockFlow
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 <<EOF
+n
+EOF
+}
+
+run_plants_overwrite_no_continue(){
+# Run DockFlow
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 --overwrite <<EOF
 Y
+n
+EOF
+}
+
+run_plants_continue_no_rewrite_ligand(){
+# Run DockFlow
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 <<EOF
+y
+n
+EOF
+}
+
+run_plants_continue_rewrite_ligand(){
+# Run DockFlow
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 <<EOF
+y
+y
+EOF
+}
+
+postdock_plants_no_archive(){
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 --postdock<<EOF
+n
+EOF
+}
+
+postdock_plants_archive_no_remove(){
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 --postdock<<EOF
+y
+n
+EOF
+}
+
+postdock_plants_archive_remove(){
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 --postdock<<EOF
+y
+y
+EOF
+}
+
+archive_plants_archive_no_remove(){
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 --archive<<EOF
+y
+n
+EOF
+}
+
+archive_plants_archive_remove(){
+DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --radius 10 --center 20.259 -2.752 18.203 --archive<<EOF
+y
+y
 EOF
 }
 
 
-test_DockFlow_vina1_creates_files(){
-TEST="test_rank_exist"
+
+test_DockFlow_vina_produces_output_pdbqt(){
+TEST="test_DockFlow_vina_produces_output_pdbqt"
 
 # run vina
-run_vina1
+run_vina_continue_no_rewrite_ligand
 
 # files that were supposed to be created
 FILES="test.chemflow/DockFlow/vina1/receptor/CHEMBL195725/VINA/output.pdbqt test.chemflow/DockFlow/vina1/receptor/CHEMBL477992/VINA/output.pdbqt"
@@ -74,13 +196,13 @@ for FILE in ${FILES} ; do
 done
 }
 
-test_PostDock_results_from_vina1(){
+test_PostDock_vina_produces_rank_docked_ligands(){
 TEST="test_PostDock_results_from_vina"
 
 # run postdock vina
-postdock_vina1
+postdock_vina_no_archive
 
-FILES="rank.csv docked_ligands.mol2"
+FILES="test.chemflow/DockFlow/vina1/receptor/rank.csv test.chemflow/DockFlow/vina1/receptor/docked_ligands.mol2"
 for FILE in ${FILES} ; do
     msg="The file ${FILE} has not been created."
     assertFileExits
@@ -119,20 +241,21 @@ done
 # Program ----------------------------------------------------------------------
 #
 echo "[ ChemFlow ] Initiating test"
+cd ${CHEMFLOW_HOME}/test/
 #ChemFlow_checkfile_ERROR protein_ligand.tar.gz
 
-# Extracts test data to run "input" folder
-tar xfz protein_ligand.tar.gz
+## Extracts test data to run "input" folder
+#tar xfz protein_ligand.tar.gz
 
 # Go to input data folder.
 cd protein_ligand
 
-# prepare input files
-python $(which SmilesTo3D.py ) -i compounds.smi -o compounds.sdf --hydrogen
-babel -isdf compounds.sdf -omol2 compounds.mol2
+## prepare input files
+#python $(which SmilesTo3D.py ) -i compounds.smi -o compounds.sdf --hydrogen
+#babel -isdf compounds.sdf -omol2 compounds.mol2
 
 # Tests
-test_DockFlow_vina1_creates_files
-test_PostDock_results_from_vina1
+test_DockFlow_vina_produces_output_pdbqt
+test_PostDock_vina_produces_rank_docked_ligands
 
 echo "All tests passed. Yeah ! :D"

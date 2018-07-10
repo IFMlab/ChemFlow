@@ -99,8 +99,10 @@ DockFlow_prepare_receptor() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_prepare_receptor
 #   DESCRIPTION: Prepare the receptor for the docking:
+#                Copy the receptor file into the rundir folder as receptor.mol2
 #                 - PLANTS uses the mol2 file,
-#                 - VINA uses a pdbqt file. It is converted using AutoDockTools.
+#                 - VINA uses a pdbqt file. It is converted using AutoDockTools
+#                   and saved into the rundir folder as receptor.pdbqt
 #
 #    PARAMETERS: ${DOCK_PROGRAM}
 #                ${RUNDIR}
@@ -117,7 +119,7 @@ cp ${WORKDIR}/${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 
 if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
     ${mgltools_folder}/bin/python \
-    /storage/rgimatev/bin/MGLTools-1.5.6/mgltools_x86_64Linux2_1.5.6//MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
+    ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
     -r ${RUNDIR}/receptor.mol2 \
     -o ${RUNDIR}/receptor.pdbqt
 fi
@@ -144,18 +146,31 @@ DockFlow_rewrite_ligands() {
 #        UPDATE: fri. july 6 14:49:50 CEST 2018
 #
 #===============================================================================
-read -p "Rewrite ligands [Y/N] ? : " rewrite_ligands
+if [ -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
+    read -p "Rewrite ligands [Y/N] ? : " rewrite_ligands
+else
+    rewrite_ligands="yes"
+fi
 
 case ${rewrite_ligands} in
 "y"|"yes"|"Yes"|"Y"|"YES")
-    if [  -d ${PROJECT}.chemflow/LigFlow/original/ ] ; then
-        rm -rf ${PROJECT}.chemflow/LigFlow/original/
-    fi
 
-    if [  ! -d ${PROJECT}.chemflow/LigFlow/original/ ] ; then
-        mkdir -p ${PROJECT}.chemflow/LigFlow/original/
-    fi
+    # Original
+    rm -rf ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
+    mkdir -p ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
 
+    OLDIFS=$IFS
+    IFS='%'
+    n=-1
+    while read line ; do
+        if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
+            let n=$n+1
+        fi
+        echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
+    done < ${WORKDIR}/${LIGAND_FILE}
+    IFS=${OLDIFS}
+
+    # Create ligand folder into the project
     for LIGAND in ${LIGAND_LIST[@]} ; do
         if [ ! -d   ${LIGAND} ] ; then
             mkdir -p  ${LIGAND}
@@ -178,12 +193,11 @@ case ${rewrite_ligands} in
             fi
         ;;
         esac
+
+        if [ -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
+            rm -rf ${LIGAND}/${DOCK_PROGRAM}
+        fi
     done
-
-    if [ -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
-        rm -rf ${LIGAND}/${DOCK_PROGRAM}
-    fi
-
 #        if [ -f  ${PROJECT}.chemflow/LigFlow/ligands.lst ] ; then
 #            rm -rf ${PROJECT}.chemflow/LigFlow/ligands.lst
 #        fi
@@ -192,14 +206,7 @@ case ${rewrite_ligands} in
 #            echo ${i} >> ${PROJECT}.chemflow/LigFlow/ligands.lst
 #        done
 
-#        n=-1
-#        while read line ; do
-#            if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-#                let n=$n+1
-#            fi
-#            echo -e "${line}" >> ${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
-#        done < ${LIGAND_FILE}
-
+#
 ;;
 "n"|"no"|"No"|"N"|"NO")
     for LIGAND in ${LIGAND_LIST[@]} ; do
@@ -538,7 +545,6 @@ for (( first=0;${first}<${NDOCK} ; first=${first}+${nlig} )) ; do
   fi
 
 done
-
 }
 
 
@@ -621,12 +627,12 @@ case ${DOCK_PROGRAM} in
     case ${JOB_SCHEDULLER} in
             "None")
                 for LIGAND in ${DOCK_LIST[@]} ; do
-        #            Create the output VINA folder if it doesn't exist.
+                    # Create the output VINA folder if it doesn't exist.
                     if [  ! -d ${RUNDIR}/${LIGAND}/VINA/ ] ; then
                         mkdir -p ${RUNDIR}/${LIGAND}/VINA/
                     fi
                     echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND}
-        #            Vina command.
+                    # Vina command.
                     echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
                         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
                         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
@@ -636,9 +642,8 @@ case ${DOCK_PROGRAM} in
                 if [ ! -f vina.xargs ] ; then
                     echo "All ligands docked, nothing to do here" ; exit 0
                 else
-        #            Actually runs VINA
-                    #cd ${RUNDIR} ; cat vina.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-                    cd ${RUNDIR} ; cat vina.xargs | xargs -P1 -I '{}' bash -c '{}'
+                    # Actually runs VINA
+                    cd ${RUNDIR} ; cat vina.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
                 fi
              ;;
             "SLURM"|"PBS")
@@ -742,19 +747,21 @@ DockFlow_postdock_plants_results() {
 #
 #          TODO: A summary of protocols would be interesting
 #===============================================================================
+for LIGAND in ${LIGAND_LIST[@]}; do
+    if [ ! -f ${LIGAND}/PLANTS/docked_ligands.mol2 ] ; then
+        echo "[ ERROR ] Plants result for ligand ${LIGAND} does not exists."
+        FAIL="true"
+    else
+        # Fill the rank.csv file
+        echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}        \r"
+        awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' ${LIGAND}/PLANTS/ranking.csv >> rank.csv
 
-if [ ! -f ${LIGAND}/PLANTS/docked_ligands.mol2 ] ; then
-    echo "[ ERROR ] Plants result for ligand ${LIGAND} does not exists."
-    FAIL="true"
-else
-    # Fill the rank.csv file
-    echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}        \r"
-    awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' ${LIGAND}/PLANTS/ranking.csv >> rank.csv
-
-    # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
-    cat ${LIGAND}/PLANTS/docked_ligands.mol2 >> docked_ligands.mol2
-
-fi
+        # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
+        cat ${LIGAND}/PLANTS/docked_ligands.mol2 >> docked_ligands.mol2
+    fi
+done
+# rename the ligand in the created file
+sed -i 's/\.*_entry.*_conf_[[:digit:]]*//' docked_ligands.mol2
 }
 
 
@@ -774,37 +781,45 @@ DockFlow_postdock_vina_results() {
 #        UPDATE: fri. July 6 14:49:50 CEST 2018
 #
 #===============================================================================
-if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.pdbqt ] ; then
-    echo "[ ERROR ] Vina's result for ligand ${LIGAND} does not exists."
-    FAIL="true"
-else
-    # Fill the rank.csv file
-    echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}        \r"
-    n=0
-    while read line ; do
-        if [ "${line:0:18}" == "REMARK VINA RESULT" ] ; then
-            let n++
-            echo "${line}" | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=${LIGAND}_conf_${n} '!/LIGAND_ENTRY/ {print "VINA",protocol,target,ligand,conf,$4}' >> rank.csv
-        fi
-    done < ${RUNDIR}/${LIGAND}/VINA/output.pdbqt
 
-    # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
-    if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.mol2 ] ; then
-        babel -ipdbqt ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -omol2 ${RUNDIR}/${LIGAND}/VINA/output.mol2
-    fi
-
-    n=0
-    while read line ; do
-        if [ "${line}" == "${RUNDIR}/${LIGAND}/VINA/output.pdbqt" ] ; then
-            let n++
-            echo ${LIGAND}_conf_${n} >>  ${RUNDIR}/docked_ligands.mol2
-            echo ${LIGAND}_conf_${n} >>  ${RUNDIR}/${LIGAND}/VINA/docked_ligands.mol2
-        else
-            echo "${line}" >> ${RUNDIR}/docked_ligands.mol2
-            echo "${line}" >> ${RUNDIR}/${LIGAND}/VINA/docked_ligands.mol2
-        fi
-    done < ${RUNDIR}/${LIGAND}/VINA/output.mol2
+if [ ${OVERWRITE}  == 'yes' ] ; then
+    rm -rf ${RUNDIR}/docked_ligands.mol2
 fi
+
+for LIGAND in ${LIGAND_LIST[@]}; do
+    if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.pdbqt ] ; then
+        echo "[ ERROR ] Vina's result for ligand ${LIGAND} does not exists."
+        FAIL="true"
+    else
+        # Fill the rank.csv file
+        echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}        \r"
+        n=0
+        while read line ; do
+            if [ "${line:0:18}" == "REMARK VINA RESULT" ] ; then
+                let n++
+                echo "${line}" | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=${LIGAND}_conf_${n} '!/LIGAND_ENTRY/ {print "VINA",protocol,target,ligand,conf,$4}' >> rank.csv
+            fi
+        done < ${RUNDIR}/${LIGAND}/VINA/output.pdbqt
+
+        # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
+        if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.mol2 ] || [ ${OVERWRITE} == 'yes' ] ; then
+            babel -h -ipdbqt ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -omol2 ${RUNDIR}/${LIGAND}/VINA/output.mol2
+        fi
+
+        OLDIFS=$IFS
+        IFS='%'
+        n=0
+        while read line ; do
+            if [ "${line}" == "${RUNDIR}/${LIGAND}/VINA/output.pdbqt" ] ; then
+                let n++
+                echo ${LIGAND}_conf_${n} >>  ${RUNDIR}/docked_ligands.mol2
+            else
+                echo "${line}" >> ${RUNDIR}/docked_ligands.mol2
+            fi
+        done < ${RUNDIR}/${LIGAND}/VINA/output.mol2
+        IFS=${OLDIFS}
+    fi
+done
 }
 
 
@@ -865,13 +880,12 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
 #        echo "Ligands: ${LIGAND_LIST[@]}"
 
         # Organize to ChemFlow standard.
-        for LIGAND in ${LIGAND_LIST[@]}; do
-            if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
-                DockFlow_postdock_plants_results
-            elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
-                DockFlow_postdock_vina_results
-            fi
-        done
+        if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
+            DockFlow_postdock_plants_results
+        elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
+            DockFlow_postdock_vina_results
+        fi
+
     done
 done
 

@@ -93,22 +93,30 @@ case ${WORKFLOW} in
         ERROR_MESSAGE="SCORING_FUNCTION ${SCORING_FUNCTION} not implemented"; ChemFlow_error;
     ;;
     esac
-
+    if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
+        ERROR_MESSAGE="Docking requires a mol2 file as receptor input"; ChemFlow_error ;
+    fi
     # Center is required for docking.
     check_center
 ;;
 "ScoreFlow")
     case ${SCORING_FUNCTION} in
     "chemplp"|"plp"|"plp95") # PLANTS is the default SCORE_PROGRAM
+    if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
+        ERROR_MESSAGE="Plants rescoring requires a mol2 file as receptor input"; ChemFlow_error ;
+    fi
     ;;
     "vina")
         SCORE_PROGRAM="VINA" ;
+    if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
+        ERROR_MESSAGE="Vina rescoring requires a mol2 file as receptor input"; ChemFlow_error ;
+    fi
     ;;
     "mmgbsa") # mmgbsa as scoring function is only allowed for ScoreFlow.
         SCORE_PROGRAM="AMBER"
         RECEPTOR_NAME="$(basename -s .pdb ${RECEPTOR_FILE})"
         if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "pdb" ] ; then
-            ERROR_MESSAGE="mmgbsa rescoring requires a PDB file as input"; ChemFlow_error ;
+            ERROR_MESSAGE="mmgbsa rescoring requires a PDB file as receptor input"; ChemFlow_error ;
         fi
     ;;
     *)
@@ -153,6 +161,9 @@ if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
         if  [ "$(command -v sander)" == "" ] ; then
           echo "[ERROR ] AmberTools is not installed or on PATH" ; exit 0
         fi
+        if [ ${CHARGE} == "resp" ] && [ "$(command -v g09)" == "" ] ; then
+          echo "[ERROR ] Gaussian is not installed or on PATH" ; exit 0
+        fi
     ;;
     esac
 
@@ -162,7 +173,7 @@ if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
 
       case ${opt} in
         "Y"|"YES"|"Yes"|"yes"|"y")  ;;
-        *)  echo "Safe decison. Rerun without '--overwrite'" ; exit 0 ;;
+        *)  echo "Safe decision. Rerun without '--overwrite'" ; exit 0 ;;
       esac
     fi
 fi
@@ -171,9 +182,11 @@ ChemFlow_set_ligand_list ${LIGAND_FILE}
 }
 
 check_center(){
-if [ -z "${DOCK_CENTER}" ] ; then
-    ERROR_MESSAGE="No DOCKING CENTER defined (--center x y z)" ;
-    ChemFlow_error ;
+if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
+    if [ -z "${DOCK_CENTER}" ] ; then
+        ERROR_MESSAGE="No DOCKING CENTER defined (--center x y z)" ;
+        ChemFlow_error ;
+    fi
 fi
 }
 

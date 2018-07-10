@@ -156,7 +156,32 @@ ScoreFlow_rescore_vina() {
 #                ${DOCK_RADIUS}
 #                ${DOCK_POSES}
 #===============================================================================
-TODO
+
+# Cleanup
+if [ -f ${RUNDIR}/ScoreFlow.csv ] ; then
+    rm -rf ${RUNDIR}/ScoreFlow.csv
+fi
+
+# Prepare RECEPTOR
+    ${mgltools_folder}/bin/python \
+    ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
+        -r ${RUNDIR}/receptor.mol2 \
+        -o ${RUNDIR}/receptor.pdbqt
+
+
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    # DONA fix this please.
+    ${mgltools_folder}/bin/python \
+    ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
+        -l ${RUNDIR}/${LIGAND}/ligand.mol2 \
+        -o ${RUNDIR}/${LIGAND}/ligand.pdbqt
+done
+
+for LIGAND in ${LIGAND_LIST[@]} ; do
+
+  vina --score_only --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt | awk -v LIGAND=${LIGAND} 'BEGIN{OFS=",";}/Affinity:/{print LIGAND,$2}' >> ${RUNDIR}/ScoreFlow.csv
+
+done
 }
 
 
@@ -174,14 +199,15 @@ ScoreFlow_rescore_mmgbsa() {
 #===============================================================================
   ScoreFlow_compute_charges
   ScoreFlow_write_run_tleap
+  ScoreFlow_implicit_write_MIN
+  ScoreFlow_MMGBSA_write
 
   for LIGAND in ${LIGAND_LIST[@]} ; do
     echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r" 
     cd ${RUNDIR}/${LIGAND}
-    ScoreFlow_MMGBSA_implicit_write_MIN
-    ScoreFlow_MMGBSA_implicit_run_MIN
-    ScoreFlow_MMGBSA_write
-    ScoreFlow_MMGBSA_run_MIN
+    ScoreFlow_implicit_run_MIN
+    ScoreFlow_MMGBSA_run
+
   done
 }
 
@@ -215,16 +241,9 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     fi
 
     case ${CHARGE} in
-    #"gas")
-    # Compute gasteiger charges
-    #    if [ ! -f ligand_gas.mol2 ] ; then
-    #      antechamber -i ligand.mol2 -fi mol2 -o ligand_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
-    #    fi
-    #    ;;
     "bcc")
         # Compute am1-bcc charges
         if [ ! -f ligand_bcc.mol2 ] ; then
-            # Mandatory Gasteiger charges
             echo "cd ${RUNDIR}/${LIGAND} ; antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> ${RUNDIR}/charges.xargs
         fi
         ;;
@@ -234,7 +253,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
             antechamber -i ligand_gas.mol2 -fi mol2 -o ligand.gau -fo gcrt -gv 1 -ge ligand.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
 
             # Run Gaussian to optimize structure and generate electrostatic potential grid
-            g09 ligand.gau > ligand.gout
+            g09 <ligand.gau>ligand.gout
 
             # Read Gaussian output and write new optimized ligand with RESP charges
             antechamber -i ligand.gout -fi gout -o ligand_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> ${RUNDIR}/antechamber.log
@@ -243,38 +262,30 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     esac
 done 
 
-if [ -f ${RUNDIR}/charges.xargs ] ; then
+if [ ${CHARGE} == "bcc" ] && [ -f ${RUNDIR}/charges.xargs ] ; then
     cat ${RUNDIR}/charges.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 fi
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
     cd ${RUNDIR}/${LIGAND}
-    if [ ! -f ligand.frcmod ] ; then
-        case ${CHARGE} in
-        "gas")
-            if [ ! -f ligand_gas.mol2 ] ;        then
-                echo >> ${RUNDIR}/antechamber_errors.lst
-            else
-                parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
-            fi
-            ;;
-        "bcc")
-            if [ ! -f ligand_bcc.mol2 ] ; then
-                echo >> ${RUNDIR}/antechamber_errors.lst
-            else
-                parmchk2 -i ligand_bcc.mol2 -o ligand.frcmod -s 2 -f mol2
-            fi
-            ;;
-        "resp")
-            if [ ! -f ligand.gau ] ;      then echo >> ${RUNDIR}/antechamber_errors.lst ; fi
-            if [ ! -f ligand_resp.mol2 ]; then
-                echo >> ${RUNDIR}/antechamber_errors.lst
-            else
-                parmchk2 -i ligand_resp.mol2 -o ligand.frcmod -s 2 -f mol2
-            fi
-            ;;
-        esac
+    if [ ! -f ligand.frcmod ] && [ -f ligand_gas.mol2 ] ; then
+            parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
+    else
+        echo "${LIGAND} gas" >> ${RUNDIR}/antechamber_errors.lst
     fi
+
+    case ${CHARGE} in
+    "bcc")
+        if [ ! -f ligand_bcc.mol2 ] ; then
+            echo "${LIGAND} bcc" >> ${RUNDIR}/antechamber_errors.lst
+        fi
+    ;;
+    "resp")
+        if [ ! -f ligand_resp.mol2 ]; then
+            echo "${LIGAND} resp">> ${RUNDIR}/antechamber_errors.lst
+        fi
+    ;;
+    esac
 done
 }
 
@@ -294,10 +305,8 @@ ScoreFlow_write_run_tleap() {
 #       RETURNS: -
 #
 #===============================================================================
-for LIGAND in ${LIGAND_LIST[@]} ; do
 
-echo -ne "Preparing complex: ${RECEPTOR_NAME} - ${LIGAND}     \r"
-cd ${RUNDIR}/${LIGAND}/
+cd ${RUNDIR}/
 
 echo "
 source oldff/leaprc.ff99SBildn
@@ -324,18 +333,18 @@ saveamberparm complex complex.prmtop complex.rst7
 #charge complex
 quit
 " > tleap_gbsa.in
-done
 
 # Goes back to rundir to prepare in parallel.
-cd ${RUNDIR}
 
 if [ -f tleap.xargs ] ; then rm -rf tleap.xargs ; fi
  
 for LIGAND in ${LIGAND_LIST[@]} ; do
+    echo -ne "Preparing complex: ${RECEPTOR_NAME} - ${LIGAND}     \r"
     if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] ; then
-        echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR_NAME} - ${LIGAND}\" ;  tleap -f tleap_gbsa.in &> tleap.job" >> tleap.xargs
+        echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR_NAME} - ${LIGAND}\" ;  tleap -f ../tleap_gbsa.in &> tleap.job" >> tleap.xargs
     fi
 done
+
 if [ ! -f tleap.xargs ] ; then
     ERROR_MESSAGE="run tleap impossible (TODO)"
 else
@@ -343,7 +352,7 @@ else
 fi
 }
 
-ScoreFlow_MMGBSA_implicit_write_MIN() {
+ScoreFlow_implicit_write_MIN() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_MMGBSA_implicit_write_MIN
 #   DESCRIPTION: Write mmgbsa implicit MIN config
@@ -354,6 +363,9 @@ ScoreFlow_MMGBSA_implicit_write_MIN() {
 #       RETURNS: -
 #
 #===============================================================================
+
+cd ${RUNDIR}
+
 echo "MD GB2, infinite cut off
 &cntrl
   imin=1,maxcyc=1000,
@@ -370,7 +382,7 @@ echo "MD GB2, infinite cut off
 }
 
 
-ScoreFlow_MMGBSA_implicit_write_MD() {
+ScoreFlow_implicit_write_MD() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_MMGBSA_implicit_write_MIN
 #   DESCRIPTION: Write mmgbsa implicit config
@@ -381,10 +393,13 @@ ScoreFlow_MMGBSA_implicit_write_MD() {
 #       RETURNS: -
 #
 #===============================================================================
+
+cd ${RUNDIR}
+
 echo "MD GB2, infinite cut off
 &cntrl
   imin=0,irest=0,ntx=1,
-  nstlim=500000,dt=0.002,ntb=0,
+  nstlim=1000,dt=0.002,ntb=0,
   ntf=2,ntc=2,
   ntpr=1000, ntwx=1000, ntwr=30000,
   cut=9999.0, rgbmax=15.0,
@@ -401,7 +416,7 @@ echo "MD GB2, infinite cut off
 " > md_gbsa.in
 }
 
-ScoreFlow_MMGBSA_implicit_run_MIN() {
+ScoreFlow_implicit_run_MIN() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
 #   DESCRIPTION: Run mmgbsa implicit MIN
@@ -427,7 +442,7 @@ fi
 # If empty or simulation finished, (re)run.
 if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
     pmemd.cuda -O  \
-    -i ${input}.in    -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
+    -i ../${input}.in -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
     -x ${run}.mdcrd   -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
     -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
 fi
@@ -445,6 +460,8 @@ ScoreFlow_MMGBSA_write() {
 #       RETURNS: -
 #
 #===============================================================================
+cd ${RUNDIR}
+
 echo "Input file for running GB2
 &general
    verbose=1,keep_files=0,interval=10
@@ -456,7 +473,7 @@ echo "Input file for running GB2
 }
 
 
-ScoreFlow_MMGBSA_run_MIN() {
+ScoreFlow_MMGBSA_run() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
 #   DESCRIPTION: Run mmgbsa
@@ -467,12 +484,15 @@ ScoreFlow_MMGBSA_run_MIN() {
 #       RETURNS: -
 #
 #===============================================================================
-if [ ! -f MMPBSA_MINI.dat ] || [ "${OVERWRITE}" == 'yes' ] ; then
+
+TRAJECTORY="mini.rst7"
+
+if [ ! -f MMPBSA.dat ] || [ "${OVERWRITE}" == 'yes' ] ; then
     rm -rf com.top rec.top ligand.top
 
     ante-MMPBSA.py -p complex.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job
 
-    MMPBSA.py -O -i GB2.in -cp com.top -rp rec.top -lp ligand.top -o MMPBSA_MINI.dat -eo MMPBSA_MINI.csv -y mini.rst7 &> MMPBSA_MINI.job
+    MMPBSA.py -O -i ../GB2.in -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job
 
     rm -rf reference.frc
 fi
@@ -495,42 +515,56 @@ ScoreFlow_organize() {
 # 
 
 
-if [ ${ORGANIZE} == 'yes' ] ; then
+#if [ ${ORGANIZE} == 'yes' ] ; then
 
-   if [  ! -d ${RUNDIR} ] ; then
-      mkdir -p ${RUNDIR}
-   fi
+if [  ! -d ${RUNDIR} ] ; then
+  mkdir -p ${RUNDIR}
+fi
 
-    if [ ${SCORE_PROGRAM} == "PLANTS" ] ; then
-          for LIGAND in ${LIGAND_LIST[@]} ; do
-            if [  ! -d ${RUNDIR}/${LIGAND}/ ] ; then
-              mkdir -p ${RUNDIR}/${LIGAND}/
-            fi
-          done
-    fi
+if [ ${SCORE_PROGRAM} == "PLANTS" ] ; then
+      for LIGAND in ${LIGAND_LIST[@]} ; do
+        if [  ! -d ${RUNDIR}/${LIGAND}/ ] ; then
+          mkdir -p ${RUNDIR}/${LIGAND}/
+        fi
+      done
+fi
+
+
 
 # if [ ${REWRITE_LIGANDS} == 'yes' ] ; then 
 
-    # Copy files to project folder.
-    if [ ${SCORING_FUNCTION} == "mmgbsa" ] ; then
-        cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.pdb
-    else
-        cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
-    fi
-        cp ${LIGAND_FILE}   ${RUNDIR}/ligand.mol2
-
-    if [ ${SCORE_PROGRAM} != "PLANTS" ] ; then
-        # Copy each ligand to it's folder.
-        n=-1
-        while read line ; do
-          if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-            let n=$n+1
-            echo -ne "" > ${RUNDIR}/${LIGAND_LIST[$n]}/ligand.mol2
-          fi
-          echo -e "${line}" >> ${RUNDIR}/${LIGAND_LIST[$n]}/ligand.mol2
-        done < ${LIGAND_FILE}
-    fi
+# Copy files to project folder.
+if [ ${SCORING_FUNCTION} == "mmgbsa" ] ; then
+    cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.pdb
+else
+    cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 fi
+cp ${LIGAND_FILE}   ${RUNDIR}/ligand.mol2
+
+
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    if [ ! -d  ${RUNDIR}/${LIGAND} ] ; then
+      mkdir -p ${RUNDIR}/${LIGAND}
+    fi
+done
+
+
+OLDIFS=$IFS
+IFS='%'
+if [ ${SCORE_PROGRAM} != "PLANTS" ] ; then
+    # Copy each ligand to it's folder.
+    n=-1
+    while read line ; do
+      if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
+        let n=$n+1
+        echo -ne "" > ${RUNDIR}/${LIGAND_LIST[$n]}/ligand.mol2
+      fi
+      echo -e "${line}" >> ${RUNDIR}/${LIGAND_LIST[$n]}/ligand.mol2
+    done < ${LIGAND_FILE}
+fi
+IFS=$OLDIFS
+
+#fi
 }
 
 
@@ -559,7 +593,7 @@ case ${SCORE_PROGRAM} in
         ERROR_MESSAGE="[ ERROR ] Plants results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
         ChemFlow_error
     else
-        sed 's/_entry/,/2' ${RUNDIR}/PLANTS/ranking.csv | awk -F, 'BEGIN{OFS=",";}!/LIGAND/{print $1,$3}' > ${RUNDIR}/ScoreFlow.csv
+        sed 's/\.*_entry.*_conf_[[:digit:]]*//' ${RUNDIR}/PLANTS/ranking.csv | awk -F, 'BEGIN{OFS=",";}!/LIGAND/{print $1,$2}' > ${RUNDIR}/ScoreFlow.csv
     fi
 ;;
 "AMBER")
@@ -599,7 +633,7 @@ NLIGANDS ${NLIGANDS}
 case ${SCORE_PROGRAM} in
 "VINA")
     echo "  CENTER ${DOCK_CENTER[@]}
-  SIZE ${DOCK_LENGHT[@]} (X,Y,Z)"
+   SIZE ${DOCK_LENGHT[@]} (X,Y,Z)"
 ;;
 "PLANTS")
     echo "  CENTER ${DOCK_CENTER[@]}
@@ -629,7 +663,7 @@ echo "Example usage:
 ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf chemplp] 
 
 # For MMGBSA only 
-ScoreFlow -pdb receptor.pdb -l ligand.mol2 -p myproject [-protocol 1] [-n 8] -sf mmgbsa 
+ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol 1] [-n 8] -sf mmgbsa
 
 [Options]
  -h/--help           : Show this help message and quit
