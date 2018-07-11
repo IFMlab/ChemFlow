@@ -637,24 +637,31 @@ Scoring function: ${SCORING_FUNCTION}
 if [ -f ${RUNDIR}/ScoreFlow.csv ]  ; then
     rm -rf ${RUNDIR}/ScoreFlow.csv
 fi
-echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
+
 case ${SCORE_PROGRAM} in
 "PLANTS")
     if [ ! -f ${RUNDIR}/PLANTS/ranking.csv ] ; then
-        ERROR_MESSAGE="[ ERROR ] Plants results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
+        ERROR_MESSAGE="Plants results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
         ChemFlow_error
     else
+        echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
         sed 's/\.*_entry.*_conf_[[:digit:]]*//' ${RUNDIR}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND/ {print "PLANTS",protocol,target,ligand,$1,$2}' > ${RUNDIR}/ScoreFlow.csv
     fi
+;;
+"VINA")
+    echo "Implement this !!!"
 ;;
 "AMBER")
     for LIGAND in ${LIGAND_LIST[@]} ; do
         if [ -f ${RUNDIR}/${LIGAND}/MMPBSA.dat ] ; then
+            if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
+                echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
+            fi
             awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/DELTA TOTAL/{print "AMBER",protocol,target,ligand,ligand,$3}' ${RUNDIR}/${LIGAND}/MMPBSA.dat >> ${RUNDIR}/ScoreFlow.csv
         fi
     done
-    if [ ! -s ${RUNDIR}/ScoreFlow.csv ] ; then
-         ERROR_MESSAGE="[ ERROR ] Amber results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
+    if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
+         ERROR_MESSAGE="Amber results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
          ChemFlow_error
     else
         sed -i 's/[a-zA-Z0-9]*_conf_//2' ${RUNDIR}/ScoreFlow.csv
@@ -777,8 +784,8 @@ exit 0
 ScoreFlow_CLI() {
 
 if [ "$1" == "" ] ; then
-    echo -ne "\n[ ERROR ] ScoreFlow called without arguments\n\n"
-    ScoreFlow_help
+    ERROR_MESSAGE="ScoreFlow called without arguments."
+    ChemFlow_error ;
 fi
 
 while [[ $# -gt 0 ]]; do

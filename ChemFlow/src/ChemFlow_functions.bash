@@ -67,12 +67,17 @@ fi
 # Check if the receptor file has been given------------------------------------
 
 if [ -z "${RECEPTOR_FILE}" ] ; then
-    ERROR_MESSAGE="No RECEPTOR file name (-r receptor_file.mol2)" ;
-    ChemFlow_error ;
+    if [ ${SCORING_FUNCTION} != "mmgbsa" ] ; then
+        ERROR_MESSAGE="No RECEPTOR file name (-r receptor_file.mol2)" ;
+        ChemFlow_error ;
+    else
+        ERROR_MESSAGE="No RECEPTOR file name (-r receptor_file.pdb)" ;
+        ChemFlow_error ;
+    fi
 fi
 # Check if the receptor file exists--------------------------------------------
 if [ ! -f ${RECEPTOR_FILE} ] ; then
-    ERROR_MESSAGE=="The receptor file ${RECEPTOR_FILE} does not exist." ;
+    ERROR_MESSAGE="The receptor file ${RECEPTOR_FILE} does not exist." ;
     ChemFlow_error ;
 fi
 

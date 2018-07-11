@@ -178,7 +178,7 @@ case ${rewrite_ligands} in
     #
     for LIGAND in ${LIGAND_LIST[@]} ; do
         cd ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
-        antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl
+        antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl &>/dev/null
         mv tmp.mol2 ${LIGAND}.mol2
     done
     #
@@ -188,6 +188,9 @@ case ${rewrite_ligands} in
     cd ${RUNDIR}
     # Create ligand folder into the project
     for LIGAND in ${LIGAND_LIST[@]} ; do
+        if [ ${OVERWRITE} == "yes" ] ; then
+            rm -rf ${LIGAND}
+        fi
         if [ ! -d  ${LIGAND} ] ; then
             mkdir -p  ${LIGAND}
             if [ ! -d ${LIGAND} ] ; then
@@ -692,6 +695,7 @@ if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTDOCK_ALL} ] ; then
 else
     PROTOCOL_LIST=${PROTOCOL}
 fi
+
 #echo "Protocols: ${PROTOCOL_LIST[@]}"
 
 for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
@@ -699,7 +703,7 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
     cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
 
     # Retrieve available receptors
-    if [ -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTDOCK_ALL} ] ; then
+    if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTDOCK_ALL} ] ; then
         RECEPTOR_LIST=($(ls -d */| cut -d/ -f1))
     else
         RECEPTOR_LIST=${RECEPTOR_NAME}
@@ -882,7 +886,7 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
     cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
 
     # Retrieve available receptors
-    if [ -z ${POSTDOCK_ALL} ] ; then
+    if [ ! -z ${POSTDOCK_ALL} ] ; then
         RECEPTOR_LIST=($(ls -d */| cut -d/ -f1))
     else
         RECEPTOR_LIST=${RECEPTOR_NAME}
@@ -898,9 +902,6 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
         if [ -f docked_ligands.mol2 ] ; then rm docked_ligands.mol2 ; fi
 
         echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > rank.csv
-
-        LIGAND_LIST=($(ls -d */| cut -d/ -f1))
-#        echo "Ligands: ${LIGAND_LIST[@]}"
 
         # Organize to ChemFlow standard.
         if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
@@ -1023,150 +1024,149 @@ ________________________________________________________________________________
 }
 
 DockFlow_CLI() {
-    if [ "$1" == "" ] ; then
-        ERROR_MESSAGE="DockFlow called without arguments."
-        ChemFlow_error ;
+if [ "$1" == "" ] ; then
+    ERROR_MESSAGE="DockFlow called without arguments."
+    ChemFlow_error ;
+fi
 
-    fi
+while [[ $# -gt 0 ]]; do
+    key="$1"
 
-    while [[ $# -gt 0 ]]; do
-        key="$1"
-
-        case ${key} in
-            --resume)
-                echo -ne "\nResume not implemented"
-                exit 0
-            ;;
-            -h|--help)
-                DockFlow_help
-                exit 0
-                shift # past argument
-            ;;
-            -hh|--full-help)
-                DockFlow_help_full
-                exit 0
-                shift
-            ;;
-            -f|--file)
-                CONFIG_FILE="$2"
-                shift # past argument
-            ;;
-            -r|--receptor)
-                RECEPTOR_FILE="$2"
-                RECEPTOR_NAME="$(basename -s .mol2 ${RECEPTOR_FILE})"
-                shift # past argument
-            ;;
-            -l|--ligand)
-                LIGAND_FILE="$2"
-                shift # past argument
-            ;;
-            -p|--project)
-                PROJECT="$2"
-                shift
-            ;;
-            --protocol)
-                PROTOCOL="$2"
-                shift
-            ;;
-            -sf|--scoring_function)
-                SCORING_FUNCTION="$2"
-                shift
-            ;;
-            --center)
-                DOCK_CENTER=("$2" "$3" "$4")
-                shift 3 # past argument
-            ;;
-            --size)
-                DOCK_LENGHT=("$2" "$3" "$4")
-                shift 3
-            ;;
-            --radius)
-                DOCK_RADIUS="$2"
-                DOCK_LENGHT=("$2" "$2" "$2")
-                shift # past argument
-            ;;
-            -n|--number)
-                DOCK_POSES="$2"
-                shift # past argument
-            ;;
-            --run)
-                run_mode="$2"
-                shift # past argument
-            ;;
-            -nc|--cores) # Number of Cores [1] (or cores/node)
-                NCORES="$2" # Same as above.
-                shift # past argument
-            ;;
-            # HPC options
-            -nn|--nodes) # Number of NODES [1]
-                NNODES="$2" # Same as above.
-                shift # past argument
-            ;;
-            -w|--workload) # Workload manager, [SLURM] or PBS
-                JOB_SCHEDULLER="$2"
-                shift # past argument
-            ;;
-            ## PLANTS arguments
-            --speed)
-                speed="$2"
-                shift
-            ;;
-            --ants)
-                ants="$2"
-                shift
-            ;;
-            --evap_rate)
-                evap_rate="$2"
-                shift
-            ;;
-            --water)
-                water="$2"
-                shift # past argument
-            ;;
-            --water_xyzr)
-                water_xyzr="$2 $3 $4 $5"
-                shift 4 # past argument
-            ;;
-            ### VINA arguments
-            --iteration_scaling)
-                iteration_scaling="$2"
-                shift
-            ;;
-            --exhaustiveness)
-                exhaustiveness="$2"
-                shift
-            ;;
-            --energy_range)
-                energy_range="$2"
-                shift
-            ;;
-            ## Final arguments
-            --overwrite)
-                OVERWRITE="yes"
-            ;;
-            ## ADVANCED USER INPUT
-            #    --advanced)
-            #       USER_INPUT="$2"
-            #       shift
-            --postdock)
-                POSTDOCK="yes"
-            ;;
-            --postdock-all)
-                POSTDOCK="yes"
-                POSTDOCK_ALL="yes"
-            ;;
-            --archive)
-                ARCHIVE='yes'
-            ;;
-            --archive-all)
-                ARCHIVE='yes'
-                ARCHIVE_ALL="yes"
-            ;;
-            *)
-                unknown="$1"        # unknown option
-                echo "Unknown flag \"$unknown\""
-            ;;
-        esac
-        shift # past argument or value
-    done
+    case ${key} in
+        --resume)
+            echo -ne "\nResume not implemented"
+            exit 0
+        ;;
+        -h|--help)
+            DockFlow_help
+            exit 0
+            shift # past argument
+        ;;
+        -hh|--full-help)
+            DockFlow_help_full
+            exit 0
+            shift
+        ;;
+        -f|--file)
+            CONFIG_FILE="$2"
+            shift # past argument
+        ;;
+        -r|--receptor)
+            RECEPTOR_FILE="$2"
+            RECEPTOR_NAME="$(basename -s .mol2 ${RECEPTOR_FILE})"
+            shift # past argument
+        ;;
+        -l|--ligand)
+            LIGAND_FILE="$2"
+            shift # past argument
+        ;;
+        -p|--project)
+            PROJECT="$2"
+            shift
+        ;;
+        --protocol)
+            PROTOCOL="$2"
+            shift
+        ;;
+        -sf|--scoring_function)
+            SCORING_FUNCTION="$2"
+            shift
+        ;;
+        --center)
+            DOCK_CENTER=("$2" "$3" "$4")
+            shift 3 # past argument
+        ;;
+        --size)
+            DOCK_LENGHT=("$2" "$3" "$4")
+            shift 3
+        ;;
+        --radius)
+            DOCK_RADIUS="$2"
+            DOCK_LENGHT=("$2" "$2" "$2")
+            shift # past argument
+        ;;
+        -n|--number)
+            DOCK_POSES="$2"
+            shift # past argument
+        ;;
+        --run)
+            run_mode="$2"
+            shift # past argument
+        ;;
+        -nc|--cores) # Number of Cores [1] (or cores/node)
+            NCORES="$2" # Same as above.
+            shift # past argument
+        ;;
+        # HPC options
+        -nn|--nodes) # Number of NODES [1]
+            NNODES="$2" # Same as above.
+            shift # past argument
+        ;;
+        -w|--workload) # Workload manager, [SLURM] or PBS
+            JOB_SCHEDULLER="$2"
+            shift # past argument
+        ;;
+        ## PLANTS arguments
+        --speed)
+            speed="$2"
+            shift
+        ;;
+        --ants)
+            ants="$2"
+            shift
+        ;;
+        --evap_rate)
+            evap_rate="$2"
+            shift
+        ;;
+        --water)
+            water="$2"
+            shift # past argument
+        ;;
+        --water_xyzr)
+            water_xyzr="$2 $3 $4 $5"
+            shift 4 # past argument
+        ;;
+        ### VINA arguments
+        --iteration_scaling)
+            iteration_scaling="$2"
+            shift
+        ;;
+        --exhaustiveness)
+            exhaustiveness="$2"
+            shift
+        ;;
+        --energy_range)
+            energy_range="$2"
+            shift
+        ;;
+        ## Final arguments
+        --overwrite)
+            OVERWRITE="yes"
+        ;;
+        ## ADVANCED USER INPUT
+        #    --advanced)
+        #       USER_INPUT="$2"
+        #       shift
+        --postdock)
+            POSTDOCK="yes"
+        ;;
+        --postdock-all)
+            POSTDOCK="yes"
+            POSTDOCK_ALL="yes"
+        ;;
+        --archive)
+            ARCHIVE='yes'
+        ;;
+        --archive-all)
+            ARCHIVE='yes'
+            ARCHIVE_ALL="yes"
+        ;;
+        *)
+            unknown="$1"        # unknown option
+            echo "Unknown flag \"$unknown\""
+        ;;
+    esac
+    shift # past argument or value
+done
 }
