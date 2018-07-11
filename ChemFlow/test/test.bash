@@ -181,7 +181,108 @@ EOF
 }
 
 
+# Test DockFlow input --------------------------------------------------------------------------------------------------
+test_dockflow_plants_without_arg(){
+TEST="test_dockflow_plants_without_arg"
+output=`DockFlow`
+output=`echo ${output}`
+expected="[ ERROR ] DockFlow called without arguments. For help, type: DockFlow -h"
+assertOutputIsExpected
+}
 
+test_dockflow_vina_without_arg(){
+TEST="test_dockflow_vina_without_arg"
+output=`DockFlow`
+output=`echo ${output}`
+expected="[ ERROR ] DockFlow called without arguments. For help, type: DockFlow -h"
+assertOutputIsExpected
+}
+
+test_dockflow_plants_without_project(){
+TEST="test_dockflow_plants_without_project"
+output=`DockFlow --protocol vina1 -r receptor.mol2 -l compounds.mol2`
+output=`echo ${output}`
+expected="[ ChemFlow ] Checking input files... [ ERROR ] No PROJECT name (-p myproject) For help, type: DockFlow -h"
+assertOutputIsExpected
+}
+
+test_dockflow_vina_without_project(){
+TEST="test_dockflow_vina_without_project"
+output=`DockFlow --protocol vina1 -r receptor.mol2 -l compounds.mol2 -sf vina`
+output=`echo ${output}`
+expected="[ ChemFlow ] Checking input files... [ ERROR ] No PROJECT name (-p myproject) For help, type: DockFlow -h"
+assertOutputIsExpected
+}
+
+test_dockflow_plants_without_receptor_file(){
+TEST="test_dockflow_plants_without_receptor_file"
+output=`DockFlow -p test --protocol vina1 -l compounds.mol2`
+output=`echo ${output}`
+expected="[ ChemFlow ] Checking input files... [ ERROR ] No RECEPTOR file name (-r receptor_file.mol2) For help, type: DockFlow -h"
+assertOutputIsExpected
+}
+
+test_dockflow_vina_without_receptor_file(){
+TEST="test_dockflow_vina_without_receptor_file"
+output=`DockFlow -p test --protocol vina1 -l compounds.mol2 -sf vina`
+output=`echo ${output}`
+expected="[ ChemFlow ] Checking input files... [ ERROR ] No RECEPTOR file name (-r receptor_file.mol2) For help, type: DockFlow -h"
+assertOutputIsExpected
+}
+
+test_dockflow_plants_without_ligand_file(){
+TEST="test_dockflow_plants_without_ligand_file"
+output=`DockFlow -p test --protocol vina1 -r receptor.mol2`
+output=`echo ${output}`
+expected="[ ChemFlow ] Checking input files... [ ERROR ] No LIGAND filename (-l ligand_file.mol2) For help, type: DockFlow -h"
+assertOutputIsExpected
+}
+
+test_dockflow_vina_without_ligand_file(){
+TEST="test_dockflow_vina_without_ligand_file"
+output=`DockFlow -p test --protocol vina1 -r receptor.mol2 -sf vina`
+output=`echo ${output}`
+expected="[ ChemFlow ] Checking input files... [ ERROR ] No LIGAND filename (-l ligand_file.mol2) For help, type: DockFlow -h"
+assertOutputIsExpected
+}
+
+test_dockflow_plants_without_center(){
+TEST="test_dockflow_plants_without_center"
+output=`DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2`
+output=`echo ${output}`
+expected="[ ChemFlow ] Checking input files... [ ERROR ] No DOCKING CENTER defined (--center x y z) For help, type: DockFlow -h"
+assertOutputIsExpected
+}
+
+test_dockflow_vina_without_center(){
+TEST="test_dockflow_vina_without_center"
+output=`DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 -sf vina`
+output=`echo ${output}`
+expected="[ ChemFlow ] Checking input files... [ ERROR ] No DOCKING CENTER defined (--center x y z) For help, type: DockFlow -h"
+assertOutputIsExpected
+}
+
+test_dockflow_postdock_empty_plants(){
+TEST="test_dockflow_plants_without_center"
+output=`DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 --postdock`
+output=`echo ${output}`
+expected="[ ChemFlow ] Checking input files... [ ERROR ] Plants result for ligand CHEMBL195725 does not exists. [ ERROR ] Plants result for ligand CHEMBL477992 does not exists. [ DockFlow ] Error during post-processing, see error above."
+assertOutputIsExpected
+}
+
+test_dockflow_postdock_empty_vina(){
+TEST="test_dockflow_vina_without_center"
+output=`DockFlow --project test --protocol vina1 -r receptor.mol2 -l compounds.mol2 -sf vina --postdock`
+output=`echo ${output}`
+expected="[ ChemFlow ] Checking input files... [ ERROR ] No DOCKING CENTER defined (--center x y z) For help, type: DockFlow -h"
+assertOutputIsExpected
+}
+
+
+
+
+
+# Test the flow ---------------------------------------------------------------------------------------------
 test_DockFlow_vina_produces_output_pdbqt(){
 TEST="test_DockFlow_vina_produces_output_pdbqt"
 
@@ -209,7 +310,6 @@ for FILE in ${FILES} ; do
 done
 }
 
-
 #test_vina2(){
 ## Run DockFlow
 #DockFlow --project test --protocol vina2 -r receptor.mol2 -l compounds.mol2 --radius 15 --center 20.259 -2.752 18.203 -sf vina <<EOF
@@ -236,10 +336,7 @@ done
 #EOF
 #}
 
-
-
-# Program ----------------------------------------------------------------------
-#
+initialize_test() {
 echo "[ ChemFlow ] Initiating test"
 cd ${CHEMFLOW_HOME}/test/
 #ChemFlow_checkfile_ERROR protein_ligand.tar.gz
@@ -253,9 +350,31 @@ cd protein_ligand
 ## prepare input files
 #python $(which SmilesTo3D.py ) -i compounds.smi -o compounds.sdf --hydrogen
 #babel -isdf compounds.sdf -omol2 compounds.mol2
+}
 
-# Tests
-test_DockFlow_vina_produces_output_pdbqt
-test_PostDock_vina_produces_rank_docked_ligands
 
-echo "All tests passed. Yeah ! :D"
+# Program ----------------------------------------------------------------------
+initialize_test
+
+# Tests on inputs
+test_dockflow_plants_without_arg
+test_dockflow_vina_without_arg
+
+test_dockflow_plants_without_project
+test_dockflow_vina_without_project
+
+test_dockflow_plants_without_receptor_file
+test_dockflow_vina_without_receptor_file
+
+test_dockflow_plants_without_ligand_file
+test_dockflow_vina_without_ligand_file
+
+test_dockflow_vina_without_center
+test_dockflow_plants_without_center
+
+#test_DockFlow_vina_produces_output_pdbqt
+#test_PostDock_vina_produces_rank_docked_ligands
+
+
+
+echo "[ ChemFlow ] All tests passed. Yeah ! :D"

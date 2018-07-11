@@ -197,18 +197,27 @@ ScoreFlow_rescore_mmgbsa() {
 #       RETURNS: -
 #
 #===============================================================================
-  ScoreFlow_compute_charges
-  ScoreFlow_write_run_tleap
-  ScoreFlow_implicit_write_MIN
-  ScoreFlow_MMGBSA_write
+ScoreFlow_compute_charges
+ScoreFlow_write_run_tleap
+ScoreFlow_implicit_write_MIN
 
-  for LIGAND in ${LIGAND_LIST[@]} ; do
-    echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r" 
+if [ ${MD} == 'yes' ] ; then
+  ScoreFlow_implicit_write_MD
+fi
+
+ScoreFlow_MMGBSA_write
+
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r"
     cd ${RUNDIR}/${LIGAND}
     ScoreFlow_implicit_run_MIN
-    ScoreFlow_MMGBSA_run
 
-  done
+    if [ ${MD} == 'yes' ] ; then
+      ScoreFlow_implicit_run_MD
+    fi
+
+    ScoreFlow_MMGBSA_run
+done
 }
 
 
@@ -399,7 +408,7 @@ cd ${RUNDIR}
 echo "MD GB2, infinite cut off
 &cntrl
   imin=0,irest=0,ntx=1,
-  nstlim=1000,dt=0.002,ntb=0,
+  nstlim=10000,dt=0.002,ntb=0,
   ntf=2,ntc=2,
   ntpr=1000, ntwx=1000, ntwr=30000,
   cut=9999.0, rgbmax=15.0,
@@ -443,10 +452,50 @@ fi
 if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
     pmemd.cuda -O  \
     -i ../${input}.in -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
-    -x ${run}.mdcrd   -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
+    -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
     -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
 fi
 }
+
+
+ScoreFlow_implicit_run_MD() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
+#   DESCRIPTION: Run mmgbsa implicit MIN
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: ${OVERWRITE}
+#       RETURNS: -
+#
+#===============================================================================
+init=complex
+input=md_gbsa
+prev=mini
+run=md
+
+var=""
+var_md=""
+# Check if simulations finished
+if [ -f mini.mdout ] ; then
+    var=$(tail -1 mini.mdout | awk '/Total wall time/{print $1}')
+fi
+
+if [ -f md.mdout ] ; then
+    var_md=$(tail -1 md.mdout | awk '/Total wall time/{print $1}')
+fi
+
+# If empty or simulation finished, (re)run.
+if [ "${var}" != "" ] ; then
+    if [ "${var_md}" == "" ] ||  [ ${OVERWRITE} == 'yes' ]  ; then
+        pmemd.cuda -O  \
+        -i ../${input}.in -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
+        -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
+        -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
+    fi
+fi
+}
+
 
 
 ScoreFlow_MMGBSA_write() {
@@ -486,6 +535,9 @@ ScoreFlow_MMGBSA_run() {
 #===============================================================================
 
 TRAJECTORY="mini.rst7"
+if [ ${MD} == 'yes' ] ; then
+    TRAJECTORY="md.nc"
+fi
 
 if [ ! -f MMPBSA.dat ] || [ "${OVERWRITE}" == 'yes' ] ; then
     rm -rf com.top rec.top ligand.top
@@ -529,8 +581,6 @@ if [ ${SCORE_PROGRAM} == "PLANTS" ] ; then
       done
 fi
 
-
-
 # if [ ${REWRITE_LIGANDS} == 'yes' ] ; then 
 
 # Copy files to project folder.
@@ -539,7 +589,7 @@ if [ ${SCORING_FUNCTION} == "mmgbsa" ] ; then
 else
     cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 fi
-cp ${LIGAND_FILE}   ${RUNDIR}/ligand.mol2
+cp ${LIGAND_FILE} ${RUNDIR}/ligand.mol2
 
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
@@ -587,25 +637,30 @@ Scoring function: ${SCORING_FUNCTION}
 if [ -f ${RUNDIR}/ScoreFlow.csv ]  ; then
     rm -rf ${RUNDIR}/ScoreFlow.csv
 fi
+echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
 case ${SCORE_PROGRAM} in
 "PLANTS")
     if [ ! -f ${RUNDIR}/PLANTS/ranking.csv ] ; then
         ERROR_MESSAGE="[ ERROR ] Plants results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
         ChemFlow_error
     else
-        sed 's/\.*_entry.*_conf_[[:digit:]]*//' ${RUNDIR}/PLANTS/ranking.csv | awk -F, 'BEGIN{OFS=",";}!/LIGAND/{print $1,$2}' > ${RUNDIR}/ScoreFlow.csv
+        sed 's/\.*_entry.*_conf_[[:digit:]]*//' ${RUNDIR}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND/ {print "PLANTS",protocol,target,ligand,$1,$2}' > ${RUNDIR}/ScoreFlow.csv
     fi
 ;;
 "AMBER")
     for LIGAND in ${LIGAND_LIST[@]} ; do
-        if [ -f ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat ] ; then
-            awk -v LIGAND=${LIGAND} 'BEGIN{OFS=",";}/DELTA TOTAL/{print LIGAND,$3}' ${RUNDIR}/${LIGAND}/MMPBSA_MINI.dat >> ${RUNDIR}/ScoreFlow.csv
+        if [ -f ${RUNDIR}/${LIGAND}/MMPBSA.dat ] ; then
+            awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/DELTA TOTAL/{print "AMBER",protocol,target,ligand,ligand,$3}' ${RUNDIR}/${LIGAND}/MMPBSA.dat >> ${RUNDIR}/ScoreFlow.csv
         fi
     done
     if [ ! -s ${RUNDIR}/ScoreFlow.csv ] ; then
          ERROR_MESSAGE="[ ERROR ] Amber results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
          ChemFlow_error
+    else
+        sed -i 's/[a-zA-Z0-9]*_conf_//2' ${RUNDIR}/ScoreFlow.csv
+        sed -i 's/_conf_[[:digit:]]*//' ${RUNDIR}/ScoreFlow.csv
     fi
+
 ;;
 esac
 }
@@ -639,6 +694,8 @@ case ${SCORE_PROGRAM} in
     echo "  CENTER ${DOCK_CENTER[@]}
   RADIUS ${DOCK_RADIUS}"
 ;;
+"AMBER")
+    echo "      MD ${MD}"
 esac
 echo "
 [ Run options ]
@@ -796,6 +853,9 @@ while [[ $# -gt 0 ]]; do
         ;;
         --bcc)
             CHARGE="bcc"
+        ;;
+        --md)
+            MD="yes"
         ;;
         # HPC options
         -nn|--nodes) # Number of NODES [1]

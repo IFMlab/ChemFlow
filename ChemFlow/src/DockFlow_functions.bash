@@ -146,6 +146,8 @@ DockFlow_rewrite_ligands() {
 #        UPDATE: fri. july 6 14:49:50 CEST 2018
 #
 #===============================================================================
+cd ${RUNDIR}
+
 if [ -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
     read -p "Rewrite ligands [Y/N] ? : " rewrite_ligands
 else
@@ -170,9 +172,23 @@ case ${rewrite_ligands} in
     done < ${WORKDIR}/${LIGAND_FILE}
     IFS=${OLDIFS}
 
+
+    #
+    # QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
+    #
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        cd ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
+        antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl
+        mv tmp.mol2 ${LIGAND}.mol2
+    done
+    #
+    #
+    #
+
+    cd ${RUNDIR}
     # Create ligand folder into the project
     for LIGAND in ${LIGAND_LIST[@]} ; do
-        if [ ! -d   ${LIGAND} ] ; then
+        if [ ! -d  ${LIGAND} ] ; then
             mkdir -p  ${LIGAND}
             if [ ! -d ${LIGAND} ] ; then
                 echo "[ ERROR ] could not create ${LIGAND} directory in ${RUNDIR}. Did you check your quotas ?"
@@ -761,7 +777,10 @@ for LIGAND in ${LIGAND_LIST[@]}; do
     fi
 done
 # rename the ligand in the created file
-sed -i 's/\.*_entry.*_conf_[[:digit:]]*//' docked_ligands.mol2
+if [ -f docked_ligands.mol2 ] && [ -f rank.csv ] ; then
+    sed -i 's/\.*_entry_[[:digit:]]*//' docked_ligands.mol2
+    sed -i 's/[a-zA-Z0-9]*_entry_[[:digit:]]*_conf_//' rank.csv
+fi
 }
 
 
@@ -820,6 +839,10 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS=${OLDIFS}
     fi
 done
+
+if [ -f rank.csv ] ; then
+    sed -i 's/[a-zA-Z0-9]*_conf_//' rank.csv
+fi
 }
 
 
@@ -890,7 +913,7 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
 done
 
 if [ ! -z ${FAIL} ] ; then
-    echo "[ DockFlow ] Error during post-processing, see error above." ; exit 0
+    echo "[ DockFlow ] Error during post-docking, see error above." ; exit 0
 else
     echo "[ DockFlow ] Done with post-processing."
 
@@ -1001,8 +1024,9 @@ ________________________________________________________________________________
 
 DockFlow_CLI() {
     if [ "$1" == "" ] ; then
-        echo -ne "\n[ ERROR ] DockFlow called without arguments\n\n"
-        DockFlow_help
+        ERROR_MESSAGE="DockFlow called without arguments."
+        ChemFlow_error ;
+
     fi
 
     while [[ $# -gt 0 ]]; do

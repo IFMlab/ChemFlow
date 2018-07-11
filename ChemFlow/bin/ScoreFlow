@@ -15,9 +15,9 @@
 #
 #===============================================================================
 #
-#          FILE:  ScoreFlow2.bash
+#          FILE:  ScoreFlow.bash
 #
-#         USAGE: ./ScoreFlow2.bash -p myproject -r receptor.mol2 -l multilig.mol2 -sf chemplp [-w SLURM]...
+#         USAGE: ./ScoreFlow.bash -p myproject -r receptor.mol2 -l multilig.mol2 -sf chemplp [-w SLURM]...
 # 
 #
 #         BRIEF: Main routine for ScoreFlow

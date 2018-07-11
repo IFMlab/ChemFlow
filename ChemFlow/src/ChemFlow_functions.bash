@@ -5,6 +5,16 @@ source ${CHEMFLOW_HOME}/test/test_function.sh
 
 
 ChemFlow_error() {
+#===  FUNCTION  ================================================================
+#          NAME: ChemFlow_error
+#   DESCRIPTION: A function to standardize ChemFlow error message
+#
+#    PARAMETERS: ${ERROR_MESSAGE}
+#                ${WORKFLOW} (global)
+#       RETURNS: -
+#
+#        Author: Dona de Francquen
+#===============================================================================
 echo "
 [ ERROR ] ${ERROR_MESSAGE}
 
@@ -19,11 +29,12 @@ ChemFlow_set_ligand_list() {
 #          NAME: ChemFlow_set_ligand_list
 #   DESCRIPTION: Get all molecule names in the .mol2 file and save into an array
 #
-#    PARAMETERS: Ligand_list
-#       RETURNS: -
+#    PARAMETERS: ${LIGAND_FILE}
+#       RETURNS: LIGAND_LIST
+#                NLIGANDS
 #
+#        Author: Dona de Francquen
 #===============================================================================
-#    LIGAND_FILE=${1}
 if [ ! -s ${LIGAND_FILE} ] ; then
     ERROR_MESSAGE="The ligand file ${LIGAND_FILE} is empty"
     ChemFlow_error
@@ -37,20 +48,17 @@ fi
 
 ChemFlow_validate_input() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_validate_input
+#          NAME: ChemFlow_validate_input
 #   DESCRIPTION: Validates the command line options and parameter combination.
 #
-#    PARAMETERS: Program name as $1, all others come as global variables.
+#    PARAMETERS: Every global variables.
 #       RETURNS: -
 #
+#        Author: Dona de Francquen
 #===============================================================================
-
 echo "[ ChemFlow ] Checking input files..."
 
-# Sanity check for input file
-
 # Mandatory parameters for all programs
-
 # Check if the project name has been given-------------------------------------
 if [ -z "${PROJECT}" ] ; then
     ERROR_MESSAGE="No PROJECT name (-p myproject)" ;
@@ -124,8 +132,11 @@ case ${WORKFLOW} in
     ;;
     esac
 
-    # Center is not required for mmgbsa rescoring.
+
     if [ "${SCORING_FUNCTION}" != "mmgbsa"  ] ; then
+        # No md if scoring function is != mmgbsa
+        MD="no"
+        # Center is not required for mmgbsa rescoring.
         check_center
     fi
 ;;
@@ -178,6 +189,7 @@ if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
     fi
 fi
 
+# Create the ligand list
 ChemFlow_set_ligand_list ${LIGAND_FILE}
 }
 
@@ -191,7 +203,15 @@ fi
 }
 
 ChemFlow_set_defaults(){
-
+#===  FUNCTION  ================================================================
+#          NAME: ChemFlow_set_defaults
+#   DESCRIPTION: Set a default for parameters.
+#
+#    PARAMETERS: -
+#       RETURNS: -
+#
+#        Author: Dona de Francquen
+#===============================================================================
 # General options
 WORKDIR=${PWD}
 PROTOCOL="default"
@@ -221,6 +241,8 @@ elif [ $1 == 'ScoreFlow' ] ; then
     # Scoring options
     SCORE_PROGRAM="PLANTS"
     CHARGE="gas"
-fi
 
+    # no MD
+    MD="no"
+fi
 }

@@ -15,9 +15,9 @@
 #
 #===============================================================================
 #
-#          FILE:  DockFlow2.bash
+#          FILE:  DockFlow.bash
 #
-#         USAGE: ./DockFlow2.bash -p myproject -r receptor.mol2 -l multilig.mol2 --center 2.2 -4.5 0.75 [-j SLURM] ..
+#         USAGE: ./DockFlow.bash -p myproject -r receptor.mol2 -l multilig.mol2 --center 2.2 -4.5 0.75 [-j SLURM] ..
 # 
 #
 #         BRIEF: Main routine for DockFlow
