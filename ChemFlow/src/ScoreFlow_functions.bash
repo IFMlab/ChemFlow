@@ -200,25 +200,48 @@ ScoreFlow_rescore_mmgbsa() {
 #===============================================================================
 ScoreFlow_compute_charges
 ScoreFlow_write_run_tleap
-ScoreFlow_implicit_write_MIN
 
-if [ ${MD} == 'yes' ] ; then
-  ScoreFlow_implicit_write_MD
-fi
-
-ScoreFlow_MMGBSA_write
-
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r"
-    cd ${RUNDIR}/${LIGAND}
-    ScoreFlow_implicit_run_MIN
+if [ "${WATER}" != "yes" ] ; then
+    ScoreFlow_implicit_write_MIN
 
     if [ ${MD} == 'yes' ] ; then
-      ScoreFlow_implicit_run_MD
+      ScoreFlow_implicit_write_MD
     fi
 
-    ScoreFlow_MMGBSA_run
-done
+    ScoreFlow_MMGBSA_write
+
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r"
+        cd ${RUNDIR}/${LIGAND}
+        ScoreFlow_implicit_run_MIN
+
+        if [ ${MD} == 'yes' ] ; then
+          ScoreFlow_implicit_run_MD
+        fi
+
+        ScoreFlow_MMGBSA_run
+    done
+
+else
+
+    ScoreFlow_explicit_write_MIN
+
+
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        echo -ne "Minimizing ${RECEPTOR_NAME} - ${LIGAND}     \r"
+        cd ${RUNDIR}/${LIGAND}
+        ScoreFlow_explicit_run_MIN
+    done
+
+
+    if [ ${MD} == 'yes' ] ; then
+      ScoreFlow_explicit_write_MD
+    fi
+
+
+fi
+
+
 }
 
 
@@ -278,10 +301,13 @@ fi
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
     cd ${RUNDIR}/${LIGAND}
+
     if [ ! -f ligand.frcmod ] && [ -f ligand_gas.mol2 ] ; then
-            parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
-    else
-        echo "${LIGAND} gas" >> ${RUNDIR}/antechamber_errors.lst
+        parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
+
+        if [ ! -f ligand.frcmod ]  ; then
+            echo "${LIGAND} gas" >> ${RUNDIR}/antechamber_errors.lst
+        fi
     fi
 
     case ${CHARGE} in
@@ -318,6 +344,7 @@ ScoreFlow_write_run_tleap() {
 
 cd ${RUNDIR}/
 
+if [ "${WATER}" != "yes" ] ; then
 echo "
 source oldff/leaprc.ff99SBildn
 source leaprc.gaff
@@ -343,6 +370,50 @@ saveamberparm complex complex.prmtop complex.rst7
 #charge complex
 quit
 " > tleap_gbsa.in
+
+else
+echo "
+source oldff/leaprc.ff99SBildn
+source leaprc.gaff
+
+ptn = loadpdb ../receptor.pdb
+saveamberparm ptn ptn.prmtop ptn.rst7
+savePDB ptn ptn.pdb
+charge ptn
+
+# Ligand --------------------------------------------------
+# Load ligand parameters
+loadAmberParams ligand.frcmod
+ligand = loadmol2  ligand_${CHARGE}.mol2
+saveamberparm ligand ligand.prmtop ligand.rst7
+savePDB ligand ligand.pdb
+charge ligand
+
+complex = combine{ptn,ligand}
+saveamberparm complex complex.prmtop complex.rst7
+savePDB complex complex.pdb
+charge complex
+
+# Add enough ions to neutralize
+AddIons2 complex Cl- 0
+AddIons2 complex Na+ 0
+
+# Save protein with ions: topology and coordinates
+saveamberparm complex ionized.prmtop ionized.rst7
+
+# Solvate with at least 12 Angtron buffer region
+solvateOct complex TIP3PBOX 12
+
+# Save solvated complex: topology and coordinates
+saveamberparm complex ionized_solvated.prmtop ionized_solvated.rst7
+savePDB complex ionized_solvated.pdb
+
+quit
+" > tleap_gbsa.in
+fi
+
+
+
 
 # Goes back to rundir to prepare in parallel.
 
@@ -378,7 +449,7 @@ cd ${RUNDIR}
 
 echo "MD GB2, infinite cut off
 &cntrl
-  imin=1,maxcyc=1000,
+  imin=1,maxcyc=${maxcyc},
   irest=0,ntx=1,
   cut=9999.0, rgbmax=15.0,
   igb=2
@@ -390,6 +461,28 @@ echo "MD GB2, infinite cut off
 /
 " > min_gbsa.in
 }
+
+
+ScoreFlow_explicit_write_MIN() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_MMGBSA_explicit_write_MIN
+#   DESCRIPTION: Write mmgbsa explicit MIN config
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: -
+#       RETURNS: -
+#
+#===============================================================================
+
+for filename in min_pr.in min.in ; do
+    file=$(cat ${CHEMFLOW_HOME}/templates/water/$filename)
+    eval echo \""${file}"\" > ${RUNDIR}/${filename}
+done
+
+}
+
+
 
 
 ScoreFlow_implicit_write_MD() {
@@ -426,6 +519,26 @@ echo "MD GB2, infinite cut off
 " > md_gbsa.in
 }
 
+
+ScoreFlow_explicit_write_MD() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_MMGBSA_implicit_write_MIN
+#   DESCRIPTION: Write mmgbsa implicit config
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: -
+#       RETURNS: -
+#
+#===============================================================================
+
+cd ${RUNDIR}
+
+}
+
+
+
+
 ScoreFlow_implicit_run_MIN() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
@@ -457,6 +570,51 @@ if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
     -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
 fi
 }
+
+
+ScoreFlow_explicit_run_MIN() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_MMGBSA_explicit_run_MIN
+#   DESCRIPTION: Run mmgbsa implicit MIN
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: ${OVERWRITE}
+#       RETURNS: -
+#
+#===============================================================================
+
+init=ionized_solvated    # Do not change Init
+prev="${init}"
+
+# Loop  over minimization protocol
+for run in "min_pr" "min" ; do
+    input="../${run}"
+
+    var=""
+
+    # Check if simulations finished
+    if [ -f ${run}.mdout ] ; then
+        var=$(tail -1 ${run}.mdout | awk '/Total wall time/{print $1}')
+    fi
+
+    # If empty or simulation finished, (re)run.
+    if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
+        pmemd.cuda -O  \
+        -i ${input}.in   -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
+        -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
+        -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
+    fi
+
+    prev="${run}"
+done
+
+}
+
+
+
+
+
 
 
 ScoreFlow_implicit_run_MD() {
@@ -878,6 +1036,14 @@ while [[ $# -gt 0 ]]; do
         ;;
         --md)
             MD="yes"
+        ;;
+        --water)
+            WATER='yes'
+        ;;
+# Minimization specific options
+        -maxcyc) # Maximun number of Energy minimization steps.
+            maxcyc="$2" # Same as above.
+            shift
         ;;
         # HPC options
         -nn|--nodes) # Number of NODES [1]

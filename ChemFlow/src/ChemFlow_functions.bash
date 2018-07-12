@@ -139,8 +139,6 @@ case ${WORKFLOW} in
 
 
     if [ "${SCORING_FUNCTION}" != "mmgbsa"  ] ; then
-        # No md if scoring function is != mmgbsa
-        MD="no"
         # Center is not required for mmgbsa rescoring.
         check_center
     fi
@@ -249,5 +247,7 @@ elif [ $1 == 'ScoreFlow' ] ; then
 
     # no MD
     MD="no"
+    WATER="no"
+    MAXCYC="1000"
 fi
 }

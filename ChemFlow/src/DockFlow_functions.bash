@@ -190,12 +190,12 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     fi
     case ${DOCK_PROGRAM} in
     "PLANTS")
-        if [ ! -f ${LIGAND}/ligand.mol2 ]  || [ ${OVERWRITE} == 'yes' ] ; then
+        if [ ! -f ${LIGAND}/ligand.mol2 ]  || [ ${rewrite_ligands} == 'yes' ] ; then
             cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
         fi
     ;;
     "VINA")
-        if [ ! -f  ${LIGAND}/ligand.pdbqt ] || [ ${OVERWRITE} == 'yes' ] ; then
+        if [ ! -f  ${LIGAND}/ligand.pdbqt ] || [ ${rewrite_ligands} == 'yes' ] ; then
             ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
             -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
             -o ${LIGAND}/ligand.pdbqt
