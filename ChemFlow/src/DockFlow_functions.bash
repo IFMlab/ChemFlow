@@ -148,7 +148,7 @@ IFS=${OLDIFS}
 #
 for LIGAND in ${LIGAND_LIST[@]} ; do
     cd ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
-    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl &>/dev/null
+    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -dr no &>/dev/null
     mv tmp.mol2 ${LIGAND}.mol2
 done
 #
