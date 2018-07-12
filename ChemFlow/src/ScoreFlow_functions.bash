@@ -178,9 +178,10 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
 done
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
-
-  vina --score_only --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt | awk -v LIGAND=${LIGAND} 'BEGIN{OFS=",";}/Affinity:/{print LIGAND,$2}' >> ${RUNDIR}/ScoreFlow.csv
-
+    vina --local_only --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
+         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
+         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
+         --out ${RUNDIR}/${LIGAND}/output.pdbqt --log ${RUNDIR}/${LIGAND}/output.log ${VINA_EXTRA} &> /dev/null
 done
 }
 
@@ -645,11 +646,25 @@ case ${SCORE_PROGRAM} in
         ChemFlow_error
     else
         echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
-        sed 's/\.*_entry.*_conf_[[:digit:]]*//' ${RUNDIR}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND/ {print "PLANTS",protocol,target,ligand,$1,$2}' > ${RUNDIR}/ScoreFlow.csv
+        sed 's/\.*_entry.*_conf_[[:digit:]]*//' ${RUNDIR}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND/ {print "PLANTS",protocol,target,ligand,$1,$2}' >> ${RUNDIR}/ScoreFlow.csv
     fi
 ;;
 "VINA")
-    echo "Implement this !!!"
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        if [ -f ${RUNDIR}/${LIGAND}/output.log ] ; then
+            if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
+                echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
+            fi
+            awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/Affinity:/ {print "VINA",protocol,target,ligand,ligand,$2}' ${RUNDIR}/${LIGAND}/output.log >> ${RUNDIR}/ScoreFlow.csv
+        fi
+     done
+     if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
+         ERROR_MESSAGE="Vina results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
+         ChemFlow_error
+    else
+        sed -i 's/[a-zA-Z0-9]*_conf_//2' ${RUNDIR}/ScoreFlow.csv
+        sed -i 's/_conf_[[:digit:]]*//' ${RUNDIR}/ScoreFlow.csv
+    fi
 ;;
 "AMBER")
     for LIGAND in ${LIGAND_LIST[@]} ; do

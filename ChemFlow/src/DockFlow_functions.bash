@@ -126,7 +126,38 @@ fi
 }
 
 
-DockFlow_rewrite_ligands() {
+DockFlow_rewrite_origin_ligands() {
+# Original
+rm -rf ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
+mkdir -p ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
+
+OLDIFS=$IFS
+IFS='%'
+n=-1
+while read line ; do
+    if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
+        let n=$n+1
+    fi
+    echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
+done < ${WORKDIR}/${LIGAND_FILE}
+IFS=${OLDIFS}
+
+
+#
+# QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
+#
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    cd ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
+    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl &>/dev/null
+    mv tmp.mol2 ${LIGAND}.mol2
+done
+#
+#
+#
+}
+
+
+DockFlow_prepare_ligands() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_rewrite_ligands
 #   DESCRIPTION: User interface for the rewrite ligands option.
@@ -148,75 +179,30 @@ DockFlow_rewrite_ligands() {
 #===============================================================================
 cd ${RUNDIR}
 
-if [ -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
-    read -p "Rewrite ligands [Y/N] ? : " rewrite_ligands
-else
-    rewrite_ligands="yes"
-fi
-
-case ${rewrite_ligands} in
-"y"|"yes"|"Yes"|"Y"|"YES")
-
-    # Original
-    rm -rf ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
-    mkdir -p ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
-
-    OLDIFS=$IFS
-    IFS='%'
-    n=-1
-    while read line ; do
-        if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-            let n=$n+1
+# Create ligand folder into the project
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    if [ ! -d  ${LIGAND} ] ; then
+        mkdir -p  ${LIGAND}
+        if [ ! -d ${LIGAND} ] ; then
+            echo "[ ERROR ] could not create ${LIGAND} directory in ${RUNDIR}. Did you check your quotas ?"
+            exit 0
         fi
-        echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
-    done < ${WORKDIR}/${LIGAND_FILE}
-    IFS=${OLDIFS}
-
-
-    #
-    # QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
-    #
-    for LIGAND in ${LIGAND_LIST[@]} ; do
-        cd ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
-        antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl &>/dev/null
-        mv tmp.mol2 ${LIGAND}.mol2
-    done
-    #
-    #
-    #
-
-    cd ${RUNDIR}
-    # Create ligand folder into the project
-    for LIGAND in ${LIGAND_LIST[@]} ; do
-        if [ ${OVERWRITE} == "yes" ] ; then
-            rm -rf ${LIGAND}
+    fi
+    case ${DOCK_PROGRAM} in
+    "PLANTS")
+        if [ ! -f ${LIGAND}/ligand.mol2 ]  || [ ${OVERWRITE} == 'yes' ] ; then
+            cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
         fi
-        if [ ! -d  ${LIGAND} ] ; then
-            mkdir -p  ${LIGAND}
-            if [ ! -d ${LIGAND} ] ; then
-                echo "[ ERROR ] could not create ${LIGAND} directory in ${RUNDIR}. Did you check your quotas ?"
-                exit 0
-            fi
+    ;;
+    "VINA")
+        if [ ! -f  ${LIGAND}/ligand.pdbqt ] || [ ${OVERWRITE} == 'yes' ] ; then
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
+            -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
+            -o ${LIGAND}/ligand.pdbqt
         fi
-        case ${DOCK_PROGRAM} in
-        "PLANTS")
-            if [ ! -f ${LIGAND}/ligand.mol2 ]  || [ ${OVERWRITE} == 'yes' ] ; then
-                cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
-            fi
-        ;;
-        "VINA")
-            if [ ! -f  ${LIGAND}/ligand.pdbqt ] || [ ${OVERWRITE} == 'yes' ] ; then
-                ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
-                -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
-                -o ${LIGAND}/ligand.pdbqt
-            fi
-        ;;
-        esac
-
-        if [ -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
-            rm -rf ${LIGAND}/${DOCK_PROGRAM}
-        fi
-    done
+    ;;
+    esac
+done
 #        if [ -f  ${PROJECT}.chemflow/LigFlow/ligands.lst ] ; then
 #            rm -rf ${PROJECT}.chemflow/LigFlow/ligands.lst
 #        fi
@@ -226,32 +212,6 @@ case ${rewrite_ligands} in
 #        done
 
 #
-;;
-"n"|"no"|"No"|"N"|"NO")
-    for LIGAND in ${LIGAND_LIST[@]} ; do
-        case ${DOCK_PROGRAM} in
-        "PLANTS")
-            # If the folder exists but there's no "bestranking.csv" its incomplete.
-            echo ${LIGAND}/${DOCK_PROGRAM}
-            if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -s ${LIGAND}/${DOCK_PROGRAM}/bestranking.csv ] ; then
-                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
-                rm -rf ${LIGAND}/${DOCK_PROGRAM}
-            fi
-        ;;
-        "VINA")
-            # If the folder exists but there's no "bestranking.csv" its incomplete.
-            if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -s ${LIGAND}/${DOCK_PROGRAM}/output.pdbqt ] ; then
-                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
-                rm -rf ${LIGAND}/${DOCK_PROGRAM}
-            fi
-        ;;
-        esac
-    done
-;;
-*)
-    echo ${opt} "[ ERROR ] Choose only Y or N" ; exit 0
-;;
-esac
 }
 
 
@@ -283,7 +243,24 @@ cd ${RUNDIR}
 DockFlow_prepare_receptor
 
 # 3. Ligands
-DockFlow_rewrite_ligands
+if [ -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] && [ -d ${RUNDIR}/${LIGAND_LIST} ]; then
+    read -p "Rewrite ligands [Y/N] ? : " rewrite_ligands
+else
+    rewrite_ligands="yes"
+fi
+
+case ${rewrite_ligands} in
+"y"|"yes"|"Yes"|"Y"|"YES")
+    DockFlow_rewrite_origin_ligands
+    DockFlow_prepare_ligands
+;;
+"n"|"no"|"No"|"N"|"NO")
+    DockFlow_prepare_ligands
+;;
+*)
+    echo ${opt} "[ ERROR ] Choose only Y or N" ; exit 0
+;;
+esac
 }
 
 
@@ -604,8 +581,27 @@ fi
 
 # Creation of the docking list, checkpoint calculations.
 DOCK_LIST=""
+case ${DOCK_PROGRAM} in
+"PLANTS")
+    # If the folder exists but there's no "bestranking.csv" its incomplete.
+    FILE="bestranking.csv"
+;;
+"VINA")
+    # If the folder exists but there's no "output.pdbqt" its incomplete.
+    FILE="output.pdbqt"
+;;
+esac
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
+    if [ "${OVERWRITE}" == "no" ] ; then # Useless to process this loop if we overwrite anyway.
+        if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -f ${LIGAND}/${DOCK_PROGRAM}/${FILE} ] ; then
+            echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+            rm -rf ${LIGAND}/${DOCK_PROGRAM}
+        fi
+    else
+        rm -rf ${LIGAND}/${DOCK_PROGRAM}
+    fi
+
+    if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] || [ ${OVERWRITE} == "yes" ] ; then
         DOCK_LIST="${DOCK_LIST} $LIGAND"  # Still unused.
         echo -ne "Preparing: ${LIGAND} \r"
         echo "${LIGAND}" >> todock.lst
@@ -655,7 +651,7 @@ case ${DOCK_PROGRAM} in
                     echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
                         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
                         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
-                        --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt ${VINA_EXTRA} &>/dev/null " >> vina.xargs
+                        --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> vina.xargs
                 done
 
                 if [ ! -f vina.xargs ] ; then
@@ -758,7 +754,7 @@ DockFlow_postdock_plants_results() {
 #    PARAMETERS: ${PROJECT}
 #
 #          NOTE: Must be run while at "${RUNDIR}
-#       RETURNS: rank.csv, top.csv
+#       RETURNS: DockFlow.csv, top.csv
 #
 #        Author: Diego E. B. Gomes
 #                Cedric Bouysset
@@ -772,18 +768,18 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         echo "[ ERROR ] Plants result for ligand ${LIGAND} does not exists."
         FAIL="true"
     else
-        # Fill the rank.csv file
+        # Fill the DockFlow.csv file
         echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}        \r"
-        awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' ${LIGAND}/PLANTS/ranking.csv >> rank.csv
+        awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' ${LIGAND}/PLANTS/ranking.csv >> DockFlow.csv
 
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         cat ${LIGAND}/PLANTS/docked_ligands.mol2 >> docked_ligands.mol2
     fi
 done
 # rename the ligand in the created file
-if [ -f docked_ligands.mol2 ] && [ -f rank.csv ] ; then
+if [ -f docked_ligands.mol2 ] && [ -f DockFlow.csv ] ; then
     sed -i 's/\.*_entry_[[:digit:]]*//' docked_ligands.mol2
-    sed -i 's/[a-zA-Z0-9]*_entry_[[:digit:]]*_conf_//' rank.csv
+    sed -i 's/[a-zA-Z0-9]*_entry_[[:digit:]]*_conf_//' DockFlow.csv
 fi
 }
 
@@ -797,7 +793,7 @@ DockFlow_postdock_vina_results() {
 #    PARAMETERS: ${PROJECT}
 #                ${LIGAND_LIST}
 #
-#       RETURNS: docked_ligands.mol2, rank.csv, top.csv
+#       RETURNS: docked_ligands.mol2, DockFlow.csv, top.csv
 #
 #        Author: Dona de Francquen
 #
@@ -814,15 +810,8 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         echo "[ ERROR ] Vina's result for ligand ${LIGAND} does not exists."
         FAIL="true"
     else
-        # Fill the rank.csv file
-        echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}        \r"
-        n=0
-        while read line ; do
-            if [ "${line:0:18}" == "REMARK VINA RESULT" ] ; then
-                let n++
-                echo "${line}" | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=${LIGAND}_conf_${n} '!/LIGAND_ENTRY/ {print "VINA",protocol,target,ligand,conf,$4}' >> rank.csv
-            fi
-        done < ${RUNDIR}/${LIGAND}/VINA/output.pdbqt
+        # Fill the DockFlow.csv file
+        awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK VINA RESULT/ {print "VINA",protocol,target,ligand,conf,$4; conf++}' ${RUNDIR}/${LIGAND}/VINA/output.pdbqt >> DockFlow.csv
 
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.mol2 ] || [ ${OVERWRITE} == 'yes' ] ; then
@@ -844,8 +833,8 @@ for LIGAND in ${LIGAND_LIST[@]}; do
     fi
 done
 
-if [ -f rank.csv ] ; then
-    sed -i 's/[a-zA-Z0-9]*_conf_//' rank.csv
+if [ -f DockFlow.csv ] ; then
+    sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
 fi
 }
 
@@ -854,7 +843,7 @@ DockFlow_postdock() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_PostDock
 #   DESCRIPTION: Post processing DockFlow runs depending on the dock program used
-#                Each project / receptor will have: - a RANK.csv
+#                Each project / receptor will have: - a DockFlow.csv
 #                                                   - a docked_ligands.mol2
 #
 #    PARAMETERS: ${DOCK_PROGRAM}
@@ -898,10 +887,10 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
         cd ${RUNDIR}
 
         # Cleanup
-        if [ -f rank.csv ] ; then rm rank.csv ; fi
+        if [ -f DockFlow.csv ] ; then rm DockFlow.csv ; fi
         if [ -f docked_ligands.mol2 ] ; then rm docked_ligands.mol2 ; fi
 
-        echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > rank.csv
+        echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > DockFlow.csv
 
         # Organize to ChemFlow standard.
         if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then

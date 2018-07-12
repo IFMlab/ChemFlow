@@ -51,7 +51,7 @@ ChemFlow_validate_input  # Sanity check. (parameters and input files)
 RUNDIR=${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/
 
 if [ ! -z ${ARCHIVE} ] ; then
-  DockFlow_archive
+    DockFlow_archive
 elif  [ ! -z ${POSTDOCK} ] ; then
     DockFlow_postdock       # Standardizes the output
 else

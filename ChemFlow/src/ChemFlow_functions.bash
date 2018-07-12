@@ -226,7 +226,7 @@ SCORING_FUNCTION="chemplp"
 JOB_SCHEDULLER="None"
 NCORES=$(getconf _NPROCESSORS_ONLN)
 NNODES="1"
-OVERWRITE="No"    # Don't overwrite stuff.
+OVERWRITE="no"    # Don't overwrite stuff.
 
 if [ $1 == 'DockFlow' ] ; then
     WORKFLOW="DockFlow"

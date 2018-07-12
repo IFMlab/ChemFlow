@@ -4,7 +4,9 @@ function assertFileExits(){
     if [[ -z ${msg} ]] ; then
         msg=""
     fi
-    if [[ ! -s ${FILE} ]] ; then
+    if [[ -f ${FILE} ]] ; then
+        true
+    else
         echo ---------------------------------------------------
         echo
         echo "FAIL: ${TEST}. ${msg}" ;

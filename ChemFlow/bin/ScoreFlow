@@ -54,6 +54,7 @@ source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
 ChemFlow_set_defaults 'ScoreFlow'  # Set default values for docking parameters.
 ScoreFlow_CLI "$@"       # Read the command line.
 ChemFlow_validate_input  # Various Checks
+
 RUNDIR=${WORKDIR}/${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR_NAME}/
 
 if [ ! -z ${POSTPROCESS} ] ; then

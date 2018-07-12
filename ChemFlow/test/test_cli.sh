@@ -230,7 +230,7 @@ TEST="test_scoreflow_postprocess_empty_vina"
 mkdir -p test.chemflow/ScoreFlow/vina/receptor/
 output=`ScoreFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 -sf vina --postprocess | tail -5`
 output=`echo ${output}`
-expected="[ ChemFlow ] Checking input files... [ ERROR ] Vina's result for ligand CHEMBL477992 does not exists. [ ERROR ] Vina's result for ligand CHEMBL195725 does not exists. [ ScoreFlow ] Error during post-docking, see error above."
+expected="[ ERROR ] Vina results for PROJECT 'test' / PROTOCOL 'vina' does not exists. For help, type: ScoreFlow -h"
 assertOutputIsExpected
 rm -rf test.chemflow/ScoreFlow/vina
 }
