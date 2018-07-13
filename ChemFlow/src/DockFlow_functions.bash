@@ -127,6 +127,25 @@ fi
 
 
 DockFlow_rewrite_origin_ligands() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_rewrite_ligands
+#   DESCRIPTION: User interface for the rewrite ligands option.
+#                 - Read all ligand names from the header of a .MOL2 file.
+#                 - Split each ligand to it's own ".MOL2" file.
+#               #  - Create "ligand.lst" with the list of ligands do dock.
+#
+#    PARAMETERS: ${PROJECT}
+#                ${LIGAND_LIST}
+#                ${RUNDIR}
+#                ${DOCK_PROGRAM}
+#                ${WORKDIR}
+#                ${OVERWRITE}
+#
+#        Author: Dona de Francquen
+#
+#        UPDATE: fri. july 6 14:49:50 CEST 2018
+#
+#===============================================================================
 # Original
 rm -rf ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
 mkdir -p ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
@@ -279,36 +298,9 @@ DockFlow_write_plants_config() {
 #
 #          TODO: Allow "extra PLANTS keywords from cmd line"
 #===============================================================================
-
-echo "
-# input files
-protein_file ../receptor.mol2
-ligand_file  ligand.mol2
-
-# output
-output_dir PLANTS
-
-# scoring function and search settings
-scoring_function ${SCORING_FUNCTION}
-search_speed speed1
-
-# write mol2 files as a single (1) or multiple (0) mol2 files
-write_multi_mol2 1
-
-# binding site definition
-bindingsite_center ${DOCK_CENTER[@]}
-bindingsite_radius ${DOCK_RADIUS}
-
-# cluster algorithm, save the best DOCK_POSES.
-cluster_structures ${DOCK_POSES}
-cluster_rmsd 2.0
-
-# write 
-write_ranking_links 0
-write_protein_bindingsite 1
-write_protein_conformations 0
-####
-" > ${RUNDIR}/${LIGAND}/dock_input.in
+RECEPTOR_FILE="../receptor.mol2"
+file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config.in)
+eval echo \""${file}"\" > ${RUNDIR}/dock_input.in
 }
 
 
@@ -335,31 +327,15 @@ echo "#! /bin/bash
 #SBATCH -N ${NNODES}
 #SBATCH -n ${NTHREADS}
 #SBATCH -t 0:30:00
-
 #Write the full DockFlow_write_plants_config function here.
-$(declare -f DockFlow_write_plants_config)
 
-RUNDIR=${RUNDIR}
 cd ${RUNDIR}
 
-DOCK_PROGRAM=${DOCK_PROGRAM}
-DOCK_CENTER=\"${DOCK_CENTER[@]}\"
-DOCK_RADIUS=${DOCK_RADIUS}
-DOCK_POSES=${DOCK_POSES}
-SCORING_FUNCTION=${SCORING_FUNCTION}
-
 if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
-
 for LIGAND in ${DOCK_LIST[@]:$first:$nlig} ; do
-
-    DockFlow_write_plants_config
-
-    echo \"cd ${RUNDIR}/\${LIGAND} ; PLANTS1.2_64bit --mode screen dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${first}.xargs
-
+    echo \"cd ${RUNDIR}/\${LIGAND} ; PLANTS1.2_64bit --mode screen ../dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${first}.xargs
 done
-
 cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-
 "> DockFlow.slurm
 }
 
@@ -510,7 +486,7 @@ DockFlow_write_HPC() {
 
 echo "There are $NDOCK ligands to dock"
 read -p "
-How many do you want per PBS/SLURM job? : " nlig
+How many Dockings per PBS/SLURM job? : " nlig
 
 read -p "
 How many tasks per node ? : " NCORES
@@ -614,15 +590,21 @@ done
 DOCK_LIST=(${DOCK_LIST})
 NDOCK=${#DOCK_LIST[@]}
 
-echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to dock"
+if [ ${NDOCK} == 0 ] ; then
+    echo "[ DockFlow ] All compounds already docked ! " ; exit 0
+else
+    echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to dock"
+fi
 
 # Actually run the docking --------------------------------------------
 case ${DOCK_PROGRAM} in
     "PLANTS")
+
+        DockFlow_write_plants_config
+
         case ${JOB_SCHEDULLER} in
             "None")
                 for LIGAND in ${DOCK_LIST[@]} ; do  # Write XARGS file.
-                    DockFlow_write_plants_config
                     echo "cd ${RUNDIR}/${LIGAND} ; echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ;  PLANTS1.2_64bit --mode screen dock_input.in &> PLANTS.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}" >> plants.xargs
                 done
 

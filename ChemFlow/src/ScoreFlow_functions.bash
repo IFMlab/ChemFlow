@@ -200,6 +200,7 @@ ScoreFlow_rescore_mmgbsa() {
 #===============================================================================
 ScoreFlow_compute_charges
 ScoreFlow_write_run_tleap
+ScoreFlow_MMGBSA_write
 
 if [ "${WATER}" != "yes" ] ; then
     ScoreFlow_implicit_write_MIN
@@ -208,40 +209,37 @@ if [ "${WATER}" != "yes" ] ; then
       ScoreFlow_implicit_write_MD
     fi
 
-    ScoreFlow_MMGBSA_write
-
     for LIGAND in ${LIGAND_LIST[@]} ; do
         echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r"
         cd ${RUNDIR}/${LIGAND}
         ScoreFlow_implicit_run_MIN
 
         if [ ${MD} == 'yes' ] ; then
-          ScoreFlow_implicit_run_MD
+            echo -ne "Molecular Dynamics ${RECEPTOR_NAME} - ${LIGAND}     \r"
+            ScoreFlow_implicit_run_MD
         fi
-
         ScoreFlow_MMGBSA_run
     done
 
 else
-
     ScoreFlow_explicit_write_MIN
-
-
-    for LIGAND in ${LIGAND_LIST[@]} ; do
-        echo -ne "Minimizing ${RECEPTOR_NAME} - ${LIGAND}     \r"
-        cd ${RUNDIR}/${LIGAND}
-        ScoreFlow_explicit_run_MIN
-    done
-
 
     if [ ${MD} == 'yes' ] ; then
       ScoreFlow_explicit_write_MD
     fi
 
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        echo -ne "Minimizing ${RECEPTOR_NAME} - ${LIGAND}     \r"
+        cd ${RUNDIR}/${LIGAND}
+        ScoreFlow_explicit_run_MIN
 
+        if [ ${MD} == 'yes' ] ; then
+            echo -ne "Molecular Dynamics ${RECEPTOR_NAME} - ${LIGAND}     \r"
+            ScoreFlow_explicit_run_MD
+        fi
+        ScoreFlow_MMGBSA_run
+    done
 fi
-
-
 }
 
 
@@ -449,7 +447,7 @@ cd ${RUNDIR}
 
 echo "MD GB2, infinite cut off
 &cntrl
-  imin=1,maxcyc=${maxcyc},
+  imin=1,maxcyc=${MAXCYC},
   irest=0,ntx=1,
   cut=9999.0, rgbmax=15.0,
   igb=2
@@ -465,8 +463,8 @@ echo "MD GB2, infinite cut off
 
 ScoreFlow_explicit_write_MIN() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_explicit_write_MIN
-#   DESCRIPTION: Write mmgbsa explicit MIN config
+#          NAME: ScoreFlow_explicit_write_MIN
+#   DESCRIPTION: Write explicit water MIN config
 #
 #        Author: Diego E. B. Gomes
 #
@@ -474,15 +472,11 @@ ScoreFlow_explicit_write_MIN() {
 #       RETURNS: -
 #
 #===============================================================================
-
 for filename in min_pr.in min.in ; do
     file=$(cat ${CHEMFLOW_HOME}/templates/water/$filename)
     eval echo \""${file}"\" > ${RUNDIR}/${filename}
 done
-
 }
-
-
 
 
 ScoreFlow_implicit_write_MD() {
@@ -502,7 +496,7 @@ cd ${RUNDIR}
 echo "MD GB2, infinite cut off
 &cntrl
   imin=0,irest=0,ntx=1,
-  nstlim=10000,dt=0.002,ntb=0,
+  nstlim=1000,dt=0.002,ntb=0,
   ntf=2,ntc=2,
   ntpr=1000, ntwx=1000, ntwr=30000,
   cut=9999.0, rgbmax=15.0,
@@ -533,6 +527,12 @@ ScoreFlow_explicit_write_MD() {
 #===============================================================================
 
 cd ${RUNDIR}
+
+for filename in heat_nvt.in heat_npt.in equil.in prod.in ; do
+    file=$(cat ${CHEMFLOW_HOME}/templates/water/$filename)
+    eval echo \""${file}"\" > ${RUNDIR}/${filename}
+done
+
 
 }
 
@@ -589,6 +589,60 @@ prev="${init}"
 
 # Loop  over minimization protocol
 for run in "min_pr" "min" ; do
+    input="../${run}"
+
+    var=""
+
+    # Check if simulations finished
+    if [ -f ${run}.mdout ] ; then
+        var=$(tail -1 ${run}.mdout | awk '/Total wall time/{print $1}')
+    fi
+
+    # If empty or simulation finished, (re)run.
+    if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
+        pmemd.cuda -O  \
+        -i ${input}.in   -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
+        -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
+        -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
+    fi
+
+    prev="${run}"
+done
+
+}
+
+
+
+ScoreFlow_explicit_run_MD() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_MMGBSA_explicit_run_MD
+#   DESCRIPTION: Run mmgbsa explicit MD
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: ${OVERWRITE}
+#       RETURNS: -
+#
+#===============================================================================
+
+init="ionized_solvated"     # Do not change Init
+prev="min"                  # The last step of minimization.
+
+
+#
+# We lack proper a step to verify if minimization is complete.
+#
+# Check if MINIMIZATION finished
+if [ -f min.mdout ] ; then
+    var=$(tail -1 ${run}.mdout | awk '/Total wall time/{print $1}')
+fi
+#
+#
+
+
+
+# Loop  over minimization protocol
+for run in heat_nvt heat_npt equil prod ; do
     input="../${run}"
 
     var=""
@@ -707,8 +761,8 @@ if [ ! -f MMPBSA.dat ] || [ "${OVERWRITE}" == 'yes' ] ; then
 
     rm -rf reference.frc
 fi
-
 }
+
 
 ScoreFlow_organize() {
 #===  FUNCTION  ================================================================
