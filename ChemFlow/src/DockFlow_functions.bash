@@ -893,7 +893,7 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
         if [ -f DockFlow.csv ] ; then rm DockFlow.csv ; fi
         if [ -f docked_ligands.mol2 ] ; then rm docked_ligands.mol2 ; fi
 
-        echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > DockFlow.csv
+        echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > DockFlow.csv
 
         # Organize to ChemFlow standard.
         if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
