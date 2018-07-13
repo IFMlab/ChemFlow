@@ -682,48 +682,69 @@ DockFlow_archive() {
 #===============================================================================
 PROJECT=$(echo ${PROJECT} | cut -d. -f1)
 
-# Start up going to the project folder.
-cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow
-
-# Retrieve available protocols
-if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTDOCK_ALL} ] ; then
-    PROTOCOL_LIST=($(ls -d */ | cut -d/ -f1))
-else
-    PROTOCOL_LIST=${PROTOCOL}
-fi
-
-#echo "Protocols: ${PROTOCOL_LIST[@]}"
-
-for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
+if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow ] ; then
     # Start up going to the project folder.
-    cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
+    cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow
 
-    # Retrieve available receptors
+    # Retrieve available protocols
     if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTDOCK_ALL} ] ; then
-        RECEPTOR_LIST=($(ls -d */| cut -d/ -f1))
+        PROTOCOL_LIST=($(ls -d */ | cut -d/ -f1))
     else
-        RECEPTOR_LIST=${RECEPTOR_NAME}
+        PROTOCOL_LIST=${PROTOCOL}
     fi
-#    echo "Receptors: ${RECEPTOR_LIST[@]}"
 
-    for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
-        #  Go to the receptor folder.
-        cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}
+    #echo "Protocols: ${PROTOCOL_LIST[@]}"
 
-        # Cleanup
-        if [ -f docked_folder.tar.gz ] ; then rm docked_folder.tar.gz ; fi
+    for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
 
-        echo "[ DockFlow ] Archiving the ${PROTOCOL}/${RECEPTOR} docking folders into: ${PROTOCOL}/${RECEPTOR}/docked_folder.tar.gz"
-        tar cfz docked_folder.tar.gz */
+        if [ -d  ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL} ] ; then
+            # Go to the protocol folder.
+            cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
+            # Retrieve available receptors
+            if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTDOCK_ALL} ] ; then
+                RECEPTOR_LIST=($(ls -d */| cut -d/ -f1))
+            else
+                RECEPTOR_LIST=${RECEPTOR_NAME}
+            fi
+        #    echo "Receptors: ${RECEPTOR_LIST[@]}"
 
-        # Check if the archive is there
-        if [ -f docked_folder.tar.gz ] ; then
-            echo "[ DockFlow ] Archiving complete"
+            for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
+                if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR} ] ; then
+                    #  Go to the receptor folder.
+                    cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}
+
+                    if [ -d */ ] ; then
+                        # Cleanup
+                        if [ -f docked_folder.tar.gz ] ; then rm docked_folder.tar.gz ; fi
+
+                        echo "[ DockFlow ] Archiving the ${PROTOCOL}/${RECEPTOR} docking folders into: ${PROTOCOL}/${RECEPTOR}/docked_folder.tar.gz"
+                        tar cfz docked_folder.tar.gz */
+
+                        # Check if the archive is there
+                        if [ -f docked_folder.tar.gz ] ; then
+                            echo "[ DockFlow ] Archiving complete."
+                        else
+                            ERROR_MESSAGE="Archiving failed."
+                            ChemFlow_error ;
+                        fi
+                    else
+                        ERROR_MESSAGE="Nothing to archive."
+                        ChemFlow_error ;
+                    fi
+                else
+                    ERROR_MESSAGE="Error in the receptor name. The directory ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR} does not exist." ;
+                    ChemFlow_error ;
+                fi
+            done
         else
-            echo "[ DockFlow ] Archiving failed"; exit 0
+            ERROR_MESSAGE="Error in the protocol name or there is no DockFlow results. The directory ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL} does not exist." ;
+            ChemFlow_error ;
         fi
     done
-done
+else
+    ERROR_MESSAGE="Error in the project name. The directory ${WORKDIR}/${PROJECT}.chemflow/ does not exist." ;
+    ChemFlow_error ;
+fi
 
 # Remove docking folders
 if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTDOCK_ALL} ] ; then
@@ -971,8 +992,10 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf 
  -p/--project        : ChemFlow project
 
 [ Post Processing ]
- --postdock          : Process DockFlow output in a ChemFlow project.
- --archive           : Compress the docking folder
+ --postdock          : Process DockFlow output for the specified project/protocol/receptor.
+ --postdock-all      : Process DockFlow output in a ChemFlow project.
+ --archive           : Compress the docking folders for the specified project/protocol/receptor.
+ --archive-all       : Compress the docking folders in a ChemFLow project.
  --report            : [not implemented]
  --clean             : [not implemented] Clean up DockFlow output for a fresh start.
 
