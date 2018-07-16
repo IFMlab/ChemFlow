@@ -365,6 +365,8 @@ echo "#! /bin/bash
 #SBATCH -n ${NTHREADS}
 #SBATCH -t 0:30:00
 
+cd ${RUNDIR}
+
 if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
 
 for LIGAND in ${DOCK_LIST[@]:$first:$nlig} ; do
@@ -399,30 +401,17 @@ DockFlow_write_plants_pbs() {
 #===============================================================================
 echo "#! /bin/bash
 # 1 noeud 8 coeurs
-#PBS -p public
-#PBS -j DockFlow_${first}
+#PBS -q  route
+#PBS -N DockFlow_${first}
 #PBS -l nodes=${NNODES}:ppn=${NTHREADS}
 #PBS -l walltime=0:30:00
+#PBS -V
 
-#Write the full DockFlow_write_plants_config function here.
-$(declare -f DockFlow_write_plants_config)
-
-RUNDIR=${RUNDIR}
 cd ${RUNDIR}
-
-DOCK_PROGRAM=${DOCK_PROGRAM}
-DOCK_CENTER=\"${DOCK_CENTER[@]}\"
-DOCK_RADIUS=${DOCK_RADIUS}
-DOCK_POSES=${DOCK_POSES}
-SCORING_FUNCTION=${SCORING_FUNCTION}
 
 if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
 for LIGAND in ${DOCK_LIST[@]:$first:$nlig} ; do
-
-  DockFlow_write_plants_config
-
-  echo \"cd ${RUNDIR}/\${LIGAND} ; PLANTS1.2_64bit --mode screen dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${first}.xargs
-
+  echo \"cd ${RUNDIR}/\${LIGAND} ; PLANTS1.2_64bit --mode screen ../dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${first}.xargs
 done
 
 cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
@@ -449,11 +438,13 @@ DockFlow_write_vina_pbs() {
 #===============================================================================
 echo "#! /bin/bash
 # 1 noeud 8 coeurs
-#PBS -p public
-#PBS -j DockFlow_${first}
+#PBS -q route
+#PBS -N DockFlow_${first}
 #PBS -l nodes=${NNODES}:ppn=${NTHREADS}
 #PBS -l walltime=0:30:00
+#PBS -V
 
+cd ${RUNDIR}
 
 if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
 
@@ -462,7 +453,7 @@ for LIGAND in ${DOCK_LIST[@]:$first:$nlig} ; do
     echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
-        --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null " >> vina.xargs
+        --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null " >> ${first}.xargs
 done
 
 cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
@@ -605,7 +596,7 @@ case ${DOCK_PROGRAM} in
         case ${JOB_SCHEDULLER} in
             "None")
                 for LIGAND in ${DOCK_LIST[@]} ; do  # Write XARGS file.
-                    echo "cd ${RUNDIR}/${LIGAND} ; echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ;  PLANTS1.2_64bit --mode screen dock_input.in &> PLANTS.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}" >> plants.xargs
+                    echo "cd ${RUNDIR}/${LIGAND} ; echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ;  PLANTS1.2_64bit --mode screen ../dock_input.in &> PLANTS.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}" >> plants.xargs
                 done
 
                 if [ ! -f plants.xargs ] ; then
@@ -633,7 +624,7 @@ case ${DOCK_PROGRAM} in
                     echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
                         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
                         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
-                        --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> vina.xargs
+                        --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  --cpu 1 ${VINA_EXTRA} &>/dev/null " >> vina.xargs
                 done
 
                 if [ ! -f vina.xargs ] ; then
