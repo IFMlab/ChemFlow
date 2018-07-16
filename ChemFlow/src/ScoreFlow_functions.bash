@@ -416,12 +416,17 @@ fi
 # Goes back to rundir to prepare in parallel.
 
 if [ -f tleap.xargs ] ; then rm -rf tleap.xargs ; fi
- 
+
 for LIGAND in ${LIGAND_LIST[@]} ; do
     echo -ne "Preparing complex: ${RECEPTOR_NAME} - ${LIGAND}     \r"
-    if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] ; then
+
+    if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ $WATER != 'yes' ] ; then
         echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR_NAME} - ${LIGAND}\" ;  tleap -f ../tleap_gbsa.in &> tleap.job" >> tleap.xargs
     fi
+    if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ ${WATER} == 'yes' ] ; then
+        echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR_NAME} - ${LIGAND}\" ;  tleap -f ../tleap_gbsa.in &> tleap.job" >> tleap.xargs
+    fi
+
 done
 
 if [ ! -f tleap.xargs ] ; then
