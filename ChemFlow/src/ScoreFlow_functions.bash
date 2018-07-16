@@ -210,14 +210,8 @@ if [ "${WATER}" != "yes" ] ; then
     fi
 
     for LIGAND in ${LIGAND_LIST[@]} ; do
-        echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r"
         cd ${RUNDIR}/${LIGAND}
-        ScoreFlow_implicit_run_MIN
-
-        if [ ${MD} == 'yes' ] ; then
-            echo -ne "Molecular Dynamics ${RECEPTOR_NAME} - ${LIGAND}     \r"
-            ScoreFlow_implicit_run_MD
-        fi
+        ScoreFlow_implicit_run
         ScoreFlow_MMGBSA_run
     done
 
@@ -240,6 +234,25 @@ else
         ScoreFlow_MMGBSA_run
     done
 fi
+
+
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r"
+    cd ${RUNDIR}/${LIGAND}
+
+    if [ "${JOB_SCHEDULLER}" == 'none' ] ; then
+        bash ScoreFlow.run
+
+    elif [ "${JOB_SCHEDULLER}" == 'PBS' ] ; then
+        ScoreFlow_write_pbs
+        #qsub ScoreFlow.pbs
+
+    elif [ "${JOB_SCHEDULLER}" == 'SLURM' ] ; then
+        ScoreFlow_write_slurm
+        sbatch ScoreFlow.slurm
+    fi
+done
+
 }
 
 
@@ -512,7 +525,7 @@ echo "MD GB2, infinite cut off
 ! ibelly,
 ! bellymask,
  ntr=1,
- restraintmask=':1-242@CA,C,N,O', 
+ restraintmask=':1-198@CA,C,N,O',
  restraint_wt=10.0,
 /
 " > md_gbsa.in
@@ -542,9 +555,7 @@ done
 }
 
 
-
-
-ScoreFlow_implicit_run_MIN() {
+ScoreFlow_implicit_run() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
 #   DESCRIPTION: Run mmgbsa implicit MIN
@@ -555,6 +566,14 @@ ScoreFlow_implicit_run_MIN() {
 #       RETURNS: -
 #
 #===============================================================================
+
+
+# Clean up
+if [ -f  ScoreFlow.run ] ; then
+  rm -rf  ScoreFlow.run
+fi
+
+# Step 1 - Minimization
 init=complex
 input=min_gbsa
 prev=complex
@@ -563,16 +582,44 @@ run=mini
 var=""
 
 # Check if simulations finished
-if [ -f mini.mdout ] ; then 
+if [ -f mini.mdout ] ; then
     var=$(tail -1 mini.mdout | awk '/Total wall time/{print $1}')
 fi
- 
+
 # If empty or simulation finished, (re)run.
 if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
-    pmemd.cuda -O  \
-    -i ../${input}.in -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
-    -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
-    -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
+    echo "${AMBER_EXEC} -O  \
+-i ../${input}.in -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
+-x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
+-p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job " >> ScoreFlow.run
+fi
+
+
+if [ "${MD}" == "yes" ] ; then
+    input=md_gbsa
+    prev=mini
+    run=md
+
+    var=""
+    var_md=""
+    # Check if simulations finished
+    if [ -f mini.mdout ] ; then
+        var=$(tail -1 mini.mdout | awk '/Total wall time/{print $1}')
+    fi
+
+    if [ -f md.mdout ] ; then
+        var_md=$(tail -1 md.mdout | awk '/Total wall time/{print $1}')
+    fi
+
+    # If empty or simulation finished, (re)run.
+    if [ "${var}" != "" ] ; then
+        if [ "${var_md}" == "" ] ||  [ ${OVERWRITE} == 'yes' ]  ; then
+    echo "${AMBER_EXEC} -O  \
+-i ../${input}.in -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
+-x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
+-p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job " >> ScoreFlow.run
+        fi
+    fi
 fi
 }
 
@@ -605,7 +652,7 @@ for run in "min_pr" "min" ; do
 
     # If empty or simulation finished, (re)run.
     if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
-        pmemd.cuda -O  \
+        ${AMBER_EXEC} -O  \
         -i ${input}.in   -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
         -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
         -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
@@ -659,7 +706,7 @@ for run in heat_nvt heat_npt equil prod ; do
 
     # If empty or simulation finished, (re)run.
     if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
-        pmemd.cuda -O  \
+        ${AMBER_EXEC} -O  \
         -i ${input}.in   -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
         -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
         -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
@@ -672,47 +719,36 @@ done
 
 
 
-
-
-
-
-ScoreFlow_implicit_run_MD() {
+ScoreFlow_write_pbs() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
-#   DESCRIPTION: Run mmgbsa implicit MIN
+#          NAME: write_pbs
+#   DESCRIPTION: Writes the PBS script to for each ligand (or range of ligands).
+#                Filenames and parameters are hardcoded.
+#    PARAMETERS:
+#               ${list[@]}  -   Array with all ligand names
+#               ${first}    -   First ligand in the array
+#               ${$nlig}    -   Number of compounds to dock
+#               ${NNODES}   -   Number of compute nodes to use
+#               ${NCORES}   -   Number of cores/node
+#               ${NTHREADS} -   Total threads (NNODES*NCORES)
 #
-#        Author: Diego E. B. Gomes
-#
-#    PARAMETERS: ${OVERWRITE}
+#          NOTE: Must be run while at "${RUNDIR}
 #       RETURNS: -
-#
 #===============================================================================
-init=complex
-input=md_gbsa
-prev=mini
-run=md
+echo "#! /bin/bash
+# 1 noeud 8 coeurs
+#PBS -q  route
+#PBS -N ScoreFlow_${LIGAND}
+#PBS -l nodes=${NNODES}:ppn=${NCORES}
+#PBS -l walltime=0:30:00
+#PBS -V
 
-var=""
-var_md=""
-# Check if simulations finished
-if [ -f mini.mdout ] ; then
-    var=$(tail -1 mini.mdout | awk '/Total wall time/{print $1}')
-fi
+cd ${RUNDIR}/${LIGAND}
 
-if [ -f md.mdout ] ; then
-    var_md=$(tail -1 md.mdout | awk '/Total wall time/{print $1}')
-fi
-
-# If empty or simulation finished, (re)run.
-if [ "${var}" != "" ] ; then
-    if [ "${var_md}" == "" ] ||  [ ${OVERWRITE} == 'yes' ]  ; then
-        pmemd.cuda -O  \
-        -i ../${input}.in -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
-        -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
-        -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
-    fi
-fi
+$(cat ScoreFlow.run)
+" > ScoreFlow.pbs
 }
+
 
 
 
@@ -758,13 +794,10 @@ if [ ${MD} == 'yes' ] ; then
 fi
 
 if [ ! -f MMPBSA.dat ] || [ "${OVERWRITE}" == 'yes' ] ; then
-    rm -rf com.top rec.top ligand.top
-
-    ante-MMPBSA.py -p complex.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job
-
-    MMPBSA.py -O -i ../GB2.in -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job
-
-    rm -rf reference.frc
+echo "rm -rf com.top rec.top ligand.top
+ante-MMPBSA.py -p complex.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job
+MMPBSA.py -O -i ../GB2.in -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job
+rm -rf reference.frc " >> ScoreFlow.run
 fi
 }
 
@@ -1044,7 +1077,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         -r|--receptor)
             RECEPTOR_FILE="$2"
-            RECEPTOR_NAME="$(basename -s .mol2 ${RECEPTOR_FILE})"
+            RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .mol2 )"
             shift # past argument
         ;;
         -l|--ligand)
@@ -1132,7 +1165,8 @@ while [[ $# -gt 0 ]]; do
         #    ;;
         *)
             unknown="$1"        # unknown option
-            echo "Unknown flag \"$unknown\""
+            echo "Unknown flag \"$unknown\". RTFM"
+            exit 0
         ;;
     esac
     shift # past argument or value

@@ -612,13 +612,16 @@ case ${DOCK_PROGRAM} in
         esac
     ;;
     "VINA")
+    for LIGAND in ${DOCK_LIST[@]} ; do
+        # Create the output VINA folder if it doesn't exist.
+        if [  ! -d ${RUNDIR}/${LIGAND}/VINA/ ] ; then
+            mkdir -p ${RUNDIR}/${LIGAND}/VINA/
+        fi
+    done
+
     case ${JOB_SCHEDULLER} in
             "None")
                 for LIGAND in ${DOCK_LIST[@]} ; do
-                    # Create the output VINA folder if it doesn't exist.
-                    if [  ! -d ${RUNDIR}/${LIGAND}/VINA/ ] ; then
-                        mkdir -p ${RUNDIR}/${LIGAND}/VINA/
-                    fi
                     echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND}
                     # Vina command.
                     echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
@@ -1038,7 +1041,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         -r|--receptor)
             RECEPTOR_FILE="$2"
-            RECEPTOR_NAME="$(basename -s .mol2 ${RECEPTOR_FILE})"
+            RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .mol2 )"
             shift # past argument
         ;;
         -l|--ligand)
@@ -1112,7 +1115,11 @@ while [[ $# -gt 0 ]]; do
             water_xyzr="$2 $3 $4 $5"
             shift 4 # past argument
         ;;
-        ### VINA arguments
+        ### VINA arguments  UNUSED - REPLACED BY --vina_extra
+        --vina_extra)
+            VINA_EXTRA="$2"
+            shift
+         ;;
         --iteration_scaling)
             iteration_scaling="$2"
             shift

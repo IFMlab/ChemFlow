@@ -127,7 +127,7 @@ case ${WORKFLOW} in
     ;;
     "mmgbsa") # mmgbsa as scoring function is only allowed for ScoreFlow.
         SCORE_PROGRAM="AMBER"
-        RECEPTOR_NAME="$(basename -s .pdb ${RECEPTOR_FILE})"
+        RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .pdb)"
         if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "pdb" ] ; then
             ERROR_MESSAGE="mmgbsa rescoring requires a PDB file as receptor input"; ChemFlow_error ;
         fi
@@ -173,11 +173,29 @@ if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
     ;;
     "AMBER")
         if  [ "$(command -v sander)" == "" ] ; then
-          echo "[ERROR ] AmberTools is not installed or on PATH" ; exit 0
+          echo "[ERROR ] AmberTools 17+ is not installed or on PATH" ; exit 0
         fi
         if [ ${CHARGE} == "resp" ] && [ "$(command -v g09)" == "" ] ; then
           echo "[ERROR ] Gaussian is not installed or on PATH" ; exit 0
         fi
+
+        if  [ "$(command -v pmemd.cuda)" == "" ] ; then
+          if  [ "$(command -v pmemd)" == "" ] ; then
+             echo "[ERROR ] Amber (pmemd) is not installed or on PATH, changing to SANDER."
+                 AMBER_EXEC="mpirun -n ${NCORES} sander.MPI"
+            if  [ "$(command -v sander.MPI)" == "" ] ; then
+                AMBER_EXEC="sander"
+            fi
+          else
+            AMBER_EXEC="mpirun -n ${NCORES} pmemd.MPI"
+            if  [ "$(command -v pmemd.MPI)" == "" ] ; then
+                AMBER_EXEC="pmemd"
+            fi
+          fi
+        else
+            AMBER_EXEC="pmemd.cuda"
+        fi
+
     ;;
     esac
 
