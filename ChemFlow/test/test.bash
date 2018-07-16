@@ -223,6 +223,7 @@ TEST="test_DockFlow_vina_overwrite_output_pdbqt"
 # run vina with overwrite (no rewrite ligand)
 run_vina_overwrite_continue_no_rewrite_ligand
 
+msg="Overwrite option does not overwrite the output.pdbqt"
 dir="test.chemflow/DockFlow/vina1/receptor/CHEMBL477992"
 expected="test.chemflow/DockFlow/vina1/receptor/CHEMBL477992/VINA/output.log test.chemflow/DockFlow/vina1/receptor/CHEMBL477992/VINA/output.pdbqt"
 assertFilesAreNew

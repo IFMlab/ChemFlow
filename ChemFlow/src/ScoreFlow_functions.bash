@@ -862,7 +862,7 @@ case ${SCORE_PROGRAM} in
         ERROR_MESSAGE="Plants results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
         ChemFlow_error
     else
-        echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
+        echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
         sed 's/\.*_entry.*_conf_[[:digit:]]*//' ${RUNDIR}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND/ {print "PLANTS",protocol,target,ligand,$1,$2}' >> ${RUNDIR}/ScoreFlow.csv
     fi
 ;;
@@ -870,7 +870,7 @@ case ${SCORE_PROGRAM} in
     for LIGAND in ${LIGAND_LIST[@]} ; do
         if [ -f ${RUNDIR}/${LIGAND}/output.log ] ; then
             if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
-                echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
+                echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
             fi
             awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/Affinity:/ {print "VINA",protocol,target,ligand,ligand,$2}' ${RUNDIR}/${LIGAND}/output.log >> ${RUNDIR}/ScoreFlow.csv
         fi
@@ -887,7 +887,7 @@ case ${SCORE_PROGRAM} in
     for LIGAND in ${LIGAND_LIST[@]} ; do
         if [ -f ${RUNDIR}/${LIGAND}/MMPBSA.dat ] ; then
             if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
-                echo "DOCK_PROGRAM PROTOCOL LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
+                echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
             fi
             awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/DELTA TOTAL/{print "AMBER",protocol,target,ligand,ligand,$3}' ${RUNDIR}/${LIGAND}/MMPBSA.dat >> ${RUNDIR}/ScoreFlow.csv
         fi
