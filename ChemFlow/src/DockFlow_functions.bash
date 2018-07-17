@@ -474,8 +474,6 @@ DockFlow_write_HPC() {
 #                ${NLIGANDS}    - Number of ligands.
 #       RETURNS: -
 #===============================================================================
-
-echo "There are $NDOCK ligands to dock"
 read -p "
 How many Dockings per PBS/SLURM job? : " nlig
 
@@ -1090,9 +1088,11 @@ while [[ $# -gt 0 ]]; do
             NNODES="$2" # Same as above.
             shift # past argument
         ;;
-        -w|--workload) # Workload manager, [SLURM] or PBS
-            JOB_SCHEDULLER="$2"
-            shift # past argument
+        --PBS) #Activate the PBS workload
+            JOB_SCHEDULLER="PBS"
+        ;;
+        --SLURM) #Activate the SLURM workload
+            JOB_SCHEDULLER="SLURM"
         ;;
         ## PLANTS arguments
         --speed)

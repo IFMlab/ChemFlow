@@ -59,7 +59,7 @@ esac
 }
 
 
-ScoreFlow_rescore_plants () {
+ScoreFlow_rescore_plants() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_rescore_plants
 #   DESCRIPTION: Rescore docking poses using plants
@@ -109,7 +109,6 @@ ScoreFlow_write_plants_config() {
 #
 #          TODO: Allow "extra PLANTS keywords from cmd line"
 #===============================================================================
-
 echo "
 # input files
 protein_file receptor.mol2
@@ -144,7 +143,7 @@ write_protein_conformations 0
 
 ScoreFlow_rescore_vina() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_rescore_plants
+#          NAME: ScoreFlow_rescore_vina
 #   DESCRIPTION: Rescore docking poses using vina
 #
 #        Author: Dona de Francquen
@@ -163,21 +162,22 @@ if [ -f ${RUNDIR}/ScoreFlow.csv ] ; then
 fi
 
 # Prepare RECEPTOR
+if [ ! -f ${RUNDIR}/receptor.pdbqt ] || [ "${OVERWRITE}" == "yes" ] ; then
     ${mgltools_folder}/bin/python \
     ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
         -r ${RUNDIR}/receptor.mol2 \
         -o ${RUNDIR}/receptor.pdbqt
-
-
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    # DONA fix this please.
-    ${mgltools_folder}/bin/python \
-    ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
-        -l ${RUNDIR}/${LIGAND}/ligand.mol2 \
-        -o ${RUNDIR}/${LIGAND}/ligand.pdbqt
-done
+fi
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
+    # Prepare Ligands
+    if [ ! -f ${RUNDIR}/receptor.pdbqt ] || [ "${OVERWRITE}" == "yes" ] ; then
+        ${mgltools_folder}/bin/python \
+        ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
+            -l ${RUNDIR}/${LIGAND}/ligand.mol2 \
+            -o ${RUNDIR}/${LIGAND}/ligand.pdbqt
+    fi
+    # Run vina
     vina --local_only --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
          --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
          --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
@@ -205,8 +205,8 @@ ScoreFlow_MMGBSA_write
 if [ "${WATER}" != "yes" ] ; then
     ScoreFlow_implicit_write_MIN
 
-    if [ ${MD} == 'yes' ] ; then
-      ScoreFlow_implicit_write_MD
+    if [ "${MD}" == 'yes' ] ; then
+        ScoreFlow_implicit_write_MD
     fi
 
     for LIGAND in ${LIGAND_LIST[@]} ; do
@@ -214,12 +214,11 @@ if [ "${WATER}" != "yes" ] ; then
         ScoreFlow_implicit_run
         ScoreFlow_MMGBSA_run
     done
-
 else
     ScoreFlow_explicit_write_MIN
 
     if [ ${MD} == 'yes' ] ; then
-      ScoreFlow_explicit_write_MD
+        ScoreFlow_explicit_write_MD
     fi
 
     for LIGAND in ${LIGAND_LIST[@]} ; do
@@ -235,24 +234,23 @@ else
     done
 fi
 
-
 for LIGAND in ${LIGAND_LIST[@]} ; do
     echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r"
     cd ${RUNDIR}/${LIGAND}
-
-    if [ "${JOB_SCHEDULLER}" == 'none' ] ; then
-        bash ScoreFlow.run
-
-    elif [ "${JOB_SCHEDULLER}" == 'PBS' ] ; then
+    case "${JOB_SCHEDULLER}" in
+    "None")
+        bash ScoreFlow.
+    ;;
+    "PBS")
         ScoreFlow_write_pbs
         #qsub ScoreFlow.pbs
-
-    elif [ "${JOB_SCHEDULLER}" == 'SLURM' ] ; then
+    ;;
+    "SLURM")
         ScoreFlow_write_slurm
         sbatch ScoreFlow.slurm
-    fi
+    ;;
+    esac
 done
-
 }
 
 
@@ -423,11 +421,7 @@ quit
 " > tleap_gbsa.in
 fi
 
-
-
-
 # Goes back to rundir to prepare in parallel.
-
 if [ -f tleap.xargs ] ; then rm -rf tleap.xargs ; fi
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
@@ -439,11 +433,10 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ ${WATER} == 'yes' ] ; then
         echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR_NAME} - ${LIGAND}\" ;  tleap -f ../tleap_gbsa.in &> tleap.job" >> tleap.xargs
     fi
-
 done
 
 if [ ! -f tleap.xargs ] ; then
-    ERROR_MESSAGE="run tleap impossible (TODO)"
+    ERROR_MESSAGE="run tleap impossible (TODO)" ; ChemFlow_error ;
 else
     cat tleap.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 fi
@@ -543,15 +536,12 @@ ScoreFlow_explicit_write_MD() {
 #       RETURNS: -
 #
 #===============================================================================
-
 cd ${RUNDIR}
 
 for filename in heat_nvt.in heat_npt.in equil.in prod.in ; do
-    file=$(cat ${CHEMFLOW_HOME}/templates/water/$filename)
+    file=$(cat ${CHEMFLOW_HOME}/templates/water/${filename})
     eval echo \""${file}"\" > ${RUNDIR}/${filename}
 done
-
-
 }
 
 
@@ -566,11 +556,9 @@ ScoreFlow_implicit_run() {
 #       RETURNS: -
 #
 #===============================================================================
-
-
 # Clean up
 if [ -f  ScoreFlow.run ] ; then
-  rm -rf  ScoreFlow.run
+    rm -rf  ScoreFlow.run
 fi
 
 # Step 1 - Minimization
@@ -586,14 +574,13 @@ if [ -f mini.mdout ] ; then
     var=$(tail -1 mini.mdout | awk '/Total wall time/{print $1}')
 fi
 
-# If empty or simulation finished, (re)run.
+# If empty or simulation didn't finish or overwrite, (re)run.
 if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
     echo "${AMBER_EXEC} -O  \
 -i ../${input}.in -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
 -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
 -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job " >> ScoreFlow.run
 fi
-
 
 if [ "${MD}" == "yes" ] ; then
     input=md_gbsa
@@ -635,7 +622,6 @@ ScoreFlow_explicit_run_MIN() {
 #       RETURNS: -
 #
 #===============================================================================
-
 init=ionized_solvated    # Do not change Init
 prev="${init}"
 
@@ -660,9 +646,7 @@ for run in "min_pr" "min" ; do
 
     prev="${run}"
 done
-
 }
-
 
 
 ScoreFlow_explicit_run_MD() {
@@ -676,13 +660,11 @@ ScoreFlow_explicit_run_MD() {
 #       RETURNS: -
 #
 #===============================================================================
-
 init="ionized_solvated"     # Do not change Init
 prev="min"                  # The last step of minimization.
 
-
 #
-# We lack proper a step to verify if minimization is complete.
+# We lack proper a step to verify if minimization is complete. TODO
 #
 # Check if MINIMIZATION finished
 if [ -f min.mdout ] ; then
@@ -690,8 +672,6 @@ if [ -f min.mdout ] ; then
 fi
 #
 #
-
-
 
 # Loop  over minimization protocol
 for run in heat_nvt heat_npt equil prod ; do
@@ -714,9 +694,7 @@ for run in heat_nvt heat_npt equil prod ; do
 
     prev="${run}"
 done
-
 }
-
 
 
 ScoreFlow_write_pbs() {
@@ -748,8 +726,6 @@ cd ${RUNDIR}/${LIGAND}
 $(cat ScoreFlow.run)
 " > ScoreFlow.pbs
 }
-
-
 
 
 ScoreFlow_MMGBSA_write() {
@@ -815,24 +791,19 @@ ScoreFlow_organize() {
 #===============================================================================
 # TODO 
 # Improve extracting mol2 to separate folders.
-# 
-
-
-#if [ ${ORGANIZE} == 'yes' ] ; then
+#
 
 if [  ! -d ${RUNDIR} ] ; then
-  mkdir -p ${RUNDIR}
+    mkdir -p ${RUNDIR}
 fi
 
 if [ ${SCORE_PROGRAM} == "PLANTS" ] ; then
-      for LIGAND in ${LIGAND_LIST[@]} ; do
+    for LIGAND in ${LIGAND_LIST[@]} ; do
         if [  ! -d ${RUNDIR}/${LIGAND}/ ] ; then
-          mkdir -p ${RUNDIR}/${LIGAND}/
+            mkdir -p ${RUNDIR}/${LIGAND}/
         fi
-      done
+    done
 fi
-
-# if [ ${REWRITE_LIGANDS} == 'yes' ] ; then 
 
 # Copy files to project folder.
 if [ ${SCORING_FUNCTION} == "mmgbsa" ] ; then
@@ -842,13 +813,11 @@ else
 fi
 cp ${LIGAND_FILE} ${RUNDIR}/ligand.mol2
 
-
 for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -d  ${RUNDIR}/${LIGAND} ] ; then
-      mkdir -p ${RUNDIR}/${LIGAND}
+        mkdir -p ${RUNDIR}/${LIGAND}
     fi
 done
-
 
 OLDIFS=$IFS
 IFS='%'
@@ -856,16 +825,14 @@ if [ ${SCORE_PROGRAM} != "PLANTS" ] ; then
     # Copy each ligand to it's folder.
     n=-1
     while read line ; do
-      if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-        let n=$n+1
-        echo -ne "" > ${RUNDIR}/${LIGAND_LIST[$n]}/ligand.mol2
-      fi
-      echo -e "${line}" >> ${RUNDIR}/${LIGAND_LIST[$n]}/ligand.mol2
+        if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
+            let n=$n+1
+            echo -ne "" > ${RUNDIR}/${LIGAND_LIST[$n]}/ligand.mol2
+        fi
+        echo -e "${line}" >> ${RUNDIR}/${LIGAND_LIST[$n]}/ligand.mol2
     done < ${LIGAND_FILE}
 fi
 IFS=$OLDIFS
-
-#fi
 }
 
 
@@ -1142,9 +1109,11 @@ while [[ $# -gt 0 ]]; do
             NNODES="$2" # Same as above.
             shift # past argument
         ;;
-        -w|--workload) # Workload manager, [SLURM] or PBS
-            JOB_SCHEDULLER="$2"
-            shift # past argument
+        --PBS) #Activate the PBS workload
+            JOB_SCHEDULLER="PBS"
+        ;;
+        --SLURM) #Activate the SLURM workload
+            JOB_SCHEDULLER="SLURM"
         ;;
         ## Final arguments
         --overwrite)

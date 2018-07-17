@@ -201,7 +201,7 @@ if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
 
     # Check overwriting ---------------------------------------------------------
     if [ "${OVERWRITE}" == "yes" ] ; then
-      read -p "[ Note ] Are you sure you want to OVERWRITE : " opt
+      read -p "[ Note ] Are you sure you want to OVERWRITE: " opt
 
       case ${opt} in
         "Y"|"YES"|"Yes"|"yes"|"y")  ;;
