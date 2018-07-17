@@ -943,31 +943,31 @@ echo "
 ScoreFlow summary:
 -------------------------------------------------------------------------------
 [ General info ]
-    HOST ${HOSTNAME}
-    USER ${USER}
- PROJECT ${PROJECT}
-PROTOCOL ${PROTOCOL}
- WORKDIR ${PWD} 
+    HOST: ${HOSTNAME}
+    USER: ${USER}
+ PROJECT: ${PROJECT}
+PROTOCOL: ${PROTOCOL}
+ WORKDIR: ${PWD}
 
 [ Docking setup ]
-RECEPTOR ${RECEPTOR_NAME}
-RECEPTOR_FILE ${RECEPTOR_FILE}
-  LIGAND ${LIGAND_FILE}
-  CHARGE ${CHARGE}
-NLIGANDS ${NLIGANDS}
- PROGRAM ${SCORE_PROGRAM}
- SCORING ${SCORING_FUNCTION}"
+RECEPTOR NAME: ${RECEPTOR_NAME}
+RECEPTOR FILE: ${RECEPTOR_FILE}
+  LIGAND FILE: ${LIGAND_FILE}
+       CHARGE: ${CHARGE}
+     NLIGANDS: ${NLIGANDS}
+      PROGRAM: ${SCORE_PROGRAM}
+      SCORING: ${SCORING_FUNCTION}"
 case ${SCORE_PROGRAM} in
 "VINA")
-    echo "  CENTER ${DOCK_CENTER[@]}
-   SIZE ${DOCK_LENGHT[@]} (X,Y,Z)"
+    echo "       CENTER: ${DOCK_CENTER[@]}"
+    echo "         SIZE: ${DOCK_LENGHT[@]} (X,Y,Z)"
 ;;
 "PLANTS")
-    echo "  CENTER ${DOCK_CENTER[@]}
-  RADIUS ${DOCK_RADIUS}"
+    echo "       CENTER: ${DOCK_CENTER[@]}"
+    echo "       RADIUS: ${DOCK_RADIUS}"
 ;;
 "AMBER")
-    echo "      MD ${MD}"
+    echo "           MD: ${MD}"
 esac
 echo "
 [ Run options ]
@@ -977,7 +977,7 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
      OVERWRITE: ${OVERWRITE}
 "
 read -p "
-Continue [Y/N] ? : " opt
+Continue [Y/N]?: " opt
 
 case $opt in 
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;

@@ -57,24 +57,24 @@ echo "
 DockFlow summary:
 -------------------------------------------------------------------------------
 [ General info ]
-    HOST ${HOSTNAME}
-    USER ${USER}
- PROJECT ${PROJECT}
-PROTOCOL ${PROTOCOL}
- WORKDIR ${PWD}
+    HOST: ${HOSTNAME}
+    USER: ${USER}
+ PROJECT: ${PROJECT}
+PROTOCOL: ${PROTOCOL}
+ WORKDIR: ${PWD}
 
 [ Docking setup ]
-RECEPTOR Name: ${RECEPTOR_NAME}
-RECEPTOR File: ${RECEPTOR_FILE}
-  LIGAND ${LIGAND_FILE}
-NLIGANDS ${NLIGANDS}
-  NPOSES ${DOCK_POSES}
- PROGRAM ${DOCK_PROGRAM}
- SCORING ${SCORING_FUNCTION}
-  CENTER ${DOCK_CENTER[@]}"
+RECEPTOR NAME: ${RECEPTOR_NAME}
+RECEPTOR FILE: ${RECEPTOR_FILE}
+  LIGAND FILE: ${LIGAND_FILE}
+     NLIGANDS: ${NLIGANDS}
+       NPOSES: ${DOCK_POSES}
+      PROGRAM: ${DOCK_PROGRAM}
+      SCORING: ${SCORING_FUNCTION}
+       CENTER: ${DOCK_CENTER[@]}"
 case ${DOCK_PROGRAM} in
- "VINA") echo "    SIZE ${DOCK_LENGHT[@]} (X,Y,Z)" ;;
-      *) echo "  RADIUS ${DOCK_RADIUS}"
+ "VINA") echo "         SIZE: ${DOCK_LENGHT[@]} (X,Y,Z)" ;;
+      *) echo "       RADIUS: ${DOCK_RADIUS}"
 esac
 
 echo "
@@ -86,7 +86,7 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
      OVERWRITE: ${OVERWRITE}
 "
 read -p "
-Continue [Y/N] ? : " opt
+Continue [Y/N]?: " opt
 
 case $opt in
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
