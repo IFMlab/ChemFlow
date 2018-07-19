@@ -199,6 +199,7 @@ ScoreFlow_rescore_mmgbsa() {
 #
 #===============================================================================
 ScoreFlow_compute_charges
+exit 0
 ScoreFlow_write_run_tleap
 ScoreFlow_MMGBSA_write
 
@@ -274,7 +275,7 @@ if [  -f ${RUNDIR}/charges.xargs ] ; then
 fi
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    echo -ne "Computing ${CHARGE} charges for ${LIGAND}     \r"
+
     cd ${RUNDIR}/${LIGAND}
 
     # Mandatory Gasteiger charges
@@ -282,56 +283,78 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
         antechamber -i ligand.mol2 -fi mol2 -o ligand_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
     fi
 
-    case ${CHARGE} in
-    "bcc")
-        # Compute am1-bcc charges
-        if [ ! -f ligand_bcc.mol2 ] ; then
-            echo "cd ${RUNDIR}/${LIGAND} ; antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> ${RUNDIR}/charges.xargs
-        fi
+    #check if charges already exists for this ligand
+    DONE_CHARGE="false"
+    if [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ ] ; then
+        FILENAME=${CHEMFLOW_HOME}/ChemBase/${CHARGE}/{LIGAND}.mol2
+
+        awk '/1 MOL/&&!/TEMP/ {print $9}'  ${FILENAME} > charges.dat
+        antechamber -i ligand_gas.mol2 -o ligand_bcc.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes &> /dev/null
+
+        echo "ChemBase"
+        # Do not do it again ! It's already done.
+        DONE_CHARGE="true"
+    fi
+
+    if [ -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/{LIGAND}.mol2 ] && [ ${DONE_CHARGE} == "false" ] ; then
+        echo "LigFLow"
+        DONE_CHARGE="true"
+    fi
+
+    if [ ${DONE_CHARGE} == "false" ] ; then
+#        echo -ne "Computing ${CHARGE} charges for ${LIGAND}     \r"
+        case ${CHARGE} in
+        "bcc")
+            # Compute am1-bcc charges
+            if [ ! -f ligand_bcc.mol2 ] ; then
+                echo "cd ${RUNDIR}/${LIGAND} ; antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ; cp ligand_bcc.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}.mol2" >> ${RUNDIR}/charges.xargs
+            fi
+            ;;
+        "resp")
+            # Prepare Gaussian
+            if [ ! -f ligand_resp.mol2 ] ; then
+                antechamber -i ligand_gas.mol2 -fi mol2 -o ligand.gau -fo gcrt -gv 1 -ge ligand.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
+
+                # Run Gaussian to optimize structure and generate electrostatic potential grid
+                g09 <ligand.gau>ligand.gout
+
+                # Read Gaussian output and write new optimized ligand with RESP charges
+                antechamber -i ligand.gout -fi gout -o ligand_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> ${RUNDIR}/antechamber.log
+                cp ligand_resp.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}.mol2
+            fi
         ;;
-    "resp")
-        # Prepare Gaussian
-        if [ ! -f ligand_resp.mol2 ] ; then
-            antechamber -i ligand_gas.mol2 -fi mol2 -o ligand.gau -fo gcrt -gv 1 -ge ligand.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
-
-            # Run Gaussian to optimize structure and generate electrostatic potential grid
-            g09 <ligand.gau>ligand.gout
-
-            # Read Gaussian output and write new optimized ligand with RESP charges
-            antechamber -i ligand.gout -fi gout -o ligand_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> ${RUNDIR}/antechamber.log
-        fi
-    ;;
-    esac
-done 
+        esac
+    fi
+done
 
 if [ ${CHARGE} == "bcc" ] && [ -f ${RUNDIR}/charges.xargs ] ; then
     cat ${RUNDIR}/charges.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 fi
-
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    cd ${RUNDIR}/${LIGAND}
-
-    if [ ! -f ligand.frcmod ] && [ -f ligand_gas.mol2 ] ; then
-        parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
-
-        if [ ! -f ligand.frcmod ]  ; then
-            echo "${LIGAND} gas" >> ${RUNDIR}/antechamber_errors.lst
-        fi
-    fi
-
-    case ${CHARGE} in
-    "bcc")
-        if [ ! -f ligand_bcc.mol2 ] ; then
-            echo "${LIGAND} bcc" >> ${RUNDIR}/antechamber_errors.lst
-        fi
-    ;;
-    "resp")
-        if [ ! -f ligand_resp.mol2 ]; then
-            echo "${LIGAND} resp">> ${RUNDIR}/antechamber_errors.lst
-        fi
-    ;;
-    esac
-done
+#
+#for LIGAND in ${LIGAND_LIST[@]} ; do
+#    cd ${RUNDIR}/${LIGAND}
+#
+#    if [ ! -f ligand.frcmod ] && [ -f ligand_gas.mol2 ] ; then
+#        parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
+#
+#        if [ ! -f ligand.frcmod ]  ; then
+#            echo "${LIGAND} gas" >> ${RUNDIR}/antechamber_errors.lst
+#        fi
+#    fi
+#
+#    case ${CHARGE} in
+#    "bcc")
+#        if [ ! -f ligand_bcc.mol2 ] ; then
+#            echo "${LIGAND} bcc" >> ${RUNDIR}/antechamber_errors.lst
+#        fi
+#    ;;
+#    "resp")
+#        if [ ! -f ligand_resp.mol2 ]; then
+#            echo "${LIGAND} resp">> ${RUNDIR}/antechamber_errors.lst
+#        fi
+#    ;;
+#    esac
+#done
 }
 
 
