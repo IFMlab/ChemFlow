@@ -111,6 +111,10 @@ venv.bak/
 *.smi
 *.sdf
 *.mol2
+
+# ChemBase
+!ChemBase_bcc.mol2
+!ChemBase_resp.mol2
 *.pdb
 *.pdbqt
 
