@@ -157,6 +157,24 @@ if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
     esac
 
     # Check program locations ---------------------------------------------------
+   
+
+    case "${DOCK_PROGRAM}" in
+    "PLANTS")
+        if [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
+            echo "[ERROR ] PLANTS is not installed or on PATH" ; exit 0
+        fi
+    ;;
+    "VINA")
+        if  [ "$(command -v vina)" == "" ] ; then
+            echo "[ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
+        fi
+        if [ "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" == "" ] ; then
+          echo "[ERROR ] MglTools is not installed or on PATH" ; exit 0
+        fi
+    ;;
+    esac
+
     case "${SCORE_PROGRAM}" in
     "PLANTS")
         if [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
