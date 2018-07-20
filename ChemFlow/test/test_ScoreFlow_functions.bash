@@ -76,8 +76,6 @@ output=`echo ${output}`
 expected="${CHARGE} charges found in LigFlow for ${LIGAND}"
 assertOutputIsExpected
 
-ScoreFlow_compute_charges
-
 # Check if the file has been created
 FILE="${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2"
 msg="The file ligand_${CHARGE} has not been generated. "
@@ -116,8 +114,6 @@ output=$(ScoreFlow_compute_charges)
 output=`echo ${output}`
 expected="Computing ${CHARGE} charges for ${LIGAND}"
 assertOutputIsExpected
-
-ScoreFlow_compute_charges
 
 # Check if the file has been created
 FILE="${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2"
