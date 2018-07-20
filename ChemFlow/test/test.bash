@@ -37,8 +37,9 @@
 
 DEBUG='no'
 
-source ${CHEMFLOW_HOME}/test/test_function.sh
-source ${CHEMFLOW_HOME}/test/test_cli.sh
+source ${CHEMFLOW_HOME}/test/test_functions.bash
+source ${CHEMFLOW_HOME}/test/test_cli.bash
+source ${CHEMFLOW_HOME}/test/test_ScoreFlow_functions.bash
 
 clean_project(){
     cd ${CHEMFLOW_HOME}/test/
@@ -275,17 +276,17 @@ unset msg
 initialize_test() {
 echo "[ ChemFlow ] Initiating test"
 cd ${CHEMFLOW_HOME}/test/
-##ChemFlow_checkfile_ERROR protein_ligand.tar.gz
-#
-## Extracts test data to run "input" folder
-#tar xfz protein_ligand.tar.gz
+#ChemFlow_checkfile_ERROR protein_ligand.tar.gz
+
+# Extracts test data to run "input" folder
+tar xfz protein_ligand.tar.gz
 
 # Go to input data folder.
 cd protein_ligand
 
-## prepare input files
-#python $(which SmilesTo3D.py ) -i compounds.smi -o compounds.sdf --hydrogen
-#babel -isdf compounds.sdf -omol2 compounds.mol2
+# prepare input files
+python $(which SmilesTo3D.py ) -i compounds.smi -o compounds.sdf --hydrogen
+babel -isdf compounds.sdf -omol2 compounds.mol2
 }
 
 
@@ -294,9 +295,12 @@ initialize_test
 
 test_cli
 
-test_DockFlow_vina_produces_output_pdbqt
-test_DockFlow_vina_overwrite_output_pdbqt
-test_PostDock_vina_produces_rank_docked_ligands
+# ScoreFlow functions
+test_ScoreFlow_functions
+
+#test_DockFlow_vina_produces_output_pdbqt
+#test_DockFlow_vina_overwrite_output_pdbqt
+#test_PostDock_vina_produces_rank_docked_ligands
 
 #clean_project
 

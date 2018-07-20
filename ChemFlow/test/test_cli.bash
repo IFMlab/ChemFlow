@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source ${CHEMFLOW_HOME}/test/test_function.sh
+source ${CHEMFLOW_HOME}/test/test_functions.bash
 
 # Test DockFlow input --------------------------------------------------------------------------------------------------
 test_dockflow_without_arg(){
@@ -352,6 +352,4 @@ test_scoreflow_mmgbsa_mol2_receptor_file
 test_scoreflow_plants_unexisting_receptor_file
 test_scoreflow_vina_unexisting_receptor_file
 test_scoreflow_mmgbsa_unexisting_receptor_file
-
-
 }

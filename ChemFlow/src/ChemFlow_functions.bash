@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-source ${CHEMFLOW_HOME}/test/test_function.sh
+source ${CHEMFLOW_HOME}/test/test_functions.bash
 
 
 ChemFlow_error() {
