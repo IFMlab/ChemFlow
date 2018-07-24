@@ -98,6 +98,7 @@ rm -rf test.chemflow/DockFlow/vina
 }
 
 test_dockflow_wrong_sf() {
+TEST="test_dockflow_wrong_sf"
 output=`DockFlow --project test --protocol wrong -r receptor.mol2 -l compounds.mol2 -sf wrong | tail -4`
 output=`echo ${output}`
 expected="[ ERROR ] SCORING_FUNCTION wrong not implemented For help, type: DockFlow -h"
@@ -105,6 +106,7 @@ assertOutputIsExpected
 }
 
 test_dockflow_pdb_receptor_file_for_plants() {
+TEST="test_dockflow_pdb_receptor_file_for_plants"
 output=`DockFlow --project test --protocol plants -r receptor.pdb -l compounds.mol2 | tail -4`
 output=`echo ${output}`
 expected="[ ERROR ] Docking requires a mol2 file as receptor input For help, type: DockFlow -h"
@@ -112,6 +114,7 @@ assertOutputIsExpected
 }
 
 test_dockflow_pdb_receptor_file_for_vina() {
+TEST="test_dockflow_pdb_receptor_file_for_vina"
 output=`DockFlow --project test --protocol plants -r receptor.pdb -l compounds.mol2 -sf vina | tail -4`
 output=`echo ${output}`
 expected="[ ERROR ] Docking requires a mol2 file as receptor input For help, type: DockFlow -h"
@@ -145,7 +148,7 @@ assertOutputIsExpected
 
 test_scoreflow_mmgbsa_without_project(){
 TEST="test_scoreflow_mmgbsa_without_project"
-output=`ScoreFlow --protocol vina -r receptor.pdb -l compounds.mol2 -sf mmgbsa | tail -4`
+output=`ScoreFlow --protocol mmgbsa -r receptor.pdb -l compounds.mol2 -sf mmgbsa | tail -4`
 output=`echo ${output}`
 expected="[ ERROR ] No PROJECT name (-p myproject) For help, type: ScoreFlow -h"
 assertOutputIsExpected
@@ -169,7 +172,7 @@ assertOutputIsExpected
 
 test_scoreflow_mmgbsa_without_receptor_file(){
 TEST="test_scoreflow_mmgbsa_without_receptor_file"
-output=`ScoreFlow -p test --protocol vina -l compounds.mol2 -sf mmgbsa | tail -4`
+output=`ScoreFlow -p test --protocol mmgbsa -l compounds.mol2 -sf mmgbsa | tail -4`
 output=`echo ${output}`
 expected="[ ERROR ] No RECEPTOR file name (-r receptor_file.pdb) For help, type: ScoreFlow -h"
 assertOutputIsExpected
@@ -193,7 +196,7 @@ assertOutputIsExpected
 
 test_scoreflow_mmgbsa_without_ligand_file(){
 TEST="test_scoreflow_mmgbsa_without_ligand_file"
-output=`ScoreFlow -p test --protocol vina -r receptor.mol2 -sf mmgbsa | tail -4`
+output=`ScoreFlow -p test --protocol mmgbsa -r receptor.mol2 -sf mmgbsa | tail -4`
 output=`echo ${output}`
 expected="[ ERROR ] No LIGAND filename (-l ligand_file.mol2) For help, type: ScoreFlow -h"
 assertOutputIsExpected
@@ -302,6 +305,8 @@ assertOutputIsExpected
 }
 
 test_cli() {
+echo -ne "[ TestFlow ] Test all cli requirements                                                   \r"
+
 # Tests DockFlow cli
 test_dockflow_without_arg
 
@@ -320,8 +325,9 @@ test_dockflow_plants_without_center
 test_dockflow_postdock_empty_plants
 test_dockflow_postdock_empty_vina
 
-# test receptor file
 test_dockflow_wrong_sf
+
+# test receptor file
 test_dockflow_pdb_receptor_file_for_plants
 test_dockflow_pdb_receptor_file_for_vina
 
@@ -330,12 +336,15 @@ test_scoreflow_without_arg
 
 test_scoreflow_plants_without_project
 test_scoreflow_vina_without_project
+test_scoreflow_mmgbsa_without_project
 
 test_scoreflow_plants_without_receptor_file
 test_scoreflow_vina_without_receptor_file
+test_scoreflow_mmgbsa_without_receptor_file
 
 test_scoreflow_plants_without_ligand_file
 test_scoreflow_vina_without_ligand_file
+test_scoreflow_mmgbsa_without_ligand_file
 
 test_scoreflow_vina_without_center
 test_scoreflow_plants_without_center
@@ -344,11 +353,13 @@ test_scoreflow_postprocess_empty_plants
 test_scoreflow_postprocess_empty_vina
 test_scoreflow_postprocess_empty_mmgbsa
 
-# test receptor file
 test_scoreflow_wrong_sf
+
+# test receptor file
 test_scoreflow_plants_pdb_receptor_file
 test_scoreflow_vina_pdb_receptor_file
 test_scoreflow_mmgbsa_mol2_receptor_file
+
 test_scoreflow_plants_unexisting_receptor_file
 test_scoreflow_vina_unexisting_receptor_file
 test_scoreflow_mmgbsa_unexisting_receptor_file

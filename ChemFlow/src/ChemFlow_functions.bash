@@ -160,15 +160,15 @@ if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
     case "${DOCK_PROGRAM}" in
     "PLANTS")
         if [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
-            echo "[ERROR ] PLANTS is not installed or on PATH" ; exit 0
+            echo "[ ERROR ] PLANTS is not installed or on PATH" ; exit 0
         fi
     ;;
     "VINA")
         if  [ "$(command -v vina)" == "" ] ; then
-            echo "[ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
+            echo "[ ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
         fi
         if [ "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" == "" ] ; then
-            echo "[ERROR ] MglTools is not installed or on PATH" ; exit 0
+            echo "[ ERROR ] MglTools is not installed or on PATH" ; exit 0
         fi
     ;;
     esac
@@ -176,28 +176,28 @@ if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
     case "${SCORE_PROGRAM}" in
     "PLANTS")
         if [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
-            echo "[ERROR ] PLANTS is not installed or on PATH" ; exit 0
+            echo "[ ERROR ] PLANTS is not installed or on PATH" ; exit 0
         fi
     ;;
     "VINA")
         if  [ "$(command -v vina)" == "" ] ; then
-            echo "[ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
+            echo "[ ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
         fi
         if [ "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" == "" ] ; then
-            echo "[ERROR ] MglTools is not installed or on PATH" ; exit 0
+            echo "[ ERROR ] MglTools is not installed or on PATH" ; exit 0
         fi
     ;;
     "AMBER")
         if  [ "$(command -v sander)" == "" ] ; then
-            echo "[ERROR ] AmberTools 17+ is not installed or on PATH" ; exit 0
+            echo "[ ERROR ] AmberTools 17+ is not installed or on PATH" ; exit 0
         fi
         if [ ${CHARGE} == "resp" ] && [ "$(command -v g09)" == "" ] ; then
-            echo "[ERROR ] Gaussian is not installed or on PATH" ; exit 0
+            echo "[ ERROR ] Gaussian is not installed or on PATH" ; exit 0
         fi
 
         if  [ "$(command -v pmemd.cuda)" == "" ] ; then
             if  [ "$(command -v pmemd)" == "" ] ; then
-                echo "[ERROR ] Amber (pmemd) is not installed or on PATH, changing to SANDER."
+                echo "[ ERROR ] Amber (pmemd) is not installed or on PATH, changing to SANDER."
                 AMBER_EXEC="mpirun -n ${NCORES} sander.MPI"
             if  [ "$(command -v sander.MPI)" == "" ] ; then
                 AMBER_EXEC="sander"

@@ -323,10 +323,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
         "bcc")
             # Compute am1-bcc charges
             if [ ! -f ligand_bcc.mol2 ] ; then
-                echo "cd ${RUNDIR}/${LIGAND} ; antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> ${RUNDIR}/charges.xargs
-#                if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
-#                    echo "cp ligand_bcc.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2" >> ${RUNDIR}/charges.xargs
-#                fi
+                echo "cd ${RUNDIR}/${LIGAND} ; antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ; cp ligand_bcc.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2" >> ${RUNDIR}/charges.xargs
             fi
             ;;
         "resp")

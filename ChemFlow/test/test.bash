@@ -35,11 +35,12 @@
 #      REVISION:  ---
 #===============================================================================
 
-DEBUG='no'
-
 source ${CHEMFLOW_HOME}/test/test_functions.bash
 source ${CHEMFLOW_HOME}/test/test_cli.bash
 source ${CHEMFLOW_HOME}/test/test_ScoreFlow_functions.bash
+
+PASSED=0
+FAILED=0
 
 clean_project(){
     cd ${CHEMFLOW_HOME}/test/
@@ -305,5 +306,7 @@ test_ScoreFlow_functions
 #clean_project
 
 if [ "${error}" != "true" ] ; then
-    echo "[ ChemFlow ] All tests passed. Yeah ! :D"
+    echo "[ TestFlow ] All ${PASSED} tests passed. Yeah ! :D"
+else
+    echo "[ TestFlow ] ${FAILED} over ${PASSED} tests failed... Fix this !"
 fi

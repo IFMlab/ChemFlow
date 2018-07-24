@@ -5,15 +5,16 @@ function assertFileExits(){
         msg=""
     fi
     if [[ -f ${FILE} ]] ; then
-        true
+        let PASSED++
     else
-        echo ---------------------------------------------------
+        echo "[ TestFlow ] ---------------------------------------"
         echo
         echo "FAIL: ${TEST}. ${msg}" ;
         echo "AssertionError: File ${FILE} does not exist" ;
         echo
-        echo ---------------------------------------------------
+        echo "----------------------------------------------------"
         error="true"
+        let FAILED++
     fi
 }
 
@@ -22,13 +23,16 @@ function assertOutputIsExpected(){
         msg=""
     fi
     if [[ "${output}" != "${expected}" ]] ; then
-        echo ----------------------------------------------------
+        echo "[ TestFlow ] ---------------------------------------"
         echo
         echo "FAIL: ${TEST}. ${msg}" ;
         echo "AssertionError: Output : ${output} != ${expected}" ;
         echo
-        echo ----------------------------------------------------
+        echo "----------------------------------------------------"
         error="true"
+        let FAILED++
+    else
+        let PASSED++
     fi
 }
 
@@ -42,12 +46,15 @@ function assertFilesAreNew(){
     output=`find ${dir} -type f -newermt "$(date '+%Y-%m-%d %H:%M:%S' -d '3 minute ago')"`
     output=`echo ${output}`
     if [[ "${output}" != "${expected}" ]] ; then
-        echo ----------------------------------------------------
+        echo "[ TestFlow ] ---------------------------------------"
         echo
         echo "FAIL: ${TEST}. ${msg}" ;
         echo "AssertionError: New files : ${output} != ${expected}" ;
         echo
-        echo ----------------------------------------------------
+        echo "----------------------------------------------------"
         error="true"
+        let FAILED++
+    else
+        let PASSED++
     fi
 }

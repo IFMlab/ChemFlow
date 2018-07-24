@@ -4,7 +4,6 @@ source ${CHEMFLOW_HOME}/test/test_functions.bash
 source ${CHEMFLOW_HOME}/src/ScoreFlow_functions.bash
 
 
-
 test_ScoreFlow_compute_charges_ligand_in_ChemBase() {
 TEST="test_ScoreFlow_compute_charges_ligand_in_ChemBase"
 
@@ -17,10 +16,6 @@ RUNDIR="${WORKDIR}/${PROJECT}.chemflow/ScoreFlow/${PROTOCOL}/${RECEPTOR_NAME}/"
 LIGAND_LIST=(CHEMBL477992)
 LIGAND=${LIGAND_LIST[0]}
 CHARGE="bcc"
-
-if [ -f ${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2 ] ; then
-    rm -f ${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2
-fi
 
 if [ -d ${RUNDIR}/${LIGAND} ] ; then
     rm -rf ${RUNDIR}/${LIGAND}
@@ -55,10 +50,6 @@ LIGAND_LIST=(CHEMBL11336X)
 LIGAND=${LIGAND_LIST[0]}
 CHARGE="bcc"
 
-if [ -f ${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2 ] ; then
-    rm -f ${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2
-fi
-
 if [ -d ${RUNDIR}/${LIGAND} ] ; then
     rm -rf ${RUNDIR}/${LIGAND}
 fi
@@ -80,8 +71,6 @@ assertOutputIsExpected
 FILE="${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2"
 msg="The file ligand_${CHARGE} has not been generated. "
 assertFileExits
-
-rm -rf ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}.mol2
 }
 
 
@@ -99,8 +88,8 @@ LIGAND_LIST=(CHEMBL11336X)
 LIGAND=${LIGAND_LIST[0]}
 CHARGE="bcc"
 
-if [ -f ${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2 ] ; then
-    rm -f ${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2
+if [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}.mol2 ] ; then
+    rm -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}.mol2
 fi
 
 if [ -d ${RUNDIR}/${LIGAND} ] ; then
@@ -121,8 +110,8 @@ msg="The file ligand_${CHARGE} has not been generated."
 assertFileExits
 
 # Check if it has been copied in the LigFlow db.
-FILE="${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2"
-msg="The file ligand_${CHARGE} has not been generated."
+FILE="${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}.mol2"
+msg="The file ${LIGAND}.mol2 has not been saved in LigFlow/${CHARGE}/."
 assertFileExits
 }
 
@@ -130,9 +119,12 @@ assertFileExits
 test_ScoreFlow_functions() {
 # Test on ScoreFlow_compute_charges
 # Usage of ChemBase
+echo -ne "[ TestFlow ] Test that charges in ChemBase are used.                                              \r"
 test_ScoreFlow_compute_charges_ligand_in_ChemBase
 # Usage of LigFlow
+echo -ne "[ TestFlow ] Test that charges in LigFlow are used.                                               \r"
 test_ScoreFlow_compute_charges_ligand_in_LigFlow
 # If the ligand is neither in ChemBase or LigFlow, we compute the charges and save them in LigFlow.
+echo -ne "[ TestFlow ] Test that we can compute unknown charges and save them in LigFlow (~10 min)          \r"
 test_ScoreFlow_compute_charges_ligand_neither_in_ChemBase_or_LigFlow
 }
