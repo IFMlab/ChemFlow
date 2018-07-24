@@ -1,0 +1,12 @@
+MD GB2, infinite cut off
+&cntrl
+  imin=1,maxcyc=${MAXCYC},
+  irest=0,ntx=1,
+  cut=9999.0, rgbmax=15.0,
+  igb=2
+! Frozen or restrained atoms
+!----------------------------------------------------------------------
+ ntr=1,
+ restraintmask='@CA,C,N,O',
+ restraint_wt=1.0,
+/

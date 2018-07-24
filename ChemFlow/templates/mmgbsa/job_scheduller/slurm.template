@@ -1,0 +1,24 @@
+#! /bin/bash
+#SBATCH -p publicgpu
+#SBATCH -n 1
+#SBATCH -t 2:00:00
+#SBATCH --gres=gpu:1
+#SBATCH --job-name="COMPLEX"
+#SBATCH -o COMPLEX/STATE/slurm.out
+#SBATCH -e COMPLEX/STATE/slurm.err
+
+#
+# Config 
+#
+# When running on GPUs make sure you load CUDA modules
+module load compilers/cuda-8.0
+
+# Path to amber.sh
+source $HOME/software/amber16/amber.sh
+
+# Path to amber input files
+amber_input=${HOME}/amber/amber_inputs/
+
+# Go to RUNDIR
+cd ${RUNDIR}
+

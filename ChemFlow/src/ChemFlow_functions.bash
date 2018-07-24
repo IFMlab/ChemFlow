@@ -89,7 +89,7 @@ fi
 
 # Check if the receptor file exists------------------------------------------
 if [ ! -f ${LIGAND_FILE} ] ; then
-    ERROR_MESSAGE=="The ligand file ${RECEPTOR_FILE} does not exist." ;
+    ERROR_MESSAGE=="The ligand file ${LIGAND_FILE} does not exist." ;
     ChemFlow_error ;
 fi
 
@@ -211,7 +211,10 @@ if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
         else
             AMBER_EXEC="pmemd.cuda"
         fi
-    ;;
+
+        # VERY UGLY FIX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        AMBER_EXEC="mpirun -n ${NCORES} pmemd.MPI"
+     ;;
     esac
 
     # Check overwriting ---------------------------------------------------------

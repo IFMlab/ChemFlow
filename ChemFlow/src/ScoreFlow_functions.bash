@@ -76,7 +76,7 @@ ScoreFlow_rescore_plants() {
 if [ -d ${RUNDIR}/PLANTS ] ; then
     case "${OVERWRITE}" in
     "yes")
-        rm -rf   ${RUNDIR}/PLANTS
+        rm -rf ${RUNDIR}/PLANTS
     ;;
     "no")
         ERROR_MESSAGE="PLANTS folder exists. Use --overwrite " ; ChemFlow_error ${PROGRAM} ;
@@ -84,15 +84,15 @@ if [ -d ${RUNDIR}/PLANTS ] ; then
     esac
 fi
 
-cd ${RUNDIR}
-ScoreFlow_write_plants_config
+ScoreFlow_rescore_plants_write_config
 
 # Run plants
-PLANTS1.2_64bit --mode rescore ${RUNDIR}/rescore_input.in &>rescoring.log
+cd ${RUNDIR}
+PLANTS1.2_64bit --mode rescore rescore_input.in &>rescoring.log
 }
 
 
-ScoreFlow_write_plants_config() {
+ScoreFlow_rescore_plants_write_config() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_write_plants_config
 #   DESCRIPTION: Write the dock input for plants (configuration file)
@@ -105,39 +105,12 @@ ScoreFlow_write_plants_config() {
 #                ${DOCK_CENTER}
 #                ${DOCK_RADIUS}
 #                ${DOCK_POSES}
-#       RETURNS: -
+#       RETURNS: rescore_input file
 #
-#          TODO: Allow "extra PLANTS keywords from cmd line"
 #===============================================================================
-echo "
-# input files
-protein_file receptor.mol2
-ligand_file  ligand.mol2
-
-# output
-output_dir PLANTS
-
-# scoring function and search settings
-scoring_function ${SCORING_FUNCTION}
-search_speed speed1
-
-# write mol2 files as a single (1) or multiple (0) mol2 files
-write_multi_mol2 1
-
-# binding site definition
-bindingsite_center ${DOCK_CENTER[@]}
-bindingsite_radius ${DOCK_RADIUS}
-
-# cluster algorithm, save the best DOCK_POSES.
-cluster_structures ${DOCK_POSES}
-cluster_rmsd 2.0
-
-# write
-write_ranking_links 0
-write_protein_bindingsite 1
-write_protein_conformations 0
-####
-" > ${RUNDIR}/rescore_input.in
+RECEPTOR_FILE="receptor.mol2"
+file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config.in)
+eval echo \""${file}"\" > ${RUNDIR}/rescore_input.in
 }
 
 
@@ -198,56 +171,29 @@ ScoreFlow_rescore_mmgbsa() {
 #       RETURNS: -
 #
 #===============================================================================
-ScoreFlow_compute_charges
-exit 0
-ScoreFlow_write_run_tleap
-ScoreFlow_MMGBSA_write
+ScoreFlow_rescore_mmgbsa_compute_charges
+ScoreFlow_rescore_mmgbsa_write_run_tleap
+# Write all input files
+ScoreFlow_rescore_mmgbsa_write_in
 
-if [ "${WATER}" != "yes" ] ; then
-    ScoreFlow_implicit_write_MIN
-
-    if [ "${MD}" == 'yes' ] ; then
-        ScoreFlow_implicit_write_MD
-    fi
-
-    for LIGAND in ${LIGAND_LIST[@]} ; do
-        cd ${RUNDIR}/${LIGAND}
-        ScoreFlow_implicit_run
-        ScoreFlow_MMGBSA_run
-    done
-else
-    ScoreFlow_explicit_write_MIN
-
-    if [ ${MD} == 'yes' ] ; then
-        ScoreFlow_explicit_write_MD
-    fi
-
-    for LIGAND in ${LIGAND_LIST[@]} ; do
-        echo -ne "Minimizing ${RECEPTOR_NAME} - ${LIGAND}     \r"
-        cd ${RUNDIR}/${LIGAND}
-        ScoreFlow_explicit_run_MIN
-
-        if [ ${MD} == 'yes' ] ; then
-            echo -ne "Molecular Dynamics ${RECEPTOR_NAME} - ${LIGAND}     \r"
-            ScoreFlow_explicit_run_MD
-        fi
-        ScoreFlow_MMGBSA_run
-    done
-fi
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}     \r"
+    echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
     cd ${RUNDIR}/${LIGAND}
+
+    ScoreFlow_rescore_mmgbsa_run
+
+
     case "${JOB_SCHEDULLER}" in
     "None")
-        bash ScoreFlow.
+        bash ScoreFlow.run
     ;;
     "PBS")
-        ScoreFlow_write_pbs
-        #qsub ScoreFlow.pbs
+        ScoreFlow_rescore_mmgbsa_write_pbs
+        qsub ScoreFlow.pbs
     ;;
     "SLURM")
-        ScoreFlow_write_slurm
+        ScoreFlow_rescore_mmgbsa_write_slurm
         sbatch ScoreFlow.slurm
     ;;
     esac
@@ -255,7 +201,7 @@ done
 }
 
 
-ScoreFlow_compute_charges() {
+ScoreFlow_rescore_mmgbsa_compute_charges() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_compute_charges
 #   DESCRIPTION: compute charge to run mmgbsa calculation
@@ -284,7 +230,6 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -f ligand_gas.mol2 ] ; then
         antechamber -i ligand.mol2 -fi mol2 -o ligand_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
     fi
-
 
     DONE_CHARGE="false"
     # Check if charges already exists for this ligand
@@ -376,7 +321,7 @@ done
 }
 
 
-ScoreFlow_write_run_tleap() {
+ScoreFlow_rescore_mmgbsa_write_run_tleap() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_write_run_tleap
 #   DESCRIPTION:
@@ -395,72 +340,12 @@ ScoreFlow_write_run_tleap() {
 cd ${RUNDIR}/
 
 if [ "${WATER}" != "yes" ] ; then
-echo "
-source oldff/leaprc.ff99SBildn
-source leaprc.gaff
-
-set default pbradii mbondi2 
-
-ptn = loadpdb ../receptor.pdb
-#saveamberparm ptn ptn.prmtop ptn.rst7
-#savePDB ptn ptn.pdb
-#charge ptn
-
-# Ligand --------------------------------------------------
-# Load ligand parameters
-loadAmberParams ligand.frcmod
-ligand = loadmol2  ligand_${CHARGE}.mol2
-saveamberparm ligand ligand.prmtop ligand.rst7
-#savePDB ligand ligand.pdb
-#charge ligand
-
-complex = combine{ptn,ligand}
-saveamberparm complex complex.prmtop complex.rst7
-#savePDB complex complex.pdb
-#charge complex
-quit
-" > tleap_gbsa.in
-
+    template="tleap_implicit_gbsa.template"
 else
-echo "
-source oldff/leaprc.ff99SBildn
-source leaprc.gaff
-
-ptn = loadpdb ../receptor.pdb
-saveamberparm ptn ptn.prmtop ptn.rst7
-savePDB ptn ptn.pdb
-charge ptn
-
-# Ligand --------------------------------------------------
-# Load ligand parameters
-loadAmberParams ligand.frcmod
-ligand = loadmol2  ligand_${CHARGE}.mol2
-saveamberparm ligand ligand.prmtop ligand.rst7
-savePDB ligand ligand.pdb
-charge ligand
-
-complex = combine{ptn,ligand}
-saveamberparm complex complex.prmtop complex.rst7
-savePDB complex complex.pdb
-charge complex
-
-# Add enough ions to neutralize
-AddIons2 complex Cl- 0
-AddIons2 complex Na+ 0
-
-# Save protein with ions: topology and coordinates
-saveamberparm complex ionized.prmtop ionized.rst7
-
-# Solvate with at least 12 Angtron buffer region
-solvateOct complex TIP3PBOX 12
-
-# Save solvated complex: topology and coordinates
-saveamberparm complex ionized_solvated.prmtop ionized_solvated.rst7
-savePDB complex ionized_solvated.pdb
-
-quit
-" > tleap_gbsa.in
+    template="tleap_explicit_gbsa.template"
 fi
+file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/${template})
+eval echo \""${file}"\" > ${RUNDIR}/tleap_gbsa.in
 
 # Goes back to rundir to prepare in parallel.
 if [ -f tleap.xargs ] ; then rm -rf tleap.xargs ; fi
@@ -476,124 +361,57 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     fi
 done
 
-if [ ! -f tleap.xargs ] ; then
-    ERROR_MESSAGE="run tleap impossible (TODO)" ; ChemFlow_error ;
-else
+if [ -f tleap.xargs ] ; then
     cat tleap.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 fi
 }
 
-ScoreFlow_implicit_write_MIN() {
+ScoreFlow_rescore_mmgbsa_write_in() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_implicit_write_MIN
-#   DESCRIPTION: Write mmgbsa implicit MIN config
+#          NAME: ScoreFlow_MMGBSA_implicit_write
+#   DESCRIPTION: Write mmgbsa implicit MIN (and MD if asked) config
 #
 #        Author: Diego E. B. Gomes
+#                Dona de Francquen
 #
 #    PARAMETERS: -
 #       RETURNS: -
 #
 #===============================================================================
+if [ "${WATER}" != "yes" ] ; then
+    solvent="implicit"
+    if [ "${MD}" != 'yes' ] ; then
+        scoreflow_protocol="min"
+    else
+        scoreflow_protocol="min md"
+    fi
+else
+    solvent="explicit"
+    if [ "${MD}" != 'yes' ] ; then
+        scoreflow_protocol="min1 min2 min3 min4"
+    else
+        scoreflow_protocol="min1 min2 min3 min4 heat_nvt heat_npt prod"
+    fi
+fi
 
-cd ${RUNDIR}
-
-echo "MD GB2, infinite cut off
-&cntrl
-  imin=1,maxcyc=${MAXCYC},
-  irest=0,ntx=1,
-  cut=9999.0, rgbmax=15.0,
-  igb=2
-! Frozen or restrained atoms
-!----------------------------------------------------------------------
- ntr=1,
- restraintmask='@CA,C,N,O',
- restraint_wt=1.0,
-/
-" > min_gbsa.in
-}
-
-
-ScoreFlow_explicit_write_MIN() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_explicit_write_MIN
-#   DESCRIPTION: Write explicit water MIN config
-#
-#        Author: Diego E. B. Gomes
-#
-#    PARAMETERS: -
-#       RETURNS: -
-#
-#===============================================================================
-for filename in min_pr.in min.in ; do
-    file=$(cat ${CHEMFLOW_HOME}/templates/water/$filename)
-    eval echo \""${file}"\" > ${RUNDIR}/${filename}
+for filename in ${scoreflow_protocol} ; do
+    file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/${solvent}/${filename}.template)
+    eval echo \""${file}"\" > ${RUNDIR}/${filename}.in
 done
+
+echo "$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/GB2.template)" > ${RUNDIR}/GB2.in
 }
 
 
-ScoreFlow_implicit_write_MD() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_implicit_write_MIN
-#   DESCRIPTION: Write mmgbsa implicit config
-#
-#        Author: Diego E. B. Gomes
-#
-#    PARAMETERS: -
-#       RETURNS: -
-#
-#===============================================================================
-
-cd ${RUNDIR}
-
-echo "MD GB2, infinite cut off
-&cntrl
-  imin=0,irest=0,ntx=1,
-  nstlim=1000,dt=0.002,ntb=0,
-  ntf=2,ntc=2,
-  ntpr=1000, ntwx=1000, ntwr=30000,
-  cut=9999.0, rgbmax=15.0,
-  igb=2,ntt=3,gamma_ln=1.0,nscm=0,
-  temp0=300.0,
-! Frozen or restrained atoms
-!----------------------------------------------------------------------
-! ibelly,
-! bellymask,
- ntr=1,
- restraintmask=':1-198@CA,C,N,O',
- restraint_wt=10.0,
-/
-" > md_gbsa.in
-}
-
-
-ScoreFlow_explicit_write_MD() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_implicit_write_MIN
-#   DESCRIPTION: Write mmgbsa implicit config
-#
-#        Author: Diego E. B. Gomes
-#
-#    PARAMETERS: -
-#       RETURNS: -
-#
-#===============================================================================
-cd ${RUNDIR}
-
-for filename in heat_nvt.in heat_npt.in equil.in prod.in ; do
-    file=$(cat ${CHEMFLOW_HOME}/templates/water/${filename})
-    eval echo \""${file}"\" > ${RUNDIR}/${filename}
-done
-}
-
-
-ScoreFlow_implicit_run() {
+ScoreFlow_rescore_mmgbsa_run() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
 #   DESCRIPTION: Run mmgbsa implicit MIN
 #
 #        Author: Diego E. B. Gomes
+#                Dona de Francquen
 #
-#    PARAMETERS: ${OVERWRITE}
+#    PARAMETERS:
 #       RETURNS: -
 #
 #===============================================================================
@@ -602,145 +420,95 @@ if [ -f  ScoreFlow.run ] ; then
     rm -rf  ScoreFlow.run
 fi
 
-# Step 1 - Minimization
-init=complex
-input=min_gbsa
-prev=complex
-run=mini
-
-var=""
-
-# Check if simulations finished
-if [ -f mini.mdout ] ; then
-    var=$(tail -1 mini.mdout | awk '/Total wall time/{print $1}')
-fi
-
-# If empty or simulation didn't finish or overwrite, (re)run.
-if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
-    echo "${AMBER_EXEC} -O  \
--i ../${input}.in -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
--x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
--p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job " >> ScoreFlow.run
-fi
-
-if [ "${MD}" == "yes" ] ; then
-    input=md_gbsa
-    prev=mini
-    run=md
-
-    var=""
-    var_md=""
-    # Check if simulations finished
-    if [ -f mini.mdout ] ; then
-        var=$(tail -1 mini.mdout | awk '/Total wall time/{print $1}')
+if [ "${WATER}" != "yes" ] ; then
+    init=complex           # Do not change Init
+    prev="${init}"
+    if [ "${MD}" != 'yes' ] ; then
+        scoreflow_protocol="min"
+        TRAJECTORY="min.rst7"
+    else
+        scoreflow_protocol="min md"
+        TRAJECTORY="md.nc"
     fi
-
-    if [ -f md.mdout ] ; then
-        var_md=$(tail -1 md.mdout | awk '/Total wall time/{print $1}')
-    fi
-
-    # If empty or simulation finished, (re)run.
-    if [ "${var}" != "" ] ; then
-        if [ "${var_md}" == "" ] ||  [ ${OVERWRITE} == 'yes' ]  ; then
-    echo "${AMBER_EXEC} -O  \
--i ../${input}.in -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
--x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
--p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job " >> ScoreFlow.run
-        fi
+else
+    init=ionized_solvated    # Do not change Init
+    prev="${init}"
+    if [ "${MD}" != 'yes' ] ; then
+        scoreflow_protocol="min1 min2 min3 min4"
+        TRAJECTORY="min4.rst7"
+    else
+        scoreflow_protocol="min1 min2 min3 min4 heat_nvt heat_npt prod"
+        TRAJECTORY="prod.nc"
     fi
 fi
-}
-
-
-ScoreFlow_explicit_run_MIN() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_explicit_run_MIN
-#   DESCRIPTION: Run mmgbsa implicit MIN
-#
-#        Author: Diego E. B. Gomes
-#
-#    PARAMETERS: ${OVERWRITE}
-#       RETURNS: -
-#
-#===============================================================================
-init=ionized_solvated    # Do not change Init
-prev="${init}"
 
 # Loop  over minimization protocol
-for run in "min_pr" "min" ; do
-    input="../${run}"
+echo "init=${init}
+prev=${prev}
 
-    var=""
+for run in ${scoreflow_protocol} ; do
+    input=\"../\${run}\"
+    var=''
 
-    # Check if simulations finished
-    if [ -f ${run}.mdout ] ; then
-        var=$(tail -1 ${run}.mdout | awk '/Total wall time/{print $1}')
+    # Check if run finished.
+    if [ -f \${run}.mdout ] ; then
+        var=\$(tail -1 \${run}.mdout | awk '/Total wall time/{print \$1}')
     fi
 
-    # If empty or simulation finished, (re)run.
-    if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
+    if [ \"\${var}\" == \"\" ] ; then
         ${AMBER_EXEC} -O  \
-        -i ${input}.in   -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
-        -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
-        -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
+-i \${input}.in -o \${run}.mdout -e \${run}.mden -r \${run}.rst7  \
+-x \${run}.nc -v  \${run}.mdvel -inf \${run}.mdinfo -c \${prev}.rst7 \
+-p \${init}.prmtop -ref \${prev}.rst7 &> \${run}.job
     fi
 
-    prev="${run}"
-done
-}
+    if [ -f \${run}.mdout ] ; then
+        var=\$(tail -1 \${run}.mdout | awk '/Total wall time/{print \$1}')
+    fi
+    if [ \"\${var}\" == '' ] ; then
+        echo \"[ ERROR ]Fail in step \${run}\"
+        exit 1
+    fi
 
+    prev=\${run}
+done" >> ${RUNDIR}/${LIGAND}/ScoreFlow.run
 
-ScoreFlow_explicit_run_MD() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_explicit_run_MD
-#   DESCRIPTION: Run mmgbsa explicit MD
-#
-#        Author: Diego E. B. Gomes
-#
-#    PARAMETERS: ${OVERWRITE}
-#       RETURNS: -
-#
-#===============================================================================
-init="ionized_solvated"     # Do not change Init
-prev="min"                  # The last step of minimization.
-
-#
-# We lack proper a step to verify if minimization is complete. TODO
-#
-# Check if MINIMIZATION finished
-if [ -f min.mdout ] ; then
-    var=$(tail -1 ${run}.mdout | awk '/Total wall time/{print $1}')
+if [ ! -f MMPBSA.dat ] ; then
+echo "rm -rf com.top rec.top ligand.top
+ante-MMPBSA.py -p ${init}.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job
+MMPBSA.py -O -i ../GB2.in -sp ${init}.prmtop -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job
+rm -rf reference.frc " >> ScoreFlow.run
 fi
-#
-#
 
-# Loop  over minimization protocol
-for run in heat_nvt heat_npt equil prod ; do
-    input="../${run}"
-
-    var=""
-
-    # Check if simulations finished
-    if [ -f ${run}.mdout ] ; then
-        var=$(tail -1 ${run}.mdout | awk '/Total wall time/{print $1}')
-    fi
-
-    # If empty or simulation finished, (re)run.
-    if [ "${var}" == "" ] || [ "${OVERWRITE}" == 'yes' ] ; then
-        ${AMBER_EXEC} -O  \
-        -i ${input}.in   -o   ${run}.mdout   -e ${run}.mden   -r ${run}.rst7  \
-        -x ${run}.nc      -v   ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 \
-        -p ${init}.prmtop -ref ${prev}.rst7 &>   ${run}.job
-    fi
-
-    prev="${run}"
-done
 }
 
 
-ScoreFlow_write_pbs() {
+ScoreFlow_rescore_mmgbsa_write_slurm() {
 #===  FUNCTION  ================================================================
-#          NAME: write_pbs
+#          NAME: ScoreFlow_write_slurm
+#   DESCRIPTION: Writes the SLURM script to for each ligand (or range of ligands).
+#                Filenames and parameters are hardcoded.
+#    PARAMETERS:
+#               ${list[@]}  -   Array with all ligand names
+#               ${first}    -   First ligand in the array
+#               ${$nlig}    -   Number of compounds to dock
+#               ${NNODES}   -   Number of compute nodes to use
+#               ${NCORES}   -   Number of cores/node
+#               ${NTHREADS} -   Total threads (NNODES*NCORES)
+#
+#          NOTE: Must be run while at "${RUNDIR}
+#       RETURNS: -
+#===============================================================================
+file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/slurm.template)
+eval echo \""${file}"\" > ${RUNDIR}/${LIGAND}/ScoreFlow.slurm
+
+echo "$(cat ScoreFlow.run)" >> ${RUNDIR}/${LIGAND}/ScoreFlow.slurm
+}
+
+
+ScoreFlow_rescore_mmgbsa_write_pbs() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_write_pbs
 #   DESCRIPTION: Writes the PBS script to for each ligand (or range of ligands).
 #                Filenames and parameters are hardcoded.
 #    PARAMETERS:
@@ -754,68 +522,10 @@ ScoreFlow_write_pbs() {
 #          NOTE: Must be run while at "${RUNDIR}
 #       RETURNS: -
 #===============================================================================
-echo "#! /bin/bash
-# 1 noeud 8 coeurs
-#PBS -q  route
-#PBS -N ScoreFlow_${LIGAND}
-#PBS -l nodes=${NNODES}:ppn=${NCORES}
-#PBS -l walltime=0:30:00
-#PBS -V
+file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/pbs.template)
+eval echo \""${file}"\" > ${RUNDIR}/${LIGAND}/ScoreFlow.pbs
 
-cd ${RUNDIR}/${LIGAND}
-
-$(cat ScoreFlow.run)
-" > ScoreFlow.pbs
-}
-
-
-ScoreFlow_MMGBSA_write() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_write
-#   DESCRIPTION: Write mmgbsa config
-#
-#        Author: Diego E. B. Gomes
-#
-#    PARAMETERS: -
-#       RETURNS: -
-#
-#===============================================================================
-cd ${RUNDIR}
-
-echo "Input file for running GB2
-&general
-   verbose=1,keep_files=0,interval=10
-/
-&gb
-  igb=2, saltcon=0.150
-/
-" > GB2.in
-}
-
-
-ScoreFlow_MMGBSA_run() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
-#   DESCRIPTION: Run mmgbsa
-#
-#        Author: Diego E. B. Gomes
-#
-#    PARAMETERS: ${OVERWRITE}
-#       RETURNS: -
-#
-#===============================================================================
-
-TRAJECTORY="mini.rst7"
-if [ ${MD} == 'yes' ] ; then
-    TRAJECTORY="md.nc"
-fi
-
-if [ ! -f MMPBSA.dat ] || [ "${OVERWRITE}" == 'yes' ] ; then
-echo "rm -rf com.top rec.top ligand.top
-ante-MMPBSA.py -p complex.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job
-MMPBSA.py -O -i ../GB2.in -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job
-rm -rf reference.frc " >> ScoreFlow.run
-fi
+echo "$(cat ScoreFlow.run)" >> ${RUNDIR}/${LIGAND}/ScoreFlow.pbs
 }
 
 
@@ -833,6 +543,9 @@ ScoreFlow_organize() {
 # TODO 
 # Improve extracting mol2 to separate folders.
 #
+if [ ${OVERWRITE} == "yes" ] ; then
+    rm -rf ${RUNDIR}
+fi
 
 if [  ! -d ${RUNDIR} ] ; then
     mkdir -p ${RUNDIR}
