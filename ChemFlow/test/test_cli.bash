@@ -81,7 +81,7 @@ mkdir -p test.chemflow/DockFlow/plants/receptor/CHEMBL195725
 mkdir -p test.chemflow/DockFlow/plants/receptor/CHEMBL477992
 output=`DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --postdock | tail -6`
 output=`echo ${output}`
-expected="[ ChemFlow ] Checking input files... [ ERROR ] Plants result for ligand CHEMBL477992 does not exists. [ ERROR ] Plants result for ligand CHEMBL195725 does not exists. [ DockFlow ] Error during post-docking, see error above."
+expected="[ ChemFlow ] Checking input files... [ ERROR ] Plants result for ligand CHEMBL477992 does not exists. [ DockFlow ] Error during post-docking, see error above."
 assertOutputIsExpected
 rm -rf test.chemflow/DockFlow/plants
 }
@@ -92,7 +92,7 @@ mkdir -p test.chemflow/DockFlow/vina/receptor/CHEMBL195725
 mkdir -p test.chemflow/DockFlow/vina/receptor/CHEMBL477992
 output=`DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 -sf vina --postdock | tail -6`
 output=`echo ${output}`
-expected="[ ChemFlow ] Checking input files... [ ERROR ] Vina's result for ligand CHEMBL477992 does not exists. [ ERROR ] Vina's result for ligand CHEMBL195725 does not exists. [ DockFlow ] Error during post-docking, see error above."
+expected="[ ChemFlow ] Checking input files... [ ERROR ] Vina's result for ligand CHEMBL477992 does not exists. [ DockFlow ] Error during post-docking, see error above."
 assertOutputIsExpected
 rm -rf test.chemflow/DockFlow/vina
 }
@@ -223,7 +223,7 @@ TEST="test_scoreflow_postprocess_empty_plants"
 mkdir -p test.chemflow/ScoreFlow/plants/receptor/
 output=`ScoreFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --postprocess | tail -4`
 output=`echo ${output}`
-expected="[ ERROR ] Plants results for PROJECT 'test' / PROTOCOL 'plants' does not exists. For help, type: ScoreFlow -h"
+expected="[ ERROR ] PLANTS results for PROJECT 'test' / PROTOCOL 'plants' does not exists. For help, type: ScoreFlow -h"
 assertOutputIsExpected
 rm -rf test.chemflow/ScoreFlow/plants
 }
@@ -233,7 +233,7 @@ TEST="test_scoreflow_postprocess_empty_vina"
 mkdir -p test.chemflow/ScoreFlow/vina/receptor/
 output=`ScoreFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 -sf vina --postprocess | tail -5`
 output=`echo ${output}`
-expected="[ ERROR ] Vina results for PROJECT 'test' / PROTOCOL 'vina' does not exists. For help, type: ScoreFlow -h"
+expected="[ ERROR ] VINA results for PROJECT 'test' / PROTOCOL 'vina' does not exists. For help, type: ScoreFlow -h"
 assertOutputIsExpected
 rm -rf test.chemflow/ScoreFlow/vina
 }
@@ -243,7 +243,7 @@ TEST="test_scoreflow_postprocess_empty_mmgbsa"
 mkdir -p test.chemflow/ScoreFlow/mmgbsa/receptor/
 output=`ScoreFlow --project test --protocol mmgbsa -r receptor.pdb -l compounds.mol2 -sf mmgbsa --postprocess | tail -5`
 output=`echo ${output}`
-expected="[ ERROR ] Amber results for PROJECT 'test' / PROTOCOL 'mmgbsa' does not exists. For help, type: ScoreFlow -h"
+expected="[ ERROR ] AMBER results for PROJECT 'test' / PROTOCOL 'mmgbsa' does not exists. For help, type: ScoreFlow -h"
 assertOutputIsExpected
 rm -rf test.chemflow/ScoreFlow/vina
 }

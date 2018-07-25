@@ -5,5 +5,3 @@
 #PBS -l nodes=${NNODES}:ppn=${NCORES}
 #PBS -l walltime=0:30:00
 #PBS -V
-
-cd ${RUNDIR}/${LIGAND}

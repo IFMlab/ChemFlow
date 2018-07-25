@@ -146,7 +146,7 @@ case ${WORKFLOW} in
 esac
 
 # If we are using the major program (no postprocessing or archiving) ------------
-if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
+if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
 
     # HPC adjustments
     case ${JOB_SCHEDULLER} in
@@ -233,7 +233,7 @@ ChemFlow_set_ligand_list ${LIGAND_FILE}
 }
 
 check_center(){
-if [ -z ${POSTDOCK} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
+if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
     if [ -z "${DOCK_CENTER}" ] ; then
         ERROR_MESSAGE="No DOCKING CENTER defined (--center x y z)" ;
         ChemFlow_error ;
@@ -267,7 +267,7 @@ if [ $1 == 'DockFlow' ] ; then
 
     # Docking options
     DOCK_PROGRAM="PLANTS"
-    DOCK_LENGHT="15 15 15"
+    DOCK_LENGHT=("15" "15" "15")
     DOCK_RADIUS="15"
     DOCK_POSES="10"
 
@@ -279,11 +279,17 @@ elif [ $1 == 'ScoreFlow' ] ; then
 
     # Scoring options
     SCORE_PROGRAM="PLANTS"
+    DOCK_LENGHT=("15" "15" "15")
+    DOCK_RADIUS="15"
     CHARGE="gas"
 
     # no MD
     MD="no"
     WATER="no"
     MAXCYC="1000"
+
+    #run option
+    WRITE_RUN="no"
+    RUN_FILE_PROVIDED="no"
 fi
 }

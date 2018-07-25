@@ -39,12 +39,53 @@
 ScoreFlow_rescore() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_rescore
-#   DESCRIPTION: call the right function for the rescoring
+#   DESCRIPTION: Creates the dock list, to avoid redoundant calculations.
+#                Call the right function for the rescoring.
 #
 #    PARAMETERS: ${SCORE_PROGRAM}
 #
 #        Author: Dona de Francquen
 #===============================================================================
+# Creation of the docking list, checkpoint calculations.
+DOCK_LIST=""
+case ${SCORE_PROGRAM} in
+"PLANTS")
+    # If the folder exists but there's no "bestranking.csv" its incomplete.
+    FILE="${SCORE_PROGRAM}/bestranking.csv"
+;;
+"VINA")
+    # If the folder exists but there's no "output.pdbqt" its incomplete.
+    FILE="${SCORE_PROGRAM}/output.pdbqt"
+;;
+"AMBER")
+    # If the folder exists but there's no "output.pdbqt" its incomplete.
+    FILE="MMPBSA.dat"
+;;
+esac
+if [ "${OVERWRITE}" == "no" ] ; then # Useless to process this loop if we overwrite anyway.
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        if [ ! -f ${RUNDIR}/${LIGAND}/${FILE} ] ; then
+            echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+            DOCK_LIST="${DOCK_LIST} $LIGAND"
+        fi
+    done
+    DOCK_LIST=(${DOCK_LIST})
+else
+    DOCK_LIST=(${LIGAND_LIST[@]})
+fi
+
+# Make DOCK_LIST into an array.
+unset LIGAND_LIST
+LIGAND_LIST=(${DOCK_LIST[@]})
+NDOCK=${#LIGAND_LIST[@]}
+
+echo ${LIGAND_LIST[@]}
+if [ ${NDOCK} == 0 ] ; then
+    echo "[ DockFlow ] All compounds already docked ! " ; exit 0
+else
+    echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to rescore"
+fi
+
 case ${SCORE_PROGRAM} in
     "PLANTS")
         ScoreFlow_rescore_plants
@@ -128,23 +169,19 @@ ScoreFlow_rescore_vina() {
 #                ${DOCK_RADIUS}
 #                ${DOCK_POSES}
 #===============================================================================
-
-# Cleanup
-if [ -f ${RUNDIR}/ScoreFlow.csv ] ; then
-    rm -rf ${RUNDIR}/ScoreFlow.csv
-fi
-
 # Prepare RECEPTOR
-if [ ! -f ${RUNDIR}/receptor.pdbqt ] || [ "${OVERWRITE}" == "yes" ] ; then
+if [ ! -f ${RUNDIR}/receptor.pdbqt ] ; then
     ${mgltools_folder}/bin/python \
     ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
         -r ${RUNDIR}/receptor.mol2 \
         -o ${RUNDIR}/receptor.pdbqt
 fi
-
+rm -rf vina.xargs
+# Prepare ligands
 for LIGAND in ${LIGAND_LIST[@]} ; do
+    echo ${LIGAND}
     # Prepare Ligands
-    if [ ! -f ${RUNDIR}/receptor.pdbqt ] || [ "${OVERWRITE}" == "yes" ] ; then
+    if [ ! -f ${RUNDIR}/${LIGAND}/ligand.pdbqt ] ; then
         ${mgltools_folder}/bin/python \
         ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
             -l ${RUNDIR}/${LIGAND}/ligand.mol2 \
@@ -153,8 +190,8 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     # Run vina
     vina --local_only --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
          --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
-         --out ${RUNDIR}/${LIGAND}/output.pdbqt --log ${RUNDIR}/${LIGAND}/output.log ${VINA_EXTRA} &> /dev/null
+         --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
+         --out ${RUNDIR}/${LIGAND}/output.pdbqt --log ${RUNDIR}/${LIGAND}/output.log &> /dev/null
 done
 }
 
@@ -171,37 +208,60 @@ ScoreFlow_rescore_mmgbsa() {
 #       RETURNS: -
 #
 #===============================================================================
-ScoreFlow_rescore_mmgbsa_compute_charges
-ScoreFlow_rescore_mmgbsa_write_run_tleap
 # Write all input files
-ScoreFlow_rescore_mmgbsa_write_in
+ScoreFlow_rescore_mmgbsa_write_inputs
+
+# Clean up
+if [ -f  ScoreFlow.run ] ; then
+    rm -rf  ${RUNDIR}/ScoreFlow.run
+fi
+# Write the commands to run the program
+if [ ${RUN_FILE_PROVIDED} != "yes" ] ; then
+    ScoreFlow_rescore_mmgbsa_write_compute_charges
+    ScoreFlow_rescore_mmgbsa_write_run_tleap
+    ScoreFlow_rescore_mmgbsa_write_run
+
+else
+    cp ${WORKDIR}/${RUN_FILE} ${RUNDIR}/ScoreFlow.run
+fi
 
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    echo -ne "Computing MMBSA ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
+    echo -ne "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
     cd ${RUNDIR}/${LIGAND}
 
-    ScoreFlow_rescore_mmgbsa_run
+    echo -e "cd ${RUNDIR}/${LIGAND}\n$(cat ../ScoreFlow.run)" > ScoreFlow.run
 
-
+    if [ -f charges.xargs ] ; then
+        echo -e "$(cat charges.xargs)\n$(cat ScoreFlow.run)" > ScoreFlow.run
+    fi
     case "${JOB_SCHEDULLER}" in
-    "None")
-        bash ScoreFlow.run
-    ;;
     "PBS")
         ScoreFlow_rescore_mmgbsa_write_pbs
-        qsub ScoreFlow.pbs
     ;;
     "SLURM")
         ScoreFlow_rescore_mmgbsa_write_slurm
-        sbatch ScoreFlow.slurm
     ;;
     esac
+    if [ "${WRITE_RUN}" != "yes" ] ; then
+        case "${JOB_SCHEDULLER}" in
+        "None")
+            bash ScoreFlow.run
+        ;;
+        "PBS")
+            qsub ScoreFlow.pbs
+        ;;
+        "SLURM")
+            sbatch ScoreFlow.slurm
+        ;;
+        esac
+    fi
 done
+
 }
 
 
-ScoreFlow_rescore_mmgbsa_compute_charges() {
+ScoreFlow_rescore_mmgbsa_write_compute_charges() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_compute_charges
 #   DESCRIPTION: compute charge to run mmgbsa calculation
@@ -263,36 +323,34 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
 
     # If it was not in ChemBase or LigFlow, compute them.
     if [ ${DONE_CHARGE} == "false" ] ; then
-        echo "Computing ${CHARGE} charges for ${LIGAND}"
+
         case ${CHARGE} in
         "bcc")
             # Compute am1-bcc charges
             if [ ! -f ligand_bcc.mol2 ] ; then
-                echo "cd ${RUNDIR}/${LIGAND} ; antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ; cp ligand_bcc.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2" >> ${RUNDIR}/charges.xargs
+                echo "echo \"Computing ${CHARGE} charges for ${LIGAND}\" ;  antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ; cp ligand_bcc.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2" >> ${RUNDIR}/charges.xargs
             fi
+
             ;;
         "resp")
             # Prepare Gaussian
             if [ ! -f ligand_resp.mol2 ] ; then
-                antechamber -i ligand_gas.mol2 -fi mol2 -o ligand.gau -fo gcrt -gv 1 -ge ligand.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
-
-                # Run Gaussian to optimize structure and generate electrostatic potential grid
-                g09 <ligand.gau>ligand.gout
-
-                # Read Gaussian output and write new optimized ligand with RESP charges
-                antechamber -i ligand.gout -fi gout -o ligand_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> ${RUNDIR}/antechamber.log
-                if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
-                    cp ligand_resp.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2
-                fi
+                echo "You asked for resp charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later please. I can't do it, it would take to much time.. I'm just a simple rescoring program.. I'm very sorry, please accept my apologies."
+#                antechamber -i ligand_gas.mol2 -fi mol2 -o ligand.gau -fo gcrt -gv 1 -ge ligand.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
+#
+#                # Run Gaussian to optimize structure and generate electrostatic potential grid
+#                g09 <ligand.gau>ligand.gout
+#
+#                # Read Gaussian output and write new optimized ligand with RESP charges
+#                antechamber -i ligand.gout -fi gout -o ligand_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> ${RUNDIR}/antechamber.log
+#                if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
+#                    cp ligand_resp.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2
+#                fi
             fi
         ;;
         esac
     fi
 done
-
-if [ ${CHARGE} == "bcc" ] && [ -f ${RUNDIR}/charges.xargs ] ; then
-    cat ${RUNDIR}/charges.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-fi
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
     cd ${RUNDIR}/${LIGAND}
@@ -336,7 +394,6 @@ ScoreFlow_rescore_mmgbsa_write_run_tleap() {
 #       RETURNS: -
 #
 #===============================================================================
-
 cd ${RUNDIR}/
 
 if [ "${WATER}" != "yes" ] ; then
@@ -345,28 +402,19 @@ else
     template="tleap_explicit_gbsa.template"
 fi
 file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/${template})
-eval echo \""${file}"\" > ${RUNDIR}/tleap_gbsa.in
-
-# Goes back to rundir to prepare in parallel.
-if [ -f tleap.xargs ] ; then rm -rf tleap.xargs ; fi
+eval echo \""${file}"\" >> ${RUNDIR}/tleap_gbsa.in
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    echo -ne "Preparing complex: ${RECEPTOR_NAME} - ${LIGAND}     \r"
-
     if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ $WATER != 'yes' ] ; then
-        echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR_NAME} - ${LIGAND}\" ;  tleap -f ../tleap_gbsa.in &> tleap.job" >> tleap.xargs
+        echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ${RUNDIR}/ScoreFlow.run
     fi
     if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ ${WATER} == 'yes' ] ; then
-        echo "cd ${RUNDIR}/${LIGAND}/ ; echo \"${RECEPTOR_NAME} - ${LIGAND}\" ;  tleap -f ../tleap_gbsa.in &> tleap.job" >> tleap.xargs
+        echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ${RUNDIR}/ScoreFlow.run
     fi
 done
-
-if [ -f tleap.xargs ] ; then
-    cat tleap.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-fi
 }
 
-ScoreFlow_rescore_mmgbsa_write_in() {
+ScoreFlow_rescore_mmgbsa_write_inputs() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_MMGBSA_implicit_write
 #   DESCRIPTION: Write mmgbsa implicit MIN (and MD if asked) config
@@ -403,7 +451,7 @@ echo "$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/GB2.template)" > ${RUNDIR}/GB2.in
 }
 
 
-ScoreFlow_rescore_mmgbsa_run() {
+ScoreFlow_rescore_mmgbsa_write_run() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
 #   DESCRIPTION: Run mmgbsa implicit MIN
@@ -415,11 +463,6 @@ ScoreFlow_rescore_mmgbsa_run() {
 #       RETURNS: -
 #
 #===============================================================================
-# Clean up
-if [ -f  ScoreFlow.run ] ; then
-    rm -rf  ScoreFlow.run
-fi
-
 if [ "${WATER}" != "yes" ] ; then
     init=complex           # Do not change Init
     prev="${init}"
@@ -455,7 +498,7 @@ for run in ${scoreflow_protocol} ; do
         var=\$(tail -1 \${run}.mdout | awk '/Total wall time/{print \$1}')
     fi
 
-    if [ \"\${var}\" == \"\" ] ; then
+    if [ \"\${var}\" == '' ] ; then
         ${AMBER_EXEC} -O  \
 -i \${input}.in -o \${run}.mdout -e \${run}.mden -r \${run}.rst7  \
 -x \${run}.nc -v  \${run}.mdvel -inf \${run}.mdinfo -c \${prev}.rst7 \
@@ -471,15 +514,14 @@ for run in ${scoreflow_protocol} ; do
     fi
 
     prev=\${run}
-done" >> ${RUNDIR}/${LIGAND}/ScoreFlow.run
+done" >> ${RUNDIR}/ScoreFlow.run
 
 if [ ! -f MMPBSA.dat ] ; then
 echo "rm -rf com.top rec.top ligand.top
 ante-MMPBSA.py -p ${init}.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job
 MMPBSA.py -O -i ../GB2.in -sp ${init}.prmtop -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job
-rm -rf reference.frc " >> ScoreFlow.run
+rm -rf reference.frc " >> ${RUNDIR}/ScoreFlow.run
 fi
-
 }
 
 
@@ -499,10 +541,12 @@ ScoreFlow_rescore_mmgbsa_write_slurm() {
 #          NOTE: Must be run while at "${RUNDIR}
 #       RETURNS: -
 #===============================================================================
-file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/slurm.template)
-eval echo \""${file}"\" > ${RUNDIR}/${LIGAND}/ScoreFlow.slurm
+if [ ! -f ${RUNDIR}/ScoreFlow.slurm ] ; then
+    file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/slurm.template)
+    eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.slurm
+fi
 
-echo "$(cat ScoreFlow.run)" >> ${RUNDIR}/${LIGAND}/ScoreFlow.slurm
+echo -e "$(cat ${RUNDIR}/ScoreFlow.slurm)\n$(cat ${RUNDIR}/${LIGAND}/ScoreFlow.run)" >> ${RUNDIR}/${LIGAND}/ScoreFlow.slurm
 }
 
 
@@ -522,10 +566,12 @@ ScoreFlow_rescore_mmgbsa_write_pbs() {
 #          NOTE: Must be run while at "${RUNDIR}
 #       RETURNS: -
 #===============================================================================
-file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/pbs.template)
-eval echo \""${file}"\" > ${RUNDIR}/${LIGAND}/ScoreFlow.pbs
+if [ ! -f ${RUNDIR}/ScoreFlow.pbs ] ; then
+    file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/pbs.template)
+    eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.pbs
+fi
 
-echo "$(cat ScoreFlow.run)" >> ${RUNDIR}/${LIGAND}/ScoreFlow.pbs
+echo -e "$(cat ${RUNDIR}/ScoreFlow.pbs)\n$(cat ${RUNDIR}/${LIGAND}/ScoreFlow.run)" >> ${RUNDIR}/${LIGAND}/ScoreFlow.pbs
 }
 
 
@@ -546,7 +592,6 @@ ScoreFlow_organize() {
 if [ ${OVERWRITE} == "yes" ] ; then
     rm -rf ${RUNDIR}
 fi
-
 if [  ! -d ${RUNDIR} ] ; then
     mkdir -p ${RUNDIR}
 fi
@@ -612,12 +657,9 @@ fi
 
 case ${SCORE_PROGRAM} in
 "PLANTS")
-    if [ ! -f ${RUNDIR}/PLANTS/ranking.csv ] ; then
-        ERROR_MESSAGE="Plants results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
-        ChemFlow_error
-    else
+    if [ -f ${RUNDIR}/PLANTS/ranking.csv ] ; then
         echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
-        sed 's/\.*_entry.*_conf_[[:digit:]]*//' ${RUNDIR}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND/ {print "PLANTS",protocol,target,ligand,$1,$2}' >> ${RUNDIR}/ScoreFlow.csv
+        sed 's/\.*_entry.*_conf_[[:digit:]]*//' ${RUNDIR}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -F, '!/LIGAND/ {print "PLANTS",protocol,target,$1,$1,$2}' >> ${RUNDIR}/ScoreFlow.csv
     fi
 ;;
 "VINA")
@@ -629,13 +671,6 @@ case ${SCORE_PROGRAM} in
             awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/Affinity:/ {print "VINA",protocol,target,ligand,ligand,$2}' ${RUNDIR}/${LIGAND}/output.log >> ${RUNDIR}/ScoreFlow.csv
         fi
      done
-     if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
-         ERROR_MESSAGE="Vina results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
-         ChemFlow_error
-    else
-        sed -i 's/[a-zA-Z0-9]*_conf_//2' ${RUNDIR}/ScoreFlow.csv
-        sed -i 's/_conf_[[:digit:]]*//' ${RUNDIR}/ScoreFlow.csv
-    fi
 ;;
 "AMBER")
     for LIGAND in ${LIGAND_LIST[@]} ; do
@@ -646,16 +681,15 @@ case ${SCORE_PROGRAM} in
             awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/DELTA TOTAL/{print "AMBER",protocol,target,ligand,ligand,$3}' ${RUNDIR}/${LIGAND}/MMPBSA.dat >> ${RUNDIR}/ScoreFlow.csv
         fi
     done
-    if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
-         ERROR_MESSAGE="Amber results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
-         ChemFlow_error
-    else
-        sed -i 's/[a-zA-Z0-9]*_conf_//2' ${RUNDIR}/ScoreFlow.csv
-        sed -i 's/_conf_[[:digit:]]*//' ${RUNDIR}/ScoreFlow.csv
-    fi
-
 ;;
 esac
+if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
+     ERROR_MESSAGE="${SCORE_PROGRAM} results for PROJECT '${PROJECT}' / PROTOCOL '${PROTOCOL}' does not exists."
+     ChemFlow_error
+else
+    sed -i 's/[a-zA-Z0-9]*_conf_//2' ${RUNDIR}/ScoreFlow.csv
+    sed -i 's/_conf_[[:digit:]]*//' ${RUNDIR}/ScoreFlow.csv
+fi
 }
 
 
@@ -869,12 +903,17 @@ while [[ $# -gt 0 ]]; do
         --SLURM) #Activate the SLURM workload
             JOB_SCHEDULLER="SLURM"
         ;;
+        --write_run_only)
+            WRITE_RUN="yes"
+        ;;
+        --run_file)
+            RUN_FILE_PROVIDED="yes"
+            RUN_FILE="$2"
+            shift
+        ;;
         ## Final arguments
         --overwrite)
             OVERWRITE="yes"
-        ;;
-        --no-organize)
-            ORGANIZE="no"
         ;;
         ## ADVANCED USER INPUT
         #    --advanced)

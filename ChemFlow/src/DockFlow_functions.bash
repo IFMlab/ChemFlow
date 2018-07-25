@@ -116,7 +116,6 @@ DockFlow_prepare_receptor() {
 #===============================================================================
 cp ${WORKDIR}/${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 
-
 if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
     ${mgltools_folder}/bin/python \
     ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
@@ -222,15 +221,6 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     ;;
     esac
 done
-#        if [ -f  ${PROJECT}.chemflow/LigFlow/ligands.lst ] ; then
-#            rm -rf ${PROJECT}.chemflow/LigFlow/ligands.lst
-#        fi
-
-#        for i in ${LIGAND_LIST[@]} ; do
-#            echo ${i} >> ${PROJECT}.chemflow/LigFlow/ligands.lst
-#        done
-
-#
 }
 
 
@@ -251,6 +241,10 @@ DockFlow_prepare_input() {
 #          TODO: Allow "extra PLANTS keywords from cmd line"
 #===============================================================================
 # 1. Folder
+if [ ${OVERWRITE} == "yes" ] ; then
+    rm -rf ${RUNDIR}
+fi
+
 if [  ! -d ${RUNDIR} ] ; then
   mkdir -p ${RUNDIR}
 fi
@@ -262,8 +256,8 @@ cd ${RUNDIR}
 DockFlow_prepare_receptor
 
 # 3. Ligands
-if [ -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] && [ -d ${RUNDIR}/${LIGAND_LIST} ]; then
-    read -p "Rewrite ligands [Y/N] ? : " rewrite_ligands
+if [ -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
+    read -p "Rewrite original ligands [Y/N] ? : " rewrite_ligands
 else
     rewrite_ligands="yes"
 fi
@@ -504,7 +498,6 @@ for (( first=0;${first}<${NDOCK} ; first=${first}+${nlig} )) ; do
     fi
     qsub DockFlow.pbs
   fi
-
 done
 }
 
@@ -562,11 +555,9 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
             echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
             rm -rf ${LIGAND}/${DOCK_PROGRAM}
         fi
-    else
-        rm -rf ${LIGAND}/${DOCK_PROGRAM}
     fi
 
-    if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] || [ ${OVERWRITE} == "yes" ] ; then
+    if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
         DOCK_LIST="${DOCK_LIST} $LIGAND"  # Still unused.
         echo -ne "Preparing: ${LIGAND} \r"
         echo "${LIGAND}" >> todock.lst
@@ -624,15 +615,16 @@ case ${DOCK_PROGRAM} in
                     # Vina command.
                     echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
                         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-                        --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
-                        --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  --cpu 1 ${VINA_EXTRA} &>/dev/null " >> vina.xargs
+                        --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
+                        --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> vina.xargs
                 done
 
                 if [ ! -f vina.xargs ] ; then
                     echo "All ligands docked, nothing to do here" ; exit 0
                 else
-                    # Actually runs VINA
-                    cd ${RUNDIR} ; cat vina.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+                    # Actually runs VINA ( we decided to use VINA multithreaded execution instead of splitting ligands into multiple jobs.
+                    #cd ${RUNDIR} ; cat vina.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+                    cd ${RUNDIR} ; cat vina.xargs | xargs -P1 -I '{}' bash -c '{}'
                 fi
              ;;
             "SLURM"|"PBS")
@@ -661,7 +653,7 @@ if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow ] ; then
     cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow
 
     # Retrieve available protocols
-    if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTDOCK_ALL} ] ; then
+    if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTPROCESS_ALL} ] ; then
         PROTOCOL_LIST=($(ls -d */ | cut -d/ -f1))
     else
         PROTOCOL_LIST=${PROTOCOL}
@@ -675,7 +667,7 @@ if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow ] ; then
             # Go to the protocol folder.
             cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
             # Retrieve available receptors
-            if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTDOCK_ALL} ] ; then
+            if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTPROCESS_ALL} ] ; then
                 RECEPTOR_LIST=($(ls -d */| cut -d/ -f1))
             else
                 RECEPTOR_LIST=${RECEPTOR_NAME}
@@ -721,7 +713,7 @@ else
 fi
 
 # Remove docking folders
-if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTDOCK_ALL} ] ; then
+if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTPROCESS_ALL} ] ; then
     read -p "[ DockFlow ] Remove all docking folders ? " opt
 else
     read -p "[ DockFlow ] Remove docking folders for ${PROTOCOL} / ${RECEPTOR} ? " opt
@@ -758,17 +750,30 @@ DockFlow_postdock_plants_results() {
 #
 #          TODO: A summary of protocols would be interesting
 #===============================================================================
+let DOCK_POSES++
 for LIGAND in ${LIGAND_LIST[@]}; do
     if [ ! -f ${LIGAND}/PLANTS/docked_ligands.mol2 ] ; then
         echo "[ ERROR ] Plants result for ligand ${LIGAND} does not exists."
         FAIL="true"
     else
         # Fill the DockFlow.csv file
-        echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}        \r"
-        awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' ${LIGAND}/PLANTS/ranking.csv >> DockFlow.csv
+        echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}                              \r"
+        head -${DOCK_POSES} ${LIGAND}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' >> DockFlow.csv
 
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
-        cat ${LIGAND}/PLANTS/docked_ligands.mol2 >> docked_ligands.mol2
+        OLDIFS=$IFS
+        IFS='%'
+        n=0
+        while read line && [ ${n} -lt ${DOCK_POSES} ] ; do
+            if [ "${line}" == "@<TRIPOS>MOLECULE" ] ; then
+                let n++
+            else
+                echo "${line}" >> ${RUNDIR}/docked_ligands.mol2
+            fi
+        done < ${LIGAND}/PLANTS/docked_ligands.mol2
+        IFS=${OLDIFS}
+
+#        cat ${LIGAND}/PLANTS/docked_ligands.mol2 >> docked_ligands.mol2
     fi
 done
 # rename the ligand in the created file
@@ -800,26 +805,30 @@ if [ ${OVERWRITE}  == 'yes' ] ; then
     rm -rf ${RUNDIR}/docked_ligands.mol2
 fi
 
+let DOCK_POSES++
 for LIGAND in ${LIGAND_LIST[@]}; do
     if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.pdbqt ] ; then
         echo "[ ERROR ] Vina's result for ligand ${LIGAND} does not exists."
         FAIL="true"
     else
         # Fill the DockFlow.csv file
-        awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK VINA RESULT/ {print "VINA",protocol,target,ligand,conf,$4; conf++}' ${RUNDIR}/${LIGAND}/VINA/output.pdbqt >> DockFlow.csv
+        head -${DOCK_POSES} ${RUNDIR}/${LIGAND}/VINA/output.pdbqt | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK VINA RESULT/ {print "VINA",protocol,target,ligand,conf,$4; conf++}' >> DockFlow.csv
 
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
-        if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.mol2 ] || [ ${OVERWRITE} == 'yes' ] ; then
+        if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.mol2 ] ; then
             babel -h -ipdbqt ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -omol2 ${RUNDIR}/${LIGAND}/VINA/output.mol2
         fi
 
         OLDIFS=$IFS
         IFS='%'
         n=0
-        while read line ; do
-            if [ "${line}" == "${RUNDIR}/${LIGAND}/VINA/output.pdbqt" ] ; then
+        nt=0
+        while read line  && [ ${n} -lt ${DOCK_POSES} ] ; do
+            if [ "${line}" == "@<TRIPOS>MOLECULE" ] ; then
                 let n++
-                echo ${LIGAND}_conf_${n} >>  ${RUNDIR}/docked_ligands.mol2
+            elif [ "${line}" == "${RUNDIR}/${LIGAND}/VINA/output.pdbqt" ] ; then
+                let nt++
+                echo ${LIGAND}_conf_${nt} >>  ${RUNDIR}/docked_ligands.mol2
             else
                 echo "${line}" >> ${RUNDIR}/docked_ligands.mol2
             fi
@@ -856,7 +865,7 @@ PROJECT=$(echo ${PROJECT} | cut -d. -f1)
 cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow
 
 # Retrieve available protocols
-if [ ! -z ${POSTDOCK_ALL} ] ; then
+if [ ! -z ${POSTPROCESS_ALL} ] ; then
     PROTOCOL_LIST=($(ls -d */ | cut -d/ -f1))
 else
     PROTOCOL_LIST=${PROTOCOL}
@@ -870,7 +879,7 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
     cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
 
     # Retrieve available receptors
-    if [ ! -z ${POSTDOCK_ALL} ] ; then
+    if [ ! -z ${POSTPROCESS_ALL} ] ; then
         RECEPTOR_LIST=($(ls -d */| cut -d/ -f1))
     else
         RECEPTOR_LIST=${RECEPTOR_NAME}
@@ -903,7 +912,7 @@ else
     echo "[ DockFlow ] Done with post-processing."
 
     # Archiving.
-    if [ ! -z ${POSTDOCK_ALL} ] ; then
+    if [ ! -z ${POSTPROCESS_ALL} ] ; then
         read -p "[ DockFlow ] Archive the docking results (folders) in TAR files? " opt
     else
         read -p "[ DockFlow ] Archive the docking results (folders) in a TAR file? " opt
@@ -963,11 +972,11 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf 
  -r/--receptor       : Receptor NAME
  -rf/--receptor-file : Receptor MOL2 file
  -l/--ligand         : Ligands  MOL2 file
- -p/--project        : ChemFlow project
+ -p/--project        : ChemFlow project [default]
 
 [ Post Processing ]
- --postdock          : Process DockFlow output for the specified project/protocol/receptor.
- --postdock-all      : Process DockFlow output in a ChemFlow project.
+ --postprocess       : Process DockFlow output for the specified project/protocol/receptor.
+ --postprocess-all   : Process DockFlow output in a ChemFlow project.
  --archive           : Compress the docking folders for the specified project/protocol/receptor.
  --archive-all       : Compress the docking folders in a ChemFLow project.
  --report            : [not implemented]
@@ -975,7 +984,7 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf 
 
 [ Optional ]
  --protocol          : Name for this specific protocol [default]
- -n/--number         : Number of poses to generate, per ligand [10]
+ -n/--n_poses        : Number of poses per ligand, to generate while docking, to keep while postprocessing [10]
  -sf/--function      : vina, chemplp, plp, plp95  [chemplp]
 
 [ Parallel execution ]
@@ -994,14 +1003,14 @@ ________________________________________________________________________________
  --evap_rate         : Evaporation rate of pheromones [0.15]
  --iteration_scaling : Iteration scaling factor [1.0]
  --center            : xyz coordinates of the center of the binding site, separated by a space
- --radius            : Radius of the spheric binding site
+ --radius            : Radius of the spheric binding site [15]
  --water             : Path to a structural water molecule
  --water_xyzr        : xyz coordinates and radius of the water sphere, separated by a space
 
 _________________________________________________________________________________
 [ Vina ]
  --center            : xyz coordinates of the center of the grid, separated by a space
- --size              : Size of the grid along the x, y and z axis, separated by a space
+ --size              : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
  --exhaustiveness    : Exhaustiveness of the global search [8]
  --energy_range      : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
 _________________________________________________________________________________
@@ -1071,7 +1080,7 @@ while [[ $# -gt 0 ]]; do
             DOCK_LENGHT=("$2" "$2" "$2")
             shift # past argument
         ;;
-        -n|--number)
+        -n|--n_poses)
             DOCK_POSES="$2"
             shift # past argument
         ;;
@@ -1140,12 +1149,12 @@ while [[ $# -gt 0 ]]; do
         #    --advanced)
         #       USER_INPUT="$2"
         #       shift
-        --postdock)
-            POSTDOCK="yes"
+        --postprocess)
+            POSTPROCESS="yes"
         ;;
-        --postdock-all)
-            POSTDOCK="yes"
-            POSTDOCK_ALL="yes"
+        --postprocess-all)
+            POSTPROCESS="yes"
+            POSTPROCESS_ALL="yes"
         ;;
         --archive)
             ARCHIVE='yes'

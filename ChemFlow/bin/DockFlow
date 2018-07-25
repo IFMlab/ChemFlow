@@ -52,7 +52,7 @@ RUNDIR=${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/
 
 if [ ! -z ${ARCHIVE} ] ; then
     DockFlow_archive
-elif  [ ! -z ${POSTDOCK} ] ; then
+elif  [ ! -z ${POSTPROCESS} ] ; then
     DockFlow_postdock       # Standardizes the output
 else
     DockFlow_summary        # Show a summary of actions.

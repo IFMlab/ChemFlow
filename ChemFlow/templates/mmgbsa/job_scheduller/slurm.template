@@ -3,9 +3,9 @@
 #SBATCH -n 1
 #SBATCH -t 2:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --job-name="COMPLEX"
-#SBATCH -o COMPLEX/STATE/slurm.out
-#SBATCH -e COMPLEX/STATE/slurm.err
+#SBATCH --job-name=${LIGAND}
+#SBATCH -o ${LIGAND}/slurm.out
+#SBATCH -e ${LIGAND}/slurm.err
 
 #
 # Config 
@@ -18,7 +18,4 @@ source $HOME/software/amber16/amber.sh
 
 # Path to amber input files
 amber_input=${HOME}/amber/amber_inputs/
-
-# Go to RUNDIR
-cd ${RUNDIR}
 
