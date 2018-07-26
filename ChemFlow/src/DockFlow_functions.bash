@@ -24,73 +24,133 @@
 ##
 ###############################################################################
 
-
-DockFlow_summary() {
+DockFlow_dock() {
 #===  FUNCTION  ================================================================
-#          NAME: DockFlow_summary
-#   DESCRIPTION: Summarize all docking information
+#          NAME: DockFlow_Dock.
+#   DESCRIPTION: Loop over LIGAND_LIST and dock them to receptor.mol2
+#                (Diego is not very confident BASH will confortably handle > 1 million of elemente in the array.)
 #
-#    PARAMETERS: ${HOSTNAME}
-#                ${USER}
+#    PARAMETERS: ${WORKDIR}
 #                ${PROJECT}
-#                ${PROTOCOL}
-#                ${PWD}
-#                ${RECEPTOR_NAME}
-#                ${RECEPTOR_FILE}
-#                ${LIGAND_FILE}
-#                ${NLIGANDS}
-#                ${DOCK_POSES}
-#                ${DOCK_PROGRAM}
-#                ${SCORING_FUNCTION}
-#                ${DOCK_CENTER}
-#                ${DOCK_LENGHT}
-#                ${DOCK_RADIUS}
-#                ${JOB_SCHEDULLER}
-#                ${NCORES}
-#                ${NNODES}
-#                ${OVERWRITE}
-#       RETURNS: -
-#
+#                ${RUNDIR}
+#                ${LIGAND}
+#       RETURNS: ${DOCK_LIST} - List of ligands to dock.
 #===============================================================================
 
-echo "
-DockFlow summary:
--------------------------------------------------------------------------------
-[ General info ]
-    HOST: ${HOSTNAME}
-    USER: ${USER}
- PROJECT: ${PROJECT}
-PROTOCOL: ${PROTOCOL}
- WORKDIR: ${PWD}
+# Always work here
+cd ${RUNDIR}
 
-[ Docking setup ]
-RECEPTOR NAME: ${RECEPTOR_NAME}
-RECEPTOR FILE: ${RECEPTOR_FILE}
-  LIGAND FILE: ${LIGAND_FILE}
-     NLIGANDS: ${NLIGANDS}
-       NPOSES: ${DOCK_POSES}
-      PROGRAM: ${DOCK_PROGRAM}
-      SCORING: ${SCORING_FUNCTION}
-       CENTER: ${DOCK_CENTER[@]}"
+# Some housekeeping
+if [  -f todock.lst ] ; then
+  rm -rf todock.lst
+fi
+
+if [  -f docked.lst ] ; then
+  rm -rf docked.lst
+fi
+
+if [ -f  plants.xargs ] ; then
+  rm -rf plants.xargs
+fi
+
+if [ -f  vina.xargs ] ; then
+  rm -rf vina.xargs
+fi
+
+# Creation of the docking list, checkpoint calculations.
+DOCK_LIST=""
 case ${DOCK_PROGRAM} in
- "VINA") echo "         SIZE: ${DOCK_LENGHT[@]} (X,Y,Z)" ;;
-      *) echo "       RADIUS: ${DOCK_RADIUS}"
+"PLANTS")
+    # If the folder exists but there's no "bestranking.csv" its incomplete.
+    FILE="bestranking.csv"
+;;
+"VINA")
+    # If the folder exists but there's no "output.pdbqt" its incomplete.
+    FILE="output.pdbqt"
+;;
 esac
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    if [ "${OVERWRITE}" == "no" ] ; then # Useless to process this loop if we overwrite anyway.
+        if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -f ${LIGAND}/${DOCK_PROGRAM}/${FILE} ] ; then
+            echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+            rm -rf ${LIGAND}/${DOCK_PROGRAM}
+        fi
+    fi
 
-echo "
-[ Run options ]
-JOB SCHEDULLER: ${JOB_SCHEDULLER}
-    CORES/NODE: ${NCORES}
-         NODES: ${NNODES}
+    if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
+        DOCK_LIST="${DOCK_LIST} $LIGAND"  # Still unused.
+        echo -ne "Preparing: ${LIGAND} \r"
+        echo "${LIGAND}" >> todock.lst
+    else
+        echo "${LIGAND}" >> docked.lst
+    fi
+done
 
-     OVERWRITE: ${OVERWRITE}
-"
-read -p "
-Continue [Y/N]?: " opt
+# Make DOCK_LIST into an array.
+DOCK_LIST=(${DOCK_LIST})
+NDOCK=${#DOCK_LIST[@]}
 
-case $opt in
-"Y"|"YES"|"Yes"|"yes"|"y")  ;;
-*)  echo "Exiting" ; exit 0 ;;
+if [ ${NDOCK} == 0 ] ; then
+    echo "[ DockFlow ] All compounds already docked ! " ; exit 0
+else
+    echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to dock"
+fi
+
+# Actually run the docking --------------------------------------------
+case ${DOCK_PROGRAM} in
+    "PLANTS")
+
+        DockFlow_write_plants_config
+
+        case ${JOB_SCHEDULLER} in
+            "None")
+                for LIGAND in ${DOCK_LIST[@]} ; do  # Write XARGS file.
+                    echo "cd ${RUNDIR}/${LIGAND} ; echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ;  PLANTS1.2_64bit --mode screen ../dock_input.in &> PLANTS.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}" >> plants.xargs
+                done
+
+                if [ ! -f plants.xargs ] ; then
+                    echo "All ligands docked, nothing to do here" ; exit 0
+                else
+                    echo "[ DockFlow ] Running ${PROTOCOL} ${RECEPTOR_NAME} with ${NCORES} cores"
+                    # Actually runs PLANTS
+                    cd ${RUNDIR} ; cat plants.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+                fi
+            ;;
+            "SLURM"|"PBS")
+                DockFlow_write_HPC
+        esac
+    ;;
+    "VINA")
+    for LIGAND in ${DOCK_LIST[@]} ; do
+        # Create the output VINA folder if it doesn't exist.
+        if [  ! -d ${RUNDIR}/${LIGAND}/VINA/ ] ; then
+            mkdir -p ${RUNDIR}/${LIGAND}/VINA/
+        fi
+    done
+
+    case ${JOB_SCHEDULLER} in
+            "None")
+                for LIGAND in ${DOCK_LIST[@]} ; do
+                    echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND}
+                    # Vina command.
+                    echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
+                        --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
+                        --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
+                        --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> vina.xargs
+                done
+
+                if [ ! -f vina.xargs ] ; then
+                    echo "All ligands docked, nothing to do here" ; exit 0
+                else
+                    # Actually runs VINA ( we decided to use VINA multithreaded execution instead of splitting ligands into multiple jobs.
+                    #cd ${RUNDIR} ; cat vina.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+                    cd ${RUNDIR} ; cat vina.xargs | xargs -P1 -I '{}' bash -c '{}'
+                fi
+             ;;
+            "SLURM"|"PBS")
+                DockFlow_write_HPC
+        esac
+        ;;
 esac
 }
 
@@ -502,139 +562,6 @@ done
 }
 
 
-DockFlow_dock() {
-#===  FUNCTION  ================================================================
-#          NAME: DockFlow_Dock.
-#   DESCRIPTION: Loop over ligand.lst and dock them to receptor.mol2
-#                The organization if kind of weird because I (dgomes) introduced a "ligand.lst" file
-#                to read but latter it's so much easier to use the LIGAND_LIST[@] array.
-#                I'm not very confident BASH will confortably handle > 1 million of elemente in the array.
-#
-#    PARAMETERS: ${WORKDIR}
-#                ${PROJECT}
-#                ${RUNDIR}
-#                ${LIGAND}
-#       RETURNS: ${DOCK_LIST} - List of ligands to dock.
-#===============================================================================
-
-# Always work here
-cd ${RUNDIR}
-
-# Some housekeeping
-if [  -f todock.lst ] ; then
-  rm -rf todock.lst
-fi
-
-if [  -f docked.lst ] ; then
-  rm -rf docked.lst
-fi
-
-if [ -f  plants.xargs ] ; then
-  rm -rf plants.xargs
-fi
-
-if [ -f  vina.xargs ] ; then
-  rm -rf vina.xargs
-fi
-
-# Creation of the docking list, checkpoint calculations.
-DOCK_LIST=""
-case ${DOCK_PROGRAM} in
-"PLANTS")
-    # If the folder exists but there's no "bestranking.csv" its incomplete.
-    FILE="bestranking.csv"
-;;
-"VINA")
-    # If the folder exists but there's no "output.pdbqt" its incomplete.
-    FILE="output.pdbqt"
-;;
-esac
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ "${OVERWRITE}" == "no" ] ; then # Useless to process this loop if we overwrite anyway.
-        if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -f ${LIGAND}/${DOCK_PROGRAM}/${FILE} ] ; then
-            echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
-            rm -rf ${LIGAND}/${DOCK_PROGRAM}
-        fi
-    fi
-
-    if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
-        DOCK_LIST="${DOCK_LIST} $LIGAND"  # Still unused.
-        echo -ne "Preparing: ${LIGAND} \r"
-        echo "${LIGAND}" >> todock.lst
-    else
-        echo "${LIGAND}" >> docked.lst
-    fi
-done
-
-# Make DOCK_LIST into an array.
-DOCK_LIST=(${DOCK_LIST})
-NDOCK=${#DOCK_LIST[@]}
-
-if [ ${NDOCK} == 0 ] ; then
-    echo "[ DockFlow ] All compounds already docked ! " ; exit 0
-else
-    echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to dock"
-fi
-
-# Actually run the docking --------------------------------------------
-case ${DOCK_PROGRAM} in
-    "PLANTS")
-
-        DockFlow_write_plants_config
-
-        case ${JOB_SCHEDULLER} in
-            "None")
-                for LIGAND in ${DOCK_LIST[@]} ; do  # Write XARGS file.
-                    echo "cd ${RUNDIR}/${LIGAND} ; echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ;  PLANTS1.2_64bit --mode screen ../dock_input.in &> PLANTS.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}" >> plants.xargs
-                done
-
-                if [ ! -f plants.xargs ] ; then
-                    echo "All ligands docked, nothing to do here" ; exit 0
-                else
-                    echo "[ DockFlow ] Running ${PROTOCOL} ${RECEPTOR_NAME} with ${NCORES} cores"
-                    # Actually runs PLANTS
-                    cd ${RUNDIR} ; cat plants.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-                fi
-            ;;
-            "SLURM"|"PBS")
-                DockFlow_write_HPC
-        esac
-    ;;
-    "VINA")
-    for LIGAND in ${DOCK_LIST[@]} ; do
-        # Create the output VINA folder if it doesn't exist.
-        if [  ! -d ${RUNDIR}/${LIGAND}/VINA/ ] ; then
-            mkdir -p ${RUNDIR}/${LIGAND}/VINA/
-        fi
-    done
-
-    case ${JOB_SCHEDULLER} in
-            "None")
-                for LIGAND in ${DOCK_LIST[@]} ; do
-                    echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND}
-                    # Vina command.
-                    echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
-                        --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-                        --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
-                        --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> vina.xargs
-                done
-
-                if [ ! -f vina.xargs ] ; then
-                    echo "All ligands docked, nothing to do here" ; exit 0
-                else
-                    # Actually runs VINA ( we decided to use VINA multithreaded execution instead of splitting ligands into multiple jobs.
-                    #cd ${RUNDIR} ; cat vina.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-                    cd ${RUNDIR} ; cat vina.xargs | xargs -P1 -I '{}' bash -c '{}'
-                fi
-             ;;
-            "SLURM"|"PBS")
-                DockFlow_write_HPC
-        esac
-        ;;
-esac
-}
-
-
 DockFlow_archive() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_archive
@@ -925,6 +852,76 @@ else
 fi
 
 unset FAIL
+}
+
+
+DockFlow_summary() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_summary
+#   DESCRIPTION: Summarize all docking information
+#
+#    PARAMETERS: ${HOSTNAME}
+#                ${USER}
+#                ${PROJECT}
+#                ${PROTOCOL}
+#                ${PWD}
+#                ${RECEPTOR_NAME}
+#                ${RECEPTOR_FILE}
+#                ${LIGAND_FILE}
+#                ${NLIGANDS}
+#                ${DOCK_POSES}
+#                ${DOCK_PROGRAM}
+#                ${SCORING_FUNCTION}
+#                ${DOCK_CENTER}
+#                ${DOCK_LENGHT}
+#                ${DOCK_RADIUS}
+#                ${JOB_SCHEDULLER}
+#                ${NCORES}
+#                ${NNODES}
+#                ${OVERWRITE}
+#       RETURNS: -
+#
+#===============================================================================
+
+echo "
+DockFlow summary:
+-------------------------------------------------------------------------------
+[ General info ]
+    HOST: ${HOSTNAME}
+    USER: ${USER}
+ PROJECT: ${PROJECT}
+PROTOCOL: ${PROTOCOL}
+ WORKDIR: ${PWD}
+
+[ Docking setup ]
+RECEPTOR NAME: ${RECEPTOR_NAME}
+RECEPTOR FILE: ${RECEPTOR_FILE}
+  LIGAND FILE: ${LIGAND_FILE}
+     NLIGANDS: ${NLIGANDS}
+       NPOSES: ${DOCK_POSES}
+      PROGRAM: ${DOCK_PROGRAM}
+      SCORING: ${SCORING_FUNCTION}
+       CENTER: ${DOCK_CENTER[@]}"
+case ${DOCK_PROGRAM} in
+ "VINA") echo "         SIZE: ${DOCK_LENGHT[@]} (X,Y,Z)" ;;
+      *) echo "       RADIUS: ${DOCK_RADIUS}"
+esac
+
+echo "
+[ Run options ]
+JOB SCHEDULLER: ${JOB_SCHEDULLER}
+    CORES/NODE: ${NCORES}
+         NODES: ${NNODES}
+
+     OVERWRITE: ${OVERWRITE}
+"
+read -p "
+Continue [Y/N]?: " opt
+
+case $opt in
+"Y"|"YES"|"Yes"|"yes"|"y")  ;;
+*)  echo "Exiting" ; exit 0 ;;
+esac
 }
 
 

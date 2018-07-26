@@ -42,9 +42,14 @@ ScoreFlow_rescore() {
 #   DESCRIPTION: Creates the dock list, to avoid redoundant calculations.
 #                Call the right function for the rescoring.
 #
-#    PARAMETERS: ${SCORE_PROGRAM}
-#
 #        Author: Dona de Francquen
+#
+#    PARAMETERS: ${SCORE_PROGRAM}
+#                ${OVERWRITE}
+#                ${LIGAND_LIST}
+#                ${RUNDIR}
+#                ${RECEPTOR_NAME}
+#                ${NLIGANDS}
 #===============================================================================
 # Creation of the docking list, checkpoint calculations.
 DOCK_LIST=""
@@ -104,13 +109,11 @@ ScoreFlow_rescore_plants() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_rescore_plants
 #   DESCRIPTION: Rescore docking poses using plants
+#
+#        Author: Dona de Francquen
 #                
 #    PARAMETERS: ${RUNDIR}
-#                ${LIGAND}
-#                ${SCORING_FUNCTION}
-#                ${DOCK_CENTER}
-#                ${DOCK_RADIUS}
-#                ${DOCK_POSES}
+#                ${OVERWRITE}
 #
 #       COMMENT: It's not worthy to rescore in parallel using VINA or PLANTS
 #===============================================================================
@@ -120,7 +123,7 @@ if [ -d ${RUNDIR}/PLANTS ] ; then
         rm -rf ${RUNDIR}/PLANTS
     ;;
     "no")
-        ERROR_MESSAGE="PLANTS folder exists. Use --overwrite " ; ChemFlow_error ${PROGRAM} ;
+        ERROR_MESSAGE="PLANTS folder exists. Use --overwrite " ; ChemFlow_error ;
     ;;
     esac
 fi
@@ -142,12 +145,9 @@ ScoreFlow_rescore_plants_write_config() {
 #                Dona de Francquen
 #
 #    PARAMETERS: ${RUNDIR}
-#                ${SCORING_FUNCTION}
-#                ${DOCK_CENTER}
-#                ${DOCK_RADIUS}
-#                ${DOCK_POSES}
-#       RETURNS: rescore_input file
+#                ${CHEMFLOW_HOME}
 #
+#       RETURNS: rescore_input file
 #===============================================================================
 RECEPTOR_FILE="receptor.mol2"
 file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config.in)
@@ -162,12 +162,11 @@ ScoreFlow_rescore_vina() {
 #
 #        Author: Dona de Francquen
 #
-#    PARAMETERS: ${RUNDIR}
-#                ${LIGAND}
-#                ${SCORING_FUNCTION}
+#    PARAMETERS: ${mgltools_folder}
+#                ${RUNDIR}
+#                ${LIGAND_LIST}
 #                ${DOCK_CENTER}
-#                ${DOCK_RADIUS}
-#                ${DOCK_POSES}
+#                ${DOCK_LENGHT}
 #===============================================================================
 # Prepare RECEPTOR
 if [ ! -f ${RUNDIR}/receptor.pdbqt ] ; then
@@ -202,11 +201,16 @@ ScoreFlow_rescore_mmgbsa() {
 #   DESCRIPTION: Rescore docking poses using mmgbsa
 #
 #        Author: Diego E. B. Gomes
+#                Dona de Francquen
 #                
 #    PARAMETERS: ${RUNDIR}
+#                ${RUN_FILE_PROVIDED}
+#                ${WORKDIR}
+#                ${RUN_FILE}
 #                ${LIGAND_LIST}
-#       RETURNS: -
-#
+#                ${RECEPTOR_NAME}
+#                ${JOB_SCHEDULLER}
+#                ${WRITE_RUN}
 #===============================================================================
 # Write all input files
 ScoreFlow_rescore_mmgbsa_write_inputs
@@ -233,7 +237,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     echo -e "cd ${RUNDIR}/${LIGAND}\n$(cat ../ScoreFlow.run)" > ScoreFlow.run
 
     if [ -f charges.xargs ] ; then
-        echo -e "$(cat charges.xargs)\n$(cat ScoreFlow.run)" > ScoreFlow.run
+        echo -e "$(cat charges.xargs)\n$(cat ScoreFlow.run)" >> ScoreFlow.run
     fi
     case "${JOB_SCHEDULLER}" in
     "PBS")
@@ -263,17 +267,19 @@ done
 
 ScoreFlow_rescore_mmgbsa_write_compute_charges() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_compute_charges
+#          NAME: ScoreFlow_rescore_mmgbsa_write_compute_charges
 #   DESCRIPTION: compute charge to run mmgbsa calculation
 #
 #        Author: Diego E. B. Gomes
+#                Dona de Francquen
 #
 #    PARAMETERS: ${RUNDIR}
 #                ${LIGAND_LIST}
 #                ${CHARGE}
+#                ${CHEMFLOW_HOME}
+#                ${WORKDIR}
+#                ${PROJECT}
 #                ${NCORES}
-#       RETURNS: -
-#
 #===============================================================================
 # Clean up
 if [  -f ${RUNDIR}/charges.xargs ] ; then
@@ -381,20 +387,20 @@ done
 
 ScoreFlow_rescore_mmgbsa_write_run_tleap() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_write_run_tleap
+#          NAME: ScoreFlow_rescore_mmgbsa_write_run_tleap
 #   DESCRIPTION:
 #
 #        Author: Diego E. B. Gomes
+#                Dona de Francquen
 #
 #    PARAMETERS: ${RUNDIR}
-#                ${RECEPTOR_NAME}
+#                ${WATER}
+#                ${CHEMFLOW_HOME}
 #                ${LIGAND_LIST}
-#                ${CHARGE}
-#                ${NCORES}
 #       RETURNS: -
 #
 #===============================================================================
-cd ${RUNDIR}/
+cd ${RUNDIR}
 
 if [ "${WATER}" != "yes" ] ; then
     template="tleap_implicit_gbsa.template"
@@ -405,7 +411,7 @@ file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/${template})
 eval echo \""${file}"\" >> ${RUNDIR}/tleap_gbsa.in
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ $WATER != 'yes' ] ; then
+    if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ ${WATER} != 'yes' ] ; then
         echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ${RUNDIR}/ScoreFlow.run
     fi
     if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ ${WATER} == 'yes' ] ; then
@@ -416,15 +422,18 @@ done
 
 ScoreFlow_rescore_mmgbsa_write_inputs() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_implicit_write
-#   DESCRIPTION: Write mmgbsa implicit MIN (and MD if asked) config
+#          NAME: ScoreFlow_rescore_mmgbsa_write_inputs
+#   DESCRIPTION: Write mmgbsa MIN (and MD if asked) config
 #
 #        Author: Diego E. B. Gomes
 #                Dona de Francquen
 #
-#    PARAMETERS: -
-#       RETURNS: -
+#    PARAMETERS: ${RUNDIR}
+#                ${CHEMFLOW_HOME}
+#                ${WATER}
+#                ${MD}
 #
+#       RETURNS: all .in files required
 #===============================================================================
 if [ "${WATER}" != "yes" ] ; then
     solvent="implicit"
@@ -453,15 +462,18 @@ echo "$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/GB2.template)" > ${RUNDIR}/GB2.in
 
 ScoreFlow_rescore_mmgbsa_write_run() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_MMGBSA_implicit_run_MIN
-#   DESCRIPTION: Run mmgbsa implicit MIN
+#          NAME: ScoreFlow_rescore_mmgbsa_write_run
+#   DESCRIPTION: Write the run file for MIN (MD if asked)
 #
 #        Author: Diego E. B. Gomes
 #                Dona de Francquen
 #
-#    PARAMETERS:
-#       RETURNS: -
+#    PARAMETERS: ${RUNDIR}
+#                ${WATER}
+#                ${MD}
+#                ${AMBER_EXEC}
 #
+#       RETURNS: ScoreFlow.run
 #===============================================================================
 if [ "${WATER}" != "yes" ] ; then
     init=complex           # Do not change Init
@@ -527,51 +539,41 @@ fi
 
 ScoreFlow_rescore_mmgbsa_write_slurm() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_write_slurm
-#   DESCRIPTION: Writes the SLURM script to for each ligand (or range of ligands).
-#                Filenames and parameters are hardcoded.
-#    PARAMETERS:
-#               ${list[@]}  -   Array with all ligand names
-#               ${first}    -   First ligand in the array
-#               ${$nlig}    -   Number of compounds to dock
-#               ${NNODES}   -   Number of compute nodes to use
-#               ${NCORES}   -   Number of cores/node
-#               ${NTHREADS} -   Total threads (NNODES*NCORES)
+#          NAME: ScoreFlow_rescore_mmgbsa_write_slurm
+#   DESCRIPTION: Writes the SLURM script by adding the slurm template to ScoreFlow.run.
 #
-#          NOTE: Must be run while at "${RUNDIR}
-#       RETURNS: -
+#    PARAMETERS: ${RUNDIR}
+#                ${CHEMFLOW_HOME}
+#                ${LIGAND}
+#
+#       RETURNS: ScoreFlow.slurm for ${LIGAND}
 #===============================================================================
 if [ ! -f ${RUNDIR}/ScoreFlow.slurm ] ; then
     file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/slurm.template)
     eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.slurm
 fi
 
-echo -e "$(cat ${RUNDIR}/ScoreFlow.slurm)\n$(cat ${RUNDIR}/${LIGAND}/ScoreFlow.run)" >> ${RUNDIR}/${LIGAND}/ScoreFlow.slurm
+echo -e "$(cat ${RUNDIR}/ScoreFlow.slurm)\n$(cat ${RUNDIR}/${LIGAND}/ScoreFlow.run)" > ${RUNDIR}/${LIGAND}/ScoreFlow.slurm
 }
 
 
 ScoreFlow_rescore_mmgbsa_write_pbs() {
 #===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_write_pbs
-#   DESCRIPTION: Writes the PBS script to for each ligand (or range of ligands).
-#                Filenames and parameters are hardcoded.
-#    PARAMETERS:
-#               ${list[@]}  -   Array with all ligand names
-#               ${first}    -   First ligand in the array
-#               ${$nlig}    -   Number of compounds to dock
-#               ${NNODES}   -   Number of compute nodes to use
-#               ${NCORES}   -   Number of cores/node
-#               ${NTHREADS} -   Total threads (NNODES*NCORES)
+#          NAME: ScoreFlow_rescore_mmgbsa_write_pbs
+#   DESCRIPTION: Writes the PBS script by adding the pbs template to ScoreFlow.run.
 #
-#          NOTE: Must be run while at "${RUNDIR}
-#       RETURNS: -
+#    PARAMETERS: ${RUNDIR}
+#                ${CHEMFLOW_HOME}
+#                ${LIGAND}
+#
+#       RETURNS: ScoreFlow.pbs for ${LIGAND}
 #===============================================================================
 if [ ! -f ${RUNDIR}/ScoreFlow.pbs ] ; then
     file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/pbs.template)
     eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.pbs
 fi
 
-echo -e "$(cat ${RUNDIR}/ScoreFlow.pbs)\n$(cat ${RUNDIR}/${LIGAND}/ScoreFlow.run)" >> ${RUNDIR}/${LIGAND}/ScoreFlow.pbs
+echo -e "$(cat ${RUNDIR}/ScoreFlow.pbs)\n$(cat ${RUNDIR}/${LIGAND}/ScoreFlow.run)" > ${RUNDIR}/${LIGAND}/ScoreFlow.pbs
 }
 
 
@@ -583,8 +585,12 @@ ScoreFlow_organize() {
 #        Author: Diego E. B. Gomes
 #
 #    PARAMETERS: ${OVERWRITE}
-#       RETURNS: -
+#                ${RUNDIR}
+#                ${SCORE_PROGRAM}
+#                ${LIGAND_LIST}
+#                ${LIGAND_FILE}
 #
+#       RETURNS: the project tree
 #===============================================================================
 # TODO 
 # Improve extracting mol2 to separate folders.
@@ -605,7 +611,7 @@ if [ ${SCORE_PROGRAM} == "PLANTS" ] ; then
 fi
 
 # Copy files to project folder.
-if [ ${SCORING_FUNCTION} == "mmgbsa" ] ; then
+if [ ${SCORE_PROGRAM} == "AMBER" ] ; then
     cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.pdb
 else
     cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
@@ -643,9 +649,14 @@ ScoreFlow_postprocess() {
 #
 #        Author: Dona de Francquen
 #
-#    PARAMETERS: ${OVERWRITE}
-#       RETURNS: -
+#    PARAMETERS: ${RUNDIR}
+#                ${SCORING_FUNCTION}
+#                ${SCORE_PROGRAM}
+#                ${PROTOCOL}
+#                ${RECEPTOR_NAME}
+#                ${LIGAND_LIST}
 #
+#       RETURNS: ScoreFlow.csv, csv file with the docking result.
 #===============================================================================
 echo "
 Scoring function: ${SCORING_FUNCTION}
@@ -694,6 +705,33 @@ fi
 
 
 ScoreFlow_summary() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_summary
+#   DESCRIPTION: Summary of the run options
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: ${HOSTNAME}
+#                ${USER}
+#                ${PROJECT}
+#                ${PROTOCOL}
+#                ${PWD}
+#                ${RECEPTOR_NAME}
+#                ${RECEPTOR_FILE}
+#                ${LIGAND_FILE}
+#                ${NLIGANDS}
+#                ${CHARGE}
+#                ${SCORE_PROGRAM}
+#                ${SCORING_FUNCTION}
+#                ${DOCK_CENTER}
+#                ${DOCK_LENGHT}
+#                ${DOCK_RADIUS}
+#                ${MD}
+#                ${JOB_SCHEDULLER}
+#                ${NCORES}
+#                ${NNODES}
+#                ${OVERWRITE}
+#===============================================================================
 echo "
 ScoreFlow summary:
 -------------------------------------------------------------------------------
@@ -708,8 +746,8 @@ PROTOCOL: ${PROTOCOL}
 RECEPTOR NAME: ${RECEPTOR_NAME}
 RECEPTOR FILE: ${RECEPTOR_FILE}
   LIGAND FILE: ${LIGAND_FILE}
-       CHARGE: ${CHARGE}
      NLIGANDS: ${NLIGANDS}
+       CHARGE: ${CHARGE}
       PROGRAM: ${SCORE_PROGRAM}
       SCORING: ${SCORING_FUNCTION}"
 case ${SCORE_PROGRAM} in
@@ -742,6 +780,14 @@ esac
 
 
 ScoreFlow_help() {
+#===  FUNCTION  ===============================================================
+#          NAME: ScoreFlow_help
+#   DESCRIPTION: Help displayed with -h
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: -
+#==============================================================================
 echo "Example usage: 
 # For all Scoring functions except MMGBSA:
 ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf chemplp] 
@@ -762,6 +808,14 @@ exit 0
 
 
 ScoreFlow_help_full(){
+#===  FUNCTION  ===============================================================
+#          NAME: ScoreFlow_help_full
+#   DESCRIPTION: Full help displayed with -hh
+#
+#        Author: Diego E. B. Gomes
+#
+#    PARAMETERS: -
+#==============================================================================
 echo "
 ScoreFlow is a bash script designed to work with PLANTS, Vina, IChem and AmberTools16+.
 It can perform an rescoring of molecular complexes such as protein-ligand
@@ -802,7 +856,13 @@ exit 0
 }
 
 ScoreFlow_CLI() {
-
+#===  FUNCTION  ===============================================================
+#          NAME: ScoreFlow_CLI
+#   DESCRIPTION: Set all parameters from the command line.
+#
+#        Author: Diego E. B. Gomes
+#                Dona de Francquen
+#==============================================================================
 if [ "$1" == "" ] ; then
     ERROR_MESSAGE="ScoreFlow called without arguments."
     ChemFlow_error ;
@@ -810,7 +870,6 @@ fi
 
 while [[ $# -gt 0 ]]; do
     key="$1"
-
     case ${key} in
         "--resume")
             echo -ne "\nResume not implemented"
@@ -887,7 +946,7 @@ while [[ $# -gt 0 ]]; do
         --water)
             WATER='yes'
         ;;
-# Minimization specific options
+        # Minimization specific options
         -maxcyc) # Maximun number of Energy minimization steps.
             maxcyc="$2" # Same as above.
             shift
