@@ -1,0 +1,63 @@
+prod myosin
+ &cntrl
+!----------------------------------------------------------------------
+!General flags
+  imin=0,          ! (0 = molecular dynamics, 1 = energy minimization)
+
+!----------------------------------------------------------------------
+!Energy Minimization
+! maxcyc=1
+! ncyc=10 !(RTFM)
+! ntmin=0 (0 full, RTFM) 
+! dx0=0.01 !default
+
+!----------------------------------------------------------------------
+!Nature and format of the input
+ irest=1,         ! restart md (0 no, 1 yes)
+ ntx=5,           ! coordinates & velocities (0 = coor only, 5 = restart MD)
+
+!----------------------------------------------------------------------
+!Run control options
+ nstlim=500000,   ! nsteps  1ns
+ dt=0.002,        ! time step
+ cut=10.0,         !
+
+!----------------------------------------------------------------------
+!Constraints
+ ntc=2,           ! (SHAKE 2 = bonds involving hydrogen)
+ ntf=2            ! (2 = bond inter involving H-atoms omitted SHAKE)
+
+!----------------------------------------------------------------------
+!Frozen or restrained atoms
+! ibelly
+! bellymask
+!  ntr=1,
+!  restraintmask=':1-198',
+!  restraint_wt=2.0,
+
+!----------------------------------------------------------------------
+!Temperature coupling
+ ntt=3,           ! Langevin
+ gamma_ln=2.0,    !
+! tempi=0.0,      ! Start temperature
+ temp0=300.0,     ! Target temperature
+
+!----------------------------------------------------------------------
+!Ensemble
+ ntb=2            ! (PBC for constant 1 = VOLUME 2 = PRESSURE) 
+ ntp=1,           ! (1 = isotropic scaling)
+ barostat=2       ! (1 = Berendsen, 2 = MonteCarlo)
+ taup=2.0,        !
+
+!----------------------------------------------------------------------
+!Nature and format of the output 
+ ntxo=2           ! Write Final coor, vel & box to "restr" as (1 ASCII, 2 NetCDF)
+ ntpr=2500        ! Write energy to "mdout" and "mdinfo"
+ ntwr=2500        ! Write restart to "rst"
+ ntwx=2500        ! Write coordinates to "mdcrd"
+!ntwf=1000        ! Write force to "mfrc"
+ ntwe=1000         ! Write energy to "mden"
+ iwrap=1          ! Wrap (off not to mess up with diffusion) 
+ ioutfm=1         ! Format of coor, vel & traj files (0 ASCII, 1 NetCDF)
+ /
+
