@@ -1,0 +1,55 @@
+
+# Appropriade amber for GAFF
+source oldff/leaprc.ff99
+
+# GAFF
+source leaprc.gaff
+
+# Water and ions
+loadAmberParams frcmod.ionsjc_tip3p
+
+
+# CK571 ----------------------------------------------------
+# topology
+loadOff lig.lib
+
+# extra parameters
+loadAmberParams lig.frcmod
+
+# Structure
+lig = loadMol2 lig.mol2
+saveAmberParm lig lig.prmtop lig.rst7
+
+# Water molecule in the active site
+wat = loadpdb ../pdb/water.pdb
+saveAmberParm wat wat.prmtop wat.rst7
+
+# Receptor ! ------------------------------------------------
+ptn = loadpdb ../pdb/receptor.pdb
+saveAmberParm ptn protein.prmtop protein.rst7
+ 
+# Combine into a single file/topology ---------------------
+complex = combine{ptn,lig}
+saveamberparm complex complex.prmtop complex.rst7
+savePDB complex complex.pdb
+
+complex_site_water = combine{complex,wat}
+saveamberparm complex_site_water complex_site_water.prmtop complex_site_water.rst7
+savePDB complex_site_water complex_site_water.pdb
+
+# Add enough ions to neutralize
+AddIons2 complex Cl- 0
+AddIons2 complex Na+ 0
+
+# Save protein with ions: topology and coordinates
+saveamberparm complex_site_water ionized.prmtop ionized.rst7
+
+# Solvate with at least 12 Angtron buffer region
+solvateBOX complex_site_water TIP3PBOX 10
+
+# Save solvated complex: topology and coordinates
+saveamberparm complex_site_water ionized_solvated.prmtop ionized_solvated.rst7
+savePDB complex_site_water ionized_solvated.pdb
+
+quit
+
