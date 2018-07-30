@@ -75,6 +75,12 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
             echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
             rm -rf ${LIGAND}/${DOCK_PROGRAM}
         fi
+        if [ -f ${LIGAND}/${DOCK_PROGRAM}/${FILE} ] ; then
+            if [ $(wc -l  ${LIGAND}/${DOCK_PROGRAM}/${FILE} | cut -d' ' -f1) -lt 2 ] ; then
+                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+                rm -rf ${LIGAND}/${DOCK_PROGRAM}
+            fi
+        fi
     fi
 
     if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
@@ -206,8 +212,6 @@ DockFlow_rewrite_origin_ligands() {
 #
 #===============================================================================
 # Original
-rm -rf ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
-mkdir -p ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
 
 OLDIFS=$IFS
 IFS='%'
@@ -215,8 +219,10 @@ n=-1
 while read line ; do
     if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
         let n=$n+1
+        echo -e "${line}" > ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
+    else
+        echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
     fi
-    echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
 done < ${WORKDIR}/${LIGAND_FILE}
 IFS=${OLDIFS}
 
@@ -678,6 +684,14 @@ DockFlow_postdock_plants_results() {
 #          TODO: A summary of protocols would be interesting
 #===============================================================================
 let DOCK_POSES++
+
+
+if [ ! -z ${POSTPROCESS_ALL} ] ; then
+  unset LIGAND_LIST
+  LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
+fi
+
+
 for LIGAND in ${LIGAND_LIST[@]}; do
     if [ ! -f ${LIGAND}/PLANTS/docked_ligands.mol2 ] ; then
         echo "[ ERROR ] Plants result for ligand ${LIGAND} does not exists."
@@ -691,9 +705,12 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         OLDIFS=$IFS
         IFS='%'
         n=0
-        while read line && [ ${n} -lt ${DOCK_POSES} ] ; do
+        while read line && [ "${n}" -lt ${DOCK_POSES} ] ; do
             if [ "${line}" == "@<TRIPOS>MOLECULE" ] ; then
                 let n++
+                if [ "${n}" -lt ${DOCK_POSES} ] ; then
+                    echo "${line}" >>  ${RUNDIR}/docked_ligands.mol2
+                fi
             else
                 echo "${line}" >> ${RUNDIR}/docked_ligands.mol2
             fi
@@ -728,18 +745,19 @@ DockFlow_postdock_vina_results() {
 #
 #===============================================================================
 
-if [ ${OVERWRITE}  == 'yes' ] ; then
-    rm -rf ${RUNDIR}/docked_ligands.mol2
+
+if [ ! -z ${POSTPROCESS_ALL} ] ; then
+  unset LIGAND_LIST
+  LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
 fi
 
-let DOCK_POSES++
 for LIGAND in ${LIGAND_LIST[@]}; do
     if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.pdbqt ] ; then
         echo "[ ERROR ] Vina's result for ligand ${LIGAND} does not exists."
         FAIL="true"
     else
         # Fill the DockFlow.csv file
-        head -${DOCK_POSES} ${RUNDIR}/${LIGAND}/VINA/output.pdbqt | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK VINA RESULT/ {print "VINA",protocol,target,ligand,conf,$4; conf++}' >> DockFlow.csv
+        awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK VINA RESULT/ {print "VINA",protocol,target,ligand,conf,$4; conf++}' ${RUNDIR}/${LIGAND}/VINA/output.pdbqt |  head -${DOCK_POSES}  >> DockFlow.csv
 
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.mol2 ] ; then
@@ -750,9 +768,12 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS='%'
         n=0
         nt=0
-        while read line  && [ ${n} -lt ${DOCK_POSES} ] ; do
+        while read line  && [ "${n}" -le ${DOCK_POSES} ] ; do
             if [ "${line}" == "@<TRIPOS>MOLECULE" ] ; then
                 let n++
+                if [ "${n}" -le ${DOCK_POSES} ] ; then
+                    echo "${line}" >>  ${RUNDIR}/docked_ligands.mol2
+                fi
             elif [ "${line}" == "${RUNDIR}/${LIGAND}/VINA/output.pdbqt" ] ; then
                 let nt++
                 echo ${LIGAND}_conf_${nt} >>  ${RUNDIR}/docked_ligands.mol2
@@ -797,7 +818,7 @@ if [ ! -z ${POSTPROCESS_ALL} ] ; then
 else
     PROTOCOL_LIST=${PROTOCOL}
 fi
-#echo "Protocols: ${PROTOCOL_LIST[@]}"
+echo "Protocols: ${PROTOCOL_LIST[@]}"
 
 
 for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
@@ -811,17 +832,20 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
     else
         RECEPTOR_LIST=${RECEPTOR_NAME}
     fi
-#    echo "Receptors: ${RECEPTOR_LIST[@]}"
+    echo "Receptors: ${RECEPTOR_LIST[@]}"
 
     for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
         RUNDIR="${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}"
         cd ${RUNDIR}
+        if [ "${OVERWRITE}"  == 'yes' ] ; then
+            rm -rf ${RUNDIR}/docked_ligands.mol2
+            rm -rf ${RUNDIR}/DockFlow.csv
+        fi
 
         # Cleanup
-        if [ -f DockFlow.csv ] ; then rm DockFlow.csv ; fi
-        if [ -f docked_ligands.mol2 ] ; then rm docked_ligands.mol2 ; fi
-
-        echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > DockFlow.csv
+        if [ ! -f ${RUNDIR}/DockFlow.csv ] ; then
+            echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > DockFlow.csv
+        fi
 
         # Organize to ChemFlow standard.
         if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then

@@ -212,8 +212,6 @@ if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
             AMBER_EXEC="pmemd.cuda"
         fi
 
-        # VERY UGLY FIX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        AMBER_EXEC="mpirun -n ${NCORES} pmemd.MPI"
      ;;
     esac
 

@@ -70,7 +70,9 @@ esac
 if [ "${OVERWRITE}" == "no" ] ; then # Useless to process this loop if we overwrite anyway.
     for LIGAND in ${LIGAND_LIST[@]} ; do
         if [ ! -f ${RUNDIR}/${LIGAND}/${FILE} ] ; then
-            echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+            if [ -d ${RUNDIR}/${LIGAND}/ ] ; then
+                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+            fi
             DOCK_LIST="${DOCK_LIST} $LIGAND"
         fi
     done
@@ -84,7 +86,6 @@ unset LIGAND_LIST
 LIGAND_LIST=(${DOCK_LIST[@]})
 NDOCK=${#LIGAND_LIST[@]}
 
-echo ${LIGAND_LIST[@]}
 if [ ${NDOCK} == 0 ] ; then
     echo "[ DockFlow ] All compounds already docked ! " ; exit 0
 else
