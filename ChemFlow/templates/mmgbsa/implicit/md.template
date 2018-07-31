@@ -12,6 +12,7 @@ MD GB2, infinite cut off
 ! ibelly,
 ! bellymask,
  ntr=1,
- restraintmask='CA,C,N,O',
- restraint_wt=10.0,
+ restraintmask='@CA,C,N,O',
+ restraint_wt=5.0,
 /
+
