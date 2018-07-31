@@ -1,7 +1,0 @@
-
-source leaprc.gaff
-loadAmberParams lig.frcmod
-MOL = loadMol2 lig_resp.mol2
-saveOff MOL lig.lib
-quit
-

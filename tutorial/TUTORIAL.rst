@@ -1,8 +1,8 @@
 .. highlight:: bash
 
-========
-Tutorial
-========
+========================
+Tutorial, alpha-Thrombin
+========================
 
 b1  - 1DWC crystal.
 
@@ -23,10 +23,11 @@ b2-7 - Build up manually by dgomes.
 +-----------------------+------------------------------------------------+
 | ligands_crystal.smi   | 1D3D 1D3P 1D3Q 1D3T 1DWB 1DWC 1DWD             |
 +-----------------------+------------------------------------------------+
+| decoys.smi            | decoys for a-thrombin, from DUD-E              |
++-----------------------+------------------------------------------------+
 
 Step 1: Convert SMILES into 3D structure
 ----------------------------------------
-
 The default method is ETKDG. In sequence you should make a .mol2 file.
 
 .. code-block:: console
@@ -87,11 +88,12 @@ Let's do it locally:
     DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l ligands_crystal.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina
     DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l decoys.mol2          --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina
 
-If you have access to a cluster, you may profit from the HPC resources using --SLURM or --PBS flags accordingly. :)
+If you have access to a cluster, you may profit from the HPC resources using --slurm or --pbs flags accordingly. :)
 
 When tou are done, postprocess all the results:
 
 .. code-block:: console
+
     echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l ligands.mol2          --postprocess --overwrite -n 3
     echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l ligands_crystal.mol2  --postprocess -n 3
     echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l decoys.mol2           --postprocess -n 3
@@ -100,10 +102,36 @@ When tou are done, postprocess all the results:
     echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l ligands_crystal.mol2    --postprocess -sf vina -n 3
     echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l decoys.mol2             --postprocess -sf vina -n 3
 
-
+Step 4: Run ScoreFlow to rescore the previous doking poses (best 3 for each ligand)
+-----------------------------------------------------------------------------------
+Rescoring using MMGBSA method:
 
 .. code-block:: console
-    echo y | ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa
-    echo y | ScoreFlow -p tutorial --protocol mmgbsa_water    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water
-    echo y | ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --md
-    echo y | ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water --md
+
+    ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --overwrite<<EOF
+    Y
+    y
+    EOF
+    ScoreFlow -p tutorial --protocol mmgbsa_water    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water --overwrite<<EOF
+    Y
+    y
+    EOF
+    ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --md --overwrite<<EOF
+    Y
+    y
+    EOF
+    ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water --md --overwrite<<EOF
+    Y
+    y
+    EOF
+
+Same as for DockFlow, if you have access to a cluster, use the --slurm or --pbs flag.
+
+When tou are done, postprocess all the results:
+
+.. code-block:: console
+
+    ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess
+    ScoreFlow -p tutorial --protocol mmgbsa_water    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess
+    ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess
+    ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess

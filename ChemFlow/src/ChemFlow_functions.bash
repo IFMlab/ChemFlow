@@ -259,6 +259,7 @@ JOB_SCHEDULLER="None"
 NCORES=$(getconf _NPROCESSORS_ONLN)
 NNODES="1"
 OVERWRITE="no"    # Don't overwrite stuff.
+HEADER_PROVIDED="no"
 
 if [ $1 == 'DockFlow' ] ; then
     WORKFLOW="DockFlow"

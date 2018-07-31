@@ -612,7 +612,7 @@ if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow ] ; then
                     #  Go to the receptor folder.
                     cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}
 
-                    if [ -d */ ] ; then
+                    if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}/${LIGAND_LIST}/ ] ; then
                         # Cleanup
                         if [ -f docked_folder.tar.gz ] ; then rm docked_folder.tar.gz ; fi
 
@@ -1118,11 +1118,16 @@ while [[ $# -gt 0 ]]; do
             NNODES="$2" # Same as above.
             shift # past argument
         ;;
-        --PBS) #Activate the PBS workload
+        --pbs) #Activate the PBS workload
             JOB_SCHEDULLER="PBS"
         ;;
-        --SLURM) #Activate the SLURM workload
+        --slurm) #Activate the SLURM workload
             JOB_SCHEDULLER="SLURM"
+        ;;
+        --header)
+            HEADER_PROVIDED="yes"
+            HEADER_FILE=$2
+            shift
         ;;
         ## PLANTS arguments
         --speed)

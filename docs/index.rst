@@ -13,10 +13,10 @@ Welcome to ChemFlow's documentation!
    readme
    installation
    usage
+   tutorial
    contributing
    authors
    history
-
 
 Indices and tables
 ==================

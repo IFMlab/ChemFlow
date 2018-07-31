@@ -5,3 +5,5 @@
 #PBS -l nodes=${NNODES}:ppn=${NCORES}
 #PBS -l walltime=0:30:00
 #PBS -V
+
+source ~/software/amber16/amber.sh

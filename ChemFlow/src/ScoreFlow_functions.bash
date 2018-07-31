@@ -70,9 +70,9 @@ esac
 if [ "${OVERWRITE}" == "no" ] ; then # Useless to process this loop if we overwrite anyway.
     for LIGAND in ${LIGAND_LIST[@]} ; do
         if [ ! -f ${RUNDIR}/${LIGAND}/${FILE} ] ; then
-            if [ -d ${RUNDIR}/${LIGAND}/ ] ; then
-                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
-            fi
+#            if [ -d ${RUNDIR}/${LIGAND}/ ] ; then
+#                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+#            fi
             DOCK_LIST="${DOCK_LIST} $LIGAND"
         fi
     done
@@ -222,33 +222,37 @@ if [ -f  ScoreFlow.run ] ; then
 fi
 # Write the commands to run the program
 if [ ${RUN_FILE_PROVIDED} != "yes" ] ; then
-    ScoreFlow_rescore_mmgbsa_write_compute_charges
-    ScoreFlow_rescore_mmgbsa_write_run_tleap
-    ScoreFlow_rescore_mmgbsa_write_run
-
-else
-    cp ${WORKDIR}/${RUN_FILE} ${RUNDIR}/ScoreFlow.run
+    ScoreFlow_rescore_mmgbsa_write_commun_ScoreFlow_run
 fi
 
-
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    echo -ne "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
-    cd ${RUNDIR}/${LIGAND}
+    cd ${RUNDIR}
+    if [ ${RUN_FILE_PROVIDED} != "yes" ] ; then
+        cd ${RUNDIR}/${LIGAND}
 
-    echo -e "cd ${RUNDIR}/${LIGAND}\n$(cat ../ScoreFlow.run)" > ScoreFlow.run
+        echo -e "cd ${RUNDIR}/${LIGAND}" > ScoreFlow.run
 
-    if [ -f charges.xargs ] ; then
-        echo -e "$(cat charges.xargs)\n$(cat ScoreFlow.run)" >> ScoreFlow.run
+        ScoreFlow_rescore_mmgbsa_write_compute_charges
+
+        if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ ${WATER} != 'yes' ] ; then
+            echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ScoreFlow.run
+        fi
+        if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ ${WATER} == 'yes' ] ; then
+            echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ScoreFlow.run
+        fi
+
+        echo -e "$(cat ../ScoreFlow.run)" >> ScoreFlow.run
+    else
+        echo -e "cd ${RUNDIR}/${LIGAND}" > ${LIGAND}/ScoreFlow.run
+        cat ${WORKDIR}/${RUN_FILE} >> ${LIGAND}/ScoreFlow.run
     fi
-    case "${JOB_SCHEDULLER}" in
-    "PBS")
-        ScoreFlow_rescore_mmgbsa_write_pbs
-    ;;
-    "SLURM")
-        ScoreFlow_rescore_mmgbsa_write_slurm
-    ;;
-    esac
+
+    if [ ${JOB_SCHEDULLER} != "None" ] ; then
+        ScoreFlow_rescore_mmgbsa_write_HPC
+    fi
+
     if [ "${WRITE_RUN}" != "yes" ] ; then
+        echo -ne "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
         case "${JOB_SCHEDULLER}" in
         "None")
             bash ScoreFlow.run
@@ -262,7 +266,6 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
         esac
     fi
 done
-
 }
 
 
@@ -282,67 +285,59 @@ ScoreFlow_rescore_mmgbsa_write_compute_charges() {
 #                ${PROJECT}
 #                ${NCORES}
 #===============================================================================
-# Clean up
-if [  -f ${RUNDIR}/charges.xargs ] ; then
-    rm -rf ${RUNDIR}/charges.xargs
+# The name of the ligand, without any conformational info
+LIGAND_NAME=`echo ${LIGAND} | sed -e 's/_conf_[0-9]*//'`
+
+# Mandatory Gasteiger charges
+if [ ! -f ligand_gas.mol2 ] ; then
+    antechamber -i ligand.mol2 -fi mol2 -o ligand_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
 fi
 
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    cd ${RUNDIR}/${LIGAND}
+DONE_CHARGE="false"
+# Check if charges already exists for this ligand
+if [ -f ligand_${CHARGE}.mol2 ] ; then
+    DONE_CHARGE="true"
+fi
 
-    # The name of the ligand, without any conformational info
-    LIGAND_NAME=`echo ${LIGAND} | sed -e 's/_conf_[0-9]*//'`
+# Check if the charges are in ChemBase.
+if [ "${DONE_CHARGE}" == "false" ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 ] ; then
+    if [ "$(grep ${LIGAND_NAME} ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)" == ${LIGAND_NAME} ] ; then
+        echo "${CHARGE} charges found in ChemBase for ${LIGAND}"
 
-    # Mandatory Gasteiger charges
-    if [ ! -f ligand_gas.mol2 ] ; then
-        antechamber -i ligand.mol2 -fi mol2 -o ligand_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
-    fi
-
-    DONE_CHARGE="false"
-    # Check if charges already exists for this ligand
-    if [ -f ligand_${CHARGE}.mol2 ] ; then
-        DONE_CHARGE="true"
-    fi
-
-    # Check if the charges are in ChemBase.
-    if [ "${DONE_CHARGE}" == "false" ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 ] ; then
-        if [ "$(grep ${LIGAND_NAME} ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)" == ${LIGAND_NAME} ] ; then
-            echo "${CHARGE} charges found in ChemBase for ${LIGAND}"
-
-            awk -v LIGAND=${LIGAND_NAME} '$0 ~ LIGAND {flag=1;next}/BOND/{flag=0}flag' ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 | awk '/1 MOL/&&!/TEMP/ {print $9}' > charges.dat
-            antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes &> /dev/null
-
-            # Done
-            DONE_CHARGE="true"
-        fi
-    fi
-
-    # If it was not in ChemBase, look into the LigFlow folder.
-    if [ "${DONE_CHARGE}" == "false" ] && [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
-        echo "${CHARGE} charges found in LigFlow for ${LIGAND}"
-
-        awk '/1 MOL/&&!/TEMP/ {print $9}' ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 > charges.dat
+        awk -v LIGAND=${LIGAND_NAME} '$0 ~ LIGAND {flag=1;next}/BOND/{flag=0}flag' ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 | awk '/1 MOL/&&!/TEMP/ {print $9}' > charges.dat
         antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes &> /dev/null
 
         # Done
         DONE_CHARGE="true"
     fi
+fi
 
-    # If it was not in ChemBase or LigFlow, compute them.
-    if [ ${DONE_CHARGE} == "false" ] ; then
+# If it was not in ChemBase, look into the LigFlow folder.
+if [ "${DONE_CHARGE}" == "false" ] && [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
+    echo "${CHARGE} charges found in LigFlow for ${LIGAND}"
 
-        case ${CHARGE} in
-        "bcc")
-            # Compute am1-bcc charges
-            if [ ! -f ligand_bcc.mol2 ] ; then
-                echo "echo \"Computing ${CHARGE} charges for ${LIGAND}\" ;  antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ; cp ligand_bcc.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2" >> ${RUNDIR}/charges.xargs
-            fi
+    awk '/1 MOL/&&!/TEMP/ {print $9}' ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 > charges.dat
+    antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes &> /dev/null
 
-            ;;
-        "resp")
-            # Prepare Gaussian
-            if [ ! -f ligand_resp.mol2 ] ; then
-                echo "You asked for resp charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later please. I can't do it, it would take to much time.. I'm just a simple rescoring program.. I'm very sorry, please accept my apologies."
+    # Done
+    DONE_CHARGE="true"
+fi
+
+# If it was not in ChemBase or LigFlow, compute them.
+if [ ${DONE_CHARGE} == "false" ] ; then
+
+    case ${CHARGE} in
+    "bcc")
+        # Compute am1-bcc charges
+        if [ ! -f ligand_bcc.mol2 ] ; then
+            echo "echo \"Computing ${CHARGE} charges for ${LIGAND}\" ;  antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ; cp ligand_bcc.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2" >> ScoreFlow.run
+        fi
+
+        ;;
+    "resp")
+        # Prepare Gaussian
+        if [ ! -f ligand_resp.mol2 ] ; then
+            echo "You asked for resp charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later please. I can't do it, it would take to much time.. I'm just a simple rescoring program.. I'm very sorry, please accept my apologies."
 #                antechamber -i ligand_gas.mol2 -fi mol2 -o ligand.gau -fo gcrt -gv 1 -ge ligand.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
 #
 #                # Run Gaussian to optimize structure and generate electrostatic potential grid
@@ -353,73 +348,34 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
 #                if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
 #                    cp ligand_resp.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2
 #                fi
-            fi
-        ;;
-        esac
-    fi
-done
-
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    cd ${RUNDIR}/${LIGAND}
-
-    if [ ! -f ligand.frcmod ] && [ -f ligand_gas.mol2 ] ; then
-        parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
-
-        if [ ! -f ligand.frcmod ]  ; then
-            echo "${LIGAND} gas" >> ${RUNDIR}/antechamber_errors.lst
-        fi
-    fi
-
-    case ${CHARGE} in
-    "bcc")
-        if [ ! -f ligand_bcc.mol2 ] ; then
-            echo "${LIGAND} bcc" >> ${RUNDIR}/antechamber_errors.lst
-        fi
-    ;;
-    "resp")
-        if [ ! -f ligand_resp.mol2 ]; then
-            echo "${LIGAND} resp">> ${RUNDIR}/antechamber_errors.lst
         fi
     ;;
     esac
-done
-}
-
-
-ScoreFlow_rescore_mmgbsa_write_run_tleap() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_rescore_mmgbsa_write_run_tleap
-#   DESCRIPTION:
-#
-#        Author: Diego E. B. Gomes
-#                Dona de Francquen
-#
-#    PARAMETERS: ${RUNDIR}
-#                ${WATER}
-#                ${CHEMFLOW_HOME}
-#                ${LIGAND_LIST}
-#       RETURNS: -
-#
-#===============================================================================
-cd ${RUNDIR}
-
-if [ "${WATER}" != "yes" ] ; then
-    template="tleap_implicit_gbsa.template"
-else
-    template="tleap_explicit_gbsa.template"
 fi
-file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/${template})
-eval echo \""${file}"\" >> ${RUNDIR}/tleap_gbsa.in
 
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ ${WATER} != 'yes' ] ; then
-        echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ${RUNDIR}/ScoreFlow.run
+
+if [ ! -f ligand.frcmod ] && [ -f ligand_gas.mol2 ] ; then
+    parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
+
+    if [ ! -f ligand.frcmod ]  ; then
+        echo "${LIGAND} gas" >> ${RUNDIR}/antechamber_errors.lst
     fi
-    if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ ${WATER} == 'yes' ] ; then
-        echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ${RUNDIR}/ScoreFlow.run
+fi
+
+case ${CHARGE} in
+"bcc")
+    if [ ! -f ligand_bcc.mol2 ] ; then
+        echo "${LIGAND} bcc" >> ${RUNDIR}/antechamber_errors.lst
     fi
-done
+;;
+"resp")
+    if [ ! -f ligand_resp.mol2 ]; then
+        echo "${LIGAND} resp">> ${RUNDIR}/antechamber_errors.lst
+    fi
+;;
+esac
 }
+
 
 ScoreFlow_rescore_mmgbsa_write_inputs() {
 #===  FUNCTION  ================================================================
@@ -436,6 +392,16 @@ ScoreFlow_rescore_mmgbsa_write_inputs() {
 #
 #       RETURNS: all .in files required
 #===============================================================================
+# tleap inputs
+if [ "${WATER}" != "yes" ] ; then
+    template="tleap_implicit_gbsa.template"
+else
+    template="tleap_explicit_gbsa.template"
+fi
+file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/${template})
+eval echo \""${file}"\" >> ${RUNDIR}/tleap_gbsa.in
+
+# Simulation inputs
 if [ "${WATER}" != "yes" ] ; then
     solvent="implicit"
     if [ "${MD}" != 'yes' ] ; then
@@ -457,11 +423,12 @@ for filename in ${scoreflow_protocol} ; do
     eval echo \""${file}"\" > ${RUNDIR}/${filename}.in
 done
 
+#mmgbsa input
 echo "$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/GB2.template)" > ${RUNDIR}/GB2.in
 }
 
 
-ScoreFlow_rescore_mmgbsa_write_run() {
+ScoreFlow_rescore_mmgbsa_write_commun_ScoreFlow_run() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_rescore_mmgbsa_write_run
 #   DESCRIPTION: Write the run file for MIN (MD if asked)
@@ -538,27 +505,7 @@ fi
 }
 
 
-ScoreFlow_rescore_mmgbsa_write_slurm() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_rescore_mmgbsa_write_slurm
-#   DESCRIPTION: Writes the SLURM script by adding the slurm template to ScoreFlow.run.
-#
-#    PARAMETERS: ${RUNDIR}
-#                ${CHEMFLOW_HOME}
-#                ${LIGAND}
-#
-#       RETURNS: ScoreFlow.slurm for ${LIGAND}
-#===============================================================================
-if [ ! -f ${RUNDIR}/ScoreFlow.slurm ] ; then
-    file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/slurm.template)
-    eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.slurm
-fi
-
-echo -e "$(cat ${RUNDIR}/ScoreFlow.slurm)\n$(cat ${RUNDIR}/${LIGAND}/ScoreFlow.run)" > ${RUNDIR}/${LIGAND}/ScoreFlow.slurm
-}
-
-
-ScoreFlow_rescore_mmgbsa_write_pbs() {
+ScoreFlow_rescore_mmgbsa_write_HPC() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_rescore_mmgbsa_write_pbs
 #   DESCRIPTION: Writes the PBS script by adding the pbs template to ScoreFlow.run.
@@ -569,12 +516,24 @@ ScoreFlow_rescore_mmgbsa_write_pbs() {
 #
 #       RETURNS: ScoreFlow.pbs for ${LIGAND}
 #===============================================================================
-if [ ! -f ${RUNDIR}/ScoreFlow.pbs ] ; then
-    file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/pbs.template)
-    eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.pbs
+if [ ! -f ${RUNDIR}/ScoreFlow.${JOB_SCHEDULLER,,} ] ; then
+    if [ ${HEADER_PROVIDED} != "yes" ] ; then
+        file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/${JOB_SCHEDULLER,,}.template)
+        eval echo \""${file}"\" > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+    else
+        case "${JOB_SCHEDULLER}" in
+        "PBS")
+            sed "s/LIGAND/$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+        ;;
+        "SLURM")
+            sed "s/--job-name=[A-Z0-9]*/--job-name=$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+        ;;
+        esac
+
+    fi
 fi
 
-echo -e "$(cat ${RUNDIR}/ScoreFlow.pbs)\n$(cat ${RUNDIR}/${LIGAND}/ScoreFlow.run)" > ${RUNDIR}/${LIGAND}/ScoreFlow.pbs
+cat ${RUNDIR}/${LIGAND}/ScoreFlow.run >> ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
 }
 
 
@@ -619,15 +578,16 @@ else
 fi
 cp ${LIGAND_FILE} ${RUNDIR}/ligand.mol2
 
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ ! -d  ${RUNDIR}/${LIGAND} ] ; then
-        mkdir -p ${RUNDIR}/${LIGAND}
-    fi
-done
-
 OLDIFS=$IFS
 IFS='%'
 if [ ${SCORE_PROGRAM} != "PLANTS" ] ; then
+
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        if [ ! -d  ${RUNDIR}/${LIGAND} ] ; then
+            mkdir -p ${RUNDIR}/${LIGAND}
+        fi
+    done
+
     # Copy each ligand to it's folder.
     n=-1
     while read line ; do
@@ -957,16 +917,21 @@ while [[ $# -gt 0 ]]; do
             NNODES="$2" # Same as above.
             shift # past argument
         ;;
-        --PBS) #Activate the PBS workload
+        --pbs) #Activate the PBS workload
             JOB_SCHEDULLER="PBS"
         ;;
-        --SLURM) #Activate the SLURM workload
+        --slurm) #Activate the SLURM workload
             JOB_SCHEDULLER="SLURM"
+        ;;
+        --header)
+            HEADER_PROVIDED="yes"
+            HEADER_FILE=$2
+            shift
         ;;
         --write_run_only)
             WRITE_RUN="yes"
         ;;
-        --run_file)
+        --run_template)
             RUN_FILE_PROVIDED="yes"
             RUN_FILE="$2"
             shift
