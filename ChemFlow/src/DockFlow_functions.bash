@@ -468,7 +468,7 @@ echo "#! /bin/bash
 #PBS -q  route
 #PBS -N DockFlow_${first}
 #PBS -l nodes=${NNODES}:ppn=${NTHREADS}
-#PBS -l walltime=0:30:00
+#PBS -l walltime=1:00:00
 #PBS -V
 
 cd ${RUNDIR}
