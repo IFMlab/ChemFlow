@@ -137,3 +137,37 @@ When tou are done, postprocess all the results:
     ScoreFlow -p tutorial --protocol mmgbsa_water    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess
     ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess
     ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess
+
+
+
+
+    DockFlow -p tutorial --protocol plants -r receptor.mol2 -l ligands_crystal.mol2 --center 31.50 13.74 24.36 --radius 20  --pbs <<EOF
+y
+n
+16
+16
+EOF
+
+    DockFlow -p tutorial --protocol plants -r receptor.mol2 -l decoys.mol2          --center 31.50 13.74 24.36 --radius 20 --pbs <<EOF
+y
+n
+16
+16
+EOF
+
+
+    DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l ligands.mol2         --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina
+    DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l ligands_crystal.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina  --pbs <<EOF
+y
+n
+16
+16
+EOF
+
+    DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l decoys.mol2          --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina  --pbs <<EOF
+y
+n
+16
+16
+EOF
+
