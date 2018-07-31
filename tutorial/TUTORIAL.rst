@@ -26,6 +26,8 @@ b2-7 - Build up manually by dgomes.
 | decoys.smi            | decoys for a-thrombin, from DUD-E              |
 +-----------------------+------------------------------------------------+
 
+
+
 Step 1: Convert SMILES into 3D structure
 ----------------------------------------
 The default method is ETKDG. In sequence you should make a .mol2 file.

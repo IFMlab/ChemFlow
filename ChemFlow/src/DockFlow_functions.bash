@@ -213,6 +213,10 @@ DockFlow_rewrite_origin_ligands() {
 #===============================================================================
 # Original
 
+if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
+    mkdir -p ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
+fi
+
 OLDIFS=$IFS
 IFS='%'
 n=-1
