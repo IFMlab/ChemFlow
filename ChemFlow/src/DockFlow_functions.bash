@@ -85,8 +85,8 @@ case ${JOB_SCHEDULLER} in
     cd ${RUNDIR} ; cat dock.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 ;;
 "SLURM"|"PBS")
-
-    read -p "\nHow many Dockings per PBS/SLURM job?: " nlig
+    echo ''
+    read -p "How many Dockings per PBS/SLURM job? " nlig
     # Check if the user gave a int
     nb=${nlig}
     not_a_number
@@ -238,7 +238,8 @@ DockFlow_write_HPC_header() {
 #===============================================================================
 if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
     if [ ${HEADER_PROVIDED} != "yes" ] ; then
-        read -p "\nHow many tasks per node ?: " NCORES
+        echo ''
+        read -p "How many tasks per node? " NCORES
         # Check if the user gave a int
         nb=${NCORES}
         not_a_number
@@ -253,10 +254,10 @@ if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
 fi
 case "${JOB_SCHEDULLER}" in
         "PBS")
-            sed "/PBS -N [a-zA-Z0-9]*$/ s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+            sed "/PBS -N .*$/ s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
         ;;
         "SLURM")
-            sed "/--job-name=[a-zA-Z0-9]*$/  s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+            sed "/--job-name=.*$/  s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
         ;;
         esac
 
@@ -383,7 +384,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -d  ${LIGAND} ] ; then
         mkdir -p  ${LIGAND}
         if [ ! -d ${LIGAND} ] ; then
-            echo "[ ERROR ] could not create ${LIGAND} directory in ${RUNDIR}. Did you check your quotas?"
+            echo "[ ERROR ] could not create ${LIGAND} directory in ${RUNDIR}. Did you check your quotas? "
             exit 0
         fi
     fi
@@ -539,9 +540,9 @@ fi
 
 # Remove docking folders
 if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTPROCESS_ALL} ] ; then
-    read -p "[ DockFlow ] Remove all docking folders ? " opt
+    read -p "[ DockFlow ] Remove all docking folders? [y/n] " opt
 else
-    read -p "[ DockFlow ] Remove docking folders for ${PROTOCOL} / ${RECEPTOR} ? " opt
+    read -p "[ DockFlow ] Remove docking folders for ${PROTOCOL} / ${RECEPTOR}? [y/n] " opt
 fi
 case ${opt} in
 "y"|"yes"|"Yes"|"Y"|"YES")
@@ -756,9 +757,9 @@ else
 
     # Archiving.
     if [ ! -z ${POSTPROCESS_ALL} ] ; then
-        read -p "[ DockFlow ] Archive the docking results (folders) in TAR files? " opt
+        read -p "[ DockFlow ] Archive the docking results (folders) in TAR files? [y/n] " opt
     else
-        read -p "[ DockFlow ] Archive the docking results (folders) in a TAR file? " opt
+        read -p "[ DockFlow ] Archive the docking results (folders) in a TAR file? [y/n] " opt
     fi
     case ${opt} in
     "y"|"yes"|"Yes"|"Y"|"YES")
@@ -832,7 +833,7 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
      OVERWRITE: ${OVERWRITE}
 "
 read -p "
-Continue [Y/N]?: " opt
+Continue [y/n]? " opt
 
 case $opt in
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
@@ -843,17 +844,21 @@ esac
 
 DockFlow_help() {
 echo "Example usage: 
-DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf chemplp]   
+DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-n 8] [-sf chemplp]
 
 [Options]
  -h/--help           : Show this help message and quit
  -hh/--fullhelp      : Detailed help
- -f/--file           : DockFlow configuration file
+
  -r/--receptor       : Receptor's mol2 file.
  -l/--ligand         : Ligands .mol2 input file.
- -p/--project        : ChemFlow project
- --postdock          : Process DockFlow output in a ChemFlow project.
+ -p/--project        : ChemFlow project.
 
+Dock:
+ --center            : X Y Z coordinates of the center of the binding site, separated by a space.
+
+Postprocess:
+ --postprocess       : Process DockFlow output in a ChemFlow project.
 "
 exit 0
 }
@@ -866,30 +871,22 @@ DockFlow is a bash script designed to work with PLANTS or Vina.
 It can perform an automatic VS based on information given by the user :
 ligands, receptor, binding site info, and extra options.
 
-DockFlow requires a configuration file named DockFlow.config, if absent, one will be created.
-A template can be found in: ${CHEMFLOW_HOME}/config_files/DockFlow.config
-
-If you already have an existing config file and wish to rerun DockFlow
-only modifying some options, see the help below.
-
-
 Usage:
-DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf chemplp] [--radius 15]
+DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol protocol-name] [-n 8] [-sf chemplp]
 
 [Help]
  -h/--help           : Show this help message and quit
  -hh/--fullhelp      : Detailed help
 
 [ Required ]
- -f/--file           : DockFlow configuration file
- -r/--receptor       : Receptor NAME
- -rf/--receptor-file : Receptor MOL2 file
- -l/--ligand         : Ligands  MOL2 file
- -p/--project        : ChemFlow project [default]
+*-p/--project        : ChemFlow project
+*-r/--receptor       : Receptor MOL2 file
+*-l/--ligand         : Ligands  MOL2 file
 
 [ Post Processing ]
  --postprocess       : Process DockFlow output for the specified project/protocol/receptor.
  --postprocess-all   : Process DockFlow output in a ChemFlow project.
+ -n/--n-poses        : Number of docked poses to keep.
  --archive           : Compress the docking folders for the specified project/protocol/receptor.
  --archive-all       : Compress the docking folders in a ChemFLow project.
  --report            : [not implemented]
@@ -901,28 +898,28 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf 
  -sf/--function      : vina, chemplp, plp, plp95  [chemplp]
 
 [ Parallel execution ]
- -nc/--cores         : Number of cores per node
- -w/--workload       : Workload manager, PBS or SLURM
- -nn/--nodes         : Number of nodes to use (ony for PBS or SLURM)
+ -nc/--cores         : Number of cores per node [${NCORES}]
+ --pbs/--slurm       : Workload manager, PBS or SLURM
+ -nn/--nodes         : Number of nodes to use (ony for PBS or SLURM) [1]
+ --header            : Header file provided to run on your cluster.
 
 [ Additional ]
- --overwrite          : Overwrite results
+ --overwrite         : Overwrite results
 
 [ Options for docking program ]
+*--center            : xyz coordinates of the center of the binding site, separated by a space
 _________________________________________________________________________________
 [ PLANTS ]
  --speed             : Search speed for Plants. 1, 2 or 4 [1]
  --ants              : Number of ants     [20]
  --evap_rate         : Evaporation rate of pheromones [0.15]
  --iteration_scaling : Iteration scaling factor [1.0]
- --center            : xyz coordinates of the center of the binding site, separated by a space
  --radius            : Radius of the spheric binding site [15]
  --water             : Path to a structural water molecule
  --water_xyzr        : xyz coordinates and radius of the water sphere, separated by a space
 
 _________________________________________________________________________________
 [ Vina ]
- --center            : xyz coordinates of the center of the grid, separated by a space
  --size              : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
  --exhaustiveness    : Exhaustiveness of the global search [8]
  --energy_range      : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
@@ -930,6 +927,7 @@ ________________________________________________________________________________
 "
     exit 0
 }
+
 
 DockFlow_CLI() {
 if [ "$1" == "" ] ; then
@@ -941,143 +939,135 @@ while [[ $# -gt 0 ]]; do
     key="$1"
 
     case ${key} in
-        --resume)
-            echo -ne "\nResume not implemented"
-            exit 0
-        ;;
-        -h|--help)
+        "-h"|"--help")
             DockFlow_help
             exit 0
             shift # past argument
         ;;
-        -hh|--full-help)
+        "-hh"|"--full-help")
             DockFlow_help_full
             exit 0
             shift
         ;;
-        -f|--file)
+        "-f"|"--file")
             CONFIG_FILE="$2"
             shift # past argument
         ;;
-        -r|--receptor)
+        "-r"|"--receptor")
             RECEPTOR_FILE="$2"
             RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .mol2 )"
             shift # past argument
         ;;
-        -l|--ligand)
+        "-l"|"--ligand")
             LIGAND_FILE="$2"
             shift # past argument
         ;;
-        -p|--project)
+        "-p"|"--project")
             PROJECT="$2"
             shift
         ;;
-        --protocol)
+        "--protocol")
             PROTOCOL="$2"
             shift
         ;;
-        -sf|--scoring_function)
+        "-sf"|"--scoring_function")
             SCORING_FUNCTION="$2"
             shift
         ;;
-        --center)
+        "--center")
             DOCK_CENTER=("$2" "$3" "$4")
             shift 3 # past argument
         ;;
-        --size)
+        "--size")
             DOCK_LENGHT=("$2" "$3" "$4")
             shift 3
         ;;
-        --radius)
+        "--radius")
             DOCK_RADIUS="$2"
             DOCK_LENGHT=("$2" "$2" "$2")
             shift # past argument
         ;;
-        -n|--n_poses)
+        "-n"|"--n_poses")
             DOCK_POSES="$2"
             shift # past argument
         ;;
-        --run)
-            run_mode="$2"
-            shift # past argument
-        ;;
-        -nc|--cores) # Number of Cores [1] (or cores/node)
+        "-nc"|"--cores") # Number of Cores [1] (or cores/node)
             NCORES="$2" # Same as above.
             shift # past argument
         ;;
         # HPC options
-        -nn|--nodes) # Number of NODES [1]
+        "-nn"|"--nodes") # Number of NODES [1]
             NNODES="$2" # Same as above.
             shift # past argument
         ;;
-        --pbs) #Activate the PBS workload
+        "--pbs") #Activate the PBS workload
             JOB_SCHEDULLER="PBS"
         ;;
-        --slurm) #Activate the SLURM workload
+        "--slurm") #Activate the SLURM workload
             JOB_SCHEDULLER="SLURM"
         ;;
-        --header)
+        "--header")
             HEADER_PROVIDED="yes"
             HEADER_FILE=$2
             shift
         ;;
         ## PLANTS arguments
-        --speed)
+        "--speed")
             speed="$2"
             shift
         ;;
-        --ants)
+        "--ants")
             ants="$2"
             shift
         ;;
-        --evap_rate)
+        "--evap_rate")
             evap_rate="$2"
             shift
         ;;
-        --water)
+        "--water")
             water="$2"
             shift # past argument
         ;;
-        --water_xyzr)
+        "--water_xyzr")
             water_xyzr="$2 $3 $4 $5"
             shift 4 # past argument
         ;;
         ### VINA arguments  UNUSED - REPLACED BY --vina_extra
-        --vina_extra)
+        "--vina_extra")
             VINA_EXTRA="$2"
             shift
          ;;
-        --iteration_scaling)
+        "--iteration_scaling")
             iteration_scaling="$2"
             shift
         ;;
-        --exhaustiveness)
+        "--exhaustiveness")
             exhaustiveness="$2"
             shift
         ;;
-        --energy_range)
+        "--energy_range")
             energy_range="$2"
             shift
         ;;
         ## Final arguments
-        --overwrite)
+        "--overwrite")
             OVERWRITE="yes"
         ;;
         ## ADVANCED USER INPUT
         #    --advanced)
         #       USER_INPUT="$2"
         #       shift
-        --postprocess)
+        "--postprocess")
             POSTPROCESS="yes"
         ;;
-        --postprocess-all)
+        "--postprocess-all")
             POSTPROCESS="yes"
             POSTPROCESS_ALL="yes"
         ;;
-        --archive)
+        "--archive")
             ARCHIVE='yes'
         ;;
-        --archive-all)
+        "--archive-all")
             ARCHIVE='yes'
             ARCHIVE_ALL="yes"
         ;;

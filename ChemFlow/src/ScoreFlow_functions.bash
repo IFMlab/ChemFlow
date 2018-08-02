@@ -292,66 +292,67 @@ if [ ! -f ligand_gas.mol2 ] ; then
     antechamber -i ligand.mol2 -fi mol2 -o ligand_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
 fi
 
-DONE_CHARGE="false"
-# Check if charges already exists for this ligand
-if [ -f ligand_${CHARGE}.mol2 ] ; then
-    DONE_CHARGE="true"
-fi
+if [ ${CHARGE} != 'gas' ] ; then
+    DONE_CHARGE="false"
+    # Check if charges already exists for this ligand
+    if [ -f ligand_${CHARGE}.mol2 ] ; then
+        DONE_CHARGE="true"
+    fi
 
-# Check if the charges are in ChemBase.
-if [ "${DONE_CHARGE}" == "false" ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 ] ; then
-    if [ "$(grep ${LIGAND_NAME} ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)" == ${LIGAND_NAME} ] ; then
-        echo "${CHARGE} charges found in ChemBase for ${LIGAND}"
+    # Check if the charges are in ChemBase.
+    if [ "${DONE_CHARGE}" == "false" ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 ] ; then
+        if [ "$(grep ${LIGAND_NAME} ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)" == ${LIGAND_NAME} ] ; then
+            echo "${CHARGE} charges found in ChemBase for ${LIGAND}"
 
-        awk -v LIGAND=${LIGAND_NAME} '$0 ~ LIGAND {flag=1;next}/BOND/{flag=0}flag' ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 | awk '/1 MOL/&&!/TEMP/ {print $9}' > charges.dat
+            awk -v LIGAND=${LIGAND_NAME} '$0 ~ LIGAND {flag=1;next}/BOND/{flag=0}flag' ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 | awk '/1 MOL/&&!/TEMP/ {print $9}' > charges.dat
+            antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes &> /dev/null
+
+            # Done
+            DONE_CHARGE="true"
+        fi
+    fi
+
+    # If it was not in ChemBase, look into the LigFlow folder.
+    if [ "${DONE_CHARGE}" == "false" ] && [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
+        echo "${CHARGE} charges found in LigFlow for ${LIGAND}"
+
+        awk '/1 MOL/&&!/TEMP/ {print $9}' ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 > charges.dat
         antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes &> /dev/null
 
         # Done
         DONE_CHARGE="true"
     fi
-fi
 
-# If it was not in ChemBase, look into the LigFlow folder.
-if [ "${DONE_CHARGE}" == "false" ] && [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
-    echo "${CHARGE} charges found in LigFlow for ${LIGAND}"
+    # If it was not in ChemBase or LigFlow, compute them.
+    if [ ${DONE_CHARGE} == "false" ] ; then
 
-    awk '/1 MOL/&&!/TEMP/ {print $9}' ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 > charges.dat
-    antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes &> /dev/null
+        case ${CHARGE} in
+        "bcc")
+            # Compute am1-bcc charges
+            if [ ! -f ligand_bcc.mol2 ] ; then
+                echo "echo \"Computing ${CHARGE} charges for ${LIGAND}\" ;  antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ; cp ligand_bcc.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2" >> ScoreFlow.run
+            fi
 
-    # Done
-    DONE_CHARGE="true"
-fi
-
-# If it was not in ChemBase or LigFlow, compute them.
-if [ ${DONE_CHARGE} == "false" ] ; then
-
-    case ${CHARGE} in
-    "bcc")
-        # Compute am1-bcc charges
-        if [ ! -f ligand_bcc.mol2 ] ; then
-            echo "echo \"Computing ${CHARGE} charges for ${LIGAND}\" ;  antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ; cp ligand_bcc.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2" >> ScoreFlow.run
-        fi
-
+            ;;
+        "resp")
+            # Prepare Gaussian
+            if [ ! -f ligand_resp.mol2 ] ; then
+                echo "You asked for resp charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later please. I can't do it, it would take to much time.. I'm just a simple rescoring program.. I'm very sorry, please accept my apologies."
+    #                antechamber -i ligand_gas.mol2 -fi mol2 -o ligand.gau -fo gcrt -gv 1 -ge ligand.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
+    #
+    #                # Run Gaussian to optimize structure and generate electrostatic potential grid
+    #                g09 <ligand.gau>ligand.gout
+    #
+    #                # Read Gaussian output and write new optimized ligand with RESP charges
+    #                antechamber -i ligand.gout -fi gout -o ligand_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> ${RUNDIR}/antechamber.log
+    #                if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
+    #                    cp ligand_resp.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2
+    #                fi
+            fi
         ;;
-    "resp")
-        # Prepare Gaussian
-        if [ ! -f ligand_resp.mol2 ] ; then
-            echo "You asked for resp charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later please. I can't do it, it would take to much time.. I'm just a simple rescoring program.. I'm very sorry, please accept my apologies."
-#                antechamber -i ligand_gas.mol2 -fi mol2 -o ligand.gau -fo gcrt -gv 1 -ge ligand.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
-#
-#                # Run Gaussian to optimize structure and generate electrostatic potential grid
-#                g09 <ligand.gau>ligand.gout
-#
-#                # Read Gaussian output and write new optimized ligand with RESP charges
-#                antechamber -i ligand.gout -fi gout -o ligand_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> ${RUNDIR}/antechamber.log
-#                if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
-#                    cp ligand_resp.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2
-#                fi
-        fi
-    ;;
-    esac
+        esac
+    fi
 fi
-
 
 if [ ! -f ligand.frcmod ] && [ -f ligand_gas.mol2 ] ; then
     parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
@@ -561,14 +562,6 @@ if [  ! -d ${RUNDIR} ] ; then
     mkdir -p ${RUNDIR}
 fi
 
-if [ ${SCORE_PROGRAM} == "PLANTS" ] ; then
-    for LIGAND in ${LIGAND_LIST[@]} ; do
-        if [  ! -d ${RUNDIR}/${LIGAND}/ ] ; then
-            mkdir -p ${RUNDIR}/${LIGAND}/
-        fi
-    done
-fi
-
 # Copy files to project folder.
 if [ ${SCORE_PROGRAM} == "AMBER" ] ; then
     cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.pdb
@@ -732,7 +725,7 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
      OVERWRITE: ${OVERWRITE}
 "
 read -p "
-Continue [Y/N]?: " opt
+Continue [y/n]? " opt
 
 case $opt in 
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
@@ -751,19 +744,25 @@ ScoreFlow_help() {
 #    PARAMETERS: -
 #==============================================================================
 echo "Example usage: 
-# For all Scoring functions except MMGBSA:
-ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf chemplp] 
+# For VINA and PLANTS scoring functions:
+ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol protocol-name] [-n 8] [-sf vina]
 
 # For MMGBSA only 
-ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol 1] [-n 8] -sf mmgbsa
+ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] [-n 8] -sf mmgbsa
 
 [Options]
  -h/--help           : Show this help message and quit
--hh/--full-help      : Detailed help
- -f/--file           : ScoreFlow configuration file
- -r/--receptor       : Receptor's mol2 file.
+ -hh/--fullhelp      : Detailed help
+
+ -r/--receptor       : Receptor .mol2 or .pdb file.
  -l/--ligand         : Ligands .mol2 input file.
- -p/--project        : ChemFlow project name
+ -p/--project        : ChemFlow project.
+
+Rescoring:
+ --center            : X Y Z coordinates of the center of the binding site, separated by a space.
+
+Postprocess:
+ --postprocess       : Process DockFlow output in a ChemFlow project.
 "
 exit 0
 }
@@ -782,40 +781,59 @@ echo "
 ScoreFlow is a bash script designed to work with PLANTS, Vina, IChem and AmberTools16+.
 It can perform an rescoring of molecular complexes such as protein-ligand
 
-ScoreFlow requires a project folder named \"project\".chemflow if absent, one will be created. 
+ScoreFlow requires a project folder named 'myproject'.chemflow. If absent, one will be created.
 
 Usage:
-ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject [-protocol 1] [-n 8] [-sf chemplp]
+# For VINA and PLANTS scoring functions:
+ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol protocol-name] [-n 8] [-sf vina]
+
+# For MMGBSA only
+ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] [-n 8] -sf mmgbsa
 
 [Help]
- -h/--help           : Show this help message and quit
--hh/--full-help      : Detailed help
+ -h/--help              : Show this help message and quit
+ -hh/--fullhelp         : Detailed help
 
 [Required]
- -f/--file           : ScoreFlow configuration file
- -r/--receptor       : Receptor's mol2 file
- -l/--ligand         : Ligands .mol2 input file
- -p/--project        : ChemFlow project name
+*-p/--project       STR : ChemFlow project
+*-r/--receptor     FILE : Receptor MOL2 file
+*-l/--ligand       FILE : Ligands  MOL2 file
 
 [Optional]
- --protocol          : Name for this specific protocol [default]
- -sf/--function      : vina, chemplp, plp, plp95, mmgbsa, IFP
+ --protocol         STR : Name for this specific protocol [default]
+ -sf/--function     STR : vina, chemplp, plp, plp95, mmgbsa [chemplp]
 
-[ Charge Scheme ] 
- --gas               : Default Gasteiger-Marsili charges
- --bcc               : BCC charges
- --resp              : RESP charges (require gaussian)
+[ Charge Scheme - MMGBSA ]
+ --gas                  : Default Gasteiger-Marsili (default)
+ --bcc                  : BCC charges
+ --resp                 : RESP charges (require gaussian)
 
-[ Parallel execution ] 
- -nc/--cores         : Number of cores per node
-  -w/--workload      : Workload manager, PBS or SLURM 
- -nn/--nodes         : Number of nodes to use (ony for PBS or SLURM)
+[ Simulation ]
+ --water                : Explicit solvent [implicit solvent]
+ --md                   : Molecular dynamics
 
-[ Options for docking program ] 
+[ Parallel execution - MMGBSA ]
+ -nc/--cores        INT : Number of cores per node [${NCORES}]
+ --pbs/--slurm          : Workload manager, PBS or SLURM
+ -nn/--nodes        INT : Number of nodes to use (ony for PBS or SLURM) [1]
+ --header          FILE : Header file provided to run on your cluster.
+ --write_templ_only     : Write the HPC command without runing.
+ --run_template    FILE : Run the template provided by the user.
+
+
+[ Additional ]
+ --overwrite            : Overwrite results
+
+[ Rescoring with vina or plants ]
+*--center           STR : xyz coordinates of the center of the binding site, separated by a space
+
+[ Post Processing ]
+ --postprocess          : Process DockFlow output for the specified project/protocol/receptor.
 _________________________________________________________________________________
 "
 exit 0
 }
+
 
 ScoreFlow_CLI() {
 #===  FUNCTION  ===============================================================
@@ -833,10 +851,6 @@ fi
 while [[ $# -gt 0 ]]; do
     key="$1"
     case ${key} in
-        "--resume")
-            echo -ne "\nResume not implemented"
-            exit 0
-        ;;
         "-h"|"--help")
             ScoreFlow_help
             exit 0
@@ -847,105 +861,98 @@ while [[ $# -gt 0 ]]; do
             exit 0
             shift
         ;;
-        -f|--file)
-            CONFIG_FILE="$2"
-            shift # past argument
-        ;;
-        -r|--receptor)
+        "-r"|"--receptor")
             RECEPTOR_FILE="$2"
             RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .mol2 )"
             shift # past argument
         ;;
-        -l|--ligand)
+        "-l"|"--ligand")
             LIGAND_FILE="$2"
             shift # past argument
         ;;
-        -p|--project)
+        "-p"|"--project")
             PROJECT="$2"
             shift
         ;;
-        --protocol)
+        "--protocol")
             PROTOCOL="$2"
             shift
         ;;
-        -sf|--scoring_function)
+        "-sf"|"--scoring_function")
             SCORING_FUNCTION="$2"
             shift
         ;;
-        --center)
+        "--center")
             DOCK_CENTER=("$2" "$3" "$4")
             shift 3 # past argument
         ;;
-        --size)
+        "--size")
             DOCK_LENGHT=("$2" "$3" "$4")
             shift 3
         ;;
-        --radius)
+        "--radius")
             DOCK_RADIUS="$2"
             DOCK_LENGHT=("$2" "$2" "$2")
             shift # past argument
         ;;
-        -nc|--cores) # Number of Cores [1] (or cores/node)
+        "-nc"|"--cores") # Number of Cores [1] (or cores/node)
             NCORES="$2" # Same as above.
             shift # past argument
         ;;
-        --cuda)
-            CUDA="yes"
-        ;;
         # Charge calculation
-        --gas)
+        "--gas")
             CHARGE="gas"
         ;;
-        --resp)
+        "--resp")
             CHARGE="resp"
         ;;
-        --bcc)
+        "--bcc")
             CHARGE="bcc"
         ;;
-        --md)
+        "--md")
             MD="yes"
         ;;
-        --water)
+        "--water")
             WATER='yes'
         ;;
         # Minimization specific options
-        -maxcyc) # Maximun number of Energy minimization steps.
+        "-maxcyc") # Maximun number of Energy minimization steps.
             maxcyc="$2" # Same as above.
             shift
         ;;
         # HPC options
-        -nn|--nodes) # Number of NODES [1]
+        "-nn"|"--nodes") # Number of NODES [1]
             NNODES="$2" # Same as above.
             shift # past argument
         ;;
-        --pbs) #Activate the PBS workload
+        "--pbs") #Activate the PBS workload
             JOB_SCHEDULLER="PBS"
         ;;
-        --slurm) #Activate the SLURM workload
+        "--slurm") #Activate the SLURM workload
             JOB_SCHEDULLER="SLURM"
         ;;
-        --header)
+        "--header")
             HEADER_PROVIDED="yes"
             HEADER_FILE=$2
             shift
         ;;
-        --write_run_only)
+        "--write_templ_only")
             WRITE_RUN="yes"
         ;;
-        --run_template)
+        "--run_template")
             RUN_FILE_PROVIDED="yes"
             RUN_FILE="$2"
             shift
         ;;
         ## Final arguments
-        --overwrite)
+        "--overwrite")
             OVERWRITE="yes"
         ;;
         ## ADVANCED USER INPUT
         #    --advanced)
         #      USER_INPUT="$2"
         #      shift
-        --postprocess)
+        "--postprocess")
             POSTPROCESS="yes"
         ;;
         #    --archive)
