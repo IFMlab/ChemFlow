@@ -1,1 +1,1 @@
-.. include:: ../tutorial/alpha-thrombin/TUTORIAL.rst
+.. include:: ../tutorial/TUTORIAL.rst

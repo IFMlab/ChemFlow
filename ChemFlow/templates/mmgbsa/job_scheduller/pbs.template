@@ -2,7 +2,7 @@
 # 1 noeud 8 coeurs
 #PBS -q  route
 #PBS -N ScoreFlow_${LIGAND}
-#PBS -l nodes=${NNODES}:ppn=${NCORES}
+#PBS -l nodes=1:ppn=${NCORES}
 #PBS -l walltime=0:30:00
 #PBS -V
 

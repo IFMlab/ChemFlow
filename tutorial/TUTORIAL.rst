@@ -85,7 +85,7 @@ Then we'll evaluate the quality of the scoring functions to rank the docking pos
 results together with the **scoring power** which will measure how well it will rank *compounds* against each other.
 
 Let's do it locally:
-********************
+++++++++++++++++++++
 Run DockFlow for each set of ligands.
 
 * Using plants:
@@ -107,7 +107,7 @@ Run DockFlow for each set of ligands.
 If you have access to a cluster, you may profit from the HPC resources using --slurm or --pbs flags accordingly. :)
 
 Using a pbs cluster:
-********************
+++++++++++++++++++++
 
 Connect to your pbs cluster.
 
@@ -158,7 +158,7 @@ Here, we only keep on with plants results (tutorial.chemflow/DockFlow/plants/rec
 Rescoring using MMGBSA method:
 
 Locally:
-********
+++++++++
 
     ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --overwrite``
 
@@ -176,7 +176,7 @@ For each of these commands you will be asked:
 Same as for DockFlow, if you have access to a cluster, use the --slurm or --pbs flag.
 
 Using a pbs cluster:
-********************
+++++++++++++++++++++
 
     ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa              --pbs --overwrite``
 
@@ -187,7 +187,7 @@ Using a pbs cluster:
     ``ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water --md --pbs --overwrite``
 
 Step 6: Postprocess the results
------------------------------------
+-------------------------------
 When tou are done, you can postprocess (--postprocess) the results:
 
     ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess``

@@ -684,7 +684,6 @@ ScoreFlow_summary() {
 #                ${MD}
 #                ${JOB_SCHEDULLER}
 #                ${NCORES}
-#                ${NNODES}
 #                ${OVERWRITE}
 #===============================================================================
 echo "
@@ -721,7 +720,6 @@ echo "
 [ Run options ]
 JOB SCHEDULLER: ${JOB_SCHEDULLER}
     CORES/NODE: ${NCORES}
-         NODES: ${NNODES}
      OVERWRITE: ${OVERWRITE}
 "
 read -p "
@@ -921,10 +919,6 @@ while [[ $# -gt 0 ]]; do
             shift
         ;;
         # HPC options
-        "-nn"|"--nodes") # Number of NODES [1]
-            NNODES="$2" # Same as above.
-            shift # past argument
-        ;;
         "--pbs") #Activate the PBS workload
             JOB_SCHEDULLER="PBS"
         ;;

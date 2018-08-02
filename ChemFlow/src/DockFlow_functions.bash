@@ -169,9 +169,7 @@ DockFlow_write_plants_HPC() {
 #               ${list[@]}  -   Array with all ligand names
 #               ${first}    -   First ligand in the array
 #               ${$nlig}    -   Number of compounds to dock
-#               ${NNODES}   -   Number of compute nodes to use
 #               ${NCORES}   -   Number of cores/node
-#               ${NTHREADS} -   Total threads (NNODES*NCORES)
 #
 #          NOTE: Must be run while at "${RUNDIR}
 #       RETURNS: -
@@ -198,9 +196,7 @@ DockFlow_write_vina_HPC() {
 #               ${list[@]}  -   Array with all ligand names
 #               ${first}    -   First ligand in the array
 #               ${$nlig}    -   Number of compounds to dock
-#               ${NNODES}   -   Number of compute nodes to use
 #               ${NCORES}   -   Number of cores/node
-#               ${NTHREADS} -   Total threads (NNODES*NCORES)
 #
 #          NOTE: Must be run while at "${RUNDIR}
 #       RETURNS: -
@@ -239,12 +235,10 @@ DockFlow_write_HPC_header() {
 if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
     if [ ${HEADER_PROVIDED} != "yes" ] ; then
         echo ''
-        read -p "How many tasks per node? " NCORES
+        read -p "How many cores per node? " NCORES
         # Check if the user gave a int
         nb=${NCORES}
         not_a_number
-
-        NTHREADS=$(echo "${NNODES} * ${NCORES}" | bc)
 
         file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
         eval echo \""${file}"\" > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
@@ -794,7 +788,6 @@ DockFlow_summary() {
 #                ${DOCK_RADIUS}
 #                ${JOB_SCHEDULLER}
 #                ${NCORES}
-#                ${NNODES}
 #                ${OVERWRITE}
 #       RETURNS: -
 #
@@ -828,7 +821,6 @@ echo "
 [ Run options ]
 JOB SCHEDULLER: ${JOB_SCHEDULLER}
     CORES/NODE: ${NCORES}
-         NODES: ${NNODES}
 
      OVERWRITE: ${OVERWRITE}
 "
@@ -996,10 +988,6 @@ while [[ $# -gt 0 ]]; do
             shift # past argument
         ;;
         # HPC options
-        "-nn"|"--nodes") # Number of NODES [1]
-            NNODES="$2" # Same as above.
-            shift # past argument
-        ;;
         "--pbs") #Activate the PBS workload
             JOB_SCHEDULLER="PBS"
         ;;

@@ -209,14 +209,14 @@ if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ] ; then
         else
             AMBER_EXEC="pmemd.cuda"
         fi
-        if [ ${HEADER_PROVIDED} != 'no' ] ; then
-            if [ ! -f ${HEADER_FILE} ] ; then
-                ERROR_MESSAGE="Header file ${HEADER_FILE} does not exist." ; ChemFlow_error ;
-            fi
-        fi
-
      ;;
     esac
+
+    if [ ${HEADER_PROVIDED} != 'no' ] ; then
+        if [ ! -f ${HEADER_FILE} ] ; then
+            ERROR_MESSAGE="Header file ${HEADER_FILE} does not exist." ; ChemFlow_error ;
+        fi
+    fi
 
     # Check overwriting ---------------------------------------------------------
     if [ "${OVERWRITE}" == "yes" ] ; then
@@ -259,7 +259,6 @@ SCORING_FUNCTION="chemplp"
 # Run options
 JOB_SCHEDULLER="None"
 NCORES=$(getconf _NPROCESSORS_ONLN)
-NNODES="1"
 OVERWRITE="no"    # Don't overwrite stuff.
 HEADER_PROVIDED="no"
 
