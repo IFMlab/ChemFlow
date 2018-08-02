@@ -36,8 +36,7 @@ ChemFlow_set_ligand_list() {
 #        Author: Dona de Francquen
 #===============================================================================
 if [ ! -s ${LIGAND_FILE} ] ; then
-    ERROR_MESSAGE="The ligand file ${LIGAND_FILE} is empty"
-    ChemFlow_error
+    ERROR_MESSAGE="The ligand file ${LIGAND_FILE} is empty" ; ChemFlow_error
 else
     LIGAND_LIST=$(awk 'f{print;f=0} /MOLECULE/{f=1}' ${LIGAND_FILE})
     LIGAND_LIST=(${LIGAND_LIST})  # transform a list into an array
@@ -146,13 +145,12 @@ case ${WORKFLOW} in
 esac
 
 # If we are using the major program (no postprocessing or archiving) ------------
-if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
+if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ] ; then
 
     # HPC adjustments
     case ${JOB_SCHEDULLER} in
     "None"|"PBS"|"SLURM") ;;
-    *) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" ;
-       ChemFlow_error ;
+    *) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" ; ChemFlow_error ;
        ;;
     esac
 
@@ -160,15 +158,15 @@ if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
     case "${DOCK_PROGRAM}" in
     "PLANTS")
         if [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
-            echo "[ ERROR ] PLANTS is not installed or on PATH" ; exit 0
+            ERROR_MESSAGE="PLANTS is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
     "VINA")
         if  [ "$(command -v vina)" == "" ] ; then
-            echo "[ ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
+            ERROR_MESSAGE="Autodock Vina is not installed or on PATH" ; ChemFlow_error ;
         fi
         if [ "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" == "" ] ; then
-            echo "[ ERROR ] MglTools is not installed or on PATH" ; exit 0
+            ERROR_MESSAGE="MglTools is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
     esac
@@ -176,32 +174,32 @@ if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
     case "${SCORE_PROGRAM}" in
     "PLANTS")
         if [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
-            echo "[ ERROR ] PLANTS is not installed or on PATH" ; exit 0
+            ERROR_MESSAGE="PLANTS is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
     "VINA")
         if  [ "$(command -v vina)" == "" ] ; then
-            echo "[ ERROR ] Autodock Vina is not installed or on PATH" ; exit 0
+            ERROR_MESSAGE="Autodock Vina is not installed or on PATH" ; ChemFlow_error ;
         fi
         if [ "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" == "" ] ; then
-            echo "[ ERROR ] MglTools is not installed or on PATH" ; exit 0
+            ERROR_MESSAGE="MglTools is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
     "AMBER")
         if  [ "$(command -v sander)" == "" ] ; then
-            echo "[ ERROR ] AmberTools 17+ is not installed or on PATH" ; exit 0
+            ERROR_MESSAGE="AmberTools 17+ is not installed or on PATH" ; ChemFlow_error ;
         fi
         if [ ${CHARGE} == "resp" ] && [ "$(command -v g09)" == "" ] ; then
-            echo "[ ERROR ] Gaussian is not installed or on PATH" ; exit 0
+            ERROR_MESSAGE="Gaussian is not installed or on PATH" ; ChemFlow_error ;
         fi
 
         if  [ "$(command -v pmemd.cuda)" == "" ] ; then
             if  [ "$(command -v pmemd)" == "" ] ; then
                 echo "[ ERROR ] Amber (pmemd) is not installed or on PATH, changing to SANDER."
                 AMBER_EXEC="mpirun -n ${NCORES} sander.MPI"
-            if  [ "$(command -v sander.MPI)" == "" ] ; then
-                AMBER_EXEC="sander"
-            fi
+                if  [ "$(command -v sander.MPI)" == "" ] ; then
+                    AMBER_EXEC="sander"
+                fi
             else
                 AMBER_EXEC="mpirun -n ${NCORES} pmemd.MPI"
                 if  [ "$(command -v pmemd.MPI)" == "" ] ; then
@@ -211,13 +209,18 @@ if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
         else
             AMBER_EXEC="pmemd.cuda"
         fi
+        if [ ${HEADER_PROVIDED} != 'no' ] ; then
+            if [ ! -f ${HEADER_FILE} ] ; then
+                ERROR_MESSAGE="Header file ${HEADER_FILE} does not exist." ; ChemFlow_error ;
+            fi
+        fi
 
      ;;
     esac
 
     # Check overwriting ---------------------------------------------------------
     if [ "${OVERWRITE}" == "yes" ] ; then
-      read -p "[ Note ] Are you sure you want to OVERWRITE: " opt
+      read -p "[ Note ] Are you sure you want to OVERWRITE [y/n]? " opt
 
       case ${opt} in
         "Y"|"YES"|"Yes"|"yes"|"y")  ;;
@@ -233,8 +236,7 @@ ChemFlow_set_ligand_list ${LIGAND_FILE}
 check_center(){
 if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
     if [ -z "${DOCK_CENTER}" ] ; then
-        ERROR_MESSAGE="No DOCKING CENTER defined (--center x y z)" ;
-        ChemFlow_error ;
+        ERROR_MESSAGE="No DOCKING CENTER defined (--center x y z)" ; ChemFlow_error ;
     fi
 fi
 }

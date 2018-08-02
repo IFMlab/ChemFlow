@@ -1,0 +1,7 @@
+#! /bin/bash
+# 1 noeud 8 coeurs
+#SBATCH -p public
+#SBATCH --job-name=DockFlow_${first}
+#SBATCH -N ${NNODES}
+#SBATCH -n ${NTHREADS}
+#SBATCH -t 1:00:00

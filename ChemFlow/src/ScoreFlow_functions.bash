@@ -176,10 +176,9 @@ if [ ! -f ${RUNDIR}/receptor.pdbqt ] ; then
         -r ${RUNDIR}/receptor.mol2 \
         -o ${RUNDIR}/receptor.pdbqt
 fi
-rm -rf vina.xargs
+
 # Prepare ligands
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    echo ${LIGAND}
     # Prepare Ligands
     if [ ! -f ${RUNDIR}/${LIGAND}/ligand.pdbqt ] ; then
         ${mgltools_folder}/bin/python \
@@ -252,9 +251,9 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     fi
 
     if [ "${WRITE_RUN}" != "yes" ] ; then
-        echo -ne "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
         case "${JOB_SCHEDULLER}" in
         "None")
+            echo -ne "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
             bash ScoreFlow.run
         ;;
         "PBS")
@@ -627,10 +626,12 @@ if [ -f ${RUNDIR}/ScoreFlow.csv ]  ; then
     rm -rf ${RUNDIR}/ScoreFlow.csv
 fi
 
+SCOREFLOW_HEADER="DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE"
+
 case ${SCORE_PROGRAM} in
 "PLANTS")
     if [ -f ${RUNDIR}/PLANTS/ranking.csv ] ; then
-        echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
+        echo ${SCOREFLOW_HEADER} > ${RUNDIR}/ScoreFlow.csv
         sed 's/\.*_entry.*_conf_[[:digit:]]*//' ${RUNDIR}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -F, '!/LIGAND/ {print "PLANTS",protocol,target,$1,$1,$2}' >> ${RUNDIR}/ScoreFlow.csv
     fi
 ;;
@@ -638,7 +639,7 @@ case ${SCORE_PROGRAM} in
     for LIGAND in ${LIGAND_LIST[@]} ; do
         if [ -f ${RUNDIR}/${LIGAND}/output.log ] ; then
             if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
-                echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
+                echo ${SCOREFLOW_HEADER} > ${RUNDIR}/ScoreFlow.csv
             fi
             awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/Affinity:/ {print "VINA",protocol,target,ligand,ligand,$2}' ${RUNDIR}/${LIGAND}/output.log >> ${RUNDIR}/ScoreFlow.csv
         fi
@@ -648,7 +649,7 @@ case ${SCORE_PROGRAM} in
     for LIGAND in ${LIGAND_LIST[@]} ; do
         if [ -f ${RUNDIR}/${LIGAND}/MMPBSA.dat ] ; then
             if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
-                echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > ${RUNDIR}/ScoreFlow.csv
+                echo ${SCOREFLOW_HEADER} > ${RUNDIR}/ScoreFlow.csv
             fi
             awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/DELTA TOTAL/{print "AMBER",protocol,target,ligand,ligand,$3}' ${RUNDIR}/${LIGAND}/MMPBSA.dat >> ${RUNDIR}/ScoreFlow.csv
         fi

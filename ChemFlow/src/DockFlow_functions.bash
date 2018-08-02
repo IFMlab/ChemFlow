@@ -34,29 +34,107 @@ DockFlow_dock() {
 #                ${PROJECT}
 #                ${RUNDIR}
 #                ${LIGAND}
-#       RETURNS: ${DOCK_LIST} - List of ligands to dock.
+#       RETURNS: ${LIGAND_LIST} - List of ligands to dock.
 #===============================================================================
-
 # Always work here
 cd ${RUNDIR}
 
-# Some housekeeping
-if [  -f todock.lst ] ; then
-  rm -rf todock.lst
+DockFlow_update_ligand_list
+NDOCK=${#LIGAND_LIST[@]}
+
+if [ ${NDOCK} == 0 ] ; then
+    echo "[ DockFlow ] All compounds already docked ! " ; exit 0
+else
+    echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to dock"
 fi
 
-if [  -f docked.lst ] ; then
-  rm -rf docked.lst
+if [ ${DOCK_PROGRAM} != "PLANTS" ] ; then
+    if [ -d ${RUNDIR}/PLANTS ] ; then
+    ERROR_MESSAGE="PLANTS folder exists. Use --overwrite " ; ChemFlow_error ;
+    fi
+
+    # Write plants config
+    RECEPTOR_FILE_PATH="../receptor.mol2"
+    file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config.in)
+    eval echo \""${file}"\" > ${RUNDIR}/dock_input.in
 fi
 
-if [ -f  plants.xargs ] ; then
-  rm -rf plants.xargs
-fi
+case ${JOB_SCHEDULLER} in
+"None")
+    if [ -f  dock.xargs ] ; then
+      rm -rf dock.xargs
+    fi
 
-if [ -f  vina.xargs ] ; then
-  rm -rf vina.xargs
-fi
+    # Write dock.xargs
+    case ${DOCK_PROGRAM} in
+    "PLANTS")
+        for LIGAND in ${LIGAND_LIST[@]} ; do
+            echo "cd ${RUNDIR}/${LIGAND} ; echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ;  PLANTS1.2_64bit --mode screen ../dock_input.in &> PLANTS.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}" >> dock.xargs
+        done
+    ;;
+    "VINA")
+        for LIGAND in ${LIGAND_LIST[@]} ; do
+            echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
+                --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
+                --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
+                --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
+        done
+    ;;
+    esac
 
+    cd ${RUNDIR} ; cat dock.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+;;
+"SLURM"|"PBS")
+    read -p "
+    How many Dockings per PBS/SLURM job?: " nlig
+    # Check if the user gave a int
+    nb=${nlig}
+    not_a_number
+
+    read -p "
+    How many tasks per node ?: " NCORES
+    # Check if the user gave a int
+    nb=${NCORES}
+    not_a_number
+
+    NTHREADS=$(echo "${NNODES} * ${NCORES}" | bc)
+
+    for (( first=0;${first}<${NDOCK} ; first=${first}+${nlig} )) ; do
+#        echo -ne "Docking $first         \r"
+        jobname="${first}"
+
+        if [ -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
+            rm -rf ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+        fi
+
+        if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
+            DockFlow_write_plants_HPC
+        elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
+            DockFlow_write_vina_HPC
+        fi
+
+        DockFlow_write_HPC
+
+        if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
+            sbatch DockFlow.slurm
+        elif [ "${JOB_SCHEDULLER}" == "PBS" ] ; then
+            qsub DockFlow.pbs
+        fi
+    done
+;;
+esac
+}
+
+
+not_a_number() {
+re='^[0-9]+$'
+if ! [[ $nb =~ $re ]] ; then
+   ERROR_MESSAGE="Not a number. I was expecting an integer." ; ChemFlow_error ;
+fi
+}
+
+
+DockFlow_update_ligand_list() {
 # Creation of the docking list, checkpoint calculations.
 DOCK_LIST=""
 case ${DOCK_PROGRAM} in
@@ -69,95 +147,117 @@ case ${DOCK_PROGRAM} in
     FILE="output.pdbqt"
 ;;
 esac
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ "${OVERWRITE}" == "no" ] ; then # Useless to process this loop if we overwrite anyway.
+
+if [ "${OVERWRITE}" == "no" ] ; then # Useless to update ligand list if we overwrite
+    for LIGAND in ${LIGAND_LIST[@]} ; do
         if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -f ${LIGAND}/${DOCK_PROGRAM}/${FILE} ] ; then
-            echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+#            echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
             rm -rf ${LIGAND}/${DOCK_PROGRAM}
+            DOCK_LIST="${DOCK_LIST} $LIGAND"
         fi
         if [ -f ${LIGAND}/${DOCK_PROGRAM}/${FILE} ] ; then
             if [ $(wc -l  ${LIGAND}/${DOCK_PROGRAM}/${FILE} | cut -d' ' -f1) -lt 2 ] ; then
-                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+#                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
                 rm -rf ${LIGAND}/${DOCK_PROGRAM}
+                DOCK_LIST="${DOCK_LIST} $LIGAND"
             fi
         fi
-    fi
-
-    if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
-        DOCK_LIST="${DOCK_LIST} $LIGAND"  # Still unused.
-        echo -ne "Preparing: ${LIGAND} \r"
-        echo "${LIGAND}" >> todock.lst
-    else
-        echo "${LIGAND}" >> docked.lst
-    fi
-done
-
-# Make DOCK_LIST into an array.
-DOCK_LIST=(${DOCK_LIST})
-NDOCK=${#DOCK_LIST[@]}
-
-if [ ${NDOCK} == 0 ] ; then
-    echo "[ DockFlow ] All compounds already docked ! " ; exit 0
-else
-    echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to dock"
-fi
-
-# Actually run the docking --------------------------------------------
-case ${DOCK_PROGRAM} in
-    "PLANTS")
-
-        DockFlow_write_plants_config
-
-        case ${JOB_SCHEDULLER} in
-            "None")
-                for LIGAND in ${DOCK_LIST[@]} ; do  # Write XARGS file.
-                    echo "cd ${RUNDIR}/${LIGAND} ; echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ;  PLANTS1.2_64bit --mode screen ../dock_input.in &> PLANTS.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}" >> plants.xargs
-                done
-
-                if [ ! -f plants.xargs ] ; then
-                    echo "All ligands docked, nothing to do here" ; exit 0
-                else
-                    echo "[ DockFlow ] Running ${PROTOCOL} ${RECEPTOR_NAME} with ${NCORES} cores"
-                    # Actually runs PLANTS
-                    cd ${RUNDIR} ; cat plants.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-                fi
-            ;;
-            "SLURM"|"PBS")
-                DockFlow_write_HPC
-        esac
-    ;;
-    "VINA")
-    for LIGAND in ${DOCK_LIST[@]} ; do
-        # Create the output VINA folder if it doesn't exist.
-        if [  ! -d ${RUNDIR}/${LIGAND}/VINA/ ] ; then
-            mkdir -p ${RUNDIR}/${LIGAND}/VINA/
+        if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
+            DOCK_LIST="${DOCK_LIST} $LIGAND"  # Still unused.
         fi
     done
+    DOCK_LIST=(${DOCK_LIST})
+else
+    DOCK_LIST=(${LIGAND_LIST[@]})
+fi
 
-    case ${JOB_SCHEDULLER} in
-            "None")
-                for LIGAND in ${DOCK_LIST[@]} ; do
-                    echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND}
-                    # Vina command.
-                    echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
-                        --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-                        --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
-                        --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> vina.xargs
-                done
+unset LIGAND_LIST
+LIGAND_LIST=(${DOCK_LIST[@]})
+}
 
-                if [ ! -f vina.xargs ] ; then
-                    echo "All ligands docked, nothing to do here" ; exit 0
-                else
-                    # Actually runs VINA ( we decided to use VINA multithreaded execution instead of splitting ligands into multiple jobs.
-                    #cd ${RUNDIR} ; cat vina.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-                    cd ${RUNDIR} ; cat vina.xargs | xargs -P1 -I '{}' bash -c '{}'
-                fi
-             ;;
-            "SLURM"|"PBS")
-                DockFlow_write_HPC
-        esac
-        ;;
-esac
+
+DockFlow_write_HPC() {
+#===  FUNCTION  ================================================================
+#          NAME: ScoreFlow_rescore_mmgbsa_write_pbs
+#   DESCRIPTION: Writes the PBS script by adding the pbs template to ScoreFlow.run.
+#
+#    PARAMETERS: ${RUNDIR}
+#                ${CHEMFLOW_HOME}
+#                ${LIGAND}
+#
+#       RETURNS: ScoreFlow.pbs for ${LIGAND}
+#===============================================================================
+if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
+    if [ ${HEADER_PROVIDED} != "yes" ] ; then
+        file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
+        eval echo \""${file}"\" > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+    else
+        cp ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+    fi
+fi
+
+cat ${RUNDIR}/DockFlow.run >> ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+}
+
+
+DockFlow_write_plants_HPC() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_write_plants_HPC
+#   DESCRIPTION: Writes the plants script for each ligand (or range of ligands).
+#                Filenames and parameters are hardcoded.
+#    PARAMETERS:
+#               ${list[@]}  -   Array with all ligand names
+#               ${first}    -   First ligand in the array
+#               ${$nlig}    -   Number of compounds to dock
+#               ${NNODES}   -   Number of compute nodes to use
+#               ${NCORES}   -   Number of cores/node
+#               ${NTHREADS} -   Total threads (NNODES*NCORES)
+#
+#          NOTE: Must be run while at "${RUNDIR}
+#       RETURNS: -
+#===============================================================================
+echo "
+cd ${RUNDIR}
+
+if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
+for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
+    # plants command.
+    echo \"cd ${RUNDIR}/\${LIGAND} ; PLANTS1.2_64bit --mode screen ../dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${first}.xargs
+done
+cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+"> DockFlow.run
+}
+
+
+DockFlow_write_vina_HPC() {
+#===  FUNCTION  ================================================================
+#          NAME: write_vina_HPC
+#   DESCRIPTION: Writes the vina script for each ligand (or range of ligands). for VINA
+#                Filenames and parameters are hardcoded.
+#    PARAMETERS:
+#               ${list[@]}  -   Array with all ligand names
+#               ${first}    -   First ligand in the array
+#               ${$nlig}    -   Number of compounds to dock
+#               ${NNODES}   -   Number of compute nodes to use
+#               ${NCORES}   -   Number of cores/node
+#               ${NTHREADS} -   Total threads (NNODES*NCORES)
+#
+#          NOTE: Must be run while at "${RUNDIR}
+#       RETURNS: -
+#===============================================================================
+echo "
+cd ${RUNDIR}
+
+if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
+for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
+    # Vina command.
+    echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
+        --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
+        --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
+        --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null " >> ${first}.xargs
+done
+cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+"> DockFlow.run
 }
 
 
@@ -272,7 +372,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -d  ${LIGAND} ] ; then
         mkdir -p  ${LIGAND}
         if [ ! -d ${LIGAND} ] ; then
-            echo "[ ERROR ] could not create ${LIGAND} directory in ${RUNDIR}. Did you check your quotas ?"
+            echo "[ ERROR ] could not create ${LIGAND} directory in ${RUNDIR}. Did you check your quotas?"
             exit 0
         fi
     fi
@@ -312,7 +412,9 @@ DockFlow_prepare_input() {
 #===============================================================================
 # 1. Folder
 if [ ${OVERWRITE} == "yes" ] ; then
-    rm -rf ${RUNDIR}
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        rm -rf ${RUNDIR}/${LIGAND}
+    done
 fi
 
 if [  ! -d ${RUNDIR} ] ; then
@@ -327,7 +429,7 @@ DockFlow_prepare_receptor
 
 # 3. Ligands
 if [ -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
-    read -p "Rewrite original ligands [Y/N] ? : " rewrite_ligands
+    read -p "Rewrite original ligands [y/n]? " rewrite_ligands
 else
     rewrite_ligands="yes"
 fi
@@ -341,234 +443,9 @@ case ${rewrite_ligands} in
     DockFlow_prepare_ligands
 ;;
 *)
-    echo ${opt} "[ ERROR ] Choose only Y or N" ; exit 0
+    echo ${opt} "Existing" ; exit 0
 ;;
 esac
-}
-
-
-DockFlow_write_plants_config() {
-#===  FUNCTION  ================================================================
-#          NAME: DockFlow_write_plants_config_input
-#   DESCRIPTION: Write the dock input for plants (configuration file)
-#                
-#    PARAMETERS: ${RUNDIR}
-#                ${LIGAND}
-#                ${SCORING_FUNCTION}
-#                ${DOCK_CENTER}
-#                ${DOCK_RADIUS}
-#                ${DOCK_POSES}
-#       RETURNS: -
-#
-#          TODO: Allow "extra PLANTS keywords from cmd line"
-#===============================================================================
-RECEPTOR_FILE="../receptor.mol2"
-file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config.in)
-eval echo \""${file}"\" > ${RUNDIR}/dock_input.in
-}
-
-
-DockFlow_write_plants_slurm() {
-#===  FUNCTION  ================================================================
-#          NAME: DockFlow_write_plants_slurm
-#   DESCRIPTION: Writes the SLURM script to for each ligand (or range of ligands).
-#                Filenames and parameters are hardcoded.
-#    PARAMETERS: 
-#               ${list[@]}  -   Array with all ligand names
-#               ${first}    -   First ligand in the array
-#               ${$nlig}    -   Number of compounds to dock
-#               ${NNODES}   -   Number of compute nodes to use
-#               ${NCORES}   -   Number of cores/node
-#               ${NTHREADS} -   Total threads (NNODES*NCORES)
-#
-#          NOTE: Must be run while at "${RUNDIR}
-#       RETURNS: -
-#===============================================================================
-echo "#! /bin/bash
-# 1 noeud 8 coeurs
-#SBATCH -p public
-#SBATCH --job-name=DockFlow_${first}
-#SBATCH -N ${NNODES}
-#SBATCH -n ${NTHREADS}
-#SBATCH -t 0:30:00
-#Write the full DockFlow_write_plants_config function here.
-
-cd ${RUNDIR}
-
-if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
-for LIGAND in ${DOCK_LIST[@]:$first:$nlig} ; do
-    echo \"cd ${RUNDIR}/\${LIGAND} ; PLANTS1.2_64bit --mode screen ../dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${first}.xargs
-done
-cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-"> DockFlow.slurm
-}
-
-
-
-DockFlow_write_vina_slurm() {
-#===  FUNCTION  ================================================================
-#          NAME: write_vina slurm
-#   DESCRIPTION: Writes the SLURM script to for each ligand (or range of ligands). for VINA
-#                Filenames and parameters are hardcoded.
-#    PARAMETERS:
-#               ${list[@]}  -   Array with all ligand names
-#               ${first}    -   First ligand in the array
-#               ${$nlig}    -   Number of compounds to dock
-#               ${NNODES}   -   Number of compute nodes to use
-#               ${NCORES}   -   Number of cores/node
-#               ${NTHREADS} -   Total threads (NNODES*NCORES)
-#
-#          NOTE: Must be run while at "${RUNDIR}
-#       RETURNS: -
-#===============================================================================
-echo "#! /bin/bash
-# 1 noeud 8 coeurs
-#SBATCH -p public
-#SBATCH --job-name=DockFlow_${first}
-#SBATCH -N ${NNODES}
-#SBATCH -n ${NTHREADS}
-#SBATCH -t 0:30:00
-
-cd ${RUNDIR}
-
-if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
-
-for LIGAND in ${DOCK_LIST[@]:$first:$nlig} ; do
-  # Vina command.
-    echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
-        --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-        --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
-        --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null " >> vina.xargs
-done
-
-cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-
-"> DockFlow.slurm
-}
-
-
-DockFlow_write_plants_pbs() {
-#===  FUNCTION  ================================================================
-#          NAME: write_pbs
-#   DESCRIPTION: Writes the PBS script to for each ligand (or range of ligands).
-#                Filenames and parameters are hardcoded.
-#    PARAMETERS: 
-#               ${list[@]}  -   Array with all ligand names
-#               ${first}    -   First ligand in the array
-#               ${$nlig}    -   Number of compounds to dock
-#               ${NNODES}   -   Number of compute nodes to use
-#               ${NCORES}   -   Number of cores/node
-#               ${NTHREADS} -   Total threads (NNODES*NCORES)
-#
-#          NOTE: Must be run while at "${RUNDIR}
-#       RETURNS: -
-#===============================================================================
-echo "#! /bin/bash
-# 1 noeud 8 coeurs
-#PBS -q  route
-#PBS -N DockFlow_${first}
-#PBS -l nodes=${NNODES}:ppn=${NTHREADS}
-#PBS -l walltime=1:00:00
-#PBS -V
-
-cd ${RUNDIR}
-
-if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
-for LIGAND in ${DOCK_LIST[@]:$first:$nlig} ; do
-  echo \"cd ${RUNDIR}/\${LIGAND} ; PLANTS1.2_64bit --mode screen ../dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${first}.xargs
-done
-
-cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-
-"> DockFlow.pbs
-}
-
-
-DockFlow_write_vina_pbs() {
-#===  FUNCTION  ================================================================
-#          NAME: write_vina_pbs
-#   DESCRIPTION: Writes the PBS script to for each ligand (or range of ligands). for VINA
-#                Filenames and parameters are hardcoded.
-#    PARAMETERS:
-#               ${list[@]}  -   Array with all ligand names
-#               ${first}    -   First ligand in the array
-#               ${$nlig}    -   Number of compounds to dock
-#               ${NNODES}   -   Number of compute nodes to use
-#               ${NCORES}   -   Number of cores/node
-#               ${NTHREADS} -   Total threads (NNODES*NCORES)
-#
-#          NOTE: Must be run while at "${RUNDIR}
-#       RETURNS: -
-#===============================================================================
-echo "#! /bin/bash
-# 1 noeud 8 coeurs
-#PBS -q route
-#PBS -N DockFlow_${first}
-#PBS -l nodes=${NNODES}:ppn=${NTHREADS}
-#PBS -l walltime=1:00:00
-#PBS -V
-
-cd ${RUNDIR}
-
-if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
-
-for LIGAND in ${DOCK_LIST[@]:$first:$nlig} ; do
-  # Vina command.
-    echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
-        --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-        --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
-        --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null " >> ${first}.xargs
-done
-
-cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-
-"> DockFlow.pbs
-}
-
-
-DockFlow_write_HPC() {
-#===  FUNCTION  ================================================================
-#          NAME: DockFlow_write_HPC
-#   DESCRIPTION: Adjusts and submits the calculation to HPC environment.
-#
-#    PARAMETERS: ${RUNDIR}      - ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR_NAME}/
-#                ${PROJECT}
-#                ${RUNDIR}
-#                ${LIGAND_LIST} - List of all ligands do dock.
-#                ${NLIGANDS}    - Number of ligands.
-#       RETURNS: -
-#===============================================================================
-read -p "
-How many Dockings per PBS/SLURM job? : " nlig
-
-read -p "
-How many tasks per node ? : " NCORES
-
-NTHREADS=$(echo "${NNODES} * ${NCORES}" | bc)
-
-for (( first=0;${first}<${NDOCK} ; first=${first}+${nlig} )) ; do
-  echo -ne "Docking $first         \r"
-  jobname="${first}"
-
-  if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
-    if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
-        DockFlow_write_plants_slurm
-    elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
-        DockFlow_write_vina_slurm
-    fi
-    sbatch DockFlow.slurm
-
-  fi
-
-  if [ "${JOB_SCHEDULLER}" == "PBS" ] ; then
-    if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
-        DockFlow_write_plants_pbs
-    elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
-        DockFlow_write_vina_pbs
-    fi
-    qsub DockFlow.pbs
-  fi
-done
 }
 
 
