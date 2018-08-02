@@ -85,20 +85,6 @@ case ${JOB_SCHEDULLER} in
     cd ${RUNDIR} ; cat dock.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 ;;
 "SLURM"|"PBS")
-    read -p "
-    How many Dockings per PBS/SLURM job?: " nlig
-    # Check if the user gave a int
-    nb=${nlig}
-    not_a_number
-
-    read -p "
-    How many tasks per node ?: " NCORES
-    # Check if the user gave a int
-    nb=${NCORES}
-    not_a_number
-
-    NTHREADS=$(echo "${NNODES} * ${NCORES}" | bc)
-
     for (( first=0;${first}<${NDOCK} ; first=${first}+${nlig} )) ; do
 #        echo -ne "Docking $first         \r"
         jobname="${first}"
@@ -113,7 +99,7 @@ case ${JOB_SCHEDULLER} in
             DockFlow_write_vina_HPC
         fi
 
-        DockFlow_write_HPC
+        DockFlow_write_HPC_header
 
         if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
             sbatch DockFlow.slurm
@@ -123,14 +109,6 @@ case ${JOB_SCHEDULLER} in
     done
 ;;
 esac
-}
-
-
-not_a_number() {
-re='^[0-9]+$'
-if ! [[ $nb =~ $re ]] ; then
-   ERROR_MESSAGE="Not a number. I was expecting an integer." ; ChemFlow_error ;
-fi
 }
 
 
@@ -176,30 +154,6 @@ LIGAND_LIST=(${DOCK_LIST[@]})
 }
 
 
-DockFlow_write_HPC() {
-#===  FUNCTION  ================================================================
-#          NAME: ScoreFlow_rescore_mmgbsa_write_pbs
-#   DESCRIPTION: Writes the PBS script by adding the pbs template to ScoreFlow.run.
-#
-#    PARAMETERS: ${RUNDIR}
-#                ${CHEMFLOW_HOME}
-#                ${LIGAND}
-#
-#       RETURNS: ScoreFlow.pbs for ${LIGAND}
-#===============================================================================
-if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
-    if [ ${HEADER_PROVIDED} != "yes" ] ; then
-        file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
-        eval echo \""${file}"\" > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
-    else
-        cp ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
-    fi
-fi
-
-cat ${RUNDIR}/DockFlow.run >> ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
-}
-
-
 DockFlow_write_plants_HPC() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_write_plants_HPC
@@ -231,7 +185,7 @@ cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 
 DockFlow_write_vina_HPC() {
 #===  FUNCTION  ================================================================
-#          NAME: write_vina_HPC
+#          NAME: DockFlow_write_vina_HPC
 #   DESCRIPTION: Writes the vina script for each ligand (or range of ligands). for VINA
 #                Filenames and parameters are hardcoded.
 #    PARAMETERS:
@@ -251,13 +205,70 @@ cd ${RUNDIR}
 if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
 for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
     # Vina command.
-    echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
+    echo \"vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
-        --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null " >> ${first}.xargs
+        --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null \" >> ${first}.xargs
 done
 cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 "> DockFlow.run
+}
+
+
+DockFlow_write_HPC_header() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_write_HPC_header
+#   DESCRIPTION: Add the HPC header to DockFlow.run.
+#                Default or provided header.
+#
+#    PARAMETERS: ${RUNDIR}
+#                ${CHEMFLOW_HOME}
+#                ${JOB_SCHEDULLER}
+#                ${WORKDIR}
+#                ${HEADER_PROVIDED}
+#                ${HEADER_FILE}
+#
+#       RETURNS: ScoreFlow.pbs for ${LIGAND}
+#===============================================================================
+if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
+    if [ ${HEADER_PROVIDED} != "yes" ] ; then
+
+        read -p "\nHow many Dockings per PBS/SLURM job?: " nlig
+        # Check if the user gave a int
+        nb=${nlig}
+        not_a_number
+
+        read -p "\nHow many tasks per node ?: " NCORES
+        # Check if the user gave a int
+        nb=${NCORES}
+        not_a_number
+
+        NTHREADS=$(echo "${NNODES} * ${NCORES}" | bc)
+
+        file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
+        eval echo \""${file}"\" > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+    else
+        cp ${WORKDIR}/${HEADER_FILE} ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+    fi
+fi
+case "${JOB_SCHEDULLER}" in
+        "PBS")
+            sed "/PBS -N [a-zA-Z0-9]*$/ s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+        ;;
+        "SLURM")
+            sed "/--job-name=[a-zA-Z0-9]*$/  s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+        ;;
+        esac
+
+cat ${RUNDIR}/DockFlow.run >> ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+}
+
+
+not_a_number() {
+re='^[0-9]+$'
+if ! [[ $nb =~ $re ]] ; then
+   ERROR_MESSAGE="Not a number. I was expecting an integer." ; ChemFlow_error ;
+fi
 }
 
 
