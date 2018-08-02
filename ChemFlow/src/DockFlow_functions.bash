@@ -85,6 +85,12 @@ case ${JOB_SCHEDULLER} in
     cd ${RUNDIR} ; cat dock.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 ;;
 "SLURM"|"PBS")
+
+    read -p "\nHow many Dockings per PBS/SLURM job?: " nlig
+    # Check if the user gave a int
+    nb=${nlig}
+    not_a_number
+
     for (( first=0;${first}<${NDOCK} ; first=${first}+${nlig} )) ; do
 #        echo -ne "Docking $first         \r"
         jobname="${first}"
@@ -232,12 +238,6 @@ DockFlow_write_HPC_header() {
 #===============================================================================
 if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
     if [ ${HEADER_PROVIDED} != "yes" ] ; then
-
-        read -p "\nHow many Dockings per PBS/SLURM job?: " nlig
-        # Check if the user gave a int
-        nb=${nlig}
-        not_a_number
-
         read -p "\nHow many tasks per node ?: " NCORES
         # Check if the user gave a int
         nb=${NCORES}
