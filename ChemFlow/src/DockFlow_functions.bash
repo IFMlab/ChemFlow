@@ -48,7 +48,7 @@ else
     echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to dock"
 fi
 
-if [ ${DOCK_PROGRAM} != "PLANTS" ] ; then
+if [ ${DOCK_PROGRAM} == "PLANTS" ] ; then
     if [ -d ${RUNDIR}/PLANTS ] ; then
     ERROR_MESSAGE="PLANTS folder exists. Use --overwrite " ; ChemFlow_error ;
     fi
