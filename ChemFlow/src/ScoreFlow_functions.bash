@@ -51,6 +51,37 @@ ScoreFlow_rescore() {
 #                ${RECEPTOR_NAME}
 #                ${NLIGANDS}
 #===============================================================================
+# Always work here
+cd ${RUNDIR}
+
+if [ -f "ScoreFlow.run" ] ; then
+    rm -f ScoreFlow.run
+fi
+
+ScoreFlow_update_ligand_list
+NDOCK=${#LIGAND_LIST[@]}
+
+if [ ${NDOCK} == 0 ] ; then
+    echo "[ DockFlow ] All compounds already docked ! " ; exit 0
+else
+    echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to rescore"
+fi
+
+case ${SCORE_PROGRAM} in
+    "PLANTS")
+        ScoreFlow_rescore_plants
+    ;;
+    "VINA")
+        ScoreFlow_rescore_vina
+    ;;
+    "AMBER")
+        ScoreFlow_rescore_mmgbsa
+    ;;
+esac
+}
+
+
+ScoreFlow_update_ligand_list() {
 # Creation of the docking list, checkpoint calculations.
 DOCK_LIST=""
 case ${SCORE_PROGRAM} in
@@ -84,25 +115,6 @@ fi
 # Make DOCK_LIST into an array.
 unset LIGAND_LIST
 LIGAND_LIST=(${DOCK_LIST[@]})
-NDOCK=${#LIGAND_LIST[@]}
-
-if [ ${NDOCK} == 0 ] ; then
-    echo "[ DockFlow ] All compounds already docked ! " ; exit 0
-else
-    echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to rescore"
-fi
-
-case ${SCORE_PROGRAM} in
-    "PLANTS")
-        ScoreFlow_rescore_plants
-    ;;
-    "VINA")
-        ScoreFlow_rescore_vina
-    ;;
-    "AMBER")
-        ScoreFlow_rescore_mmgbsa
-    ;;
-esac
 }
 
 
