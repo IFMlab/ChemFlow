@@ -715,6 +715,11 @@ case ${SCORE_PROGRAM} in
 ;;
 "AMBER")
     echo "           MD: ${MD}"
+    if [ ${WATER} = 'no' ] ; then
+        echo "      SOLVENT: implicit"
+    else
+        echo "      SOLVENT: explicit"
+    fi
 esac
 echo "
 [ Run options ]
