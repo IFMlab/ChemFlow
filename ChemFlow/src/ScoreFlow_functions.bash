@@ -216,67 +216,83 @@ ScoreFlow_rescore_mmgbsa() {
 #                Dona de Francquen
 #                
 #    PARAMETERS: ${RUNDIR}
-#                ${RUN_FILE_PROVIDED}
+#                ${RUN_ONLY_PROVIDED}
 #                ${WORKDIR}
-#                ${RUN_FILE}
+#                ${RUN_ONLY}
 #                ${LIGAND_LIST}
 #                ${RECEPTOR_NAME}
 #                ${JOB_SCHEDULLER}
-#                ${WRITE_RUN}
+#                ${WRITE_ONLY}
 #===============================================================================
 # Write all input files
-ScoreFlow_rescore_mmgbsa_write_inputs
+if [ ${RUN_ONLY} == "no" ] ; then
+    ScoreFlow_rescore_mmgbsa_write_inputs
+fi
 
 # Clean up
 if [ -f  ScoreFlow.run ] ; then
     rm -rf  ${RUNDIR}/ScoreFlow.run
 fi
 # Write the commands to run the program
-if [ ${RUN_FILE_PROVIDED} != "yes" ] ; then
+if [ ${RUN_ONLY} != "yes" ] ; then
     ScoreFlow_rescore_mmgbsa_write_commun_ScoreFlow_run
 fi
 
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    cd ${RUNDIR}
-    if [ ${RUN_FILE_PROVIDED} != "yes" ] ; then
-        cd ${RUNDIR}/${LIGAND}
+if [ ${WRITE_ONLY} == 'yes' ] ; then
+    if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ ${WATER} != 'yes' ] ; then
+        echo "tleap -f ../tleap.in &> tleap.job" > ScoreFlow.run.template
+    fi
+    if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ ${WATER} == 'yes' ] ; then
+        echo "tleap -f ../tleap.in &> tleap.job" > ScoreFlow.run.template
+    fi
 
-        echo -e "cd ${RUNDIR}/${LIGAND}" > ScoreFlow.run
+    echo -e "$(cat ScoreFlow.run)" >> ScoreFlow.run.template
+    rm -f ScoreFlow.run
+else
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+    cd ${RUNDIR}/${LIGAND}
 
-        ScoreFlow_rescore_mmgbsa_write_compute_charges
+        if [ ${RUN_ONLY} == 'yes' ] ; then
+            echo -e "cd ${RUNDIR}/${LIGAND}" > ScoreFlow.run
 
-        if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ ${WATER} != 'yes' ] ; then
-            echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ScoreFlow.run
+            ScoreFlow_rescore_mmgbsa_write_compute_charges
+
+            echo -e "$(cat ../ScoreFlow.run.template)" >> ScoreFlow.run
+        else
+            echo -e "cd ${RUNDIR}/${LIGAND}" > ScoreFlow.run
+
+            ScoreFlow_rescore_mmgbsa_write_compute_charges
+
+            if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ ${WATER} != 'yes' ] ; then
+                echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ScoreFlow.run
+            fi
+            if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ ${WATER} == 'yes' ] ; then
+                echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ScoreFlow.run
+            fi
+
+            echo -e "$(cat ../ScoreFlow.run)" >> ScoreFlow.run
         fi
-        if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ ${WATER} == 'yes' ] ; then
-            echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ScoreFlow.run
+
+        if [ "${WRITE_ONLY}" != "yes" ] ; then
+            if [ ${JOB_SCHEDULLER} != "None" ] ; then
+                ScoreFlow_rescore_mmgbsa_write_HPC
+            fi
+
+            case "${JOB_SCHEDULLER}" in
+            "None")
+                echo -ne "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
+                bash ScoreFlow.run
+            ;;
+            "PBS")
+                qsub ScoreFlow.pbs
+            ;;
+            "SLURM")
+                sbatch ScoreFlow.slurm
+            ;;
+            esac
         fi
-
-        echo -e "$(cat ../ScoreFlow.run)" >> ScoreFlow.run
-    else
-        echo -e "cd ${RUNDIR}/${LIGAND}" > ${LIGAND}/ScoreFlow.run
-        cat ${WORKDIR}/${RUN_FILE} >> ${LIGAND}/ScoreFlow.run
-    fi
-
-    if [ ${JOB_SCHEDULLER} != "None" ] ; then
-        ScoreFlow_rescore_mmgbsa_write_HPC
-    fi
-
-    if [ "${WRITE_RUN}" != "yes" ] ; then
-        case "${JOB_SCHEDULLER}" in
-        "None")
-            echo -ne "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
-            bash ScoreFlow.run
-        ;;
-        "PBS")
-            qsub ScoreFlow.pbs
-        ;;
-        "SLURM")
-            sbatch ScoreFlow.slurm
-        ;;
-        esac
-    fi
-done
+    done
+fi
 }
 
 
@@ -406,12 +422,12 @@ ScoreFlow_rescore_mmgbsa_write_inputs() {
 #===============================================================================
 # tleap inputs
 if [ "${WATER}" != "yes" ] ; then
-    template="tleap_implicit_gbsa.template"
+    template="tleap_implicit.template"
 else
-    template="tleap_explicit_gbsa.template"
+    template="tleap_explicit.template"
 fi
 file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/${template})
-eval echo \""${file}"\" >> ${RUNDIR}/tleap_gbsa.in
+eval echo \""${file}"\" >> ${RUNDIR}/tleap.in
 
 # Simulation inputs
 if [ "${WATER}" != "yes" ] ; then
@@ -566,10 +582,13 @@ ScoreFlow_organize() {
 #===============================================================================
 # TODO 
 # Improve extracting mol2 to separate folders.
-#
+
 if [ ${OVERWRITE} == "yes" ] ; then
-    rm -rf ${RUNDIR}
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        rm -rf ${RUNDIR}/${LIGAND}
+    done
 fi
+
 if [  ! -d ${RUNDIR} ] ; then
     mkdir -p ${RUNDIR}
 fi
@@ -832,8 +851,8 @@ ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] 
  --pbs/--slurm          : Workload manager, PBS or SLURM
  -nn/--nodes        INT : Number of nodes to use (ony for PBS or SLURM) [1]
  --header          FILE : Header file provided to run on your cluster.
- --write_templ_only     : Write the HPC command without runing.
- --run_template    FILE : Run the template provided by the user.
+ --write-only           : Write a template file (ScoreFlow.run.template) command without running.
+ --run-only             : Run using the ScoreFlow.run.template file.
 
 
 [ Additional ]
@@ -947,13 +966,11 @@ while [[ $# -gt 0 ]]; do
             HEADER_FILE=$2
             shift
         ;;
-        "--write_templ_only")
-            WRITE_RUN="yes"
+        "--write-only")
+            WRITE_ONLY="yes"
         ;;
-        "--run_template")
-            RUN_FILE_PROVIDED="yes"
-            RUN_FILE="$2"
-            shift
+        "--run-only")
+            RUN_ONLY="yes"
         ;;
         ## Final arguments
         "--overwrite")

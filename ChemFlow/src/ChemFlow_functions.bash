@@ -289,7 +289,7 @@ elif [ $1 == 'ScoreFlow' ] ; then
     MAXCYC="1000"
 
     #run option
-    WRITE_RUN="no"
-    RUN_FILE_PROVIDED="no"
+    WRITE_ONLY="no"
+    RUN_ONLY="no"
 fi
 }
