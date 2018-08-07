@@ -264,10 +264,10 @@ else
             ScoreFlow_rescore_mmgbsa_write_compute_charges
 
             if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ ${WATER} != 'yes' ] ; then
-                echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ScoreFlow.run
+                echo "tleap -f ../tleap.in &> tleap.job" >> ScoreFlow.run
             fi
             if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ ${WATER} == 'yes' ] ; then
-                echo "tleap -f ../tleap_gbsa.in &> tleap.job" >> ScoreFlow.run
+                echo "tleap -f ../tleap.in &> tleap.job" >> ScoreFlow.run
             fi
 
             echo -e "$(cat ../ScoreFlow.run)" >> ScoreFlow.run
