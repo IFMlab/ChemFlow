@@ -554,7 +554,7 @@ if [ ! -f ${RUNDIR}/ScoreFlow.${JOB_SCHEDULLER,,} ] ; then
             sed "s/LIGAND/$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
         ;;
         "SLURM")
-            sed "s/--job-name=[A-Z0-9]*/--job-name=$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+            sed "s/--job-name=[.]*/--job-name=$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
         ;;
         esac
 
