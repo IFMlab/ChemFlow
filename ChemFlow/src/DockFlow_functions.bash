@@ -234,7 +234,7 @@ DockFlow_write_HPC_header() {
 #
 #       RETURNS: ScoreFlow.pbs for ${LIGAND}
 #===============================================================================
-if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
+if [ ! -f ${RUNDIR}/DockFlow.header ] ; then
     if [ ${HEADER_PROVIDED} != "yes" ] ; then
         echo ''
         read -p "How many cores per node? " NCORES
@@ -243,23 +243,22 @@ if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
         not_a_number
 
         file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
-        eval echo \""${file}"\" > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+        eval echo \""${file}"\" > ${RUNDIR}/DockFlow.header
     else
-        cp ${WORKDIR}/${HEADER_FILE} ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+        cp ${WORKDIR}/${HEADER_FILE} ${RUNDIR}/DockFlow.header
     fi
 fi
 case "${JOB_SCHEDULLER}" in
         "PBS")
-            sed "/PBS -N .*$/ s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+            sed "/PBS -N .*$/ s/$/_${first}/" ${RUNDIR}/DockFlow.header > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
         ;;
         "SLURM")
-            sed "/--job-name=.*$/  s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+            sed "/--job-name=.*$/  s/$/_${first}/" ${RUNDIR}/DockFlow.header > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
         ;;
         esac
 
 cat ${RUNDIR}/DockFlow.run >> ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
 }
-
 
 not_a_number() {
 re='^[0-9]+$'
