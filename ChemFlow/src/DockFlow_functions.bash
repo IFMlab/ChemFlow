@@ -76,7 +76,7 @@ case ${JOB_SCHEDULLER} in
             if [ ! -d ${RUNDIR}/${LIGAND}/VINA ] ; then
                 echo "mkdir -p ${RUNDIR}/${LIGAND}/VINA " >> dock.xargs
             fi
-            echo "vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
+            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
                 --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
                 --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
                 --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
@@ -751,11 +751,7 @@ else
     echo "[ DockFlow ] Done with post-processing."
 
     # Archiving.
-    if [ ! -z ${POSTPROCESS_ALL} ] ; then
-        read -p "[ DockFlow ] Archive the docking results (folders) in TAR files? [y/n] " opt
-    else
-        read -p "[ DockFlow ] Archive the docking results (folders) in a TAR file? [y/n] " opt
-    fi
+    read -p "[ DockFlow ] Archive the docking results (folders) in TAR files? [y/n] " opt
     case ${opt} in
     "y"|"yes"|"Yes"|"Y"|"YES")
         DockFlow_archive

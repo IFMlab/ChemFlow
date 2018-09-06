@@ -58,6 +58,10 @@ head -n 14  decoys_final.ism > decoys.smi
 
     ``babel -isdf decoys.sdf -omol2 decoys.mol2``
 
+To keep it simple, let's merge all compounds into a single mol2 file.
+
+    ``cat ligands.mol2 ligands_crystal.mol2 decoys.mol2 > compounds.mol2``
+
 
 Step 2: Set the center coordinates for the binding pocket
 ---------------------------------------------------------
@@ -78,87 +82,41 @@ Step 3: Run DockFlow to predict the docking poses.
 To demonstrate **DockFlow** we'll run it with **three** sets of ligands, some of which we only know the binding
 affinity (7 compounds), second we know both the affinity and crystal structure (7 compounds)_ and third a set of decoys (14 compounds)
 All these scenarios will be used in the report different features. In the first place, we'll confront the 14 actives with the 14 decoys
-and evalute the classification (active/inactive) done by the scoring function from each docking program. Then using the crystal structures
+and evaluate the classification (active/inactive) done by the scoring function from each docking program. Then using the crystal structures
 we'll evaluate the accuracy of each docking program to produce docking poses near the native one (**docking power**), finally.
 
 Then we'll evaluate the quality of the scoring functions to rank the docking poses (**ranking power**) which will be latter compared with **ScoreFlow**
 results together with the **scoring power** which will measure how well it will rank *compounds* against each other.
 
-Let's do it locally:
-++++++++++++++++++++
 Run DockFlow for each set of ligands.
 
 * Using plants:
 
-    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l ligands.mol2         --center 31.50 13.74 24.36 --radius 20``
-
-    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l ligands_crystal.mol2 --center 31.50 13.74 24.36 --radius 20``
-
-    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l decoys.mol2          --center 31.50 13.74 24.36 --radius 20``
+    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2         --center 31.50 13.74 24.36 --radius 20``
 
 * Using vina:
 
-    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l ligands.mol2         --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina``
-
-    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l ligands_crystal.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina``
-
-    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l decoys.mol2          --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina``
-
-If you have access to a cluster, you may profit from the HPC resources using --slurm or --pbs flags accordingly. :)
-
-Using a pbs cluster:
-++++++++++++++++++++
-
-Connect to your pbs cluster.
-
-* Using plants:
-
-    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l ligands.mol2         --center 31.50 13.74 24.36 --radius 20 --pbs --overwrite``
-
-    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l ligands_crystal.mol2 --center 31.50 13.74 24.36 --radius 20 --pbs --overwrite``
-
-    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l decoys.mol2          --center 31.50 13.74 24.36 --radius 20 --pbs --overwrite``
-
- * Using vina:
-
-    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l ligands.mol2         --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina --pbs --overwrite``
-
-    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l ligands_crystal.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina  --pbs --overwrite``
-
-    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l decoys.mol2          --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina  --pbs --overwrite``
+    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l compounds.mol2         --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina``
 
 For each of these commands you will be asked:
 
 * Are you sure you want to OVERWRITE? > y
 * Continue? > y
 * (Rewrite original ligands? > y)
-* How many Dockings per PBS/SLURM job? > 1
-* How many tasks per node? > 1
 
 Step 4: Postprocess all the results
 -----------------------------------
 When tou are done, you can postprocess (--postprocess) the results. Here, we decided to keep only the best 3 poses for each ligand (-n 3)
 
-    ``echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l ligands.mol2          --postprocess --overwrite -n 3``
+    ``echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2          --postprocess --overwrite -n 3``
 
-    ``echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l ligands_crystal.mol2  --postprocess -n 3``
-
-    ``echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l decoys.mol2           --postprocess -n 3``
-
-    ``echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l ligands.mol2            --postprocess -sf vina  --overwrite -n 3``
-
-    ``echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l ligands_crystal.mol2    --postprocess -sf vina -n 3``
-
-    ``echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l decoys.mol2             --postprocess -sf vina -n 3``
+    ``echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l compounds.mol2            --postprocess -sf vina  --overwrite -n 3``
 
 Step 5: Run ScoreFlow to rescore the previous doking poses (best 3 for each ligand)
 -----------------------------------------------------------------------------------
 Here, we only keep on with plants results (tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2).
 
 Rescoring using MMGBSA method:
-
-Locally:
-++++++++
 
     ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --overwrite``
 
@@ -173,19 +131,6 @@ For each of these commands you will be asked:
 * Are you sure you want to OVERWRITE? > y
 * Continue? > y
 
-Same as for DockFlow, if you have access to a cluster, use the --slurm or --pbs flag.
-
-Using a pbs cluster:
-++++++++++++++++++++
-
-    ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa              --pbs --overwrite``
-
-    ``ScoreFlow -p tutorial --protocol mmgbsa_water    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water      --pbs --overwrite``
-
-    ``ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --md         --pbs --overwrite``
-
-    ``ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water --md --pbs --overwrite``
-
 Step 6: Postprocess the results
 -------------------------------
 When tou are done, you can postprocess (--postprocess) the results:
@@ -198,3 +143,82 @@ When tou are done, you can postprocess (--postprocess) the results:
 
     ``ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess``
 
+
+To run DockFlow and ScoreFlow on a super computer
+*************************************************
+
+If you have access to a cluster, you may profit from the HPC resources using --slurm or --pbs flags accordingly. :)
+
+To run it properly, you should provide a template for your scheduler.
+
+* Example for pbs:
+
+    #! /bin/bash
+    # 1 noeud 8 coeurs
+    #PBS -q  route
+    #PBS -N
+    #PBS -l nodes=1:ppn=1
+    #PBS -l walltime=0:30:00
+    #PBS -V
+
+    source ~/software/amber16/amber.sh
+
+* Example for slurm:
+    #! /bin/bash
+    #SBATCH -p publicgpu
+    #SBATCH -n 1
+    #SBATCH -t 2:00:00
+    #SBATCH --gres=gpu:1
+    #SBATCH --job-name=
+    #SBATCH -o slurm.out
+    #SBATCH -e slurm.err
+
+    #
+    # Configuration
+    #
+    # Make sure you load all the necessary modules for your AMBER installation.
+    # Don't forget the CUDA modules
+    module load compilers/intel15
+    module load libs/zlib-1.2.8
+    module load mpi/openmpi-1.8.3.i15
+    module load compilers/cuda-8.0
+
+    # Path to amber.sh replace with your own
+    source ~/software/amber16_publicgpu/amber.sh
+
+
+    # You must always provide the HEADER for SLURM and PBS, because this template may not work for you.
+
+DockFlow:
+---------
+
+Connect to your pbs cluster.
+
+* Using plants:
+
+    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2         --center 31.50 13.74 24.36 --radius 20 --pbs --overwrite``
+
+ * Using vina:
+
+    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l compounds.mol2         --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina --pbs --overwrite``
+
+Same as for DockFlow, if you have access to a cluster, use the --slurm or --pbs flag.
+
+ScoreFlow:
+----------
+
+    ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa              --pbs --overwrite``
+
+    ``ScoreFlow -p tutorial --protocol mmgbsa_water    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water      --pbs --overwrite``
+
+    ``ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --md         --pbs --overwrite``
+
+    ``ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water --md --pbs --overwrite``
+
+For each of these commands you will be asked:
+
+* Are you sure you want to OVERWRITE? > y
+* Continue? > y
+* (Rewrite original ligands? > y)
+* How many Dockings per PBS/SLURM job? > 1
+* How many tasks per node? > 1
