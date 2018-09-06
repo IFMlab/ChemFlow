@@ -209,7 +209,7 @@ cd ${RUNDIR}
 if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
 for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
     # Vina command.
-    echo \"vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
+    echo \"mkdir -p ${RUNDIR}/\${LIGAND}/VINA/ ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
         --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null \" >> ${first}.xargs
