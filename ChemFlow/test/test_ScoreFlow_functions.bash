@@ -24,7 +24,7 @@ mkdir -p ${RUNDIR}/${LIGAND}
 cp ${WORKDIR}/ligand_in_ChemBase.mol2 ${RUNDIR}/${LIGAND}/ligand.mol2
 
 # Call the function and check if ChemBase has been used
-output=$(ScoreFlow_rescore_mmgbsa_compute_charges)
+output=$(ScoreFlow_rescore_mmgbsa_write_compute_charges)
 output=`echo ${output}`
 expected="${CHARGE} charges found in ChemBase for CHEMBL477992"
 assertOutputIsExpected
@@ -62,7 +62,7 @@ cp ${WORKDIR}/ligand_in_LigFlow.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CH
 cp ${WORKDIR}/ligand_in_LigFlow.mol2 ${RUNDIR}/${LIGAND}/ligand.mol2
 
 # Call the function and check if ChemBase has been used
-output=$(ScoreFlow_rescore_mmgbsa_compute_charges)
+output=$(ScoreFlow_rescore_mmgbsa_write_compute_charges)
 output=`echo ${output}`
 expected="${CHARGE} charges found in LigFlow for ${LIGAND}"
 assertOutputIsExpected
@@ -99,7 +99,7 @@ mkdir -p ${RUNDIR}/${LIGAND}
 cp ${WORKDIR}/ligand_in_LigFlow.mol2 ${RUNDIR}/${LIGAND}/ligand.mol2
 
 # Call the function and check if ChemBase has been used
-output=$(ScoreFlow_rescore_mmgbsa_compute_charges)
+output=$(ScoreFlow_rescore_mmgbsa_write_compute_charges)
 output=`echo ${output}`
 expected="Computing ${CHARGE} charges for ${LIGAND}"
 assertOutputIsExpected

@@ -1,10 +1,10 @@
 #!/bin/bash
-##################################################################### 
+#####################################################################
 #   ChemFlow  -   Computational Chemistry is great again            #
 #####################################################################
 #
 # Diego E. B. Gomes(1,2,3) - dgomes@pq.cnpq.br
-# Cedric Boysset (3,4) - cboysset@unice.fr
+# Cedric Bouysset (3,4) - cbouysset@unice.fr
 # Marco Cecchini (3) - cecchini@unistra.fr
 #
 # 1 - Instituto Nacional de Metrologia, Qualidade e Tecnologia - Brazil
@@ -17,7 +17,7 @@
 #          FILE:  test.bash
 #
 #         USAGE: ./test.bash
-# 
+#
 #
 #         BRIEF: Main routine for testing ChemFlow
 #   DESCRIPTION: Prepare and run a docking, and rescoring calculation.
@@ -90,34 +90,34 @@ EOF
 }
 
 postdock_vina_no_archive(){
-DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 -sf vina --postdock<<EOF
+DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 -sf vina --postprocess <<EOF
 n
 EOF
 }
 
 postdock_vina_archive_no_remove(){
-DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 -sf vina --postdock<<EOF
+DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 -sf vina --postprocess <<EOF
 y
 n
 EOF
 }
 
 postdock_vina_archive_remove(){
-DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 -sf vina --postdock<<EOF
+DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 -sf vina --postprocess <<EOF
 y
 y
 EOF
 }
 
 archive_vina_archive_no_remove(){
-DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 -sf vina --archive<<EOF
+DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 -sf vina --archive <<EOF
 y
 n
 EOF
 }
 
 archive_vina_archive_remove(){
-DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 -sf vina --archive<<EOF
+DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 -sf vina --archive <<EOF
 y
 y
 EOF
@@ -161,34 +161,34 @@ EOF
 }
 
 postdock_plants_no_archive(){
-DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 --postdock<<EOF
+DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 --postprocess <<EOF
 n
 EOF
 }
 
 postdock_plants_archive_no_remove(){
-DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 --postdock<<EOF
+DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 --postprocess <<EOF
 y
 n
 EOF
 }
 
 postdock_plants_archive_remove(){
-DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 --postdock<<EOF
+DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 --postprocess <<EOF
 y
 y
 EOF
 }
 
 archive_plants_archive_no_remove(){
-DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 --archive<<EOF
+DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 --archive <<EOF
 y
 n
 EOF
 }
 
 archive_plants_archive_remove(){
-DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 --archive<<EOF
+DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --radius 12 --center 20.259 -2.752 18.203 --archive <<EOF
 y
 y
 EOF
