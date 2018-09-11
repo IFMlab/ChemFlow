@@ -1,5 +1,7 @@
-LigFlow_prepare_ligands()
+#!/usr/bin/env bash
 
+
+LigFlow_prepare_ligands() {
 for mol2 in ${list[@]}; do
   cd ${rundir}
 
@@ -59,12 +61,12 @@ for mol2 in ${list[@]}; do
   let list_max=${list_max}-1
 #  echo -ne "[DONE] ${mol2}. REMAINING: $list_max ; ERROR=$errors      \r"
 done
+}
 
 
 
 
 smart_submit_slurm() {
-
 if [ "$RESP" == 1 ] ; then
 
   # Count the number of ligands RESP.

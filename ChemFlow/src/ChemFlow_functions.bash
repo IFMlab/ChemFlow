@@ -275,7 +275,6 @@ if [ $1 == 'DockFlow' ] ; then
     RESUME="No"
 elif [ $1 == 'ScoreFlow' ] ; then
     WORKFLOW="ScoreFlow"
-    ORGANIZE='yes'
 
     # Scoring options
     SCORE_PROGRAM="PLANTS"

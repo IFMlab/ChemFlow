@@ -236,12 +236,6 @@ DockFlow_write_HPC_header() {
 #===============================================================================
 if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
     if [ ${HEADER_PROVIDED} != "yes" ] ; then
-        echo ''
-        read -p "How many cores per node? " NCORES
-        # Check if the user gave a int
-        nb=${NCORES}
-        not_a_number
-
         file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
         eval echo \""${file}"\" > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
     else
@@ -249,13 +243,13 @@ if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
     fi
 fi
 case "${JOB_SCHEDULLER}" in
-        "PBS")
-            sed "/PBS -N .*$/ s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
-        ;;
-        "SLURM")
-            sed "/--job-name=.*$/  s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
-        ;;
-        esac
+    "PBS")
+        sed "/PBS -N .*$/ s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+    ;;
+    "SLURM")
+        sed "/--job-name=.*$/  s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+    ;;
+    esac
 
 cat ${RUNDIR}/DockFlow.run >> ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
 }
@@ -865,33 +859,30 @@ Usage:
 DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol protocol-name] [-n 8] [-sf chemplp]
 
 [Help]
- -h/--help           : Show this help message and quit
- -hh/--fullhelp      : Detailed help
+ -h/--help              : Show this help message and quit
+ -hh/--fullhelp         : Detailed help
 
 [ Required ]
-*-p/--project        : ChemFlow project
-*-r/--receptor       : Receptor MOL2 file
-*-l/--ligand         : Ligands  MOL2 file
+*-p/--project       STR : ChemFlow project
+*-r/--receptor     FILE : Receptor MOL2 file
+*-l/--ligand       FILE : Ligands  MOL2 file
 
 [ Post Processing ]
- --postprocess       : Process DockFlow output for the specified project/protocol/receptor.
- --postprocess-all   : Process DockFlow output in a ChemFlow project.
- -n/--n-poses        : Number of docked poses to keep.
- --archive           : Compress the docking folders for the specified project/protocol/receptor.
- --archive-all       : Compress the docking folders in a ChemFLow project.
- --report            : [not implemented]
- --clean             : [not implemented] Clean up DockFlow output for a fresh start.
+ --postprocess          : Process DockFlow output for the specified project/protocol/receptor.
+ --postprocess-all      : Process DockFlow output in a ChemFlow project.
+ -n/--n-poses       INT : Number of docked poses to keep.
+ --archive              : Compress the docking folders for the specified project/protocol/receptor.
+ --archive-all          : Compress the docking folders in a ChemFLow project.
 
 [ Optional ]
- --protocol          : Name for this specific protocol [default]
- -n/--n_poses        : Number of poses per ligand, to generate while docking, to keep while postprocessing [10]
- -sf/--function      : vina, chemplp, plp, plp95  [chemplp]
+ --protocol         STR : Name for this specific protocol [default]
+ -n/--n_poses       INT : Number of poses per ligand, to generate while docking, to keep while postprocessing [10]
+ -sf/--function     STR : vina, chemplp, plp, plp95  [chemplp]
 
 [ Parallel execution ]
- -nc/--cores         : Number of cores per node [${NCORES}]
- --pbs/--slurm       : Workload manager, PBS or SLURM
- -nn/--nodes         : Number of nodes to use (ony for PBS or SLURM) [1]
- --header            : Header file provided to run on your cluster.
+ -nc/--cores        INT : Number of cores per node [${NCORES}]
+ --pbs/--slurm          : Workload manager, PBS or SLURM
+ --header          FILE : Header file provided to run on your cluster.
 
 [ Additional ]
  --overwrite         : Overwrite results
@@ -900,21 +891,28 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol 
 *--center            : xyz coordinates of the center of the binding site, separated by a space
 _________________________________________________________________________________
 [ PLANTS ]
- --speed             : Search speed for Plants. 1, 2 or 4 [1]
- --ants              : Number of ants     [20]
- --evap_rate         : Evaporation rate of pheromones [0.15]
- --iteration_scaling : Iteration scaling factor [1.0]
  --radius            : Radius of the spheric binding site [15]
- --water             : Path to a structural water molecule
- --water_xyzr        : xyz coordinates and radius of the water sphere, separated by a space
-
 _________________________________________________________________________________
 [ Vina ]
  --size              : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
- --exhaustiveness    : Exhaustiveness of the global search [8]
- --energy_range      : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
 _________________________________________________________________________________
 "
+    # Not implemented in this version :
+    # [ Post Processing ]
+    # --report            : [not implemented]
+    # --clean             : [not implemented] Clean up DockFlow output for a fresh start.
+    # [ PLANTS ]
+    # --speed             : Search speed for Plants. 1, 2 or 4 [1]
+    # --ants              : Number of ants     [20]
+    # --evap_rate         : Evaporation rate of pheromones [0.15]
+    # --iteration_scaling : Iteration scaling factor [1.0]
+    # --water             : Path to a structural water molecule
+    # --water_xyzr        : xyz coordinates and radius of the water sphere, separated by a space
+    # [ Vina ]
+    # --exhaustiveness    : Exhaustiveness of the global search [8]
+    # --energy_range      : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
+
+
     exit 0
 }
 

@@ -3,7 +3,7 @@
 #SBATCH -n 1
 #SBATCH -t 2:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=${LIGAND}
+#SBATCH --job-name=ScoreFlow
 #SBATCH -o slurm.out
 #SBATCH -e slurm.err
 

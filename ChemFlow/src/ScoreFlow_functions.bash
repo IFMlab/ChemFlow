@@ -547,19 +547,20 @@ ScoreFlow_rescore_mmgbsa_write_HPC() {
 if [ ! -f ${RUNDIR}/ScoreFlow.${JOB_SCHEDULLER,,} ] ; then
     if [ ${HEADER_PROVIDED} != "yes" ] ; then
         file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/${JOB_SCHEDULLER,,}.template)
-        eval echo \""${file}"\" > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+        eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.${JOB_SCHEDULLER,,}
     else
-        case "${JOB_SCHEDULLER}" in
-        "PBS")
-            sed "s/LIGAND/$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
-        ;;
-        "SLURM")
-            sed "s/--job-name=[.]*/--job-name=$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
-        ;;
-        esac
-
+        cp ${WORKDIR}/${HEADER_FILE} ${RUNDIR}/ScoreFlowFlow.${JOB_SCHEDULLER,,}
     fi
 fi
+case "${JOB_SCHEDULLER}" in
+    "PBS")
+        sed "/PBS -N .*$/ s/$/$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+    ;;
+    "SLURM")
+        sed "s/--job-name=[.]*/--job-name=$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+    ;;
+    esac
+
 
 cat ${RUNDIR}/${LIGAND}/ScoreFlow.run >> ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
 }
@@ -849,7 +850,6 @@ ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] 
 [ Parallel execution - MMGBSA ]
  -nc/--cores        INT : Number of cores per node [${NCORES}]
  --pbs/--slurm          : Workload manager, PBS or SLURM
- -nn/--nodes        INT : Number of nodes to use (ony for PBS or SLURM) [1]
  --header          FILE : Header file provided to run on your cluster.
  --write-only           : Write a template file (ScoreFlow.run.template) command without running.
  --run-only             : Run using the ScoreFlow.run.template file.
