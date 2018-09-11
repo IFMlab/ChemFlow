@@ -79,9 +79,9 @@ test_dockflow_postdock_empty_plants(){
 TEST="test_dockflow_postdock_empty_plants"
 mkdir -p test.chemflow/DockFlow/plants/receptor/CHEMBL195725
 mkdir -p test.chemflow/DockFlow/plants/receptor/CHEMBL477992
-output=`DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --postdock | tail -6`
+output=`DockFlow --project test --protocol plants -r receptor.mol2 -l compounds.mol2 --postprocess | tail -6`
 output=`echo ${output}`
-expected="[ ChemFlow ] Checking input files... [ ERROR ] Plants result for ligand CHEMBL477992 does not exists. [ DockFlow ] Error during post-docking, see error above."
+expected="[ ChemFlow ] Checking input files... Protocols: plants Receptors: receptor [ ERROR ] Plants result for ligand CHEMBL477992 does not exists. [ DockFlow ] Error during post-docking, see error above."
 assertOutputIsExpected
 rm -rf test.chemflow/DockFlow/plants
 }
@@ -90,9 +90,9 @@ test_dockflow_postdock_empty_vina(){
 TEST="test_dockflow_postdock_empty_vina"
 mkdir -p test.chemflow/DockFlow/vina/receptor/CHEMBL195725
 mkdir -p test.chemflow/DockFlow/vina/receptor/CHEMBL477992
-output=`DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 -sf vina --postdock | tail -6`
+output=`DockFlow --project test --protocol vina -r receptor.mol2 -l compounds.mol2 -sf vina --postprocess | tail -6`
 output=`echo ${output}`
-expected="[ ChemFlow ] Checking input files... [ ERROR ] Vina's result for ligand CHEMBL477992 does not exists. [ DockFlow ] Error during post-docking, see error above."
+expected="[ ChemFlow ] Checking input files... Protocols: vina Receptors: receptor [ ERROR ] Vina's result for ligand CHEMBL477992 does not exists. [ DockFlow ] Error during post-docking, see error above."
 assertOutputIsExpected
 rm -rf test.chemflow/DockFlow/vina
 }

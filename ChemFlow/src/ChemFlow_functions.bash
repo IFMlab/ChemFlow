@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
 
-source ${CHEMFLOW_HOME}/test/test_functions.bash
-
-
 ChemFlow_error() {
 #===  FUNCTION  ================================================================
 #          NAME: ChemFlow_error

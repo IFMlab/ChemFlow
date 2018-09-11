@@ -209,7 +209,7 @@ cd ${RUNDIR}
 if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
 for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
     # Vina command.
-    echo \"vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
+    echo \"mkdir -p ${RUNDIR}/\${LIGAND}/VINA/ ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
         --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null \" >> ${first}.xargs
@@ -234,26 +234,25 @@ DockFlow_write_HPC_header() {
 #
 #       RETURNS: ScoreFlow.pbs for ${LIGAND}
 #===============================================================================
-if [ ! -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
+if [ ! -f ${RUNDIR}/DockFlow.header ] ; then
     if [ ${HEADER_PROVIDED} != "yes" ] ; then
         file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
-        eval echo \""${file}"\" > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+        eval echo \""${file}"\" > ${RUNDIR}/DockFlow.header
     else
-        cp ${WORKDIR}/${HEADER_FILE} ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+        cp ${WORKDIR}/${HEADER_FILE} ${RUNDIR}/DockFlow.header
     fi
 fi
 case "${JOB_SCHEDULLER}" in
-    "PBS")
-        sed "/PBS -N .*$/ s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
-    ;;
-    "SLURM")
-        sed "/--job-name=.*$/  s/$/_${first}/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
-    ;;
-    esac
+        "PBS")
+            sed "/PBS -N .*$/ s/$/_${first}/" ${RUNDIR}/DockFlow.header > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+        ;;
+        "SLURM")
+            sed "/--job-name=.*$/  s/$/_${first}/" ${RUNDIR}/DockFlow.header > ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+        ;;
+        esac
 
 cat ${RUNDIR}/DockFlow.run >> ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
 }
-
 
 not_a_number() {
 re='^[0-9]+$'
