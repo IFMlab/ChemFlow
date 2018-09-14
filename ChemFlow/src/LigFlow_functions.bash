@@ -251,3 +251,182 @@ parmchk2 -i lig_bcc.mol2 -o lig.frcmod -s 2 -f mol2
 cd $rundir
 smart_submit_slurm
 
+
+LigFlow_write_origin_ligands() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_rewrite_ligands
+#   DESCRIPTION: User interface for the rewrite ligands option.
+#                 - Read all ligand names from the header of a .MOL2 file.
+#                 - Split each ligand to it's own ".MOL2" file.
+#               #  - Create "ligand.lst" with the list of ligands do dock.
+#
+#    PARAMETERS: ${PROJECT}
+#                ${LIGAND_LIST}
+#                ${RUNDIR}
+#                ${DOCK_PROGRAM}
+#                ${WORKDIR}
+#                ${OVERWRITE}
+#
+#        Author: Dona de Francquen
+#
+#        UPDATE: fri. july 6 14:49:50 CEST 2018
+#
+#===============================================================================
+
+OLDIFS=$IFS
+IFS='%'
+n=-1
+while read line ; do
+    if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
+        let n=$n+1
+        echo -e "${line}" > ${RUNDIR}/original/${LIGAND_LIST[$n]}.mol2
+    else
+        echo -e "${line}" >> ${RUNDIR}/original/${LIGAND_LIST[$n]}.mol2
+    fi
+done < ${WORKDIR}/${LIGAND_FILE}
+IFS=${OLDIFS}
+
+
+#
+# QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
+#
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    cd ${RUNDIR}/original/
+    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -dr no &>/dev/null
+    mv tmp.mol2 ${LIGAND}.mol2
+done
+#
+#
+#
+}
+
+LigFlow_prepare_input() {
+# Original
+if [ ! -d ${RUNDIR}/original/ ] ; then
+    mkdir -p ${RUNDIR}/original/
+fi
+
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    if [ ! -f ${RUNDIR}/original/${LIGAND}.mol2 ] ; then
+        OVERWRITE="yes"
+    fi
+done
+
+if [ ${OVERWRITE} == "yes" ] ; then
+    LigFlow_write_origin_ligands
+fi
+
+
+
+}
+
+
+DockFlow_summary() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_summary
+#   DESCRIPTION: Summarize all docking information
+#
+#    PARAMETERS: ${HOSTNAME}
+#                ${USER}
+#                ${PROJECT}
+#                ${PROTOCOL}
+#                ${PWD}
+#                ${LIGAND_FILE}
+#                ${NLIGANDS}
+#                ${JOB_SCHEDULLER}
+#                ${NCORES}
+#                ${OVERWRITE}
+#       RETURNS: -
+#
+#===============================================================================
+
+echo "
+LigFlow summary:
+-------------------------------------------------------------------------------
+[ General info ]
+    HOST: ${HOSTNAME}
+    USER: ${USER}
+ PROJECT: ${PROJECT}
+PROTOCOL: ${PROTOCOL}
+ WORKDIR: ${PWD}
+
+[ Setup ]
+  LIGAND FILE: ${LIGAND_FILE}
+     NLIGANDS: ${NLIGANDS}
+
+[ Run options ]
+JOB SCHEDULLER: ${JOB_SCHEDULLER}
+    CORES/NODE: ${NCORES}
+
+     OVERWRITE: ${OVERWRITE}
+"
+read -p "
+Continue [y/n]? " opt
+
+case $opt in
+"Y"|"YES"|"Yes"|"yes"|"y")  ;;
+*)  echo "Exiting" ; exit 0 ;;
+esac
+}
+
+
+LigFlow_CLI() {
+if [ "$1" == "" ] ; then
+    ERROR_MESSAGE="LigFlow called without arguments."
+    ChemFlow_error ;
+fi
+
+while [[ $# -gt 0 ]]; do
+    key="$1"
+
+    case ${key} in
+        "-h"|"--help")
+            DockFlow_help
+            exit 0
+            shift # past argument
+        ;;
+        "-hh"|"--full-help")
+            DockFlow_help_full
+            exit 0
+            shift
+        ;;
+        "-l"|"--ligand")
+            LIGAND_FILE="$2"
+            shift # past argument
+        ;;
+        "-p"|"--project")
+            PROJECT="$2"
+            shift
+        ;;
+        "--protocol")
+            PROTOCOL="$2"
+            shift
+        ;;
+        # HPC options
+        "--pbs") #Activate the PBS workload
+            JOB_SCHEDULLER="PBS"
+        ;;
+        "--slurm") #Activate the SLURM workload
+            JOB_SCHEDULLER="SLURM"
+        ;;
+        "--header")
+            HEADER_PROVIDED="yes"
+            HEADER_FILE=$2
+            shift
+        ;;
+        "-nc"|"--cores") # Number of Cores [1] (or cores/node)
+            NCORES="$2" # Same as above.
+            shift # past argument
+        ;;
+        ## Final arguments
+        "--overwrite")
+            OVERWRITE="yes"
+        ;;
+        *)
+            unknown="$1"        # unknown option
+            echo "Unknown flag \"$unknown\""
+        ;;
+    esac
+    shift # past argument or value
+done
+}

@@ -292,60 +292,6 @@ fi
 }
 
 
-DockFlow_rewrite_origin_ligands() {
-#===  FUNCTION  ================================================================
-#          NAME: DockFlow_rewrite_ligands
-#   DESCRIPTION: User interface for the rewrite ligands option.
-#                 - Read all ligand names from the header of a .MOL2 file.
-#                 - Split each ligand to it's own ".MOL2" file.
-#               #  - Create "ligand.lst" with the list of ligands do dock.
-#
-#    PARAMETERS: ${PROJECT}
-#                ${LIGAND_LIST}
-#                ${RUNDIR}
-#                ${DOCK_PROGRAM}
-#                ${WORKDIR}
-#                ${OVERWRITE}
-#
-#        Author: Dona de Francquen
-#
-#        UPDATE: fri. july 6 14:49:50 CEST 2018
-#
-#===============================================================================
-# Original
-
-if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
-    mkdir -p ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
-fi
-
-OLDIFS=$IFS
-IFS='%'
-n=-1
-while read line ; do
-    if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-        let n=$n+1
-        echo -e "${line}" > ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
-    else
-        echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
-    fi
-done < ${WORKDIR}/${LIGAND_FILE}
-IFS=${OLDIFS}
-
-
-#
-# QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
-#
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    cd ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
-    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -dr no &>/dev/null
-    mv tmp.mol2 ${LIGAND}.mol2
-done
-#
-#
-#
-}
-
-
 DockFlow_prepare_ligands() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_rewrite_ligands
@@ -429,24 +375,11 @@ cd ${RUNDIR}
 DockFlow_prepare_receptor
 
 # 3. Ligands
-if [ -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
-    read -p "Rewrite original ligands [y/n]? " rewrite_ligands
+if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
+    echo "Please run LigFlow before DockFlow to prepare the input ligands."
 else
-    rewrite_ligands="yes"
+    DockFlow_prepare_ligands
 fi
-
-case ${rewrite_ligands} in
-"y"|"yes"|"Yes"|"Y"|"YES")
-    DockFlow_rewrite_origin_ligands
-    DockFlow_prepare_ligands
-;;
-"n"|"no"|"No"|"N"|"NO")
-    DockFlow_prepare_ligands
-;;
-*)
-    echo ${opt} "Existing" ; exit 0
-;;
-esac
 }
 
 

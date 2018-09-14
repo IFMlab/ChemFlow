@@ -72,7 +72,7 @@ if [ -z "${RECEPTOR_FILE}" ] ; then
     fi
 fi
 # Check if the receptor file exists--------------------------------------------
-if [ ! -f ${RECEPTOR_FILE} ] ; then
+if [ ! -f ${RECEPTOR_FILE} ]  && [ ${WORKFLOW} != "LigFlow" ] ; then
     ERROR_MESSAGE="The receptor file ${RECEPTOR_FILE} does not exist." ;
     ChemFlow_error ;
 fi
@@ -103,7 +103,7 @@ case ${WORKFLOW} in
     ;;
     esac
     if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
-        ERROR_MESSAGE="Docking requires a mol2 file as receptor input"; ChemFlow_error ;
+        ERROR_MESSAGE="Docking requires a mol2 file as receptor input"; ChemFlow_error;
     fi
     # Center is required for docking.
     check_center
