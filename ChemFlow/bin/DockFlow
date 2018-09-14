@@ -57,7 +57,9 @@ elif  [ ! -z ${POSTPROCESS} ] ; then
 else
     DockFlow_summary        # Show a summary of actions.
     DockFlow_prepare_input  # Organizes and convert required files
+    date
     DockFlow_dock           # Runs the docking
+    date
 fi 
 
 #DockFlow_Report          
