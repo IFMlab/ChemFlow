@@ -77,13 +77,13 @@ if [ ! -f ${RECEPTOR_FILE} ] ; then
     ChemFlow_error ;
 fi
 
-# Check if the receptor file has been given----------------------------------
+# Check if the ligand file has been given----------------------------------
 if [ -z "${LIGAND_FILE}" ] ; then
     ERROR_MESSAGE="No LIGAND filename (-l ligand_file.mol2)" ;
     ChemFlow_error ;
 fi
 
-# Check if the receptor file exists------------------------------------------
+# Check if the ligand file exists------------------------------------------
 if [ ! -f ${LIGAND_FILE} ] ; then
     ERROR_MESSAGE=="The ligand file ${LIGAND_FILE} does not exist." ;
     ChemFlow_error ;

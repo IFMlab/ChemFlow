@@ -1,6 +1,6 @@
 #!/bin/bash
 
-##################################################################### 
+#####################################################################
 #   ChemFlow  -   Computational Chemistry is great again            #
 #####################################################################
 #
@@ -18,7 +18,7 @@
 #          FILE:  ScoreFlow2.bash
 #
 #         USAGE: ./ScoreFlow2.bash -p myproject -r receptor.mol2 -l multilig.mol2 -sf chemplp [-w SLURM]...
-# 
+#
 #
 #         BRIEF: Main routine for ScoreFlow
 #   DESCRIPTION: Prepare and run a rescoring calculation.
@@ -124,7 +124,7 @@ ScoreFlow_rescore_plants() {
 #   DESCRIPTION: Rescore docking poses using plants
 #
 #        Author: Dona de Francquen
-#                
+#
 #    PARAMETERS: ${RUNDIR}
 #                ${OVERWRITE}
 #
@@ -214,7 +214,7 @@ ScoreFlow_rescore_mmgbsa() {
 #
 #        Author: Diego E. B. Gomes
 #                Dona de Francquen
-#                
+#
 #    PARAMETERS: ${RUNDIR}
 #                ${RUN_ONLY_PROVIDED}
 #                ${WORKDIR}
@@ -580,7 +580,7 @@ ScoreFlow_organize() {
 #
 #       RETURNS: the project tree
 #===============================================================================
-# TODO 
+# TODO
 # Improve extracting mol2 to separate folders.
 
 if [ ${OVERWRITE} == "yes" ] ; then
@@ -761,7 +761,7 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
 read -p "
 Continue [y/n]? " opt
 
-case $opt in 
+case $opt in
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
 *)  echo "Exiting" ; exit 0 ;;
 esac
@@ -777,12 +777,12 @@ ScoreFlow_help() {
 #
 #    PARAMETERS: -
 #==============================================================================
-echo "Example usage: 
+echo "Example usage:
 # For VINA and PLANTS scoring functions:
-ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol protocol-name] [-n 8] [-sf vina]
+ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-sf vina]
 
-# For MMGBSA only 
-ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] [-n 8] -sf mmgbsa
+# For MMGBSA only
+ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [--protocol protocol-name] -sf mmgbsa
 
 [Options]
  -h/--help           : Show this help message and quit
@@ -796,7 +796,7 @@ Rescoring:
  --center            : X Y Z coordinates of the center of the binding site, separated by a space.
 
 Postprocess:
- --postprocess       : Process DockFlow output in a ChemFlow project.
+ --postprocess       : Process ScoreFlow output in a ChemFlow project.
 "
 exit 0
 }
@@ -819,10 +819,10 @@ ScoreFlow requires a project folder named 'myproject'.chemflow. If absent, one w
 
 Usage:
 # For VINA and PLANTS scoring functions:
-ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol protocol-name] [-n 8] [-sf vina]
+ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-sf vina]
 
 # For MMGBSA only
-ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] [-n 8] -sf mmgbsa
+ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] -sf mmgbsa
 
 [Help]
  -h/--help              : Show this help message and quit

@@ -8,7 +8,7 @@ then
   CHEMFLOW_HOME="$PWD/ChemFlow"
   echo -e "\n# ChemFlow" >> ~/.bashrc
   echo "export CHEMFLOW_HOME=\"$CHEMFLOW_HOME\"" >> ~/.bashrc
-  echo "export PATH=\$PATH:\$CHEMFLOW_HOME/ChemFlow/bin" >> ~/.bashrc
+  echo "export PATH=\$PATH:\$CHEMFLOW_HOME/bin" >> ~/.bashrc
   echo "ChemFlow successfully installed !"
 
 else
@@ -33,11 +33,12 @@ if [ -z "$mgltools_folder" ]; then
   if [ -z "$_MGLToolsPckgs" ]; then
     echo "[ WARNING ] MGLTools is not installed. Please install it and run this script if you plan on using Vina."
   else
-    echo "mgltools_folder=$(echo $_MGLToolsPckgs | sed 's/\/MGLToolsPckgs//')" >> ~/.bashrc
+    echo "# MGLTools for ChemFlow" >> ~/.bashrc
+    echo "export mgltools_folder=$(echo $_MGLToolsPckgs | sed 's/\/MGLToolsPckgs//')" >> ~/.bashrc
   fi
 fi
 if [ -z "$(command -v PLANTS1.2_64bit)" ]; then echo "[ WARNING ] PLANTS is not on your PATH"; fi
 if [ -z "$(command -v vina)" ]; then echo "[ WARNING ] Vina is not on your PATH"; fi
-if [ -z "$(command -v sander)" ] ; then echo "[ WARNING ] AmberTools 17+ is not on your PATH"; fi
+if [ -z "$(command -v sander)" ] ; then echo "[ WARNING ] AmberTools is not on your PATH"; fi
 if [ -z "$(command -v g09)" ] ; then echo "[ WARNING ] Gaussian09 is not on your PATH"; fi
 if [ -z "$(command -v IChem)" ] ; then echo "[ WARNING ] IChem is not on your PATH"; fi

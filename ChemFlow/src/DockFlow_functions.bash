@@ -4,22 +4,22 @@
 ##
 ## Complies with:
 ## The ChemFlow standard version 1.0
-## 
+##
 ## Routine:
 ## DockFlow_init
 ##
 ## Brief:
 ## Initializes DockFlow variables and reads input.
 ##
-## Description: 
-## Initializes all DockFlow variables, then reads user input from command line or 
+## Description:
+## Initializes all DockFlow variables, then reads user input from command line or
 ## from a configuration file.
 ##
 ## Author:
 ## dgomes    - Diego Enry Barreto Gomes - dgomes@pq.cnpq.br
 ## cbouysset - Cedric Bouysset - cbouysset@unice.fr
-## 
-## Last Update: (date, by who and where ) 
+##
+## Last Update: (date, by who and where )
 ## vendredi 25 mai 2018, 13:54:40 (UTC+0200) by dgomes @ Universite de Strasbourg.
 ##
 ###############################################################################
@@ -304,7 +304,7 @@ DockFlow_rewrite_origin_ligands() {
 #   DESCRIPTION: User interface for the rewrite ligands option.
 #                 - Read all ligand names from the header of a .MOL2 file.
 #                 - Split each ligand to it's own ".MOL2" file.
-#               #  - Create "ligand.lst" with the list of ligands do dock.
+#               #  - Create "ligand.lst" with the list of ligands to dock.
 #
 #    PARAMETERS: ${PROJECT}
 #                ${LIGAND_LIST}
@@ -379,7 +379,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -d  ${LIGAND} ] ; then
         mkdir -p  ${LIGAND}
         if [ ! -d ${LIGAND} ] ; then
-            echo "[ ERROR ] could not create ${LIGAND} directory in ${RUNDIR}. Did you check your quotas? "
+            echo "[ ERROR ] Could not create ${LIGAND} directory in ${RUNDIR}."
             exit 0
         fi
     fi
@@ -832,7 +832,7 @@ esac
 
 
 DockFlow_help() {
-echo "Example usage: 
+echo "Example usage:
 DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-n 8] [-sf chemplp]
 
 [Options]
@@ -861,7 +861,7 @@ It can perform an automatic VS based on information given by the user :
 ligands, receptor, binding site info, and extra options.
 
 Usage:
-DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol protocol-name] [-n 8] [-sf chemplp]
+DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-n 10] [-sf chemplp]
 
 [Help]
  -h/--help           : Show this help message and quit
@@ -875,7 +875,6 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol 
 [ Post Processing ]
  --postprocess       : Process DockFlow output for the specified project/protocol/receptor.
  --postprocess-all   : Process DockFlow output in a ChemFlow project.
- -n/--n-poses        : Number of docked poses to keep.
  --archive           : Compress the docking folders for the specified project/protocol/receptor.
  --archive-all       : Compress the docking folders in a ChemFLow project.
  --report            : [not implemented]
@@ -883,13 +882,13 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol 
 
 [ Optional ]
  --protocol          : Name for this specific protocol [default]
- -n/--n_poses        : Number of poses per ligand, to generate while docking, to keep while postprocessing [10]
  -sf/--function      : vina, chemplp, plp, plp95  [chemplp]
+ -n/--n-poses        : Number of docked poses to generate or keep [10]
 
 [ Parallel execution ]
- -nc/--cores         : Number of cores per node [${NCORES}]
+ -nc/--cores         : Number of cores, or cores per node [${NCORES}]
  --pbs/--slurm       : Workload manager, PBS or SLURM
- -nn/--nodes         : Number of nodes to use (ony for PBS or SLURM) [1]
+ -nn/--nodes         : Number of nodes to use (only for PBS or SLURM) [1]
  --header            : Header file provided to run on your cluster.
 
 [ Additional ]
@@ -959,7 +958,7 @@ while [[ $# -gt 0 ]]; do
             PROTOCOL="$2"
             shift
         ;;
-        "-sf"|"--scoring_function")
+        "-sf"|"--function")
             SCORING_FUNCTION="$2"
             shift
         ;;
@@ -976,7 +975,7 @@ while [[ $# -gt 0 ]]; do
             DOCK_LENGHT=("$2" "$2" "$2")
             shift # past argument
         ;;
-        "-n"|"--n_poses")
+        "-n"|"--n-poses")
             DOCK_POSES="$2"
             shift # past argument
         ;;
