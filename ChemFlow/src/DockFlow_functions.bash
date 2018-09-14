@@ -12,12 +12,11 @@
 ## Initializes DockFlow variables and reads input.
 ##
 ## Description:
-## Initializes all DockFlow variables, then reads user input from command line or
-## from a configuration file.
+## Initializes all DockFlow variables, then reads user input from command line
 ##
 ## Author:
 ## dgomes    - Diego Enry Barreto Gomes - dgomes@pq.cnpq.br
-## cbouysset - Cedric Bouysset - cbouysset@unice.fr
+## cbouy     - Cedric Bouysset - cbouysset@unice.fr
 ##
 ## Last Update: (date, by who and where )
 ## vendredi 25 mai 2018, 13:54:40 (UTC+0200) by dgomes @ Universite de Strasbourg.
@@ -239,7 +238,7 @@ if [ ! -f ${RUNDIR}/DockFlow.header ] ; then
         file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
         eval echo \""${file}"\" > ${RUNDIR}/DockFlow.header
     else
-        cp ${WORKDIR}/${HEADER_FILE} ${RUNDIR}/DockFlow.header
+        cp ${HEADER_FILE} ${RUNDIR}/DockFlow.header
     fi
 fi
 case "${JOB_SCHEDULLER}" in
@@ -281,7 +280,7 @@ DockFlow_prepare_receptor() {
 #        UPDATE: fri. july 6 14:49:50 CEST 2018
 #
 #===============================================================================
-cp ${WORKDIR}/${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
+cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 
 if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
     ${mgltools_folder}/bin/python \
@@ -292,7 +291,6 @@ fi
 }
 
 
-<<<<<<< HEAD
 DockFlow_rewrite_origin_ligands() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_rewrite_ligands
@@ -329,7 +327,7 @@ while read line ; do
     else
         echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
     fi
-done < ${WORKDIR}/${LIGAND_FILE}
+done < ${LIGAND_FILE}
 IFS=${OLDIFS}
 
 
@@ -347,8 +345,6 @@ done
 }
 
 
-=======
->>>>>>> d867f6c20c443c59bce57551ef3c7a3aabbee990
 DockFlow_prepare_ligands() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_rewrite_ligands
@@ -434,6 +430,7 @@ DockFlow_prepare_receptor
 # 3. Ligands
 if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
     echo "Please run LigFlow before DockFlow to prepare the input ligands."
+    exit 0
 else
     DockFlow_prepare_ligands
 fi
@@ -782,12 +779,12 @@ DockFlow summary:
     USER: ${USER}
  PROJECT: ${PROJECT}
 PROTOCOL: ${PROTOCOL}
- WORKDIR: ${PWD}
+ WORKDIR: ${WORKDIR}
 
 [ Docking setup ]
 RECEPTOR NAME: ${RECEPTOR_NAME}
-RECEPTOR FILE: ${RECEPTOR_FILE}
-  LIGAND FILE: ${LIGAND_FILE}
+RECEPTOR FILE: $(realpath --relative-to="${WORKDIR}" ${RECEPTOR_FILE})
+  LIGAND FILE: $(realpath --relative-to="${WORKDIR}" ${LIGAND_FILE})
      NLIGANDS: ${NLIGANDS}
        NPOSES: ${DOCK_POSES}
       PROGRAM: ${DOCK_PROGRAM}
@@ -926,17 +923,13 @@ while [[ $# -gt 0 ]]; do
             exit 0
             shift
         ;;
-        "-f"|"--file")
-            CONFIG_FILE="$2"
-            shift # past argument
-        ;;
         "-r"|"--receptor")
-            RECEPTOR_FILE="$2"
+            RECEPTOR_FILE=$(realpath "$2")
             RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .mol2 )"
             shift # past argument
         ;;
         "-l"|"--ligand")
-            LIGAND_FILE="$2"
+            LIGAND_FILE=$(realpath "$2")
             shift # past argument
         ;;
         "-p"|"--project")
@@ -981,7 +974,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         "--header")
             HEADER_PROVIDED="yes"
-            HEADER_FILE=$2
+            HEADER_FILE=$(realpath "$2")
             shift
         ;;
         ## PLANTS arguments
