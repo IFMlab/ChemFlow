@@ -3,14 +3,14 @@
 block_cipher = None
 
 a = Analysis(['GUI.py'],
-             pathex=['/home/cedric/Dropbox/work/ChemFlow/src/GUI'],
+             pathex=['/usr/lib/qt/plugins/platforms'],
              binaries=[],
              datas=[
-             ('img/archive.png','.'),
-             ('img/process.png','.'),
-             ('img/run.png','.'),
-             ('img/logo.png','.'),
-             ('img/logo.ico','.')
+             ('img/archive.png','img'),
+             ('img/process.png','img'),
+             ('img/run.png','img'),
+             ('img/logo.png','img'),
+             ('img/logo.ico','img')
              ],
              hiddenimports=[],
              hookspath=[],
@@ -27,7 +27,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='ChemFlow',
+          name='chemflow',
           debug=False,
           strip=False,
           upx=True,

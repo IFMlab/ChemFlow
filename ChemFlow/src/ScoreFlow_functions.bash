@@ -5,7 +5,7 @@
 #####################################################################
 #
 # Diego E. B. Gomes(1,2,3) - dgomes@pq.cnpq.br
-# Cedric Boysset (3,4) - cboysset@unice.fr
+# Cedric Bouysset (3,4) - cbouysset@unice.fr
 # Marco Cecchini (3) - cecchini@unistra.fr
 #
 # 1 - Instituto Nacional de Metrologia, Qualidade e Tecnologia - Brazil

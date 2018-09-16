@@ -633,6 +633,8 @@
     </property>
     <addaction name="actionNew_project"/>
     <addaction name="actionLoad_project"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -683,6 +685,11 @@
   <action name="actionDebug_mode">
    <property name="text">
     <string>Debug mode</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
    </property>
   </action>
  </widget>

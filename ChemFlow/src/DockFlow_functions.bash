@@ -50,7 +50,11 @@ fi
 if [ ${DOCK_PROGRAM} == "PLANTS" ] ; then
     # Write plants config
     RECEPTOR_FILE="../receptor.mol2"
-    file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config.in)
+    if [ -z "${PLANTS_WATER}" ]; then
+      file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config.in)
+    else
+      file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_water_config.in)
+    fi
     eval echo \""${file}"\" > ${RUNDIR}/dock_input.in
 fi
 
@@ -77,7 +81,8 @@ case ${JOB_SCHEDULLER} in
             fi
             echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
                 --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-                --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
+                --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} \
+                --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
                 --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
         done
     ;;
@@ -211,6 +216,7 @@ for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
     echo \"mkdir -p ${RUNDIR}/\${LIGAND}/VINA/ ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
+        --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
         --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null \" >> ${first}.xargs
 done
 cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
@@ -762,7 +768,7 @@ DockFlow_summary() {
 #                ${DOCK_PROGRAM}
 #                ${SCORING_FUNCTION}
 #                ${DOCK_CENTER}
-#                ${DOCK_LENGHT}
+#                ${DOCK_LENGTH}
 #                ${DOCK_RADIUS}
 #                ${JOB_SCHEDULLER}
 #                ${NCORES}
@@ -791,7 +797,7 @@ RECEPTOR FILE: $(realpath --relative-to="${WORKDIR}" ${RECEPTOR_FILE})
       SCORING: ${SCORING_FUNCTION}
        CENTER: ${DOCK_CENTER[@]}"
 case ${DOCK_PROGRAM} in
- "VINA") echo "         SIZE: ${DOCK_LENGHT[@]} (X,Y,Z)" ;;
+ "VINA") echo "         SIZE: ${DOCK_LENGTH[@]} (X,Y,Z)" ;;
       *) echo "       RADIUS: ${DOCK_RADIUS}"
 esac
 
@@ -878,26 +884,24 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol
 _________________________________________________________________________________
 [ PLANTS ]
  --radius            : Radius of the spheric binding site [15]
+ --speed             : Search speed for Plants. 1, 2 or 4 [1]
+ --ants              : Number of ants [20]
+ --evap_rate         : Evaporation rate of pheromones [0.15]
+ --iteration_scaling : Iteration scaling factor [1.0]
+ --cluster_rmsd      : RMSD similarity threshold between poses, in Å [2.0]
+ --water             : Path to a structural water molecule (.mol2)
+ --water_xyzr        : xyz coordinates and radius of the water sphere, separated by a space
 _________________________________________________________________________________
 [ Vina ]
  --size              : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
+ --exhaustiveness    : Exhaustiveness of the global search [8]
+ --energy_range      : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
 _________________________________________________________________________________
 "
     # Not implemented in this version :
     # [ Post Processing ]
     # --report            : [not implemented]
     # --clean             : [not implemented] Clean up DockFlow output for a fresh start.
-    # [ PLANTS ]
-    # --speed             : Search speed for Plants. 1, 2 or 4 [1]
-    # --ants              : Number of ants     [20]
-    # --evap_rate         : Evaporation rate of pheromones [0.15]
-    # --iteration_scaling : Iteration scaling factor [1.0]
-    # --water             : Path to a structural water molecule
-    # --water_xyzr        : xyz coordinates and radius of the water sphere, separated by a space
-    # [ Vina ]
-    # --exhaustiveness    : Exhaustiveness of the global search [8]
-    # --energy_range      : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
-
 
     exit 0
 }
@@ -949,12 +953,12 @@ while [[ $# -gt 0 ]]; do
             shift 3 # past argument
         ;;
         "--size")
-            DOCK_LENGHT=("$2" "$3" "$4")
+            DOCK_LENGTH=("$2" "$3" "$4")
             shift 3
         ;;
         "--radius")
             DOCK_RADIUS="$2"
-            DOCK_LENGHT=("$2" "$2" "$2")
+            DOCK_LENGTH=("$2" "$2" "$2")
             shift # past argument
         ;;
         "-n"|"--n-poses")
@@ -979,50 +983,46 @@ while [[ $# -gt 0 ]]; do
         ;;
         ## PLANTS arguments
         "--speed")
-            speed="$2"
+            SPEED="$2"
+            shift
+        ;;
+        "--iteration_scaling")
+            ITERATION_SCALING="$2"
             shift
         ;;
         "--ants")
-            ants="$2"
+            ANTS="$2"
             shift
         ;;
         "--evap_rate")
-            evap_rate="$2"
+            EVAP_RATE="$2"
+            shift
+        ;;
+        "--cluster_rmsd")
+            CLUSTER_RMSD="$2"
             shift
         ;;
         "--water")
-            water="$2"
+            WATER_FILE="$2"
             shift # past argument
         ;;
         "--water_xyzr")
-            water_xyzr="$2 $3 $4 $5"
+            WATER_XYZR="$2 $3 $4 $5"
             shift 4 # past argument
         ;;
-        ### VINA arguments  UNUSED - REPLACED BY --vina_extra
-        "--vina_extra")
-            VINA_EXTRA="$2"
-            shift
-         ;;
-        "--iteration_scaling")
-            iteration_scaling="$2"
-            shift
-        ;;
+        ### VINA arguments
         "--exhaustiveness")
-            exhaustiveness="$2"
+            EXHAUSTIVENESS="$2"
             shift
         ;;
         "--energy_range")
-            energy_range="$2"
+            ENERGY_RANGE="$2"
             shift
         ;;
         ## Final arguments
         "--overwrite")
             OVERWRITE="yes"
         ;;
-        ## ADVANCED USER INPUT
-        #    --advanced)
-        #       USER_INPUT="$2"
-        #       shift
         "--postprocess")
             POSTPROCESS="yes"
         ;;

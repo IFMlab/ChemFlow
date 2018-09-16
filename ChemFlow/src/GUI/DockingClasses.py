@@ -66,6 +66,7 @@ class DialogDockPlants(QDialog, Ui_DockingPlants):
         self.values['Ants'] = self.spinBox_ants.value()
         self.values['EvaporationRate'] = self.doubleSpinBox_evaporationRate.value()
         self.values['IterationScaling'] = self.doubleSpinBox_iterationScaling.value()
+        self.values['ClusterRMSD'] = self.doubleSpinBox_clusterRMSD.value()
         self.values['ScoringFunction'] = self.comboBox_scoringFunction.currentText()
         self.values['SearchSpeed'] = self.comboBox_searchSpeed.currentText()
         if self.checkBox_water.isChecked():

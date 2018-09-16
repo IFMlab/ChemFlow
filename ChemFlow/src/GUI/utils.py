@@ -151,11 +151,13 @@ def errorDialog(title="Error", message="", info=""):
     if retval == QMessageBox.Ok:
         msg.close()
 
-def yesNoDialog(title="Question", message="", info=""):
+def yesNoDialog(title="Question", message="", info="", details=""):
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Question)
     msg.setText(message)
     msg.setInformativeText(info)
+    if details:
+        msg.setDetailedText(details)
     msg.setWindowTitle(title)
     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     retval = msg.exec_()

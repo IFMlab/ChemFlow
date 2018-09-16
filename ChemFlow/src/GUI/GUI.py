@@ -2,8 +2,8 @@
 
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
-import pexpect
-import sys, os, webbrowser
+from re import search
+import sys, os, webbrowser, pexpect
 from utils import (
     WORKDIR, CWDIR, EMPTY_VALUES,
     cleanParameters,
@@ -41,6 +41,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionDebug_mode.triggered.connect(self.debug_mode)
         self.actionNew_project.triggered.connect(self.create_project)
         self.actionLoad_project.triggered.connect(self.load_project)
+        self.actionExit.triggered.connect(self.close)
         ## Input
         self.pushButton_docking_rec.clicked.connect(self.browse_docking_receptor)
         self.pushButton_docking_lig.clicked.connect(self.browse_docking_ligand)
@@ -150,7 +151,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 # Protocol for PLANTS
                 for kw in [
                 'DockCenterX','DockCenterY','DockCenterZ',
-                'DockRadius','ScoringFunction',
+                'DockRadius','ScoringFunction','ClusterRMSD',
                 'Ants','EvaporationRate','IterationScaling','SearchSpeed'
                 ]:
                     self.input[kw] = self.docking_protocol[kw]
@@ -236,16 +237,24 @@ class Main(QMainWindow, Ui_MainWindow):
         self.input['Archive'] = False
         missing = []
         missing.extend(self.check_docking_required_args())
-        # Execute
-        self.execute_command(self.build_docking_command())
+        # Show errors or execute
+        if missing:
+            missingParametersDialog(*missing)
+        else:
+            # Execute
+            self.execute_command(self.build_docking_command())
 
     def run_docking_archive(self):
         self.input['Archive'] = True
         self.input['PostProcess'] = False
         missing = []
         missing.extend(self.check_docking_required_args())
-        # Execute
-        self.execute_command(self.build_docking_command())
+        # Show errors or execute
+        if missing:
+            missingParametersDialog(*missing)
+        else:
+            # Execute
+            self.execute_command(self.build_docking_command())
 
     def build_docking_command(self):
         command = ['DockFlow']
@@ -256,13 +265,15 @@ class Main(QMainWindow, Ui_MainWindow):
         command.extend(['--ligand', self.input['Ligand']])
         # Protocol
         command.extend(['--protocol', self.input['Protocol']])
-        command.extend(['-n', self.input['NumDockingPoses']])
-        # Postprocess and archive
-        if self.input['PostProcess']:
-            command.append('--postprocess')
-            return command
+        # Archive
         if self.input['Archive']:
             command.append('--archive')
+            return command
+        # Number of docking poses
+        command.extend(['-n', self.input['NumDockingPoses']])
+        # Postprocess
+        if self.input['PostProcess']:
+            command.append('--postprocess')
             return command
         # Docking protocol
         command.extend(['-sf', self.input['ScoringFunction']])
@@ -285,6 +296,7 @@ class Main(QMainWindow, Ui_MainWindow):
         # PLANTS
         if self.input['docking_software'] == 'PLANTS':
             command.extend(['--speed', self.input['SearchSpeed']])
+            command.extend(['--cluster_rmsd', self.input['ClusterRMSD']])
             command.extend(['--ants', self.input['Ants']])
             command.extend(['--evap_rate', self.input['EvaporationRate']])
             command.extend(['--iteration_scaling', self.input['IterationScaling']])
@@ -323,23 +335,40 @@ class Main(QMainWindow, Ui_MainWindow):
                 index = child.expect(['\?', pexpect.EOF])
                 if index == 0: # question
                     # Get the question from the buffer
-                    split = child.before.split('\n')
-                    if len(split) > 1:
-                        msg = split[-1]
+                    split_lines = child.before.split('\n')
+                    if len(split_lines) > 1:
+                        question = split_lines[-1]
                     else:
-                        msg = child.before
+                        question = child.before
                     # Separate yes/no questions from others
-                    if '[y/n]' in msg:
-                        answer = yesNoDialog(message=msg)
+                    if '[y/n]' in question:
+                        # Separate Summary from other y/n questions
+                        summary_begin = None
+                        for i, line in enumerate(split_lines):
+                            summary_search = search(r'.+Flow summary:', line)
+                            if summary_search:
+                                summary_begin = i
+                                break
+                        if summary_begin:
+                            summary = '\n'.join(split_lines[summary_begin+2:-1])
+                            answer = yesNoDialog(
+                                title="{} summary".format(command[0]),
+                                message="Please check if the details are correct",
+                                info="Continue ?",
+                                details=summary)
+                            child.sendline(answer)
+                            _continue = True if answer == 'yes' else False
+                        else:
+                            answer = yesNoDialog(message=question)
+                            child.sendline(answer)
                     else:
-                        qdialog = DialogQuestion(question=msg)
+                        qdialog = DialogQuestion(question=question)
                         qdialog.exec_()
                         answer = qdialog.answer
-                    # Send answer to child
-                    child.sendline(answer)
+                        child.sendline(answer)
                 elif index == 1: # EOF signal
                     _continue = False
-                    print('[ ChemFlow GUI ] Normal termination of the child process')
+            print('[ ChemFlow GUI ] Normal termination of the child process')
 
     def closeEvent(self, event):
         cleanParameters(CWDIR)
