@@ -6,8 +6,9 @@ a = Analysis(['GUI.py'],
              pathex=['/usr/lib/qt/plugins/platforms'],
              binaries=[],
              datas=[
-             ('img/*.png','img'),\
-             ('img/*.ico','img')
+               ('img/*.png','img'),
+               ('img/*.ico','img'),
+               ('fonts/*.ttf','fonts'),
              ],
              hiddenimports=[],
              hookspath=[],
