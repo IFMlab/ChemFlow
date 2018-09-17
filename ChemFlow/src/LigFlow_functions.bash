@@ -368,29 +368,29 @@ LigFlow_compute_charge() {
 #                ${PROJECT}
 #                ${NCORES}
 #===============================================================================
-# The name of the ligand, without any conformational info
-LIGAND_NAME=`echo ${LIGAND} | sed -e 's/_conf_[0-9]*//'`
+echo "# The name of the ligand, without any conformational info
+LIGAND_NAME=\`echo \${LIGAND} | sed -e 's/_conf_[0-9]*//'\`
 
 # Mandatory Gasteiger charges
-if [ ! -f gas/${LIGAND_NAME}.mol2 ] ; then
-    echo "antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/gas/${LIGAND_NAME}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> LigFlow.run
-fi
+if [ ! -f ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 ] ; then
+    echo \"antechamber -i ${RUNDIR}/original/\${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> LigFlow.xargs
+fi " >> LigFlow.run
 
 case ${CHARGE} in
 "bcc")
     # Compute am1-bcc charges
-    echo "antechamber -i ${RUNDIR}/gas/${LIGAND_NAME}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND_NAME}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> LigFlow.run
+    echo "echo \"antechamber -i ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fi mol2 -o ${RUNDIR}/bcc/\${LIGAND_NAME}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> LigFlow.xargs" >> LigFlow.run
 
     ;;
 "resp")
 #   Prepare Gaussian
-    echo "antechamber -i ${RUNDIR}/gas/${LIGAND_NAME}.mol2 -fi mol2 -o ${LIGAND_NAME}.gau -fo gcrt -gv 1 -ge ligand.gesp -gm \"%mem=16Gb\" -gn \"%nproc=${NCORES}\" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> LigFlow.run
+    echo "echo \"antechamber -i ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fi mol2 -o \${LIGAND_NAME}.gau -fo gcrt -gv 1 -ge ligand.gesp -gm \"%mem=16Gb\" -gn \"%nproc=${NCORES}\" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> LigFlow.xargs" >> LigFlow.run
 
     # Run Gaussian to optimize structure and generate electrostatic potential grid
-    echo "g09 <${LIGAND_NAME}.gau>${LIGAND_NAME}.gout" >> LigFlow.run
+    echo "echo \"g09 <\${LIGAND_NAME}.gau>\${LIGAND_NAME}.gout \">> LigFlow.xargs" >> LigFlow.run
 
     # Read Gaussian output and write new optimized ligand with RESP charges
-    echo "antechamber -i ${LIGAND_NAME}.gout -fi gout -o ${RUNDIR}/bcc/${LIGAND_NAME}_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> antechamber.log" >> LigFlow.run
+    echo "echo \"antechamber -i \${LIGAND_NAME}.gout -fi gout -o ${RUNDIR}/bcc/\${LIGAND_NAME}_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> antechamber.log \">> LigFlow.xargs" >> LigFlow.run
 ;;
 esac
 }
@@ -462,13 +462,16 @@ case ${JOB_SCHEDULLER} in
       rm -rf LigFlow.run
     fi
 
-    for LIGAND in ${LIGAND_LIST[@]} ; do
-        LigFlow_compute_charge
-    done
+    echo "for LIGAND in ${LIGAND_LIST[@]} ; do" > LigFlow.run
+    LigFlow_compute_charge
+
+    echo "done
+cat LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'" >> LigFlow.run
 
     if [ -f  ${RUNDIR}/LigFlow.run ] ; then
-        cd ${RUNDIR} ; cat LigFlow.run | xargs -P${NCORES} -I '{}' bash -c '{}'
+        bash LigFlow.run
     fi
+    rm -f LigFlow.run
 ;;
 "SLURM"|"PBS")
     echo ''
@@ -489,40 +492,15 @@ case ${JOB_SCHEDULLER} in
         mkdir tmp_${first}
 cd tmp_${first}
 
-if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
-for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
+if [ -f ${first}.xargs ] ; then rm -rf LigFlow.xargs ; fi
+for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do" > LigFlow.run
 
-# The name of the ligand, without any conformational info
-LIGAND_NAME=\`echo \${LIGAND} | sed -e 's/_conf_[0-9]*//'\`
+        LigFlow_compute_charge
 
-# Mandatory Gasteiger charges
-if [ ! -f ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 ] ; then
-    echo \"antechamber -i ${RUNDIR}/original/\${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> ${first}.xargs
-fi " > LigFlow.run
-
-case ${CHARGE} in
-"bcc")
-    # Compute am1-bcc charges
-    echo "echo \"antechamber -i ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fi mol2 -o ${RUNDIR}/bcc/\${LIGAND_NAME}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> ${first}.xargs" >> LigFlow.run
-
-    ;;
-"resp")
-#   Prepare Gaussian
-    echo "echo \"antechamber -i ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fi mol2 -o \${LIGAND_NAME}.gau -fo gcrt -gv 1 -ge ligand.gesp -gm \"%mem=16Gb\" -gn \"%nproc=${NCORES}\" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> ${first}.xargs" >> LigFlow.run
-
-    # Run Gaussian to optimize structure and generate electrostatic potential grid
-    echo "echo \"g09 <\${LIGAND_NAME}.gau>\${LIGAND_NAME}.gout \">> ${first}.xargs" >> LigFlow.run
-
-    # Read Gaussian output and write new optimized ligand with RESP charges
-    echo "echo \"antechamber -i \${LIGAND_NAME}.gout -fi gout -o ${RUNDIR}/bcc/\${LIGAND_NAME}_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> antechamber.log \">> ${first}.xargs" >> LigFlow.run
-;;
-esac
-
-echo "done
-cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-rm -rf tmp_${first}
-">> LigFlow.run
-
+        echo "done
+cat LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+cd ${RUNDIR}
+rm -rf ${RUNDIR}/tmp_${first}">> LigFlow.run
 
         LigFlow_write_HPC_header
 
