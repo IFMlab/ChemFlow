@@ -485,7 +485,8 @@ case ${JOB_SCHEDULLER} in
             rm -rf ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
         fi
 
-        echo "mkdir tmp_${first}
+        echo "cd ${RUNDIR}
+        mkdir tmp_${first}
 cd tmp_${first}
 
 if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
@@ -495,7 +496,7 @@ for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
 LIGAND_NAME=\`echo \${LIGAND} | sed -e 's/_conf_[0-9]*//'\`
 
 # Mandatory Gasteiger charges
-if [ ! -f gas/\${LIGAND_NAME}.mol2 ] ; then
+if [ ! -f ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 ] ; then
     echo \"antechamber -i ${RUNDIR}/original/\${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> ${first}.xargs
 fi " > LigFlow.run
 
@@ -525,11 +526,11 @@ rm -rf tmp_${first}
 
         LigFlow_write_HPC_header
 
-#        if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
-#            sbatch LigFlow.slurm
-#        elif [ "${JOB_SCHEDULLER}" == "PBS" ] ; then
-#            qsub LigFlow.pbs
-#        fi
+        if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
+            sbatch LigFlow.slurm
+        elif [ "${JOB_SCHEDULLER}" == "PBS" ] ; then
+            qsub LigFlow.pbs
+        fi
     done
 ;;
 esac
@@ -622,7 +623,6 @@ LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]
  --resp                 : Compute resp charges
 
 [ Parallel execution ]
- -nc/--cores        INT : Number of cores per node [${NCORES}]
  --pbs/--slurm          : Workload manager, PBS or SLURM
  --header          FILE : Header file provided to run on your cluster.
 
@@ -683,10 +683,6 @@ while [[ $# -gt 0 ]]; do
             HEADER_PROVIDED="yes"
             HEADER_FILE=$2
             shift
-        ;;
-        "-nc"|"--cores") # Number of Cores [1] (or cores/node)
-            NCORES="$2" # Same as above.
-            shift # past argument
         ;;
         *)
             unknown="$1"        # unknown option

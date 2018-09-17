@@ -265,7 +265,6 @@ SCORING_FUNCTION="chemplp"
 # Run options
 JOB_SCHEDULLER="None"
 NCORES=$(getconf _NPROCESSORS_ONLN)
-#NCORES=1
 OVERWRITE="no"    # Don't overwrite stuff.
 HEADER_PROVIDED="no"
 
@@ -310,6 +309,7 @@ elif [ $1 == 'ScoreFlow' ] ; then
     RUN_ONLY="no"
 elif [ $1 == 'LigFlow' ] ; then
     WORKFLOW="LigFlow"
+    NCORES=1
 
     CHARGE="gas"
     BCC="no"
