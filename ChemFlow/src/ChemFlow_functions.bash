@@ -63,7 +63,7 @@ fi
 # Check if the receptor file has been given------------------------------------
 
 if [ -z "${RECEPTOR_FILE}" ] && [ ${WORKFLOW} != "LigFlow" ] ; then
-    if [ ${SCORING_FUNCTION} != "mmgbsa" ] ; then
+    if [ "${SCORING_FUNCTION}" != "mmgbsa" ] ; then
         ERROR_MESSAGE="No RECEPTOR file name (-r receptor_file.mol2)" ;
         ChemFlow_error ;
     else
@@ -72,28 +72,30 @@ if [ -z "${RECEPTOR_FILE}" ] && [ ${WORKFLOW} != "LigFlow" ] ; then
     fi
 fi
 # Check if the receptor file exists--------------------------------------------
-if [ ! -f ${RECEPTOR_FILE} ]  && [ ${WORKFLOW} != "LigFlow" ] ; then
+if [ ! -f "${RECEPTOR_FILE}" ]  && [ "${WORKFLOW}" != "LigFlow" ] ; then
     ERROR_MESSAGE="The receptor file ${RECEPTOR_FILE} does not exist." ;
     ChemFlow_error ;
 fi
 
-# Check if the receptor file has been given----------------------------------
+# Check if the ligand file has been given----------------------------------
 if [ -z "${LIGAND_FILE}" ] ; then
     ERROR_MESSAGE="No LIGAND filename (-l ligand_file.mol2)" ;
     ChemFlow_error ;
 fi
 
 # Check if the receptor file exists------------------------------------------
-if [ ! -f ${LIGAND_FILE} ] ; then
+if [ ! -f "${LIGAND_FILE}" ] ; then
     ERROR_MESSAGE="The ligand file ${LIGAND_FILE} does not exist." ;
     ChemFlow_error ;
 fi
 
 # Set the docking program or score program-------------------------------------
-case ${WORKFLOW} in
+case "${WORKFLOW}" in
 "DockFlow")
-    case ${SCORING_FUNCTION} in
+    case "${SCORING_FUNCTION}" in
     "chemplp"|"plp"|"plp95") # PLANTS is the default DOCK_PROGRAM
+        # check if docking with water
+        check_water
     ;;
     "vina")
         DOCK_PROGRAM="VINA" ;
@@ -109,7 +111,7 @@ case ${WORKFLOW} in
     check_center
 ;;
 "ScoreFlow")
-    case ${SCORING_FUNCTION} in
+    case "${SCORING_FUNCTION}" in
     "chemplp"|"plp"|"plp95") # PLANTS is the default SCORE_PROGRAM
     if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
         ERROR_MESSAGE="Plants rescoring requires a mol2 file as receptor input"; ChemFlow_error ;
@@ -133,7 +135,6 @@ case ${WORKFLOW} in
     ;;
     esac
 
-
     if [ "${SCORING_FUNCTION}" != "mmgbsa"  ] ; then
         # Center is not required for mmgbsa rescoring.
         check_center
@@ -142,10 +143,10 @@ case ${WORKFLOW} in
 esac
 
 # If we are using the major program (no postprocessing or archiving) ------------
-if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ] ; then
+if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
 
     # HPC adjustments
-    case ${JOB_SCHEDULLER} in
+    case "${JOB_SCHEDULLER}" in
     "None"|"PBS"|"SLURM") ;;
     *) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" ; ChemFlow_error ;
        ;;
@@ -154,15 +155,15 @@ if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ] ; then
     # Check program locations ---------------------------------------------------
     case "${DOCK_PROGRAM}" in
     "PLANTS")
-        if [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
+        if [ -z "$(command -v PLANTS1.2_64bit)" ] ; then
             ERROR_MESSAGE="PLANTS is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
     "VINA")
-        if  [ "$(command -v vina)" == "" ] ; then
+        if  [ -z "$(command -v vina)" ] ; then
             ERROR_MESSAGE="Autodock Vina is not installed or on PATH" ; ChemFlow_error ;
         fi
-        if [ "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" == "" ] ; then
+        if [ -z "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" ] ; then
             ERROR_MESSAGE="MglTools is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
@@ -170,36 +171,36 @@ if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ] ; then
 
     case "${SCORE_PROGRAM}" in
     "PLANTS")
-        if [ "$(command -v PLANTS1.2_64bit)" == "" ] ; then
+        if [ -z "$(command -v PLANTS1.2_64bit)" ] ; then
             ERROR_MESSAGE="PLANTS is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
     "VINA")
-        if  [ "$(command -v vina)" == "" ] ; then
+        if  [ -z "$(command -v vina)" ] ; then
             ERROR_MESSAGE="Autodock Vina is not installed or on PATH" ; ChemFlow_error ;
         fi
-        if [ "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" == "" ] ; then
+        if [ -z "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" ] ; then
             ERROR_MESSAGE="MglTools is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
     "AMBER")
-        if  [ "$(command -v sander)" == "" ] ; then
+        if  [ -z "$(command -v sander)" ] ; then
             ERROR_MESSAGE="AmberTools 17+ is not installed or on PATH" ; ChemFlow_error ;
         fi
-        if [ ${CHARGE} == "resp" ] && [ "$(command -v g09)" == "" ] ; then
+        if [ "${CHARGE}" == "resp" ] && [ -z "$(command -v g09)" ] ; then
             ERROR_MESSAGE="Gaussian is not installed or on PATH" ; ChemFlow_error ;
         fi
 
-        if  [ "$(command -v pmemd.cuda)" == "" ] ; then
-            if  [ "$(command -v pmemd)" == "" ] ; then
+        if  [ -z "$(command -v pmemd.cuda)" ] ; then
+            if  [ -z "$(command -v pmemd)" ] ; then
                 echo "[ ERROR ] Amber (pmemd) is not installed or on PATH, changing to SANDER."
                 AMBER_EXEC="mpirun -n ${NCORES} sander.MPI"
-                if  [ "$(command -v sander.MPI)" == "" ] ; then
+                if  [ -z "$(command -v sander.MPI)" ] ; then
                     AMBER_EXEC="sander"
                 fi
             else
                 AMBER_EXEC="mpirun -n ${NCORES} pmemd.MPI"
-                if  [ "$(command -v pmemd.MPI)" == "" ] ; then
+                if  [ -z "$(command -v pmemd.MPI)" ] ; then
                     AMBER_EXEC="pmemd"
                 fi
             fi
@@ -209,7 +210,7 @@ if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ] ; then
      ;;
     esac
 
-    if [ ${HEADER_PROVIDED} != 'no' ] ; then
+    if [ "${HEADER_PROVIDED}" != 'no' ] ; then
         if [ ! -f ${HEADER_FILE} ] ; then
             ERROR_MESSAGE="Header file ${HEADER_FILE} does not exist." ; ChemFlow_error ;
         fi
@@ -219,7 +220,7 @@ if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ] ; then
     if [ "${OVERWRITE}" == "yes" ] ; then
       read -p "[ Note ] Are you sure you want to OVERWRITE [y/n]? " opt
 
-      case ${opt} in
+      case "${opt}" in
         "Y"|"YES"|"Yes"|"yes"|"y")  ;;
         *)  echo "Safe decision. Rerun without '--overwrite'" ; exit 0 ;;
       esac
@@ -231,10 +232,18 @@ ChemFlow_set_ligand_list ${LIGAND_FILE}
 }
 
 check_center(){
-if [ -z ${POSTPROCESS} ] && [ -z ${ARCHIVE} ]  && [ -z ${POSTPROCESS} ] ; then
+if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ]; then
     if [ -z "${DOCK_CENTER}" ] ; then
         ERROR_MESSAGE="No DOCKING CENTER defined (--center x y z)" ; ChemFlow_error ;
     fi
+fi
+}
+
+check_water(){
+if [ "${DOCK_PROGRAM}" == "PLANTS" ]; then
+  if [ -s "${WATER_FILE}" ] && [ ! -z "${WATER_XYZR}" ]; then
+    PLANTS_WATER="yes"
+  fi
 fi
 }
 
@@ -249,7 +258,7 @@ ChemFlow_set_defaults(){
 #        Author: Dona de Francquen
 #===============================================================================
 # General options
-WORKDIR=${PWD}
+WORKDIR="${PWD}"
 PROTOCOL="default"
 SCORING_FUNCTION="chemplp"
 
@@ -264,9 +273,20 @@ if [ $1 == 'DockFlow' ] ; then
 
     # Docking options
     DOCK_PROGRAM="PLANTS"
-    DOCK_LENGHT=("15" "15" "15")
+    DOCK_LENGTH=("15" "15" "15")
     DOCK_RADIUS="15"
     DOCK_POSES="10"
+
+    # PLANTS advanced options
+    SPEED="1"
+    ANTS="20"
+    EVAP_RATE="0.15"
+    ITERATION_SCALING="1.0"
+    CLUSTER_RMSD="2.0"
+
+    # Vina advanced options
+    EXHAUSTIVENESS="8"
+    ENERGY_RANGE="3.00"
 
     # Run options
     RESUME="No"
@@ -275,7 +295,7 @@ elif [ $1 == 'ScoreFlow' ] ; then
 
     # Scoring options
     SCORE_PROGRAM="PLANTS"
-    DOCK_LENGHT=("15" "15" "15")
+    DOCK_LENGTH=("15" "15" "15")
     DOCK_RADIUS="15"
     CHARGE="gas"
 
@@ -284,7 +304,7 @@ elif [ $1 == 'ScoreFlow' ] ; then
     WATER="no"
     MAXCYC="1000"
 
-    #run option
+    # run option
     WRITE_ONLY="no"
     RUN_ONLY="no"
 elif [ $1 == 'LigFlow' ] ; then

@@ -4,22 +4,21 @@
 ##
 ## Complies with:
 ## The ChemFlow standard version 1.0
-## 
+##
 ## Routine:
 ## DockFlow_init
 ##
 ## Brief:
 ## Initializes DockFlow variables and reads input.
 ##
-## Description: 
-## Initializes all DockFlow variables, then reads user input from command line or 
-## from a configuration file.
+## Description:
+## Initializes all DockFlow variables, then reads user input from command line
 ##
 ## Author:
 ## dgomes    - Diego Enry Barreto Gomes - dgomes@pq.cnpq.br
-## cbouysset - Cedric Bouysset - cbouysset@unice.fr
-## 
-## Last Update: (date, by who and where ) 
+## cbouy     - Cedric Bouysset - cbouysset@unice.fr
+##
+## Last Update: (date, by who and where )
 ## vendredi 25 mai 2018, 13:54:40 (UTC+0200) by dgomes @ Universite de Strasbourg.
 ##
 ###############################################################################
@@ -51,7 +50,11 @@ fi
 if [ ${DOCK_PROGRAM} == "PLANTS" ] ; then
     # Write plants config
     RECEPTOR_FILE="../receptor.mol2"
-    file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config.in)
+    if [ -z "${PLANTS_WATER}" ]; then
+      file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config.in)
+    else
+      file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_water_config.in)
+    fi
     eval echo \""${file}"\" > ${RUNDIR}/dock_input.in
 fi
 
@@ -78,7 +81,8 @@ case ${JOB_SCHEDULLER} in
             fi
             echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
                 --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-                --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
+                --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} \
+                --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
                 --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
         done
     ;;
@@ -212,6 +216,7 @@ for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
     echo \"mkdir -p ${RUNDIR}/\${LIGAND}/VINA/ ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
+        --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
         --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null \" >> ${first}.xargs
 done
 cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
@@ -239,7 +244,7 @@ if [ ! -f ${RUNDIR}/DockFlow.header ] ; then
         file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
         eval echo \""${file}"\" > ${RUNDIR}/DockFlow.header
     else
-        cp ${WORKDIR}/${HEADER_FILE} ${RUNDIR}/DockFlow.header
+        cp ${HEADER_FILE} ${RUNDIR}/DockFlow.header
     fi
 fi
 case "${JOB_SCHEDULLER}" in
@@ -281,7 +286,7 @@ DockFlow_prepare_receptor() {
 #        UPDATE: fri. july 6 14:49:50 CEST 2018
 #
 #===============================================================================
-cp ${WORKDIR}/${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
+cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 
 if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
     ${mgltools_folder}/bin/python \
@@ -289,6 +294,60 @@ if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
     -r ${RUNDIR}/receptor.mol2 \
     -o ${RUNDIR}/receptor.pdbqt
 fi
+}
+
+
+DockFlow_rewrite_origin_ligands() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_rewrite_ligands
+#   DESCRIPTION: User interface for the rewrite ligands option.
+#                 - Read all ligand names from the header of a .MOL2 file.
+#                 - Split each ligand to it's own ".MOL2" file.
+#               #  - Create "ligand.lst" with the list of ligands to dock.
+#
+#    PARAMETERS: ${PROJECT}
+#                ${LIGAND_LIST}
+#                ${RUNDIR}
+#                ${DOCK_PROGRAM}
+#                ${WORKDIR}
+#                ${OVERWRITE}
+#
+#        Author: Dona de Francquen
+#
+#        UPDATE: fri. july 6 14:49:50 CEST 2018
+#
+#===============================================================================
+# Original
+
+if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
+    mkdir -p ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
+fi
+
+OLDIFS=$IFS
+IFS='%'
+n=-1
+while read line ; do
+    if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
+        let n=$n+1
+        echo -e "${line}" > ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
+    else
+        echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
+    fi
+done < ${LIGAND_FILE}
+IFS=${OLDIFS}
+
+
+#
+# QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
+#
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    cd ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
+    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -dr no &>/dev/null
+    mv tmp.mol2 ${LIGAND}.mol2
+done
+#
+#
+#
 }
 
 
@@ -319,7 +378,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -d  ${LIGAND} ] ; then
         mkdir -p  ${LIGAND}
         if [ ! -d ${LIGAND} ] ; then
-            echo "[ ERROR ] could not create ${LIGAND} directory in ${RUNDIR}. Did you check your quotas? "
+            echo "[ ERROR ] Could not create ${LIGAND} directory in ${RUNDIR}."
             exit 0
         fi
     fi
@@ -377,6 +436,7 @@ DockFlow_prepare_receptor
 # 3. Ligands
 if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
     echo "Please run LigFlow before DockFlow to prepare the input ligands."
+    exit 0
 else
     DockFlow_prepare_ligands
 fi
@@ -708,7 +768,7 @@ DockFlow_summary() {
 #                ${DOCK_PROGRAM}
 #                ${SCORING_FUNCTION}
 #                ${DOCK_CENTER}
-#                ${DOCK_LENGHT}
+#                ${DOCK_LENGTH}
 #                ${DOCK_RADIUS}
 #                ${JOB_SCHEDULLER}
 #                ${NCORES}
@@ -725,19 +785,19 @@ DockFlow summary:
     USER: ${USER}
  PROJECT: ${PROJECT}
 PROTOCOL: ${PROTOCOL}
- WORKDIR: ${PWD}
+ WORKDIR: ${WORKDIR}
 
 [ Docking setup ]
 RECEPTOR NAME: ${RECEPTOR_NAME}
-RECEPTOR FILE: ${RECEPTOR_FILE}
-  LIGAND FILE: ${LIGAND_FILE}
+RECEPTOR FILE: $(realpath --relative-to="${WORKDIR}" ${RECEPTOR_FILE})
+  LIGAND FILE: $(realpath --relative-to="${WORKDIR}" ${LIGAND_FILE})
      NLIGANDS: ${NLIGANDS}
        NPOSES: ${DOCK_POSES}
       PROGRAM: ${DOCK_PROGRAM}
       SCORING: ${SCORING_FUNCTION}
        CENTER: ${DOCK_CENTER[@]}"
 case ${DOCK_PROGRAM} in
- "VINA") echo "         SIZE: ${DOCK_LENGHT[@]} (X,Y,Z)" ;;
+ "VINA") echo "         SIZE: ${DOCK_LENGTH[@]} (X,Y,Z)" ;;
       *) echo "       RADIUS: ${DOCK_RADIUS}"
 esac
 
@@ -759,7 +819,7 @@ esac
 
 
 DockFlow_help() {
-echo "Example usage: 
+echo "Example usage:
 DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-n 8] [-sf chemplp]
 
 [Options]
@@ -788,7 +848,7 @@ It can perform an automatic VS based on information given by the user :
 ligands, receptor, binding site info, and extra options.
 
 Usage:
-DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol protocol-name] [-n 8] [-sf chemplp]
+DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-n 10] [-sf chemplp]
 
 [Help]
  -h/--help              : Show this help message and quit
@@ -808,7 +868,7 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol 
 
 [ Optional ]
  --protocol         STR : Name for this specific protocol [default]
- -n/--n_poses       INT : Number of poses per ligand, to generate while docking, to keep while postprocessing [10]
+ -n/--n-poses       INT : Number of poses per ligand to generate while docking [10]
  -sf/--function     STR : vina, chemplp, plp, plp95  [chemplp]
 
 [ Parallel execution ]
@@ -824,26 +884,24 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [-protocol 
 _________________________________________________________________________________
 [ PLANTS ]
  --radius            : Radius of the spheric binding site [15]
+ --speed             : Search speed for Plants. 1, 2 or 4 [1]
+ --ants              : Number of ants [20]
+ --evap_rate         : Evaporation rate of pheromones [0.15]
+ --iteration_scaling : Iteration scaling factor [1.0]
+ --cluster_rmsd      : RMSD similarity threshold between poses, in Å [2.0]
+ --water             : Path to a structural water molecule (.mol2)
+ --water_xyzr        : xyz coordinates and radius of the water sphere, separated by a space
 _________________________________________________________________________________
 [ Vina ]
  --size              : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
+ --exhaustiveness    : Exhaustiveness of the global search [8]
+ --energy_range      : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
 _________________________________________________________________________________
 "
     # Not implemented in this version :
     # [ Post Processing ]
     # --report            : [not implemented]
     # --clean             : [not implemented] Clean up DockFlow output for a fresh start.
-    # [ PLANTS ]
-    # --speed             : Search speed for Plants. 1, 2 or 4 [1]
-    # --ants              : Number of ants     [20]
-    # --evap_rate         : Evaporation rate of pheromones [0.15]
-    # --iteration_scaling : Iteration scaling factor [1.0]
-    # --water             : Path to a structural water molecule
-    # --water_xyzr        : xyz coordinates and radius of the water sphere, separated by a space
-    # [ Vina ]
-    # --exhaustiveness    : Exhaustiveness of the global search [8]
-    # --energy_range      : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
-
 
     exit 0
 }
@@ -869,17 +927,13 @@ while [[ $# -gt 0 ]]; do
             exit 0
             shift
         ;;
-        "-f"|"--file")
-            CONFIG_FILE="$2"
-            shift # past argument
-        ;;
         "-r"|"--receptor")
-            RECEPTOR_FILE="$2"
+            RECEPTOR_FILE=$(realpath "$2")
             RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .mol2 )"
             shift # past argument
         ;;
         "-l"|"--ligand")
-            LIGAND_FILE="$2"
+            LIGAND_FILE=$(realpath "$2")
             shift # past argument
         ;;
         "-p"|"--project")
@@ -890,7 +944,7 @@ while [[ $# -gt 0 ]]; do
             PROTOCOL="$2"
             shift
         ;;
-        "-sf"|"--scoring_function")
+        "-sf"|"--function")
             SCORING_FUNCTION="$2"
             shift
         ;;
@@ -899,15 +953,15 @@ while [[ $# -gt 0 ]]; do
             shift 3 # past argument
         ;;
         "--size")
-            DOCK_LENGHT=("$2" "$3" "$4")
+            DOCK_LENGTH=("$2" "$3" "$4")
             shift 3
         ;;
         "--radius")
             DOCK_RADIUS="$2"
-            DOCK_LENGHT=("$2" "$2" "$2")
+            DOCK_LENGTH=("$2" "$2" "$2")
             shift # past argument
         ;;
-        "-n"|"--n_poses")
+        "-n"|"--n-poses")
             DOCK_POSES="$2"
             shift # past argument
         ;;
@@ -924,55 +978,51 @@ while [[ $# -gt 0 ]]; do
         ;;
         "--header")
             HEADER_PROVIDED="yes"
-            HEADER_FILE=$2
+            HEADER_FILE=$(realpath "$2")
             shift
         ;;
         ## PLANTS arguments
         "--speed")
-            speed="$2"
+            SPEED="$2"
+            shift
+        ;;
+        "--iteration_scaling")
+            ITERATION_SCALING="$2"
             shift
         ;;
         "--ants")
-            ants="$2"
+            ANTS="$2"
             shift
         ;;
         "--evap_rate")
-            evap_rate="$2"
+            EVAP_RATE="$2"
+            shift
+        ;;
+        "--cluster_rmsd")
+            CLUSTER_RMSD="$2"
             shift
         ;;
         "--water")
-            water="$2"
+            WATER_FILE="$2"
             shift # past argument
         ;;
         "--water_xyzr")
-            water_xyzr="$2 $3 $4 $5"
+            WATER_XYZR="$2 $3 $4 $5"
             shift 4 # past argument
         ;;
-        ### VINA arguments  UNUSED - REPLACED BY --vina_extra
-        "--vina_extra")
-            VINA_EXTRA="$2"
-            shift
-         ;;
-        "--iteration_scaling")
-            iteration_scaling="$2"
-            shift
-        ;;
+        ### VINA arguments
         "--exhaustiveness")
-            exhaustiveness="$2"
+            EXHAUSTIVENESS="$2"
             shift
         ;;
         "--energy_range")
-            energy_range="$2"
+            ENERGY_RANGE="$2"
             shift
         ;;
         ## Final arguments
         "--overwrite")
             OVERWRITE="yes"
         ;;
-        ## ADVANCED USER INPUT
-        #    --advanced)
-        #       USER_INPUT="$2"
-        #       shift
         "--postprocess")
             POSTPROCESS="yes"
         ;;
