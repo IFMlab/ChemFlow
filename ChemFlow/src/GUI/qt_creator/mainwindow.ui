@@ -190,9 +190,9 @@
      <widget class="QLabel" name="label_dockingSoftware">
       <property name="geometry">
        <rect>
-        <x>17</x>
+        <x>7</x>
         <y>150</y>
-        <width>61</width>
+        <width>71</width>
         <height>20</height>
        </rect>
       </property>
@@ -624,7 +624,7 @@
      <x>0</x>
      <y>0</y>
      <width>662</width>
-     <height>23</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuProject">

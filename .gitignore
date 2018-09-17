@@ -123,3 +123,4 @@ test/*/
 
 # GUI
 *.ini
+*.pro.user

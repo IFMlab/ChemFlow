@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/ChemFlow/src/GUI/qt_creator/create_project.ui'
+# Form implementation generated from reading ui file '/home/cedric/software/ChemFlow/ChemFlow/src/GUI/qt_creator/create_project.ui'
 #
-# Created by: PyQt5 UI code generator 5.10
+# Created by: PyQt5 UI code generator 5.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -13,7 +13,7 @@ class Ui_CreateProject(object):
         CreateProject.setObjectName("CreateProject")
         CreateProject.resize(462, 152)
         self.label = QtWidgets.QLabel(CreateProject)
-        self.label.setGeometry(QtCore.QRect(10, 10, 201, 17))
+        self.label.setGeometry(QtCore.QRect(10, 10, 241, 17))
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
