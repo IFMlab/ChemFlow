@@ -359,6 +359,7 @@ if [ ${CHARGE} != 'gas' ] ; then
             # Compute am1-bcc charges
             if [ ! -f ligand_bcc.mol2 ] ; then
                 echo "You asked for bcc charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later."
+                exit
 #                echo "echo \"Computing ${CHARGE} charges for ${LIGAND}\" ;  antechamber -i ligand_gas.mol2 -fi mol2 -o ligand_bcc.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ; cp ligand_bcc.mol2 ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2" >> ScoreFlow.run
             fi
 
@@ -367,6 +368,7 @@ if [ ${CHARGE} != 'gas' ] ; then
             # Prepare Gaussian
             if [ ! -f ligand_resp.mol2 ] ; then
                 echo "You asked for resp charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later."
+                exit
     #                antechamber -i ligand_gas.mol2 -fi mol2 -o ligand.gau -fo gcrt -gv 1 -ge ligand.gesp -gm "%mem=16Gb" -gn "%nproc=${NCORES}" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
     #
     #                # Run Gaussian to optimize structure and generate electrostatic potential grid

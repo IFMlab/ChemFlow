@@ -265,14 +265,13 @@ LigFlow_write_origin_ligands() {
 #                ${RUNDIR}
 #                ${DOCK_PROGRAM}
 #                ${WORKDIR}
-#                ${OVERWRITE}
 #
 #        Author: Dona de Francquen
 #
 #        UPDATE: fri. july 6 14:49:50 CEST 2018
 #
 #===============================================================================
-
+echo "write origin"
 OLDIFS=$IFS
 IFS='%'
 n=-1
@@ -299,9 +298,10 @@ done
 #
 #
 
-rm -f ATECHAMBER_*
+rm -f ANTECHAMBER_*
 rm ATOMTYPE.INF
 }
+
 
 LigFlow_prepare_input() {
 # Original
@@ -309,15 +309,230 @@ if [ ! -d ${RUNDIR}/original/ ] ; then
     mkdir -p ${RUNDIR}/original/
 fi
 
+
 for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -f ${RUNDIR}/original/${LIGAND}.mol2 ] ; then
-        OVERWRITE="yes"
+        REWRITE="yes"
     fi
 done
 
-if [ ${OVERWRITE} == "yes" ] ; then
+if [ "${REWRITE}" == "yes" ] ; then
     LigFlow_write_origin_ligands
 fi
+}
+
+
+LigFlow_filter_ligand_list() {
+NEW_LIGAND_LIST=""
+LIGAND_NAME_LIST=""
+
+for LIGAND in ${LIGAND_LIST[@]} ; do
+    LIGAND_NAME=`echo ${LIGAND} | sed -e 's/_conf_[0-9]*//'`
+    DONE_CHARGE="false"
+
+    if [ "${DONE_CHARGE}" == "false" ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 ] ; then
+        if [ "$(grep ${LIGAND_NAME} ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)" == ${LIGAND_NAME} ] ; then
+            ${DONE_CHARGE} = "true"
+        fi
+    fi
+    if [ "${DONE_CHARGE}" == "false" ] && [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
+        ${DONE_CHARGE} = "true"
+    fi
+    if [ ${DONE_CHARGE} == "false" ] ; then
+        if [ ! -n "`echo ${LIGAND_NAME_LIST} | xargs -n1 echo | grep -e \"^${LIGAND_NAME}$\"`" ] ; then
+            NEW_LIGAND_LIST="${NEW_LIGAND_LIST} $LIGAND"
+            LIGAND_NAME_LIST="${LIGAND_NAME_LIST} $LIGAND_NAME"
+        fi
+    fi
+done
+
+unset LIGAND_LIST
+LIGAND_LIST=(${NEW_LIGAND_LIST[@]})
+
+}
+
+
+LigFlow_compute_charge() {
+#===  FUNCTION  ================================================================
+#          NAME: LigFlow_compute_charge
+#   DESCRIPTION: compute charge
+#
+#        Author: Diego E. B. Gomes
+#                Dona de Francquen
+#
+#    PARAMETERS: ${RUNDIR}
+#                ${LIGAND_LIST}
+#                ${CHARGE}
+#                ${CHEMFLOW_HOME}
+#                ${WORKDIR}
+#                ${PROJECT}
+#                ${NCORES}
+#===============================================================================
+# The name of the ligand, without any conformational info
+LIGAND_NAME=`echo ${LIGAND} | sed -e 's/_conf_[0-9]*//'`
+
+# Mandatory Gasteiger charges
+if [ ! -f gas/${LIGAND_NAME}.mol2 ] ; then
+    echo "antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/gas/${LIGAND_NAME}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> LigFlow.run
+fi
+
+case ${CHARGE} in
+"bcc")
+    # Compute am1-bcc charges
+    echo "antechamber -i ${RUNDIR}/gas/${LIGAND_NAME}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND_NAME}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> LigFlow.run
+
+    ;;
+"resp")
+#   Prepare Gaussian
+    echo "antechamber -i ${RUNDIR}/gas/${LIGAND_NAME}.mol2 -fi mol2 -o ${LIGAND_NAME}.gau -fo gcrt -gv 1 -ge ligand.gesp -gm \"%mem=16Gb\" -gn \"%nproc=${NCORES}\" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> LigFlow.run
+
+    # Run Gaussian to optimize structure and generate electrostatic potential grid
+    echo "g09 <${LIGAND_NAME}.gau>${LIGAND_NAME}.gout" >> LigFlow.run
+
+    # Read Gaussian output and write new optimized ligand with RESP charges
+    echo "antechamber -i ${LIGAND_NAME}.gout -fi gout -o ${RUNDIR}/bcc/${LIGAND_NAME}_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> antechamber.log" >> LigFlow.run
+;;
+esac
+}
+
+
+LigFlow_write_HPC_header() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_write_HPC_header
+#   DESCRIPTION: Add the HPC header to DockFlow.run.
+#                Default or provided header.
+#
+#    PARAMETERS: ${RUNDIR}
+#                ${CHEMFLOW_HOME}
+#                ${JOB_SCHEDULLER}
+#                ${WORKDIR}
+#                ${HEADER_PROVIDED}
+#                ${HEADER_FILE}
+#
+#       RETURNS: ScoreFlow.pbs for ${LIGAND}
+#===============================================================================
+if [ ! -f ${RUNDIR}/LigFlow.header ] ; then
+    if [ ${HEADER_PROVIDED} != "yes" ] ; then
+        file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
+        eval echo \""${file}"\" > ${RUNDIR}/LigFlow.header
+    else
+        cp ${HEADER_FILE} ${RUNDIR}/LigFlow.header
+    fi
+fi
+case "${JOB_SCHEDULLER}" in
+        "PBS")
+            sed "/PBS -N .*$/ s/$/_${first}/" ${RUNDIR}/LigFlow.header > ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+        ;;
+        "SLURM")
+            sed "/--job-name=.*$/  s/$/_${first}/" ${RUNDIR}/LigFlow.header > ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+        ;;
+        esac
+
+cat ${RUNDIR}/LigFlow.run >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+}
+
+
+not_a_number() {
+re='^[0-9]+$'
+if ! [[ $nb =~ $re ]] ; then
+   ERROR_MESSAGE="Not a number. I was expecting an integer." ; ChemFlow_error ;
+fi
+}
+
+
+
+LigFlow_prepare_ligands_charges() {
+
+# Actualize the ligand list
+LigFlow_filter_ligand_list
+
+cd ${RUNDIR}
+
+if [ ! -d ${RUNDIR}/gas ] ; then
+    mkdir -p ${RUNDIR}/gas
+fi
+
+if [ ! -d ${RUNDIR}/${CHARGE} ] ; then
+    mkdir -p ${RUNDIR}/${CHARGE}
+fi
+
+case ${JOB_SCHEDULLER} in
+"None")
+    if [ -f  LigFlow.run ] ; then
+      rm -rf LigFlow.run
+    fi
+
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        LigFlow_compute_charge
+    done
+
+    if [ -f  ${RUNDIR}/LigFlow.run ] ; then
+        cd ${RUNDIR} ; cat LigFlow.run | xargs -P${NCORES} -I '{}' bash -c '{}'
+    fi
+;;
+"SLURM"|"PBS")
+    echo ''
+    read -p "How many Dockings per PBS/SLURM job? " nlig
+    # Check if the user gave a int
+    nb=${nlig}
+    not_a_number
+
+    for (( first=0;${first}<${#LIGAND_LIST[@]} ; first=${first}+${nlig} )) ; do
+#        echo -ne "Docking $first         \r"
+        jobname="${first}"
+
+        if [ -f ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,} ] ; then
+            rm -rf ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+        fi
+
+        echo "mkdir tmp_${first}
+cd tmp_${first}
+
+if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
+for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
+
+# The name of the ligand, without any conformational info
+LIGAND_NAME=\`echo \${LIGAND} | sed -e 's/_conf_[0-9]*//'\`
+
+# Mandatory Gasteiger charges
+if [ ! -f gas/\${LIGAND_NAME}.mol2 ] ; then
+    echo \"antechamber -i ${RUNDIR}/original/\${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> ${first}.xargs
+fi " > LigFlow.run
+
+case ${CHARGE} in
+"bcc")
+    # Compute am1-bcc charges
+    echo "echo \"antechamber -i ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fi mol2 -o ${RUNDIR}/bcc/\${LIGAND_NAME}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> ${first}.xargs" >> LigFlow.run
+
+    ;;
+"resp")
+#   Prepare Gaussian
+    echo "echo \"antechamber -i ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fi mol2 -o \${LIGAND_NAME}.gau -fo gcrt -gv 1 -ge ligand.gesp -gm \"%mem=16Gb\" -gn \"%nproc=${NCORES}\" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> ${first}.xargs" >> LigFlow.run
+
+    # Run Gaussian to optimize structure and generate electrostatic potential grid
+    echo "echo \"g09 <\${LIGAND_NAME}.gau>\${LIGAND_NAME}.gout \">> ${first}.xargs" >> LigFlow.run
+
+    # Read Gaussian output and write new optimized ligand with RESP charges
+    echo "echo \"antechamber -i \${LIGAND_NAME}.gout -fi gout -o ${RUNDIR}/bcc/\${LIGAND_NAME}_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> antechamber.log \">> ${first}.xargs" >> LigFlow.run
+;;
+esac
+
+echo "done
+cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+rm -rf tmp_${first}
+">> LigFlow.run
+
+
+        LigFlow_write_HPC_header
+
+#        if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
+#            sbatch LigFlow.slurm
+#        elif [ "${JOB_SCHEDULLER}" == "PBS" ] ; then
+#            qsub LigFlow.pbs
+#        fi
+    done
+;;
+esac
 }
 
 
@@ -335,7 +550,6 @@ LigFlow_summary() {
 #                ${NLIGANDS}
 #                ${JOB_SCHEDULLER}
 #                ${NCORES}
-#                ${OVERWRITE}
 #       RETURNS: -
 #
 #===============================================================================
@@ -361,8 +575,6 @@ PROTOCOL: ${PROTOCOL}
 [ Run options ]
 JOB SCHEDULLER: ${JOB_SCHEDULLER}
     CORES/NODE: ${NCORES}
-
-     OVERWRITE: ${OVERWRITE}
 "
 read -p "
 Continue [y/n]? " opt
@@ -414,9 +626,6 @@ LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]
  --pbs/--slurm          : Workload manager, PBS or SLURM
  --header          FILE : Header file provided to run on your cluster.
 
-[ Additional ]
- --overwrite         : Overwrite results
-
 "
     exit 0
 }
@@ -457,9 +666,11 @@ while [[ $# -gt 0 ]]; do
         # Charges
         "--bcc")
             BCC="yes"
+            CHARGE="bcc"
         ;;
         "--resp")
             RESP="yes"
+            CHARGE="resp"
         ;;
         # HPC options
         "--pbs") #Activate the PBS workload
@@ -476,10 +687,6 @@ while [[ $# -gt 0 ]]; do
         "-nc"|"--cores") # Number of Cores [1] (or cores/node)
             NCORES="$2" # Same as above.
             shift # past argument
-        ;;
-        ## Final arguments
-        "--overwrite")
-            OVERWRITE="yes"
         ;;
         *)
             unknown="$1"        # unknown option
