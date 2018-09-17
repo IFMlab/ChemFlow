@@ -51,8 +51,9 @@ ChemFlow_validate_input  # Sanity check. (parameters and input files)
 
 RUNDIR=${WORKDIR}/${PROJECT}.chemflow/LigFlow/
 
-LigFlow_summary        # Show a summary of actions.
-LigFlow_prepare_input      # Organizes and convert required files
+LigFlow_summary                 # Show a summary of actions.
+LigFlow_prepare_input           # Organizes and convert required files
+LigFlow_prepare_ligands_charges # Compute the charges
 
 echo "
 [ LigFlow ] Normal completion.

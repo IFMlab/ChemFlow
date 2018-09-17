@@ -62,7 +62,7 @@ if [ -z "${PROJECT}" ] ; then
 fi
 # Check if the receptor file has been given------------------------------------
 
-if [ -z "${RECEPTOR_FILE}" ] ; then
+if [ -z "${RECEPTOR_FILE}" ] && [ ${WORKFLOW} != "LigFlow" ] ; then
     if [ "${SCORING_FUNCTION}" != "mmgbsa" ] ; then
         ERROR_MESSAGE="No RECEPTOR file name (-r receptor_file.mol2)" ;
         ChemFlow_error ;
@@ -83,9 +83,9 @@ if [ -z "${LIGAND_FILE}" ] ; then
     ChemFlow_error ;
 fi
 
-# Check if the ligand file exists------------------------------------------
+# Check if the receptor file exists------------------------------------------
 if [ ! -f "${LIGAND_FILE}" ] ; then
-    ERROR_MESSAGE=="The ligand file ${LIGAND_FILE} does not exist." ;
+    ERROR_MESSAGE="The ligand file ${LIGAND_FILE} does not exist." ;
     ChemFlow_error ;
 fi
 
@@ -134,7 +134,6 @@ case "${WORKFLOW}" in
         ERROR_MESSAGE="SCORING_FUNCTION ${SCORING_FUNCTION} not implemented"; ChemFlow_error ;
     ;;
     esac
-
 
     if [ "${SCORING_FUNCTION}" != "mmgbsa"  ] ; then
         # Center is not required for mmgbsa rescoring.
@@ -308,5 +307,12 @@ elif [ $1 == 'ScoreFlow' ] ; then
     # run option
     WRITE_ONLY="no"
     RUN_ONLY="no"
+elif [ $1 == 'LigFlow' ] ; then
+    WORKFLOW="LigFlow"
+    NCORES=1
+
+    CHARGE="gas"
+    BCC="no"
+    RESP="no"
 fi
 }
