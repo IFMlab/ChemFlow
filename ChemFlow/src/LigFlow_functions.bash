@@ -541,10 +541,10 @@ LigFlow summary:
     USER: ${USER}
  PROJECT: ${PROJECT}
 PROTOCOL: ${PROTOCOL}
- WORKDIR: ${PWD}
+ WORKDIR: ${WORKDIR}
 
 [ Setup ]
-  LIGAND FILE: ${LIGAND_FILE}
+  LIGAND FILE: $(relpath "${LIGAND_FILE}"   "${WORKDIR}")
      NLIGANDS: ${NLIGANDS}
 
 [ Charge options ]
@@ -630,7 +630,7 @@ while [[ $# -gt 0 ]]; do
             shift
         ;;
         "-l"|"--ligand")
-            LIGAND_FILE="$2"
+            LIGAND_FILE=$(abspath "$2")
             shift # past argument
         ;;
         "-p"|"--project")
@@ -659,7 +659,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         "--header")
             HEADER_PROVIDED="yes"
-            HEADER_FILE=$2
+            HEADER_FILE=$(abspath "$2")
             shift
         ;;
         *)

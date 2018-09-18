@@ -18,7 +18,7 @@ bindingsite_radius ${DOCK_RADIUS}
 
 # structural water molecule
 water_molecule_definition ${WATER_FILE}
-water_molecule ${WATER_XYZR}
+water_molecule ${WATER_XYZR[@]}
 
 # write mol2 files as a single (1) or multiple (0) mol2 files
 write_multi_mol2 1
