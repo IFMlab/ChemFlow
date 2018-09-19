@@ -624,12 +624,12 @@ while [[ $# -gt 0 ]]; do
 
     case ${key} in
         "-h"|"--help")
-            DockFlow_help
+            LigFlow_help
             exit 0
             shift # past argument
         ;;
         "-hh"|"--full-help")
-            DockFlow_help_full
+            LigFlow_help_full
             exit 0
             shift
         ;;
