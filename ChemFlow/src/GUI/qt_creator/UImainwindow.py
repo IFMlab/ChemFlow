@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/ChemFlow/src/GUI/qt_creator/mainwindow.ui'
+# Form implementation generated from reading ui file '/home/cedric/software/ChemFlow/ChemFlow/src/GUI/qt_creator/mainwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.10
+# Created by: PyQt5 UI code generator 5.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -67,7 +67,7 @@ class Ui_MainWindow(object):
         self.pushButton_docking_configure_protocol.setGeometry(QtCore.QRect(317, 148, 91, 24))
         self.pushButton_docking_configure_protocol.setObjectName("pushButton_docking_configure_protocol")
         self.label_dockingSoftware = QtWidgets.QLabel(self.tab_DockFlow)
-        self.label_dockingSoftware.setGeometry(QtCore.QRect(17, 150, 61, 20))
+        self.label_dockingSoftware.setGeometry(QtCore.QRect(7, 150, 71, 20))
         self.label_dockingSoftware.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_dockingSoftware.setObjectName("label_dockingSoftware")
         self.label_inputFiles = QtWidgets.QLabel(self.tab_DockFlow)
@@ -189,7 +189,7 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tab_Tools, "")
         MainWindow.setCentralWidget(self.centralWidget)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 662, 23))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 662, 25))
         self.menuBar.setObjectName("menuBar")
         self.menuProject = QtWidgets.QMenu(self.menuBar)
         self.menuProject.setObjectName("menuProject")

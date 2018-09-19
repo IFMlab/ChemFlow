@@ -241,10 +241,23 @@ fi
 
 check_water(){
 if [ "${DOCK_PROGRAM}" == "PLANTS" ]; then
-  if [ -s "${WATER_FILE}" ] && [ ! -z "${WATER_XYZR}" ]; then
+  if [ -s "${WATER_FILE}" ] && [ ! -z "${WATER_XYZR[@]}" ]; then
     PLANTS_WATER="yes"
   fi
 fi
+}
+
+relpath(){
+  # returns path relative to the specified directory
+  # $1 path
+  # $2 directory
+  perl -e 'use File::Spec; print File::Spec->abs2rel(@ARGV) . "\n"' "$1" "$2"
+}
+
+abspath(){
+  # returns the canonical absolute version of a path
+  # $1 path
+  perl -MCwd -e 'print Cwd::realpath($ARGV[0]),qq<\n>' "$1"
 }
 
 ChemFlow_set_defaults(){

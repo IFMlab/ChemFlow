@@ -2,58 +2,27 @@
 
 NAME="chemflow"
 
-_help(){
-  echo "Usage: $0 onefile|onedir|pyqtdeploy"
-}
-
 clean_build(){
   if [ -d build ]; then
     rm -rf dist
     rm -rf build
   fi
-  if [ -d build-linux-64 ]; then
-    rm -rf build-linux-64
-  fi
 }
 
 export_lib(){
-  export LD_LIBRARY_PATH=${CONDA_PATH}/lib:/usr/lib
+  OLD_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+  export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:~/python3.6.6/lib:~/miniconda3/lib
+}
+
+unset_lib(){
+  export LD_LIBRARY_PATH=${OLD_LD_LIBRARY_PATH}
 }
 
 package_pyinstaller(){
-  pyinstaller ${NAME}_${1}.spec
+  pyinstaller ${NAME}.spec
 }
 
-package_pyqtdeploy(){
-  pyqtdeploy-build --verbose ${NAME}.pdy
-  if [ -d build-linux-64 ]; then
-    cd build-linux-64
-    qmake
-    make
-    cd ..
-  fi
-}
-
-case "${1,,}" in
-  "-h"|"--help")
-    _help
-  ;;
-  "onedir")
-    clean_build
-    export_lib
-    package_pyinstaller "onedir"
-  ;;
-  "onefile")
-    clean_build
-    export_lib
-    package_pyinstaller "onefile"
-  ;;
-  "pyqtdeploy")
-    clean_build
-    package_pyqtdeploy
-  ;;
-  *)
-    echo "Error: Unknown packager $1"
-    _help
-  ;;
-esac
+clean_build
+export_lib
+package_pyinstaller
+unset_lib

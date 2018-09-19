@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>496</width>
+    <width>521</width>
     <height>337</height>
    </rect>
   </property>
@@ -16,7 +16,7 @@
   <widget class="QSpinBox" name="spinBox_ants">
    <property name="geometry">
     <rect>
-     <x>380</x>
+     <x>400</x>
      <y>126</y>
      <width>70</width>
      <height>27</height>
@@ -38,7 +38,7 @@
   <widget class="QLabel" name="label_8">
    <property name="geometry">
     <rect>
-     <x>271</x>
+     <x>291</x>
      <y>102</y>
      <width>91</width>
      <height>20</height>
@@ -56,7 +56,7 @@
     <rect>
      <x>261</x>
      <y>130</y>
-     <width>101</width>
+     <width>121</width>
      <height>20</height>
     </rect>
    </property>
@@ -70,7 +70,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_evaporationRate">
    <property name="geometry">
     <rect>
-     <x>380</x>
+     <x>400</x>
      <y>158</y>
      <width>70</width>
      <height>27</height>
@@ -89,7 +89,7 @@
   <widget class="QComboBox" name="comboBox_scoringFunction">
    <property name="geometry">
     <rect>
-     <x>380</x>
+     <x>400</x>
      <y>71</y>
      <width>106</width>
      <height>24</height>
@@ -119,7 +119,7 @@
     <rect>
      <x>261</x>
      <y>162</y>
-     <width>101</width>
+     <width>121</width>
      <height>20</height>
     </rect>
    </property>
@@ -133,7 +133,7 @@
   <widget class="QLabel" name="label_5">
    <property name="geometry">
     <rect>
-     <x>40</x>
+     <x>30</x>
      <y>100</y>
      <width>41</width>
      <height>26</height>
@@ -141,6 +141,9 @@
    </property>
    <property name="text">
     <string>Y</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
   </widget>
   <widget class="Line" name="line_4">
@@ -181,7 +184,7 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>270</x>
+     <x>288</x>
      <y>264</y>
      <width>86</width>
      <height>23</height>
@@ -194,9 +197,9 @@
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>251</x>
+     <x>261</x>
      <y>72</y>
-     <width>111</width>
+     <width>121</width>
      <height>21</height>
     </rect>
    </property>
@@ -229,9 +232,9 @@
   <widget class="QLabel" name="label_12">
    <property name="geometry">
     <rect>
-     <x>225</x>
+     <x>221</x>
      <y>194</y>
-     <width>137</width>
+     <width>161</width>
      <height>20</height>
     </rect>
    </property>
@@ -247,7 +250,7 @@
     <rect>
      <x>30</x>
      <y>260</y>
-     <width>241</width>
+     <width>261</width>
      <height>31</height>
     </rect>
    </property>
@@ -264,7 +267,7 @@
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>40</x>
+     <x>30</x>
      <y>70</y>
      <width>41</width>
      <height>26</height>
@@ -272,6 +275,9 @@
    </property>
    <property name="text">
     <string>X</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
   </widget>
   <widget class="QDoubleSpinBox" name="doubleSpinBox_radius">
@@ -299,7 +305,7 @@
   <widget class="QPushButton" name="pushButton_cancel">
    <property name="geometry">
     <rect>
-     <x>270</x>
+     <x>280</x>
      <y>300</y>
      <width>86</width>
      <height>29</height>
@@ -331,7 +337,7 @@
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
-     <x>40</x>
+     <x>30</x>
      <y>130</y>
      <width>41</width>
      <height>26</height>
@@ -340,13 +346,16 @@
    <property name="text">
     <string>Z</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
   </widget>
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
-     <x>80</x>
+     <x>40</x>
      <y>40</y>
-     <width>91</width>
+     <width>121</width>
      <height>20</height>
     </rect>
    </property>
@@ -366,7 +375,7 @@
   <widget class="QPushButton" name="pushButton_ok">
    <property name="geometry">
     <rect>
-     <x>140</x>
+     <x>150</x>
      <y>300</y>
      <width>86</width>
      <height>29</height>
@@ -398,20 +407,23 @@
   <widget class="QLabel" name="label_10">
    <property name="geometry">
     <rect>
-     <x>25</x>
+     <x>20</x>
      <y>160</y>
-     <width>41</width>
+     <width>51</width>
      <height>26</height>
     </rect>
    </property>
    <property name="text">
     <string>Radius</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
   </widget>
   <widget class="QComboBox" name="comboBox_searchSpeed">
    <property name="geometry">
     <rect>
-     <x>380</x>
+     <x>400</x>
      <y>99</y>
      <width>106</width>
      <height>24</height>
@@ -439,7 +451,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_iterationScaling">
    <property name="geometry">
     <rect>
-     <x>380</x>
+     <x>400</x>
      <y>190</y>
      <width>70</width>
      <height>27</height>
@@ -483,7 +495,7 @@
   <widget class="QLabel" name="label_13">
    <property name="geometry">
     <rect>
-     <x>260</x>
+     <x>280</x>
      <y>225</y>
      <width>101</width>
      <height>20</height>
@@ -499,7 +511,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_clusterRMSD">
    <property name="geometry">
     <rect>
-     <x>380</x>
+     <x>400</x>
      <y>222</y>
      <width>70</width>
      <height>27</height>

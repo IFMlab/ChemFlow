@@ -718,12 +718,12 @@ ScoreFlow summary:
     USER: ${USER}
  PROJECT: ${PROJECT}
 PROTOCOL: ${PROTOCOL}
- WORKDIR: ${PWD}
+ WORKDIR: ${WORKDIR}
 
-[ Docking setup ]
+[ Rescoring setup ]
 RECEPTOR NAME: ${RECEPTOR_NAME}
-RECEPTOR FILE: ${RECEPTOR_FILE}
-  LIGAND FILE: ${LIGAND_FILE}
+RECEPTOR FILE: $(relpath "${RECEPTOR_FILE}" "${WORKDIR}")
+  LIGAND FILE: $(relpath "${LIGAND_FILE}"   "${WORKDIR}")
      NLIGANDS: ${NLIGANDS}
        CHARGE: ${CHARGE}
       PROGRAM: ${SCORE_PROGRAM}
@@ -888,12 +888,12 @@ while [[ $# -gt 0 ]]; do
             shift
         ;;
         "-r"|"--receptor")
-            RECEPTOR_FILE="$2"
+            RECEPTOR_FILE=$(abspath "$2")
             RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .mol2 )"
             shift # past argument
         ;;
         "-l"|"--ligand")
-            LIGAND_FILE="$2"
+            LIGAND_FILE=$(abspath "$2")
             shift # past argument
         ;;
         "-p"|"--project")
@@ -955,7 +955,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         "--header")
             HEADER_PROVIDED="yes"
-            HEADER_FILE=$2
+            HEADER_FILE=$(abspath "$2")
             shift
         ;;
         "--write-only")

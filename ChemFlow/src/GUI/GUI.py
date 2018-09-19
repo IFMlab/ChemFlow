@@ -127,12 +127,14 @@ class Main(QMainWindow, Ui_MainWindow):
             self.lineEdit_docking_lig.setText(self.input['Ligand'])
 
     def configure_docking_protocol(self):
+        '''Configure the docking protocol'''
         self.input['docking_software'] = self.comboBox_docking_software.currentText()
         if self.input['docking_software'] == 'AutoDock Vina':
             docking_dialog = DialogDockVina()
         elif self.input['docking_software'] == 'PLANTS':
             docking_dialog = DialogDockPlants()
         docking_dialog.exec_()
+        # save the parameters
         try:
             self.docking_protocol = docking_dialog.values
         except AttributeError:
@@ -165,6 +167,7 @@ class Main(QMainWindow, Ui_MainWindow):
                         self.input[kw] = self.docking_protocol[kw]
 
     def configure_docking_execution(self):
+        '''Configure how DockFlow is going to run on the local machine'''
         self.input['JobQueue'] = self.comboBox_docking_job_queue.currentText()
         if self.input['JobQueue'] == 'None':
             run_dialog = DialogRunLocal()
@@ -173,6 +176,7 @@ class Main(QMainWindow, Ui_MainWindow):
         elif self.input['JobQueue'] == 'SLURM':
             run_dialog = DialogRunSlurm()
         run_dialog.exec_()
+        # save parameters
         try:
             self.docking_execution = run_dialog.values
         except AttributeError:
@@ -206,8 +210,10 @@ class Main(QMainWindow, Ui_MainWindow):
         return missing
 
     def run_docking(self):
+        '''Run a docking experiment with DockFlow'''
         self.input['PostProcess'] = False
         self.input['Archive'] = False
+        # search for missing configuration
         missing = []
         missing.extend(self.check_docking_required_args())
         try:
@@ -233,6 +239,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.execute_command(self.build_docking_command())
 
     def run_docking_postprocess(self):
+        '''Postprocess docking results'''
         self.input['PostProcess'] = True
         self.input['Archive'] = False
         missing = []
@@ -245,6 +252,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.execute_command(self.build_docking_command())
 
     def run_docking_archive(self):
+        '''Archive docking results'''
         self.input['Archive'] = True
         self.input['PostProcess'] = False
         missing = []
@@ -257,6 +265,8 @@ class Main(QMainWindow, Ui_MainWindow):
             self.execute_command(self.build_docking_command())
 
     def build_docking_command(self):
+        '''Generate a command for DockFlow.
+        RETURNS: LIST'''
         command = ['DockFlow']
         # Project
         command.extend(['--project', self.input['Project']])
@@ -321,6 +331,9 @@ class Main(QMainWindow, Ui_MainWindow):
         return command
 
     def execute_command(self, command):
+        """Run a command through pexpect module. The command can be interactive, as long as the '?' character
+        is used to mark them.
+        command: LIST"""
         CMD = ' '.join([str(i) for i in command])
         if self.DEBUG:
             print(CMD)
@@ -377,9 +390,16 @@ class Main(QMainWindow, Ui_MainWindow):
 
 if __name__ == '__main__':
     OLDDIR = os.getcwd()
-    # create widget and show
+    # create widget
     app = QtWidgets.QApplication(sys.argv)
+    # Use custom font
+    roboto = os.path.realpath(os.path.join(WORKDIR, "fonts", "Roboto-Regular.ttf"))
+    QtGui.QFontDatabase.addApplicationFont(roboto)
+    font = QtGui.QFont("Roboto Regular", 10)
+    app.setFont(font)
+    # show app
     main = Main()
     main.show()
+    # exit
     os.chdir(OLDDIR)
     sys.exit(app.exec_())

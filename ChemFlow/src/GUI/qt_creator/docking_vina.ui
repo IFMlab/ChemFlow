@@ -16,7 +16,7 @@
   <widget class="QSpinBox" name="spinBox_sz">
    <property name="geometry">
     <rect>
-     <x>313</x>
+     <x>300</x>
      <y>165</y>
      <width>101</width>
      <height>27</height>
@@ -35,7 +35,7 @@
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
-     <x>73</x>
+     <x>42</x>
      <y>73</y>
      <width>131</width>
      <height>20</height>
@@ -50,11 +50,14 @@
    <property name="text">
     <string>Center of the grid</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
   </widget>
   <widget class="QLabel" name="label_10">
    <property name="geometry">
     <rect>
-     <x>63</x>
+     <x>37</x>
      <y>35</y>
      <width>111</width>
      <height>20</height>
@@ -67,7 +70,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_energyRange">
    <property name="geometry">
     <rect>
-     <x>353</x>
+     <x>344</x>
      <y>32</y>
      <width>65</width>
      <height>27</height>
@@ -83,7 +86,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_cz">
    <property name="geometry">
     <rect>
-     <x>83</x>
+     <x>70</x>
      <y>165</y>
      <width>131</width>
      <height>27</height>
@@ -104,7 +107,7 @@
     <rect>
      <x>13</x>
      <y>10</y>
-     <width>201</width>
+     <width>211</width>
      <height>17</height>
     </rect>
    </property>
@@ -121,7 +124,7 @@
   <widget class="QPushButton" name="pushButton_ok">
    <property name="geometry">
     <rect>
-     <x>135</x>
+     <x>110</x>
      <y>215</y>
      <width>86</width>
      <height>29</height>
@@ -134,7 +137,7 @@
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>43</x>
+     <x>30</x>
      <y>105</y>
      <width>41</width>
      <height>26</height>
@@ -147,7 +150,7 @@
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>303</x>
+     <x>267</x>
      <y>73</y>
      <width>121</width>
      <height>20</height>
@@ -162,11 +165,14 @@
    <property name="text">
     <string>Size of the grid</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
   </widget>
   <widget class="QLabel" name="label_11">
    <property name="geometry">
     <rect>
-     <x>263</x>
+     <x>250</x>
      <y>35</y>
      <width>91</width>
      <height>20</height>
@@ -179,7 +185,7 @@
   <widget class="QSpinBox" name="spinBox_sx">
    <property name="geometry">
     <rect>
-     <x>313</x>
+     <x>300</x>
      <y>105</y>
      <width>101</width>
      <height>27</height>
@@ -198,7 +204,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_cy">
    <property name="geometry">
     <rect>
-     <x>83</x>
+     <x>70</x>
      <y>135</y>
      <width>131</width>
      <height>27</height>
@@ -217,7 +223,7 @@
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
-     <x>43</x>
+     <x>30</x>
      <y>165</y>
      <width>41</width>
      <height>26</height>
@@ -230,7 +236,7 @@
   <widget class="QDoubleSpinBox" name="doubleSpinBox_cx">
    <property name="geometry">
     <rect>
-     <x>83</x>
+     <x>70</x>
      <y>105</y>
      <width>131</width>
      <height>27</height>
@@ -249,7 +255,7 @@
   <widget class="QSpinBox" name="spinBox_sy">
    <property name="geometry">
     <rect>
-     <x>313</x>
+     <x>300</x>
      <y>135</y>
      <width>101</width>
      <height>27</height>
@@ -268,7 +274,7 @@
   <widget class="QLabel" name="label_7">
    <property name="geometry">
     <rect>
-     <x>273</x>
+     <x>260</x>
      <y>105</y>
      <width>41</width>
      <height>26</height>
@@ -281,7 +287,7 @@
   <widget class="QLabel" name="label_9">
    <property name="geometry">
     <rect>
-     <x>273</x>
+     <x>260</x>
      <y>135</y>
      <width>41</width>
      <height>26</height>
@@ -294,7 +300,7 @@
   <widget class="QLabel" name="label_5">
    <property name="geometry">
     <rect>
-     <x>43</x>
+     <x>30</x>
      <y>135</y>
      <width>41</width>
      <height>26</height>
@@ -307,7 +313,7 @@
   <widget class="QSpinBox" name="spinBox_exhaustiveness">
    <property name="geometry">
     <rect>
-     <x>173</x>
+     <x>147</x>
      <y>32</y>
      <width>51</width>
      <height>27</height>
@@ -323,7 +329,7 @@
   <widget class="Line" name="line_4">
    <property name="geometry">
     <rect>
-     <x>233</x>
+     <x>220</x>
      <y>75</y>
      <width>20</width>
      <height>131</height>
@@ -336,7 +342,7 @@
   <widget class="QPushButton" name="pushButton_cancel">
    <property name="geometry">
     <rect>
-     <x>265</x>
+     <x>240</x>
      <y>215</y>
      <width>86</width>
      <height>29</height>
@@ -349,7 +355,7 @@
   <widget class="QLabel" name="label_8">
    <property name="geometry">
     <rect>
-     <x>273</x>
+     <x>260</x>
      <y>165</y>
      <width>41</width>
      <height>26</height>

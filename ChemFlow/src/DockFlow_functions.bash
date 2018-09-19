@@ -789,8 +789,8 @@ PROTOCOL: ${PROTOCOL}
 
 [ Docking setup ]
 RECEPTOR NAME: ${RECEPTOR_NAME}
-RECEPTOR FILE: $(realpath --relative-to="${WORKDIR}" ${RECEPTOR_FILE})
-  LIGAND FILE: $(realpath --relative-to="${WORKDIR}" ${LIGAND_FILE})
+RECEPTOR FILE: $(relpath "${RECEPTOR_FILE}" "${WORKDIR}")
+  LIGAND FILE: $(relpath "${LIGAND_FILE}"   "${WORKDIR}")
      NLIGANDS: ${NLIGANDS}
        NPOSES: ${DOCK_POSES}
       PROGRAM: ${DOCK_PROGRAM}
@@ -928,12 +928,12 @@ while [[ $# -gt 0 ]]; do
             shift
         ;;
         "-r"|"--receptor")
-            RECEPTOR_FILE=$(realpath "$2")
+            RECEPTOR_FILE=$(abspath "$2")
             RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .mol2 )"
             shift # past argument
         ;;
         "-l"|"--ligand")
-            LIGAND_FILE=$(realpath "$2")
+            LIGAND_FILE=$(abspath "$2")
             shift # past argument
         ;;
         "-p"|"--project")
@@ -978,7 +978,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         "--header")
             HEADER_PROVIDED="yes"
-            HEADER_FILE=$(realpath "$2")
+            HEADER_FILE=$(abspath "$2")
             shift
         ;;
         ## PLANTS arguments
@@ -1007,7 +1007,7 @@ while [[ $# -gt 0 ]]; do
             shift # past argument
         ;;
         "--water_xyzr")
-            WATER_XYZR="$2 $3 $4 $5"
+            WATER_XYZR=("$2" "$3" "$4" "$5")
             shift 4 # past argument
         ;;
         ### VINA arguments
