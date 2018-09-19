@@ -2,7 +2,7 @@
 
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
-from PyQt5.QtCore import QProcess, QByteArray
+from PyQt5.QtCore import QProcess, QByteArray, QRegExp
 from webbrowser import open as browser_open
 from time import strftime, gmtime
 import sys, os, logging
