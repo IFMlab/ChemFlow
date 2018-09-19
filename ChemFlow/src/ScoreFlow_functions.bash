@@ -721,7 +721,7 @@ ScoreFlow_summary() {
 #                ${NCORES}
 #                ${OVERWRITE}
 #===============================================================================
-echo "
+echo "\
 ScoreFlow summary:
 -------------------------------------------------------------------------------
 [ General info ]
@@ -762,9 +762,10 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
     CORES/NODE: ${NCORES}
      OVERWRITE: ${OVERWRITE}
 "
-read -p "
-Continue [y/n]? " opt
 
+echo -n "
+Continue [y/n]? "
+read opt
 case $opt in
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
 *)  echo "Exiting" ; exit 0 ;;

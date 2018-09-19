@@ -160,7 +160,7 @@
        <rect>
         <x>170</x>
         <y>177</y>
-        <width>111</width>
+        <width>151</width>
         <height>31</height>
        </rect>
       </property>
@@ -370,6 +370,11 @@
         <height>21</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
       <property name="toolTip">
        <string>Receptor MOL2 file</string>
       </property>
@@ -382,6 +387,11 @@
         <width>441</width>
         <height>21</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+       </font>
       </property>
       <property name="toolTip">
        <string>Ligands MOL2 file</string>
@@ -450,75 +460,6 @@
        <string>Configure</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_docking_run">
-      <property name="geometry">
-       <rect>
-        <x>120</x>
-        <y>340</y>
-        <width>86</width>
-        <height>36</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-        <weight>50</weight>
-        <bold>false</bold>
-       </font>
-      </property>
-      <property name="toolTip">
-       <string>Run the docking experiment</string>
-      </property>
-      <property name="text">
-       <string>Dock</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="pushButton_docking_archive">
-      <property name="geometry">
-       <rect>
-        <x>462</x>
-        <y>340</y>
-        <width>96</width>
-        <height>36</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-        <weight>50</weight>
-        <bold>false</bold>
-       </font>
-      </property>
-      <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Compress all files from the specified project, protocol, and receptor in a single tar.gz archive&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-      <property name="text">
-       <string>Archive</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="pushButton_docking_postprocess">
-      <property name="geometry">
-       <rect>
-        <x>266</x>
-        <y>340</y>
-        <width>141</width>
-        <height>36</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-        <weight>50</weight>
-        <bold>false</bold>
-       </font>
-      </property>
-      <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Process and standardize the outputs for the specified project, protocol, and receptor&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-      <property name="text">
-       <string>Postprocess</string>
-      </property>
-     </widget>
      <widget class="QCheckBox" name="checkBox_overwrite">
       <property name="geometry">
        <rect>
@@ -535,63 +476,6 @@
        <string>Overwrite pre-existing results</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_postdock_logo">
-      <property name="geometry">
-       <rect>
-        <x>229</x>
-        <y>340</y>
-        <width>36</width>
-        <height>36</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="pixmap">
-       <pixmap>../img/process.png</pixmap>
-      </property>
-      <property name="scaledContents">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_archivedock_logo">
-      <property name="geometry">
-       <rect>
-        <x>424</x>
-        <y>340</y>
-        <width>36</width>
-        <height>36</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="pixmap">
-       <pixmap>../img/archive.png</pixmap>
-      </property>
-      <property name="scaledContents">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_dock_logo">
-      <property name="geometry">
-       <rect>
-        <x>82</x>
-        <y>340</y>
-        <width>36</width>
-        <height>36</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="pixmap">
-       <pixmap>../img/run.png</pixmap>
-      </property>
-      <property name="scaledContents">
-       <bool>true</bool>
-      </property>
-     </widget>
      <widget class="Line" name="line">
       <property name="geometry">
        <rect>
@@ -605,6 +489,99 @@
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
+     <widget class="QCommandLinkButton" name="commandLinkButton_docking_run">
+      <property name="geometry">
+       <rect>
+        <x>100</x>
+        <y>330</y>
+        <width>111</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>Run the docking experiment</string>
+      </property>
+      <property name="text">
+       <string>Dock</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>../img/run.png</normaloff>../img/run.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+     </widget>
+     <widget class="QCommandLinkButton" name="commandLinkButton_docking_postprocess">
+      <property name="geometry">
+       <rect>
+        <x>230</x>
+        <y>330</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Process and standardize the outputs for the specified project, protocol, and receptor&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Postprocess</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>../img/process.png</normaloff>../img/process.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+     </widget>
+     <widget class="QCommandLinkButton" name="commandLinkButton_docking_archive">
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>330</y>
+        <width>131</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Compress all files from the specified project, protocol, and receptor in a single tar.gz archive&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Archive</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>../img/archive.png</normaloff>../img/archive.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_ScoreFlow">
      <attribute name="title">
@@ -615,6 +592,116 @@
      <attribute name="title">
       <string>Tools</string>
      </attribute>
+    </widget>
+    <widget class="QWidget" name="tab_Output">
+     <attribute name="title">
+      <string>Output</string>
+     </attribute>
+     <widget class="QPlainTextEdit" name="output_display">
+      <property name="geometry">
+       <rect>
+        <x>-1</x>
+        <y>38</y>
+        <width>639</width>
+        <height>351</height>
+       </rect>
+      </property>
+      <property name="cursor" stdset="0">
+       <cursorShape>ArrowCursor</cursorShape>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="tabChangesFocus">
+       <bool>false</bool>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+      <property name="textInteractionFlags">
+       <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_command">
+      <property name="geometry">
+       <rect>
+        <x>79</x>
+        <y>5</y>
+        <width>351</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_2">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>8</y>
+        <width>73</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Command</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_5">
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>8</y>
+        <width>51</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Status</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_status">
+      <property name="geometry">
+       <rect>
+        <x>487</x>
+        <y>5</y>
+        <width>91</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_kill">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>583</x>
+        <y>5</y>
+        <width>51</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Kill</string>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -645,6 +732,7 @@
     <addaction name="actionTutorial"/>
     <addaction name="separator"/>
     <addaction name="actionDebug_mode"/>
+    <addaction name="actionLogfile"/>
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
@@ -690,6 +778,11 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionLogfile">
+   <property name="text">
+    <string>Logfile</string>
    </property>
   </action>
  </widget>

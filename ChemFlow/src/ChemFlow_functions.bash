@@ -218,7 +218,8 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
 
     # Check overwriting ---------------------------------------------------------
     if [ "${OVERWRITE}" == "yes" ] ; then
-      read -p "[ Note ] Are you sure you want to OVERWRITE [y/n]? " opt
+      echo -n "[ Note ] Are you sure you want to overwrite? [y/n] "
+      read opt
 
       case "${opt}" in
         "Y"|"YES"|"Yes"|"yes"|"y")  ;;

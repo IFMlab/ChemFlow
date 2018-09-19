@@ -163,12 +163,25 @@ def yesNoDialog(title="Question", message="", info="", details=""):
     retval = msg.exec_()
     msg.close()
     if retval == QMessageBox.Yes:
-        return 'yes'
+        return 'y'
     else:
-        return 'no'
+        return 'n'
 
 
 EMPTY_VALUES = [None, '', ' ']
+PROCESS_STATE = {
+    QProcess.NotRunning: "Not Running",
+    QProcess.Starting: "Starting",
+    QProcess.Running: "Running"
+}
+PROCESS_ERROR = {
+    QProcess.FailedToStart: "The process failed to start. Either the invoked program is missing, or you may have insufficient permissions to invoke the program.",
+    QProcess.Crashed: "The process crashed some time after starting successfully.",
+    QProcess.Timedout: "Timed out",
+    QProcess.WriteError: "An error occurred when attempting to write to the process.",
+    QProcess.ReadError: "An error occurred when attempting to read from the process.",
+    QProcess.UnknownError: "An unknown error occurred."
+}
 # directory where the binary is being decompressed and executed, usually /tmp/_MEIxxxxxx
 WORKDIR = os.path.dirname(resource_path(__file__))
 # directory where the binary that was launched is

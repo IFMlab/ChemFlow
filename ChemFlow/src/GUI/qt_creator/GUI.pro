@@ -40,4 +40,5 @@ FORMS += \
     run_local.ui \
     about.ui \
     create_project.ui \
-    question.ui
+    question.ui \
+    logfile.ui

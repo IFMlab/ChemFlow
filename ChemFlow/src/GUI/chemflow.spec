@@ -9,6 +9,7 @@ a = Analysis(['GUI.py'],
                ('img/*.png','img'),
                ('img/*.ico','img'),
                ('fonts/*.ttf','fonts'),
+               ('qss/*.css', 'qss')
              ],
              hiddenimports=[],
              hookspath=[],

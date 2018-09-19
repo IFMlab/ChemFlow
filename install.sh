@@ -10,6 +10,11 @@
 ##
 ###############################################################################
 
+RELEASE="v0.3-alpha"
+GUI_NAME="chemflow"
+
+# ChemFlow installation script
+
 not_on_path(){
   echo "[ $1 ] $2 is not on your PATH"
   if [ "$1" == "WARNING" ]; then
@@ -24,8 +29,8 @@ _install(){
     echo "Installing ChemFlow in $DESTINATION..."
     # Move files if necessary
     if [ "$DESTINATION" != $(abspath "$PWD") ]; then
-      echo "Copying files..."
-      cp -r "$PWD" "$DESTINATION"
+      echo "Copying files from $PWD to $DESTINATION/"
+      cp -r "$PWD" "$DESTINATION/"
       COPY=1
     fi
     # Create environment variable and add to .bashrc
@@ -49,13 +54,14 @@ _update(){
     echo "Updating installation to $DESTINATION..."
     # Move files if necessary
     if [ "$DESTINATION" != $(abspath "$PWD") ]; then
-      echo "Copying files..."
+      echo "Copying files from $PWD to $DESTINATION/"
       cp -r "$PWD" "$DESTINATION/"
       COPY=1
     fi
     # Backup
     cp ~/.bashrc ~/.bashrc.bak
     # Replace with new path (not using sed -i because it's not available on all sed versions)
+    CHEMFLOW_HOME="$DESTINATION/ChemFlow"
     sed -e 's?export CHEMFLOW_HOME=".*"?export CHEMFLOW_HOME="'$DESTINATION'\/ChemFlow"?g' ~/.bashrc > ~/.bashrc.new && mv ~/.bashrc.new ~/.bashrc
     echo "Update successful"
   else
@@ -67,10 +73,21 @@ _update(){
   fi
 }
 
+_install_gui(){
+  if [ -z "$1" ]; then
+    echo "Installing GUI from release $RELEASE"
+    #TODO: uncomment when repository made public
+    #wget -P /tmp/ https://github.com/IFMlab/ChemFlow/releases/download/${RELEASE}/${GUI_NAME}
+    #mv /tmp/${GUI_NAME} ${CHEMFLOW_HOME}/bin/
+  else
+    echo "Would download GUI from release $RELEASE"
+  fi
+}
 
 _check(){
   # Check if programs are on PATH
   echo "Checking softwares available on your PATH..."
+  source ~/.bashrc
 
   ## Core tools
   if [ -z "$(command -v perl)" ] ; then not_on_path ERROR Perl ; fi
@@ -115,6 +132,12 @@ _check(){
   if [ -z "$(command -v sander)" ] ;         then not_on_path WARNING AmberTools; fi
   if [ -z "$(command -v g09)" ] ;            then not_on_path WARNING Gaussian09; fi
   if [ -z "$(command -v IChem)" ] ;          then not_on_path WARNING IChem; fi
+
+  # ChemFlow
+  if [ ! -x "$CHEMFLOW_HOME/bin/DockFlow" ]; then
+    echo "[ ERROR ] Binaries in $CHEMFLOW_HOME are not executable"
+    let error_count+=1
+  fi
 }
 
 _help(){
@@ -122,6 +145,7 @@ echo"\
 Usage:  $0
         -h|--help             : show this help message and quit
         -d|--destination  STR : install ChemFlow at the specified destination
+        --gui                 : install GUI from release $RELEASE (not working yet)
         --debug               : only verify the installation, don't do anything
 "
 }
@@ -133,6 +157,9 @@ while [[ $# -gt 0 ]]; do
     "-h"|"--help")
       _help
       exit 0
+    ;;
+    "--gui")
+      GUI=1
     ;;
     "-d"|"--destination")
       if [ -w "$2" ] && [ -d "$2" ] && [ ! -f "$2/ChemFlow" ]; then
@@ -170,6 +197,9 @@ then
   _install $DEBUG
 else
   _update $DEBUG
+fi
+if [ ! -z "$GUI" ]; then
+  _install_gui $DEBUG
 fi
 _check $DEBUG
 
