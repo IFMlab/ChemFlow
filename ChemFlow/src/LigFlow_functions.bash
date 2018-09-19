@@ -311,7 +311,8 @@ fi
 
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ ! -f ${RUNDIR}/original/${LIGAND}.mol2 ] ; then
+    LIGAND_NAME=`echo ${LIGAND} | sed -e 's/_conf_[0-9]*//'`
+    if [ ! -f ${RUNDIR}/original/${LIGAND_NAME}.mol2 ] ; then
         REWRITE="yes"
     fi
 done
@@ -384,13 +385,13 @@ case ${CHARGE} in
     ;;
 "resp")
 #   Prepare Gaussian
-    echo "echo \"antechamber -i ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fi mol2 -o \${LIGAND_NAME}.gau -fo gcrt -gv 1 -ge ligand.gesp -gm \"%mem=16Gb\" -gn \"%nproc=${NCORES}\" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> LigFlow.xargs" >> LigFlow.run
+    echo "echo \"antechamber -i ${RUNDIR}/gas/\${LIGAND_NAME}.mol2 -fi mol2 -o ${RUNDIR}/resp/\${LIGAND_NAME}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/\${LIGAND_NAME}.gesp -gm \"%mem=16Gb\" -gn \"%nproc=${NCORES}\" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log \">> LigFlow.xargs" >> LigFlow.run
 
     # Run Gaussian to optimize structure and generate electrostatic potential grid
-    echo "echo \"g09 <\${LIGAND_NAME}.gau>\${LIGAND_NAME}.gout \">> LigFlow.xargs" >> LigFlow.run
+    echo "echo \"g09 <${RUNDIR}/resp/\${LIGAND_NAME}.gau>${RUNDIR}/resp/\${LIGAND_NAME}.gout \">> LigFlow.xargs" >> LigFlow.run
 
     # Read Gaussian output and write new optimized ligand with RESP charges
-    echo "echo \"antechamber -i \${LIGAND_NAME}.gout -fi gout -o ${RUNDIR}/bcc/\${LIGAND_NAME}_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> antechamber.log \">> LigFlow.xargs" >> LigFlow.run
+    echo "echo \"antechamber -i ${RUNDIR}/resp/\${LIGAND_NAME}.gout -fi gout -o ${RUNDIR}/resp/\${LIGAND_NAME}_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &>> antechamber.log \">> LigFlow.xargs" >> LigFlow.run
 ;;
 esac
 }
@@ -462,7 +463,10 @@ case ${JOB_SCHEDULLER} in
       rm -rf LigFlow.run
     fi
 
-    echo "for LIGAND in ${LIGAND_LIST[@]} ; do" > LigFlow.run
+    echo "for LIGAND in ${LIGAND_LIST[@]} ; do
+    mkdir /tmp/${LIGAND}_${CHARGE}
+    cd    /tmp/${LIGAND}_${CHARGE}" > LigFlow.run
+
     LigFlow_compute_charge
 
     echo "done
@@ -488,19 +492,19 @@ cat LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'" >> LigFlow.run
             rm -rf ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
         fi
 
-        echo "cd ${RUNDIR}
-        mkdir tmp_${first}
-cd tmp_${first}
-
+        echo "
 if [ -f ${first}.xargs ] ; then rm -rf LigFlow.xargs ; fi
-for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do" > LigFlow.run
+for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
+    mkdir /tmp/${LIGAND}_${CHARGE}
+    cd    /tmp/${LIGAND}_${CHARGE}
+" > LigFlow.run
 
         LigFlow_compute_charge
 
         echo "done
 cat LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 cd ${RUNDIR}
-rm -rf ${RUNDIR}/tmp_${first}">> LigFlow.run
+">> LigFlow.run
 
         LigFlow_write_HPC_header
 
@@ -621,12 +625,12 @@ while [[ $# -gt 0 ]]; do
 
     case ${key} in
         "-h"|"--help")
-            DockFlow_help
+            LigFlow_help
             exit 0
             shift # past argument
         ;;
         "-hh"|"--full-help")
-            DockFlow_help_full
+            LigFlow_help_full
             exit 0
             shift
         ;;
