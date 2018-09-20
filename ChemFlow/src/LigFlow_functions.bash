@@ -304,7 +304,7 @@ rm ATOMTYPE.INF
 
 LigFlow_prepare_input() {
 
-LIGAND_LIST=(`echo ${LIGAND_LIST[@]} | sed -e 's/_conf_[0-9]*//'`)
+LIGAND_LIST=(`echo ${LIGAND_LIST[@]} | sed -e 's/_conf_[0-9]*//g'`)
 
 # Original
 if [ ! -d ${RUNDIR}/original/ ] ; then

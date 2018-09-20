@@ -70,14 +70,36 @@ You may skip this step if you want to provide the coordinates manually.
 Use the reference ligand to compute the center for docking.
 For PLANTS it's enough to have only the center.
 
-    ``python /storage/donadef/git/ChemFlow/ChemFlow/bin/bounding_shape.py reference_ligand.mol2 --sphere 8.0``
+    ``python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --sphere 8.0``
 
 For VINA you need the center AND the lenghts of X Y and Z.
 
-    ``python /storage/donadef/git/ChemFlow/ChemFlow/bin/bounding_shape.py reference_ligand.mol2 --box 8.0``
+    ``python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --box 8.0``
 
 
-Step 3: Run DockFlow to predict the docking poses.
+Step 3: Run LigFlow to prepare the ligands.
+-------------------------------------------
+Before running unknown compounds within ChemFlow we need to prepare the .mol2 to comply with the used standards using Lig*Flow*,
+our workflow to handle ligands and general compounds.
+
+LigFlow takes multimol2 files as input, then organizes them individually into your project folder while normalizing the .mol2 files.
+To perform this action run:
+
+    ``LigFlow -p tutorial -l compounds.mol2``
+
+In addition LigFlow can be used to  build up a compound database with **advanced** charges such as AM1-BCC and RESP and their associated
+optimized structures, we'll see it's use latter to compute appropriate charges for the free energy calculations.
+Since these calculations are computationally expensive we recomend the users to use a cluster/supercomputer. In the examples bellow
+we demonstrate how to derive the AM1-BCC and RESP charges using the two most widespread queueing systems in supercomputers (PBS and SLURM)
+
+    ``LigFlow -p tutorial -l compounds.mol2 --bcc --pbs``
+
+    ``LigFlow -p tutorial -l compounds.mol2 --resp --slurm``
+
+If a compound already exists in the ChemBase (ChemFlow database), Lig*Flow* won't compute the charges for this compound.
+
+
+Step 4: Run DockFlow to predict the docking poses.
 --------------------------------------------------
 To demonstrate **DockFlow** we'll run it with **three** sets of ligands, some of which we only know the binding
 affinity (7 compounds), second we know both the affinity and crystal structure (7 compounds)_ and third a set of decoys (14 compounds)
@@ -104,7 +126,7 @@ For each of these commands you will be asked:
 * Continue? > y
 * (Rewrite original ligands? > y)
 
-Step 4: Postprocess all the results
+Step 5: Postprocess all the results
 -----------------------------------
 When tou are done, you can postprocess (--postprocess) the results. Here, we decided to keep only the best 3 poses for each ligand (-n 3)
 
@@ -112,7 +134,7 @@ When tou are done, you can postprocess (--postprocess) the results. Here, we dec
 
     ``echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l compounds.mol2            --postprocess -sf vina  --overwrite -n 3``
 
-Step 5: Run ScoreFlow to rescore the previous doking poses (best 3 for each ligand)
+Step 6: Run ScoreFlow to rescore the previous doking poses (best 3 for each ligand)
 -----------------------------------------------------------------------------------
 Here, we only keep on with plants results (tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2).
 
@@ -131,7 +153,7 @@ For each of these commands you will be asked:
 * Are you sure you want to OVERWRITE? > y
 * Continue? > y
 
-Step 6: Postprocess the results
+Step 7: Postprocess the results
 -------------------------------
 When tou are done, you can postprocess (--postprocess) the results:
 
