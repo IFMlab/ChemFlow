@@ -539,17 +539,17 @@ ScoreFlow_rescore_mmgbsa_write_HPC() {
 if [ ! -f ${RUNDIR}/ScoreFlow.${JOB_SCHEDULLER,,} ] ; then
     if [ ${HEADER_PROVIDED} != "yes" ] ; then
         file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/${JOB_SCHEDULLER,,}.template)
-        eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.${JOB_SCHEDULLER,,}
+        eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.header
     else
-        cp ${WORKDIR}/${HEADER_FILE} ${RUNDIR}/ScoreFlowFlow.${JOB_SCHEDULLER,,}
+        cp ${HEADER_FILE} ${RUNDIR}/ScoreFlow.header
     fi
 fi
 case "${JOB_SCHEDULLER}" in
     "PBS")
-        sed "/PBS -N .*$/ s/$/$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+        sed "/PBS -N .*$/ s/$/$LIGAND/" ${RUNDIR}/ScoreFlow.header > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
     ;;
     "SLURM")
-        sed "s/--job-name=[.]*/--job-name=$LIGAND/" ${WORKDIR}/${HEADER_FILE} > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
+        sed "s/--job-name=[.]*/--job-name=$LIGAND/" ${RUNDIR}/ScoreFlow.header > ${RUNDIR}/${LIGAND}/ScoreFlow.${JOB_SCHEDULLER,,}
     ;;
     esac
 

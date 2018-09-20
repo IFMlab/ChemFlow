@@ -114,11 +114,11 @@ Run DockFlow for each set of ligands.
 
 * Using plants:
 
-    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2         --center 31.50 13.74 24.36 --radius 20``
+    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2 --center 31.50 13.74 24.36 --radius 20``
 
 * Using vina:
 
-    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l compounds.mol2         --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina``
+    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l compounds.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina``
 
 For each of these commands you will be asked:
 
@@ -130,11 +130,11 @@ Step 5: Postprocess all the results
 -----------------------------------
 When tou are done, you can postprocess (--postprocess) the results. Here, we decided to keep only the best 3 poses for each ligand (-n 3)
 
-    ``echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2          --postprocess --overwrite -n 3``
+    ``echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2 --postprocess --overwrite -n 3``
 
-    ``echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l compounds.mol2            --postprocess -sf vina  --overwrite -n 3``
+    ``echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l compounds.mol2   --postprocess -sf vina  --overwrite -n 3``
 
-Step 6: Run ScoreFlow to rescore the previous doking poses (best 3 for each ligand)
+Step 6: Run ScoreFlow to rescore the previous docking poses (best 3 for each ligand)
 -----------------------------------------------------------------------------------
 Here, we only keep on with plants results (tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2).
 
