@@ -536,13 +536,11 @@ ScoreFlow_rescore_mmgbsa_write_HPC() {
 #
 #       RETURNS: ScoreFlow.pbs for ${LIGAND}
 #===============================================================================
-if [ ! -f ${RUNDIR}/ScoreFlow.${JOB_SCHEDULLER,,} ] ; then
-    if [ ${HEADER_PROVIDED} != "yes" ] ; then
-        file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/${JOB_SCHEDULLER,,}.template)
-        eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.header
-    else
-        cp ${HEADER_FILE} ${RUNDIR}/ScoreFlow.header
-    fi
+if [ ${HEADER_PROVIDED} != "yes" ] ; then
+    file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/job_scheduller/${JOB_SCHEDULLER,,}.template)
+    eval echo \""${file}"\" > ${RUNDIR}/ScoreFlow.header
+else
+    cp ${HEADER_FILE} ${RUNDIR}/ScoreFlow.header
 fi
 case "${JOB_SCHEDULLER}" in
     "PBS")
