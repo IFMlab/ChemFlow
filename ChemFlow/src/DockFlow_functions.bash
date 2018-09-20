@@ -924,12 +924,10 @@ while [[ $# -gt 0 ]]; do
         "-h"|"--help")
             DockFlow_help
             exit 0
-            shift # past argument
         ;;
         "-hh"|"--full-help")
             DockFlow_help_full
             exit 0
-            shift
         ;;
         "-r"|"--receptor")
             RECEPTOR_FILE=$(abspath "$2")

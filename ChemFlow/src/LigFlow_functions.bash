@@ -365,13 +365,11 @@ LigFlow_write_HPC_header() {
 #
 #       RETURNS: ScoreFlow.pbs for ${LIGAND}
 #===============================================================================
-if [ ! -f ${RUNDIR}/LigFlow.header ] ; then
-    if [ ${HEADER_PROVIDED} != "yes" ] ; then
-        file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
-        eval echo \""${file}"\" > ${RUNDIR}/LigFlow.header
-    else
-        cp ${HEADER_FILE} ${RUNDIR}/LigFlow.header
-    fi
+if [ ${HEADER_PROVIDED} != "yes" ] ; then
+    file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
+    eval echo \""${file}"\" > ${RUNDIR}/LigFlow.header
+else
+    cp ${HEADER_FILE} ${RUNDIR}/LigFlow.header
 fi
 case "${JOB_SCHEDULLER}" in
         "PBS")
@@ -435,7 +433,7 @@ case ${JOB_SCHEDULLER} in
         ;;
         "resp")
         #   Prepare Gaussian
-            antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch ${LIGAND} -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
+            antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch ${RUNDIR}/resp/${LIGAND} -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
 
             # Run Gaussian to optimize structure and generate electrostatic potential grid
             g09 <${RUNDIR}/resp/${LIGAND}.gau>${RUNDIR}/resp/${LIGAND}.gout
@@ -487,7 +485,7 @@ case ${JOB_SCHEDULLER} in
             ;;
             "resp")
             #   Prepare Gaussian
-                echo "antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch ${LIGAND}  -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+                echo "antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch  ${RUNDIR}/resp/${LIGAND}  -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
 
                 # Run Gaussian to optimize structure and generate electrostatic potential grid
                 echo "g09 <${RUNDIR}/resp/${LIGAND}.gau>${RUNDIR}/resp/${LIGAND}.gout" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
@@ -625,12 +623,10 @@ while [[ $# -gt 0 ]]; do
         "-h"|"--help")
             LigFlow_help
             exit 0
-            shift # past argument
         ;;
         "-hh"|"--full-help")
             LigFlow_help_full
             exit 0
-            shift
         ;;
         "-l"|"--ligand")
             LIGAND_FILE=$(abspath "$2")

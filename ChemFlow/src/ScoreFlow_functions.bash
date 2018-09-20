@@ -881,12 +881,10 @@ while [[ $# -gt 0 ]]; do
         "-h"|"--help")
             ScoreFlow_help
             exit 0
-            shift # past argument
         ;;
         "-hh"|"--full-help")
             ScoreFlow_help_full
             exit 0
-            shift
         ;;
         "-r"|"--receptor")
             RECEPTOR_FILE=$(abspath "$2")
