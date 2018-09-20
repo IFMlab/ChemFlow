@@ -454,8 +454,8 @@ case ${JOB_SCHEDULLER} in
 ;;
 
 "SLURM"|"PBS")
-    echo ''
-    read -p "How many Ligands per PBS/SLURM job? " nlig
+    echo -ne "\nHow many Dockings per PBS/SLURM job? "
+    read nlig
     # Check if the user gave a int
     nb=${nlig}
     not_a_number
@@ -534,7 +534,7 @@ LigFlow_summary() {
 #
 #===============================================================================
 
-echo "
+echo "\
 LigFlow summary:
 -------------------------------------------------------------------------------
 [ General info ]
@@ -556,9 +556,10 @@ PROTOCOL: ${PROTOCOL}
 JOB SCHEDULLER: ${JOB_SCHEDULLER}
     CORES/NODE: ${NCORES}
 "
-read -p "
-Continue [y/n]? " opt
 
+echo -n "
+Continue [y/n]? "
+read opt
 case $opt in
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
 *)  echo "Exiting" ; exit 0 ;;

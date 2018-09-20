@@ -2,14 +2,15 @@
 
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
-from re import search
-import sys, os, webbrowser, pexpect
+from PyQt5.QtCore import QProcess, QByteArray, QRegExp
+from webbrowser import open as browser_open
+from time import strftime, gmtime
+import sys, os, logging
 from utils import (
-    WORKDIR, CWDIR, EMPTY_VALUES,
-    cleanParameters,
-    missingParametersDialog, errorDialog, yesNoDialog,
+    WORKDIR, CWDIR, EMPTY_VALUES, PROCESS_ERROR, PROCESS_STATE,
+    cleanParameters, missingParametersDialog, errorDialog, yesNoDialog,
 )
-from MainClasses import DialogAbout, DialogNewProject, DialogQuestion
+from MainClasses import DialogAbout, DialogNewProject, DialogQuestion, LogfileDialog
 from DockingClasses import DialogDockVina, DialogDockPlants
 from ExecutionClasses import DialogRunLocal, DialogRunPbs, DialogRunSlurm
 from qt_creator.UImainwindow import Ui_MainWindow
@@ -26,12 +27,15 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setWindowIcon(icon)
         self.label_logo.setPixmap(QtGui.QPixmap(logo_path))
         # set other icons
-        run_logo_path = os.path.realpath(os.path.join(WORKDIR, "img", "run.png"))
-        self.label_dock_logo.setPixmap(QtGui.QPixmap(run_logo_path))
-        postprocess_logo_path = os.path.realpath(os.path.join(WORKDIR, "img", "process.png"))
-        self.label_postdock_logo.setPixmap(QtGui.QPixmap(postprocess_logo_path))
-        archive_logo_path = os.path.realpath(os.path.join(WORKDIR, "img", "archive.png"))
-        self.label_archivedock_logo.setPixmap(QtGui.QPixmap(archive_logo_path))
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(os.path.realpath(os.path.join(WORKDIR, "img", "run.png"))), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.commandLinkButton_docking_run.setIcon(icon)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(os.path.realpath(os.path.join(WORKDIR, "img", "process.png"))), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.commandLinkButton_docking_postprocess.setIcon(icon)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(os.path.realpath(os.path.join(WORKDIR, "img", "archive.png"))), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.commandLinkButton_docking_archive.setIcon(icon)
         # connect buttons with actions
         ## Menu
         self.actionAbout.triggered.connect(self.about)
@@ -39,6 +43,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionReport_issue.triggered.connect(self.report_issue)
         self.actionTutorial.triggered.connect(self.tutorial)
         self.actionDebug_mode.triggered.connect(self.debug_mode)
+        self.actionLogfile.triggered.connect(self.read_logs)
         self.actionNew_project.triggered.connect(self.create_project)
         self.actionLoad_project.triggered.connect(self.load_project)
         self.actionExit.triggered.connect(self.close)
@@ -50,33 +55,49 @@ class Main(QMainWindow, Ui_MainWindow):
         ## Execution
         self.pushButton_docking_configure_job_queue.clicked.connect(self.configure_docking_execution)
         ## Actions
-        self.pushButton_docking_run.clicked.connect(self.run_docking)
-        self.pushButton_docking_postprocess.clicked.connect(self.run_docking_postprocess)
-        self.pushButton_docking_archive.clicked.connect(self.run_docking_archive)
+        self.commandLinkButton_docking_run.clicked.connect(self.run_docking)
+        self.commandLinkButton_docking_postprocess.clicked.connect(self.run_docking_postprocess)
+        self.commandLinkButton_docking_archive.clicked.connect(self.run_docking_archive)
+        self.action_buttons = [
+            self.commandLinkButton_docking_run,
+            self.commandLinkButton_docking_postprocess,
+            self.commandLinkButton_docking_archive,
+        ]
+        # Output tab
+        self.pushButton_kill.clicked.connect(self.kill_process)
+        # Validators
+        validator = QtGui.QRegExpValidator(QRegExp('[\w\-\+\.]+')) # only accept letters/numbers and .+-_ as valid
+        self.lineEdit_docking_protocol.setValidator(validator)
         # Create dictionary that stores all ChemFlow variables
         self.input = {
             'PostProcess': False,
             'Archive': False,
         }
         self.DEBUG = False
+        # Logfile
+        self.logfile = os.path.join(os.getenv('CHEMFLOW_HOME', os.environ['HOME']), 'chemflow.log')
+        logging.basicConfig(filename=self.logfile, level=logging.DEBUG,
+            format='%(asctime)s - %(message)s', datefmt='%H:%M:%S')
+        timestamp = strftime("%A %d %B %Y", gmtime())
+        logging.info('Launching ChemFlow GUI: {}'.format(timestamp))
 
     def about(self):
         """Show the About section"""
-        dialog_about = DialogAbout()
-        dialog_about.exec_()
+        dialog_about = DialogAbout(parent=main)
+        dialog_about.show()
 
     def github(self):
         """Open the GitHub page in a web browser"""
-        webbrowser.open('https://github.com/IFMlab/ChemFlow')
+        browser_open('https://github.com/IFMlab/ChemFlow')
 
     def report_issue(self):
         """Open the Issue page from the GitHub in a web browser"""
-        webbrowser.open('https://github.com/IFMlab/ChemFlow/issues')
+        browser_open('https://github.com/IFMlab/ChemFlow/issues')
 
     def tutorial(self):
         """Open the tutorial section in a web browser"""
         # TODO update link when commit to master branch
-        webbrowser.open('https://github.com/IFMlab/ChemFlow/blob/devel/tutorial/TUTORIAL.rst')
+        browser_open('https://github.com/IFMlab/ChemFlow/blob/devel/tutorial/TUTORIAL.rst')
 
     def debug_mode(self):
         """Activate the debug mode. Prints commands instead of running them"""
@@ -86,6 +107,14 @@ class Main(QMainWindow, Ui_MainWindow):
         else:
             self.DEBUG = True
             self.statusBar.showMessage("Debug mode is on", 5000)
+
+    def read_logs(self):
+        """Open the logfile"""
+        if os.path.isfile(self.logfile):
+            logger = LogfileDialog(self.logfile, parent=main)
+            logger.show()
+        else:
+            errorDialog(message='No logfile to show')
 
     def create_project(self):
         """Create a new ChemFlow project"""
@@ -331,75 +360,124 @@ class Main(QMainWindow, Ui_MainWindow):
         return command
 
     def execute_command(self, command):
-        """Run a command through pexpect module. The command can be interactive, as long as the '?' character
-        is used to mark them.
+        """Run a command through a QProcess. The command can ask for user input at any point, as long as the '?' character
+        is shown before the prompt (i.e avoid `read -p "Continue? [y/n] " opt` and use `echo -n "Continue? [y/n] "; read opt` instead)
         command: LIST"""
         CMD = ' '.join([str(i) for i in command])
         if self.DEBUG:
-            print(CMD)
+            self.display(CMD)
         else:
-            child = pexpect.spawn(CMD, cwd=self.WORKDIR,
-                timeout=None, encoding='utf-8')
-            child.logfile_read = sys.stdout
-            print('[ ChemFlow GUI ] {} was spawned with PID {}'.format(command[0], child.pid))
-            _continue = True
-            while _continue:
-                # search for a question or the EOF signal
-                index = child.expect(['\?', pexpect.EOF])
-                if index == 0: # question
-                    # Get the question from the buffer
-                    split_lines = child.before.split('\n')
-                    if len(split_lines) > 1:
-                        question = split_lines[-1]
-                    else:
-                        question = child.before
-                    # Separate yes/no questions from others
-                    if '[y/n]' in question:
-                        # Separate Summary from other y/n questions
-                        summary_begin = None
-                        for i, line in enumerate(split_lines):
-                            summary_search = search(r'.+Flow summary:', line)
-                            if summary_search:
-                                summary_begin = i
-                                break
-                        if summary_begin:
-                            summary = '\n'.join(split_lines[summary_begin+2:-1])
+            # create process
+            self.process = QProcess()
+            self.pushButton_kill.setEnabled(True)
+            self.process.setWorkingDirectory(self.WORKDIR)
+            # Merge STDOUT and STDERR
+            self.process.setProcessChannelMode(QProcess.MergedChannels)
+            # Capture STDIN
+            self.process.setInputChannelMode(QProcess.ManagedInputChannel)
+            # Display STDOUT as it arrives and take action
+            self.process.readyReadStandardOutput.connect(self.capture_stdin_stdout)
+            # Connect signals from the process
+            self.process.stateChanged.connect(lambda state: self.lineEdit_status.setText(PROCESS_STATE[state]))
+            self.process.started.connect(self.process_started)
+            self.process.finished.connect(lambda status: self.process_finished(status))
+            self.process.errorOccurred.connect(lambda error: self.process_error(error))
+            # Execute
+            self.process.start(CMD)
+
+    def process_started(self):
+        """Routine launched at the start of a QProcess"""
+        command = ' '.join([arg for arg in [self.process.program()] + self.process.arguments()])
+        self.lineEdit_command.setText(command)
+        self.display(command)
+        self.summary_text = ''
+        self.display('[ ChemFlow ] {} was spawned with PID {}'.format(self.process.program(), self.process.processId()))
+        # Prevent user from launching other commands
+        for button in self.action_buttons:
+            button.setEnabled(False)
+
+    def process_finished(self, status):
+        """Routine launched when a QProcess is finished"""
+        self.display('[ ChemFlow ] {} process ended with exit status {}'.format(self.process.program(), status))
+        self.pushButton_kill.setEnabled(False)
+        # Allow user to send new commands
+        for button in self.action_buttons:
+            button.setEnabled(True)
+        self.process.close()
+
+    def process_error(self, error):
+        """Routine launched when a QProcess signals an error"""
+        self.display('[ ChemFlow ] ERROR while running {} process - {}'.format(self.process.program(), PROCESS_ERROR[error]))
+
+    def kill_process(self):
+        """Kill a QProcess"""
+        self.display('[ ChemFlow ] Killing {} with PID {}'.format(self.process.program(), self.process.processId()))
+        self.process.kill()
+
+    def capture_stdin_stdout(self):
+        """Display STDOUT while searching for STDIN events"""
+        text = str(self.process.readAllStandardOutput().data().decode('utf-8'))
+        if text:
+            self.display(text)
+            # Process text line by line
+            text = text.split('\n')
+            for line in text:
+                # Add content to summary if necessary
+                if len(self.summary_text):
+                    self.summary_text += line + '\n'
+                # Detect summary start
+                if 'Flow summary:' in line:
+                    self.summary_text = line + '\n'
+                # Capture questions
+                elif '?' in line:
+                    # switch to the Output tab
+                    self.tabWidget.setCurrentIndex(4)
+                    # Yes No question
+                    if '[y/n]' in line:
+                        if len(self.summary_text):
                             answer = yesNoDialog(
-                                title="{} summary".format(command[0]),
-                                message="Please check if the details are correct",
-                                info="Continue ?",
-                                details=summary)
-                            child.sendline(answer)
-                            _continue = True if answer == 'yes' else False
+                                title='{} summary'.format(self.process.program()),
+                                message='Please check carefully the protocol details below',
+                                info='Continue ?',
+                                details='\n'.join(self.summary_text.split('\n')[2:-2]),
+                            )
+                            self.summary_text = ''
                         else:
-                            answer = yesNoDialog(message=question)
-                            child.sendline(answer)
+                            answer = yesNoDialog(message=line)
+                        self.display(answer)
+                        self.process.write('{}\n'.format(answer).encode('utf-8'))
+                    # Other question
                     else:
-                        qdialog = DialogQuestion(question=question)
+                        qdialog = DialogQuestion(question=line)
                         qdialog.exec_()
                         answer = qdialog.answer
-                        child.sendline(answer)
-                elif index == 1: # EOF signal
-                    _continue = False
-            print('[ ChemFlow GUI ] Normal termination of the child process')
+                        self.display(answer)
+                        self.process.write('{}\n'.format(answer).encode('utf-8'))
+
+    def display(self, text):
+        """Print text on the Output tab and to the logfile"""
+        self.output_display.insertPlainText(text + '\n')
+        self.output_display.moveCursor(QtGui.QTextCursor.End)
+        logging.info(text)
 
     def closeEvent(self, event):
+        """Routine launched when quitting the ChemFlow app"""
         cleanParameters(CWDIR)
+        self.display("[ ChemFlow ] Closing...")
         QMainWindow.closeEvent(self, event)
 
 
 if __name__ == '__main__':
-    OLDDIR = os.getcwd()
     # create widget
     app = QtWidgets.QApplication(sys.argv)
-    # Use custom font
-    roboto = os.path.realpath(os.path.join(WORKDIR, "fonts", "Roboto-Regular.ttf"))
-    QtGui.QFontDatabase.addApplicationFont(roboto)
-    font = QtGui.QFont("Roboto Regular", 10)
-    app.setFont(font)
+    # Use custom fonts and stylesheet
+    for filename in os.listdir(os.path.realpath(os.path.join(WORKDIR, "fonts"))):
+        font = os.path.realpath(os.path.join(WORKDIR, "fonts", filename))
+        QtGui.QFontDatabase.addApplicationFont(font)
+    stylesheet = os.path.realpath(os.path.join(WORKDIR, "qss", "chemflow.css"))
+    app.setStyleSheet(open(stylesheet).read())
     # show app
     main = Main()
     main.show()
     # exit
-    os.chdir(OLDDIR)
     sys.exit(app.exec_())

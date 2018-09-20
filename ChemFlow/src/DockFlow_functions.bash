@@ -91,8 +91,8 @@ case ${JOB_SCHEDULLER} in
     cd ${RUNDIR} ; cat dock.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 ;;
 "SLURM"|"PBS")
-    echo ''
-    read -p "How many Dockings per PBS/SLURM job? " nlig
+    echo -ne "\nHow many Dockings per PBS/SLURM job? "
+    read nlig
     # Check if the user gave a int
     nb=${nlig}
     not_a_number
@@ -522,9 +522,11 @@ fi
 
 # Remove docking folders
 if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTPROCESS_ALL} ] ; then
-    read -p "[ DockFlow ] Remove all docking folders? [y/n] " opt
+    echo -n "[ DockFlow ] Remove all docking folders? [y/n] "
+    read opt
 else
-    read -p "[ DockFlow ] Remove docking folders for ${PROTOCOL} / ${RECEPTOR}? [y/n] " opt
+    echo -n "[ DockFlow ] Remove docking folders for ${PROTOCOL} / ${RECEPTOR}? [y/n] "
+    read opt
 fi
 case ${opt} in
 "y"|"yes"|"Yes"|"Y"|"YES")
@@ -738,7 +740,8 @@ else
     echo "[ DockFlow ] Done with post-processing."
 
     # Archiving.
-    read -p "[ DockFlow ] Archive the docking results (folders) in TAR files? [y/n] " opt
+    echo -n "[ DockFlow ] Archive the docking results (folders) in TAR files? [y/n] "
+    read opt
     case ${opt} in
     "y"|"yes"|"Yes"|"Y"|"YES")
         DockFlow_archive
@@ -777,7 +780,7 @@ DockFlow_summary() {
 #
 #===============================================================================
 
-echo "
+echo "\
 DockFlow summary:
 -------------------------------------------------------------------------------
 [ General info ]
@@ -808,9 +811,10 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
 
      OVERWRITE: ${OVERWRITE}
 "
-read -p "
-Continue [y/n]? " opt
 
+echo -n "
+Continue [y/n]? "
+read opt
 case $opt in
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
 *)  echo "Exiting" ; exit 0 ;;

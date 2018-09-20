@@ -89,8 +89,8 @@ class DialogDockPlants(QDialog, Ui_DockingPlants):
         waterDialog = DialogWaterPlants()
         waterDialog.exec_()
         try:
-            waterDialog.values
-        except AttributeError:
+            waterDialog.values['WaterFile']
+        except KeyError:
             pass
         else:
             for i in ['WaterCenterX','WaterCenterY','WaterCenterZ','WaterRadius','WaterFile']:
@@ -123,6 +123,7 @@ class DialogWaterPlants(QDialog, Ui_PlantsWater):
         try:
             if self.values['WaterFile'] in EMPTY_VALUES:
                 missingParametersDialog('- Water MOL2 File')
+                self.values['WaterFile'] = None
             else:
                 self.close()
         except KeyError:
