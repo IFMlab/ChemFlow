@@ -435,7 +435,7 @@ case ${JOB_SCHEDULLER} in
         ;;
         "resp")
         #   Prepare Gaussian
-            antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -gm \"%mem=16Gb\" -gn \"%nproc=${NCORES}\" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
+            antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch ${LIGAND} -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
 
             # Run Gaussian to optimize structure and generate electrostatic potential grid
             g09 <${RUNDIR}/resp/${LIGAND}.gau>${RUNDIR}/resp/${LIGAND}.gout
@@ -467,7 +467,7 @@ case ${JOB_SCHEDULLER} in
         LigFlow_write_HPC_header
 
         for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
-            if [ ! -f ${RUNDIR}/gas/\${LIGAND}.mol2 ] ; then
+            if [ ! -f ${RUNDIR}/gas/${LIGAND}.mol2 ] ; then
                 echo "mkdir -p /tmp/\${LIGAND}; cd /tmp/\${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/gas/${LIGAND}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ; rm -rf /tmp/${LIGAND}/" >>  LigFlow_gas.${first}.xargs
             fi
         done
@@ -487,7 +487,7 @@ case ${JOB_SCHEDULLER} in
             ;;
             "resp")
             #   Prepare Gaussian
-                echo "antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -gm \"%mem=16Gb\" -gn \"%nproc=${NCORES}\" -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+                echo "antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch ${LIGAND}  -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
 
                 # Run Gaussian to optimize structure and generate electrostatic potential grid
                 echo "g09 <${RUNDIR}/resp/${LIGAND}.gau>${RUNDIR}/resp/${LIGAND}.gout" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
