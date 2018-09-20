@@ -452,7 +452,7 @@ case ${JOB_SCHEDULLER} in
 ;;
 
 "SLURM"|"PBS")
-    echo -ne "\nHow many Dockings per PBS/SLURM job? "
+    echo -ne "\nHow many compounds per PBS/SLURM job? "
     read nlig
     # Check if the user gave a int
     nb=${nlig}
