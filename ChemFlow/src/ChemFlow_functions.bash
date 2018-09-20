@@ -147,7 +147,12 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
 
     # HPC adjustments
     case "${JOB_SCHEDULLER}" in
-    "None"|"PBS"|"SLURM") ;;
+    "None") ;;
+    "PBS"|"SLURM")
+        if [ -z ${NC_CHANGED} ] ; then
+            NCORES=16
+        fi
+    ;;
     *) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" ; ChemFlow_error ;
        ;;
     esac
@@ -322,7 +327,6 @@ elif [ $1 == 'ScoreFlow' ] ; then
     RUN_ONLY="no"
 elif [ $1 == 'LigFlow' ] ; then
     WORKFLOW="LigFlow"
-    NCORES=1
 
     CHARGE="gas"
     BCC="no"

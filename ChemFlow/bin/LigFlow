@@ -53,8 +53,9 @@ RUNDIR=${WORKDIR}/${PROJECT}.chemflow/LigFlow/
 
 LigFlow_summary                 # Show a summary of actions.
 LigFlow_prepare_input           # Organizes and convert required files
-LigFlow_prepare_ligands_charges # Compute the charges
-
+if [ ! ${CHARGE} == "gas" ] ; then
+    LigFlow_prepare_ligands_charges # Compute the charges
+fi
 echo "
 [ LigFlow ] Normal completion.
 "

@@ -35,7 +35,6 @@
 #       CREATED:  lundi 28 mai 2018, 16:05:06 (UTC+0200)
 #      REVISION:  ---
 #===============================================================================
-
 if [ -z ${CHEMFLOW_HOME} ] ; then 
   echo "CHEMFLOW_HOME is not defined"
   exit 0
