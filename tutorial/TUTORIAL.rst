@@ -1,8 +1,11 @@
 .. highlight:: bash
 
-========================
-Tutorial, alpha-Thrombin
-========================
+========
+Tutorial
+========
+
+alpha-Thrombin
+++++++++++++++
 
 Provided files
 **************
@@ -34,11 +37,10 @@ Run ChemFlow
 
 Step 1: Convert SMILES into 3D structure
 ----------------------------------------
-The default method is ETKDG. In sequence you should make a .mol2 file.
+To go from smiles to 3D structures use the script bellow. The default method for Bioactive structure generation is the state-of-the-art ETKDG.
+In sequence you should make a .mol2 file using babel or your favorite program.
 
-
-First for the b1-b7 from an undisclosed article (blame diego)
-We do have the affinities.
+First for the b1-b7 from an undisclosed article, we do have the affinities.
 
     ``python $(which SmilesTo3D.py) -i ligands.smi -o ligands.sdf --hydrogen -v``
 
@@ -62,22 +64,7 @@ To keep it simple, let's merge all compounds into a single mol2 file.
 
     ``cat ligands.mol2 ligands_crystal.mol2 decoys.mol2 > compounds.mol2``
 
-
-Step 2: Set the center coordinates for the binding pocket
----------------------------------------------------------
-You may skip this step if you want to provide the coordinates manually.
-
-Use the reference ligand to compute the center for docking.
-For PLANTS it's enough to have only the center.
-
-    ``python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --sphere 8.0``
-
-For VINA you need the center AND the lenghts of X Y and Z.
-
-    ``python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --box 8.0``
-
-
-Step 3: Run LigFlow to prepare the ligands.
+Step 2: Run LigFlow to prepare the ligands.
 -------------------------------------------
 Before running unknown compounds within ChemFlow we need to prepare the .mol2 to comply with the used standards using Lig*Flow*,
 our workflow to handle ligands and general compounds.
@@ -98,6 +85,22 @@ we demonstrate how to derive the AM1-BCC and RESP charges using the two most wid
 
 If a compound already exists in the ChemBase (ChemFlow database), Lig*Flow* won't compute the charges for this compound.
 
+For each of these commands you will be asked:
+
+* Continue? > y
+
+Step 3: Set the center coordinates for the binding pocket
+---------------------------------------------------------
+You may skip this step if you want to provide the coordinates manually.
+
+Use the reference ligand to compute the center for docking.
+For PLANTS it's enough to have only the center.
+
+    ``python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --sphere 8.0``
+
+For VINA you need the center AND the lenghts of X Y and Z.
+
+    ``python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --box 8.0``
 
 Step 4: Run DockFlow to predict the docking poses.
 --------------------------------------------------
@@ -122,36 +125,32 @@ Run DockFlow for each set of ligands.
 
 For each of these commands you will be asked:
 
-* Are you sure you want to OVERWRITE? > y
 * Continue? > y
-* (Rewrite original ligands? > y)
 
 Step 5: Postprocess all the results
 -----------------------------------
 When tou are done, you can postprocess (--postprocess) the results. Here, we decided to keep only the best 3 poses for each ligand (-n 3)
 
-    ``echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2 --postprocess --overwrite -n 3``
+    ``echo n | DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2 --postprocess -n 3``
 
-    ``echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l compounds.mol2   --postprocess -sf vina  --overwrite -n 3``
+    ``echo n | DockFlow -p tutorial --protocol vina -r receptor.mol2 -l compounds.mol2   --postprocess -sf vina -n 3``
 
 Step 6: Run ScoreFlow to rescore the previous docking poses (best 3 for each ligand)
------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 Here, we only keep on with plants results (tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2).
 
-Rescoring using MMGBSA method:
+Rescoring through the MMGBSA method, using two protocols in **implicit solvent** first just minimization, then 1ns md simulation :
 
-    ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --overwrite``
+    ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa``
 
-    ``ScoreFlow -p tutorial --protocol mmgbsa_water    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water --overwrite``
-
-    ``ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --md --overwrite``
-
-    ``ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water --md --overwrite``
+    ``ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --md``
 
 For each of these commands you will be asked:
 
 * Are you sure you want to OVERWRITE? > y
 * Continue? > y
+
+Note: You can turn on explicit solvation using the flag --water.
 
 Step 7: Postprocess the results
 -------------------------------
@@ -159,12 +158,19 @@ When tou are done, you can postprocess (--postprocess) the results:
 
     ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess``
 
-    ``ScoreFlow -p tutorial --protocol mmgbsa_water    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess``
-
     ``ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess``
 
-    ``ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --postprocess``
 
+Advanced
+********
+
+Using the  **--write-only** flag, all files input files will be written in tutorial.chemflow/ScoreFlow/mmgbsa_md/receptor/:
+
+* System Setup: You can modify the system setup (tleap.in file) inside your job.
+* Simulation protocol: The procedures for each protocol can also be modified, the user must review "ScoreFlow.run.template".
+* Run input files (Amber and MMGBSA): Namely min1.in, heat.in, equil.in, md.in ... can also be manually modified at wish :)
+
+* After the modifications, rerun ScoreFlow using **--run-only**.
 
 To run DockFlow and ScoreFlow on a super computer
 *************************************************
@@ -218,29 +224,27 @@ Connect to your pbs cluster.
 
 * Using plants:
 
-    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2         --center 31.50 13.74 24.36 --radius 20 --pbs --overwrite``
+    ``DockFlow -p tutorial --protocol plants -r receptor.mol2 -l compounds.mol2         --center 31.50 13.74 24.36 --radius 20 --pbs``
 
  * Using vina:
 
-    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l compounds.mol2         --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina --pbs --overwrite``
+    ``DockFlow -p tutorial --protocol vina   -r receptor.mol2 -l compounds.mol2         --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina --pbs``
 
 Same as for DockFlow, if you have access to a cluster, use the --slurm or --pbs flag.
 
 ScoreFlow:
 ----------
 
-    ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa              --pbs --overwrite``
+    ``ScoreFlow -p tutorial --protocol mmgbsa          -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa``
 
-    ``ScoreFlow -p tutorial --protocol mmgbsa_water    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water      --pbs --overwrite``
+    ``ScoreFlow -p tutorial --protocol mmgbsa_water    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa --water``
 
-    ``ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --md         --pbs --overwrite``
+    ``ScoreFlow -p tutorial --protocol mmgbsa_md       -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa --md``
 
-    ``ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --water --md --pbs --overwrite``
+    ``ScoreFlow -p tutorial --protocol mmgbsa_water_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa --water --md``
 
 For each of these commands you will be asked:
 
-* Are you sure you want to OVERWRITE? > y
 * Continue? > y
 * (Rewrite original ligands? > y)
 * How many Dockings per PBS/SLURM job? > 1
-* How many tasks per node? > 1

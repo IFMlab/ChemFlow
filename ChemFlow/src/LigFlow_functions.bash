@@ -320,6 +320,10 @@ done
 
 if [ "${REWRITE}" == "yes" ] ; then
     LigFlow_write_origin_ligands
+else
+    if [ "${CHARGE}" == "gas" ] ; then
+        echo "[ LigFlow ] All ligand already present ! " ; exit 0
+    fi
 fi
 }
 
@@ -396,6 +400,13 @@ LigFlow_prepare_ligands_charges() {
 
 # Actualize the ligand list
 LigFlow_filter_ligand_list
+NCHARGE=${#LIGAND_LIST[@]}
+
+if [ ${NCHARGE} == 0 ] ; then
+    echo "[ LigFlow ] All charges already present ! " ; exit 0
+else
+    echo "There are ${NLIGANDS} compounds and ${NCHARGE} remaining to dock"
+fi
 
 cd ${RUNDIR}
 
