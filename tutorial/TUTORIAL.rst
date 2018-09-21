@@ -172,7 +172,7 @@ Note: You can turn on explicit solvation using the flag --water.
 
 Step 7: Postprocess the results
 -------------------------------
-When tou are done, you can postprocess (--postprocess) the results:
+When you are done, you can postprocess (--postprocess) the results:
 
 .. code-block:: bash
 
@@ -196,7 +196,7 @@ To run Dock\ *Flow* and Score\ *Flow* on a super computer
 
 If you have access to a cluster, you may profit from the HPC resources using --slurm or --pbs flags accordingly. :)
 
-To run it properly, you should provide a template for your scheduler.
+To run it properly, you should provide a template for your scheduler using the --header FILE option. Here are examples for this header file.
 
 * Example for pbs::
 
