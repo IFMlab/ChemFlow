@@ -52,9 +52,9 @@
    <property name="geometry">
     <rect>
      <x>360</x>
-     <y>40</y>
+     <y>39</y>
      <width>86</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="text">
@@ -124,6 +124,13 @@
    </property>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>lineEdit_path</tabstop>
+  <tabstop>pushButton_browse</tabstop>
+  <tabstop>lineEdit_name</tabstop>
+  <tabstop>pushButton_ok</tabstop>
+  <tabstop>pushButton_cancel</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

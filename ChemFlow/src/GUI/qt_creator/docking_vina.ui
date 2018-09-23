@@ -58,7 +58,7 @@
    <property name="geometry">
     <rect>
      <x>37</x>
-     <y>35</y>
+     <y>40</y>
      <width>111</width>
      <height>20</height>
     </rect>
@@ -71,7 +71,7 @@
    <property name="geometry">
     <rect>
      <x>344</x>
-     <y>32</y>
+     <y>37</y>
      <width>65</width>
      <height>27</height>
     </rect>
@@ -173,7 +173,7 @@
    <property name="geometry">
     <rect>
      <x>250</x>
-     <y>35</y>
+     <y>40</y>
      <width>91</width>
      <height>20</height>
     </rect>
@@ -314,7 +314,7 @@
    <property name="geometry">
     <rect>
      <x>147</x>
-     <y>32</y>
+     <y>37</y>
      <width>51</width>
      <height>27</height>
     </rect>
@@ -366,6 +366,18 @@
    </property>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>spinBox_exhaustiveness</tabstop>
+  <tabstop>doubleSpinBox_energyRange</tabstop>
+  <tabstop>doubleSpinBox_cx</tabstop>
+  <tabstop>doubleSpinBox_cy</tabstop>
+  <tabstop>doubleSpinBox_cz</tabstop>
+  <tabstop>spinBox_sx</tabstop>
+  <tabstop>spinBox_sy</tabstop>
+  <tabstop>spinBox_sz</tabstop>
+  <tabstop>pushButton_ok</tabstop>
+  <tabstop>pushButton_cancel</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

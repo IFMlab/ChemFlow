@@ -315,6 +315,7 @@ fi
 for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -f ${RUNDIR}/original/${LIGAND}.mol2 ] ; then
         REWRITE="yes"
+        break
     fi
 done
 
@@ -339,7 +340,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
         ${DONE_CHARGE} = "true"
     fi
     if [ ${DONE_CHARGE} == "false" ] ; then
-        if [ ! -n "`echo ${NEW_LIGAND_LIST} | xargs -n1 echo | grep -e \"^${LIGAND}$\"`" ] ; then
+        if [ ! -n "$(echo ${NEW_LIGAND_LIST} | xargs -n1 echo | grep -e \"^${LIGAND}$\")" ] ; then
             NEW_LIGAND_LIST="${NEW_LIGAND_LIST} $LIGAND"
         fi
     fi
@@ -539,7 +540,6 @@ LigFlow summary:
     HOST: ${HOSTNAME}
     USER: ${USER}
  PROJECT: ${PROJECT}
-PROTOCOL: ${PROTOCOL}
  WORKDIR: ${WORKDIR}
 
 [ Setup ]
@@ -596,7 +596,6 @@ LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]
 *-l/--ligand       FILE : Ligands  MOL2 file
 
 [ Optional ]
- --protocol         STR : Name for this specific protocol [default]
  --bcc                  : Compute bcc charges
  --resp                 : Compute resp charges
 
@@ -634,10 +633,6 @@ while [[ $# -gt 0 ]]; do
         ;;
         "-p"|"--project")
             PROJECT="$2"
-            shift
-        ;;
-        "--protocol")
-            PROTOCOL="$2"
             shift
         ;;
         # Charges

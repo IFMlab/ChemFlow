@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/ChemFlow/src/GUI/qt_creator/plants_water.ui'
+# Form implementation generated from reading ui file '/home/cedric/software/ChemFlow/ChemFlow/src/GUI/qt_creator/plants_water.ui'
 #
-# Created by: PyQt5 UI code generator 5.10
+# Created by: PyQt5 UI code generator 5.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -23,7 +23,7 @@ class Ui_PlantsWater(object):
         self.label_6.setGeometry(QtCore.QRect(100, 115, 36, 26))
         self.label_6.setObjectName("label_6")
         self.pushButton_water = QtWidgets.QPushButton(PlantsWater)
-        self.pushButton_water.setGeometry(QtCore.QRect(350, 28, 86, 21))
+        self.pushButton_water.setGeometry(QtCore.QRect(350, 26, 86, 23))
         self.pushButton_water.setObjectName("pushButton_water")
         self.label_5 = QtWidgets.QLabel(PlantsWater)
         self.label_5.setGeometry(QtCore.QRect(100, 85, 36, 26))
@@ -74,6 +74,13 @@ class Ui_PlantsWater(object):
 
         self.retranslateUi(PlantsWater)
         QtCore.QMetaObject.connectSlotsByName(PlantsWater)
+        PlantsWater.setTabOrder(self.lineEdit_water, self.pushButton_water)
+        PlantsWater.setTabOrder(self.pushButton_water, self.doubleSpinBox_cx)
+        PlantsWater.setTabOrder(self.doubleSpinBox_cx, self.doubleSpinBox_cy)
+        PlantsWater.setTabOrder(self.doubleSpinBox_cy, self.doubleSpinBox_cz)
+        PlantsWater.setTabOrder(self.doubleSpinBox_cz, self.doubleSpinBox_radius)
+        PlantsWater.setTabOrder(self.doubleSpinBox_radius, self.pushButton_ok)
+        PlantsWater.setTabOrder(self.pushButton_ok, self.pushButton_cancel)
 
     def retranslateUi(self, PlantsWater):
         _translate = QtCore.QCoreApplication.translate

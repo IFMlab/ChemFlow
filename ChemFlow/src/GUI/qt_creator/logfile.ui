@@ -84,6 +84,12 @@
    </property>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>lineEdit</tabstop>
+  <tabstop>plainTextEdit_log</tabstop>
+  <tabstop>pushButton_remove</tabstop>
+  <tabstop>pushButton_close</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

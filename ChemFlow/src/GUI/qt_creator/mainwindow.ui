@@ -60,16 +60,280 @@
       <x>10</x>
       <y>70</y>
       <width>641</width>
-      <height>421</height>
+      <height>423</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab_LigFlow">
      <attribute name="title">
       <string>LigFlow</string>
      </attribute>
+     <widget class="QPushButton" name="pushButton_ligflow_lig">
+      <property name="geometry">
+       <rect>
+        <x>538</x>
+        <y>39</y>
+        <width>91</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Ligands MOL2 file</string>
+      </property>
+      <property name="whatsThis">
+       <string/>
+      </property>
+      <property name="text">
+       <string>Browse</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_inputFiles_2">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>10</y>
+        <width>81</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Input files</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_lig_2">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>40</y>
+        <width>65</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Ligands MOL2 file</string>
+      </property>
+      <property name="whatsThis">
+       <string/>
+      </property>
+      <property name="text">
+       <string>Ligands</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_ligflow_lig">
+      <property name="geometry">
+       <rect>
+        <x>92</x>
+        <y>40</y>
+        <width>441</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>Ligands MOL2 file</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_protocol">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>80</y>
+        <width>231</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Ligand preparation protocol</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_13">
+      <property name="geometry">
+       <rect>
+        <x>-54</x>
+        <y>184</y>
+        <width>131</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Job queue</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="comboBox_ligflow_job_queue">
+      <property name="geometry">
+       <rect>
+        <x>91</x>
+        <y>180</y>
+        <width>111</width>
+        <height>26</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Batch system used to control your jobs:&lt;ul&gt;&lt;li&gt;None: run locally in parallel&lt;/li&gt;&lt;li&gt;PBS: Portable Batch System for UNIX clusters&lt;/li&gt;&lt;li&gt;SLURM: Slurm Workload Manager for HPC clusters&lt;/li&gt;&lt;/ul&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>None</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>PBS</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>SLURM</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QPushButton" name="pushButton_ligflow_configure_job_queue">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>206</x>
+        <y>180</y>
+        <width>91</width>
+        <height>26</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Configure the number of cores used...etc.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Configure</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_14">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>152</y>
+        <width>181</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Configure execution</string>
+      </property>
+     </widget>
+     <widget class="Line" name="line_3">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>320</y>
+        <width>640</width>
+        <height>3</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QCommandLinkButton" name="commandLinkButton_ligflow_run">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>330</y>
+        <width>211</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>Run the docking experiment</string>
+      </property>
+      <property name="text">
+       <string>Prepare ligands</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>../img/run.png</normaloff>../img/run.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="comboBox_charges">
+      <property name="geometry">
+       <rect>
+        <x>91</x>
+        <y>109</y>
+        <width>111</width>
+        <height>26</height>
+       </rect>
+      </property>
+      <item>
+       <property name="text">
+        <string>Gasteiger</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>AM1-BCC</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>RESP</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QLabel" name="label_15">
+      <property name="geometry">
+       <rect>
+        <x>7</x>
+        <y>111</y>
+        <width>71</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Charges</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_DockFlow">
      <attribute name="title">
@@ -81,7 +345,7 @@
         <x>92</x>
         <y>148</y>
         <width>221</width>
-        <height>24</height>
+        <height>26</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -102,7 +366,7 @@
       <property name="geometry">
        <rect>
         <x>37</x>
-        <y>176</y>
+        <y>179</y>
         <width>41</width>
         <height>31</height>
        </rect>
@@ -137,7 +401,7 @@
       <property name="geometry">
        <rect>
         <x>92</x>
-        <y>177</y>
+        <y>180</y>
         <width>70</width>
         <height>31</height>
        </rect>
@@ -159,7 +423,7 @@
       <property name="geometry">
        <rect>
         <x>170</x>
-        <y>177</y>
+        <y>180</y>
         <width>151</width>
         <height>31</height>
        </rect>
@@ -177,7 +441,7 @@
         <x>317</x>
         <y>148</y>
         <width>91</width>
-        <height>24</height>
+        <height>26</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -226,9 +490,9 @@
       <property name="geometry">
        <rect>
         <x>538</x>
-        <y>60</y>
+        <y>59</y>
         <width>91</width>
-        <height>21</height>
+        <height>23</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -267,9 +531,9 @@
       <property name="geometry">
        <rect>
         <x>538</x>
-        <y>30</y>
+        <y>29</y>
         <width>91</width>
-        <height>21</height>
+        <height>23</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -308,7 +572,7 @@
       <property name="geometry">
        <rect>
         <x>13</x>
-        <y>220</y>
+        <y>227</y>
         <width>181</width>
         <height>17</height>
        </rect>
@@ -401,7 +665,7 @@
       <property name="geometry">
        <rect>
         <x>-53</x>
-        <y>250</y>
+        <y>257</y>
         <width>131</width>
         <height>17</height>
        </rect>
@@ -417,9 +681,9 @@
       <property name="geometry">
        <rect>
         <x>92</x>
-        <y>246</y>
+        <y>253</y>
         <width>111</width>
-        <height>24</height>
+        <height>26</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -448,9 +712,9 @@
       <property name="geometry">
        <rect>
         <x>207</x>
-        <y>246</y>
+        <y>253</y>
         <width>91</width>
-        <height>24</height>
+        <height>26</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -460,17 +724,17 @@
        <string>Configure</string>
       </property>
      </widget>
-     <widget class="QCheckBox" name="checkBox_overwrite">
+     <widget class="QCheckBox" name="checkBox_overwrite_docking">
       <property name="geometry">
        <rect>
         <x>90</x>
-        <y>280</y>
+        <y>287</y>
         <width>251</width>
         <height>22</height>
        </rect>
       </property>
       <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Overwrite results corresponding to the same project, protocol name and receptor name. Will overwrite docking poses, affinities... everything !&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Usefull if you've made an error in a protocol you've just run and want to correct it without manually deleting files.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Overwrite results corresponding to the same project, protocol name and receptor name for DockFlow. Will overwrite docking poses, affinities... everything !&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Usefull if you've made an error in a protocol you've just run and want to correct it without manually deleting files.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
        <string>Overwrite pre-existing results</string>
@@ -587,6 +851,476 @@
      <attribute name="title">
       <string>ScoreFlow</string>
      </attribute>
+     <widget class="QPushButton" name="pushButton_scoring_rec">
+      <property name="geometry">
+       <rect>
+        <x>538</x>
+        <y>29</y>
+        <width>91</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Receptor MOL2 file</string>
+      </property>
+      <property name="whatsThis">
+       <string/>
+      </property>
+      <property name="text">
+       <string>Browse</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_scoring_configure_protocol">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>317</x>
+        <y>148</y>
+        <width>91</width>
+        <height>26</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Configure your rescoring protocol&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Configure</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="checkBox_overwrite_scoring">
+      <property name="geometry">
+       <rect>
+        <x>90</x>
+        <y>250</y>
+        <width>251</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Overwrite results corresponding to the same project, protocol name and receptor name for ScoreFlow.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Usefull if you've made an error in a protocol you've just run and want to correct it without manually deleting files.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Overwrite pre-existing results</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="comboBox_scoring_job_queue">
+      <property name="geometry">
+       <rect>
+        <x>92</x>
+        <y>216</y>
+        <width>111</width>
+        <height>26</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Batch system used to control your jobs:&lt;ul&gt;&lt;li&gt;None: run locally in parallel&lt;/li&gt;&lt;li&gt;PBS: Portable Batch System for UNIX clusters&lt;/li&gt;&lt;li&gt;SLURM: Slurm Workload Manager for HPC clusters&lt;/li&gt;&lt;/ul&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>None</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>PBS</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>SLURM</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QLabel" name="label_dockingSoftware_3">
+      <property name="geometry">
+       <rect>
+        <x>7</x>
+        <y>150</y>
+        <width>71</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Method</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_scoring_rec">
+      <property name="geometry">
+       <rect>
+        <x>92</x>
+        <y>30</y>
+        <width>441</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>Receptor MOL2 file</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_docking_3">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>98</y>
+        <width>161</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Rescoring protocol</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_scoring_protocol">
+      <property name="geometry">
+       <rect>
+        <x>92</x>
+        <y>120</y>
+        <width>316</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Name for this specific protocol</string>
+      </property>
+      <property name="whatsThis">
+       <string/>
+      </property>
+      <property name="text">
+       <string>default</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_rec_3">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>30</y>
+        <width>65</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Receptor MOL2 file</string>
+      </property>
+      <property name="whatsThis">
+       <string/>
+      </property>
+      <property name="text">
+       <string>Receptor</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_scoring_lig">
+      <property name="geometry">
+       <rect>
+        <x>538</x>
+        <y>59</y>
+        <width>91</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Ligands MOL2 file</string>
+      </property>
+      <property name="whatsThis">
+       <string/>
+      </property>
+      <property name="text">
+       <string>Browse</string>
+      </property>
+     </widget>
+     <widget class="QCommandLinkButton" name="commandLinkButton_scoring_postprocess">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>230</x>
+        <y>330</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Process and standardize the outputs for the specified project, protocol, and receptor&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Postprocess</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>../img/process.png</normaloff>../img/process.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_scoring_lig">
+      <property name="geometry">
+       <rect>
+        <x>92</x>
+        <y>60</y>
+        <width>441</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>Ligands MOL2 file</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_scoring_configure_job_queue">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>207</x>
+        <y>216</y>
+        <width>91</width>
+        <height>26</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Configure the number of cores used...etc.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Configure</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_6">
+      <property name="geometry">
+       <rect>
+        <x>-53</x>
+        <y>220</y>
+        <width>131</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Job queue</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="Line" name="line_4">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>320</y>
+        <width>640</width>
+        <height>3</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_inputFiles_5">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>10</y>
+        <width>75</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Input files</string>
+      </property>
+     </widget>
+     <widget class="QCommandLinkButton" name="commandLinkButton_scoring_archive">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>330</y>
+        <width>131</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Compress all files from the specified project, protocol, and receptor in a single tar.gz archive&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Archive</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>../img/archive.png</normaloff>../img/archive.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_16">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>190</y>
+        <width>181</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Configure execution</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="comboBox_scoring_software">
+      <property name="geometry">
+       <rect>
+        <x>92</x>
+        <y>148</y>
+        <width>221</width>
+        <height>26</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Method or software used for rescoring&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>MM/GBSA</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>AutoDock Vina</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>PLANTS</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QCommandLinkButton" name="commandLinkButton_scoring_run">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>77</x>
+        <y>330</y>
+        <width>134</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>Run the docking experiment</string>
+      </property>
+      <property name="text">
+       <string>Rescore</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>../img/run.png</normaloff>../img/run.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_17">
+      <property name="geometry">
+       <rect>
+        <x>22</x>
+        <y>122</y>
+        <width>56</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Name for this specific protocol</string>
+      </property>
+      <property name="text">
+       <string>Name</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_lig_5">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>60</y>
+        <width>65</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Ligands MOL2 file</string>
+      </property>
+      <property name="whatsThis">
+       <string/>
+      </property>
+      <property name="text">
+       <string>Ligands</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_Tools">
      <attribute name="title">
@@ -787,6 +1521,46 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>lineEdit_ligflow_lig</tabstop>
+  <tabstop>pushButton_ligflow_lig</tabstop>
+  <tabstop>comboBox_charges</tabstop>
+  <tabstop>comboBox_ligflow_job_queue</tabstop>
+  <tabstop>pushButton_ligflow_configure_job_queue</tabstop>
+  <tabstop>commandLinkButton_ligflow_run</tabstop>
+  <tabstop>lineEdit_docking_rec</tabstop>
+  <tabstop>pushButton_docking_rec</tabstop>
+  <tabstop>lineEdit_docking_lig</tabstop>
+  <tabstop>pushButton_docking_lig</tabstop>
+  <tabstop>lineEdit_docking_protocol</tabstop>
+  <tabstop>comboBox_docking_software</tabstop>
+  <tabstop>pushButton_docking_configure_protocol</tabstop>
+  <tabstop>spinBox_docking_nposes</tabstop>
+  <tabstop>comboBox_docking_job_queue</tabstop>
+  <tabstop>pushButton_docking_configure_job_queue</tabstop>
+  <tabstop>checkBox_overwrite_docking</tabstop>
+  <tabstop>commandLinkButton_docking_run</tabstop>
+  <tabstop>commandLinkButton_docking_postprocess</tabstop>
+  <tabstop>commandLinkButton_docking_archive</tabstop>
+  <tabstop>lineEdit_scoring_rec</tabstop>
+  <tabstop>pushButton_scoring_rec</tabstop>
+  <tabstop>lineEdit_scoring_lig</tabstop>
+  <tabstop>pushButton_scoring_lig</tabstop>
+  <tabstop>lineEdit_scoring_protocol</tabstop>
+  <tabstop>comboBox_scoring_software</tabstop>
+  <tabstop>pushButton_scoring_configure_protocol</tabstop>
+  <tabstop>comboBox_scoring_job_queue</tabstop>
+  <tabstop>pushButton_scoring_configure_job_queue</tabstop>
+  <tabstop>checkBox_overwrite_scoring</tabstop>
+  <tabstop>commandLinkButton_scoring_run</tabstop>
+  <tabstop>commandLinkButton_scoring_postprocess</tabstop>
+  <tabstop>commandLinkButton_scoring_archive</tabstop>
+  <tabstop>lineEdit_command</tabstop>
+  <tabstop>lineEdit_status</tabstop>
+  <tabstop>pushButton_kill</tabstop>
+  <tabstop>output_display</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -1,12 +1,13 @@
 #!/usr/bin/python
+# coding: utf8
 
-##################################################################### 
+#####################################################################
 #   ChemFlow  -   Computational Chemistry is great again            #
 #####################################################################
 # Author: cbouy - Cédric Bouysset
 #         cbouysset@unice.fr
 #         Institut de Chimie de Nice - Université Côte d'Azur - France
-# 
+#
 # Brief: This script will read a mol2 file and return the center and radius of the smallest shape containing all the atoms
 #
 # Usage : python bounding_sphere.py file.mol2 --box/--sphere padding

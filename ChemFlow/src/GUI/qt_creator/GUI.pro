@@ -41,4 +41,7 @@ FORMS += \
     about.ui \
     create_project.ui \
     question.ui \
-    logfile.ui
+    logfile.ui \
+    mmgbsa.ui \
+    scoring_plants.ui \
+    scoring_vina.ui

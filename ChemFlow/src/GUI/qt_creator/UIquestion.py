@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/ChemFlow/src/GUI/qt_creator/question.ui'
+# Form implementation generated from reading ui file '/home/cedric/software/ChemFlow/ChemFlow/src/GUI/qt_creator/question.ui'
 #
-# Created by: PyQt5 UI code generator 5.10
+# Created by: PyQt5 UI code generator 5.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -38,6 +38,8 @@ class Ui_QuestionDialog(object):
 
         self.retranslateUi(QuestionDialog)
         QtCore.QMetaObject.connectSlotsByName(QuestionDialog)
+        QuestionDialog.setTabOrder(self.scrollArea, self.lineEdit)
+        QuestionDialog.setTabOrder(self.lineEdit, self.pushButton)
 
     def retranslateUi(self, QuestionDialog):
         _translate = QtCore.QCoreApplication.translate

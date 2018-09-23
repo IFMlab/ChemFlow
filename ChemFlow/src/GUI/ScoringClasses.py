@@ -2,9 +2,10 @@ import os, sys
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QDialog, QFileDialog
 from PyQt5.QtCore import QSettings
-from qt_creator.UIdocking_plants import Ui_DockingPlants
-from qt_creator.UIdocking_vina import Ui_DockingVina
-from qt_creator.UIplants_water import Ui_PlantsWater
+from qt_creator.UIscoring_plants import Ui_ScoringPlants
+from qt_creator.UIscoring_vina import Ui_ScoringVina
+from DockingClasses import DialogWaterPlants
+from qt_creator.UImmgbsa import Ui_ScoringMmgbsa
 from utils import (
     WORKDIR, INI_FILE, EMPTY_VALUES,
     guiSave, guiRestore,
@@ -12,7 +13,7 @@ from utils import (
 )
 
 
-class DialogDockVina(QDialog, Ui_DockingVina):
+class DialogScoreVina(QDialog, Ui_ScoringVina):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -35,8 +36,6 @@ class DialogDockVina(QDialog, Ui_DockingVina):
         self.values['SizeX'] = self.spinBox_sx.value()
         self.values['SizeY'] = self.spinBox_sy.value()
         self.values['SizeZ'] = self.spinBox_sz.value()
-        self.values['Exhaustiveness'] = self.spinBox_exhaustiveness.value()
-        self.values['EnergyRange'] = self.doubleSpinBox_energyRange.value()
         self.values['ScoringFunction'] = 'vina'
         self.close()
 
@@ -45,7 +44,7 @@ class DialogDockVina(QDialog, Ui_DockingVina):
         self.close()
 
 
-class DialogDockPlants(QDialog, Ui_DockingPlants):
+class DialogScorePlants(QDialog, Ui_ScoringPlants):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -68,12 +67,7 @@ class DialogDockPlants(QDialog, Ui_DockingPlants):
         self.values['CenterY'] = self.doubleSpinBox_cy.value()
         self.values['CenterZ'] = self.doubleSpinBox_cz.value()
         self.values['Radius'] = self.doubleSpinBox_radius.value()
-        self.values['Ants'] = self.spinBox_ants.value()
-        self.values['EvaporationRate'] = self.doubleSpinBox_evaporationRate.value()
-        self.values['IterationScaling'] = self.doubleSpinBox_iterationScaling.value()
-        self.values['ClusterRMSD'] = self.doubleSpinBox_clusterRMSD.value()
         self.values['ScoringFunction'] = self.comboBox_scoringFunction.currentText()
-        self.values['SearchSpeed'] = self.comboBox_searchSpeed.currentText()
         if self.checkBox_water.isChecked():
             try:
                 self.values['WaterFile']
@@ -106,14 +100,16 @@ class DialogDockPlants(QDialog, Ui_DockingPlants):
                 self.values[i] = waterDialog.values[i]
 
 
-class DialogWaterPlants(QDialog, Ui_PlantsWater):
+class DialogScoreMmgbsa(QDialog, Ui_ScoringMmgbsa):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
         # Buttons
         self.pushButton_ok.clicked.connect(self.validate)
         self.pushButton_cancel.clicked.connect(self.cancel)
-        self.pushButton_water.clicked.connect(self.selectWater)
+        # checkbox exclusive
+        self.checkBox_write_only.stateChanged.connect(self.checkbox_exclusive_write)
+        self.checkBox_run_only.stateChanged.connect(self.checkbox_exclusive_run)
         # Settings
         self.values = {}
         self.settings = QSettings(INI_FILE, QSettings.IniFormat)
@@ -124,26 +120,31 @@ class DialogWaterPlants(QDialog, Ui_PlantsWater):
         QDialog.closeEvent(self, event)
 
     def validate(self):
-        self.values['WaterCenterX'] = self.doubleSpinBox_cx.value()
-        self.values['WaterCenterY'] = self.doubleSpinBox_cy.value()
-        self.values['WaterCenterZ'] = self.doubleSpinBox_cz.value()
-        self.values['WaterRadius'] = self.doubleSpinBox_radius.value()
-        self.values['WaterFile'] = self.lineEdit_water.text()
-        try:
-            if self.values['WaterFile'] in EMPTY_VALUES:
-                missingParametersDialog('- Water MOL2 File')
-                self.values['WaterFile'] = None
-            else:
-                self.close()
-        except KeyError:
-            missingParametersDialog('- Water MOL2 File')
+        self.values['Charges'] = self.comboBox_charges.currentText()
+        if self.radioButton_implicit.isChecked():
+            self.values['ExplicitSolvent'] = False
+        else:
+            self.values['ExplicitSolvent'] = True
+        self.values['MaxCyc'] = self.spinBox_maxcyc.value()
+        if self.checkBox_MD.isChecked():
+            self.values['MD'] = True
+        else:
+            self.values['MD'] = False
+        self.values['ScoringFunction'] = 'mmgbsa'
+        self.close()
 
     def cancel(self):
         del self.values
         self.close()
 
-    def selectWater(self):
-        filetypes =  "MOL2 Files (*.mol2);;All Files (*)"
-        value, _ = QFileDialog.getOpenFileName(None,"Select MOL2 file of a single water", os.getcwd(), filetypes)
-        if value:
-            self.lineEdit_water.setText(value)
+    def checkbox_exclusive_run(self):
+        if self.checkBox_run_only.isChecked():
+            self.checkBox_write_only.setEnabled(False)
+        else:
+            self.checkBox_write_only.setEnabled(True)
+
+    def checkbox_exclusive_write(self):
+        if self.checkBox_write_only.isChecked():
+            self.checkBox_run_only.setEnabled(False)
+        else:
+            self.checkBox_run_only.setEnabled(True)
