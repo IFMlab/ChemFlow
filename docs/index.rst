@@ -7,20 +7,20 @@ Welcome to ChemFlow's documentation!
 ====================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    readme
    installation
-   usage
    tutorial
-   contributing
    authors
-   history
 
-Indices and tables
-==================
+..   usage
+..   contributing
+..   history
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. Indices and tables
+.. ==================
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`

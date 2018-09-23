@@ -42,6 +42,23 @@ if [ -z ${CHEMFLOW_HOME} ] ; then
   exit 0
 fi
 
+echo "
+########################################################################
+#        ChemFlow  -   Computational Chemistry is great again          #
+########################################################################
+#                                                                      #
+#   +++++++++++++++++++                                                #
+#   + Université ||| |+                                                #
+#   +++++++++++++++++++++++                                            #
+#       + ||de Strasbourg +                                            #
+#       +++++++++++++++++++                                            #
+#                                                                      #
+#                                                                      #
+# Diego E. B. Gomes - dgomes@pq.cnpq.br                                #
+# Cedric Boysset - cboysset@unice.fr                                   #
+# Marco Cecchini - cecchini@unistra.fr                                 #
+# Donatienne de Francquen - donatienne.de-francquen@etu.unistra.fr     #
+########################################################################"
 
 # Corrigir o nome do receptor quando usar o PDB
 # Corrigir o SPLIT pois uso o echo " >> "
