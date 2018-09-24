@@ -88,6 +88,11 @@
    </property>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>spinBox_cores</tabstop>
+  <tabstop>pushButton_ok</tabstop>
+  <tabstop>pushButton_cancel</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

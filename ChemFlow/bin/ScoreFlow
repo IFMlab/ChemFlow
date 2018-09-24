@@ -1,11 +1,11 @@
 #!/bin/bash
 
-##################################################################### 
+#####################################################################
 #   ChemFlow  -   Computational Chemistry is great again            #
 #####################################################################
 #
 # Diego E. B. Gomes(1,2,3) - dgomes@pq.cnpq.br
-# Cedric Boysset (3,4) - cboysset@unice.fr
+# Cedric Bouysset (3,4) - cbouysset@unice.fr
 # Marco Cecchini (3) - cecchini@unistra.fr
 #
 # 1 - Instituto Nacional de Metrologia, Qualidade e Tecnologia - Brazil
@@ -18,7 +18,7 @@
 #          FILE:  ScoreFlow.bash
 #
 #         USAGE: ./ScoreFlow.bash -p myproject -r receptor.mol2 -l multilig.mol2 -sf chemplp [-w SLURM]...
-# 
+#
 #
 #         BRIEF: Main routine for ScoreFlow
 #   DESCRIPTION: Prepare and run a rescoring calculation.
@@ -26,7 +26,7 @@
 #
 #     MANDATORY:  -r receptor.mol2 -l ligand.mol2 -p myproject
 #GBSA MANDATORY:  -pdb receptor.pdb -l ligand.mol2 -p myproject
-#  MAIN OPTIONS: [-protocol default] [-nc 8] [-sf chemplp] [--radius 15] 
+#  MAIN OPTIONS: [-protocol default] [-nc 8] [-sf chemplp] [--radius 15]
 #  REQUIREMENTS:  PLANTS or VINA, [SLURM, PBS]
 #          BUGS:  ---
 #         NOTES:  ---
@@ -37,7 +37,7 @@
 #      REVISION:  ---
 #===============================================================================
 
-if [ -z ${CHEMFLOW_HOME} ] ; then 
+if [ -z ${CHEMFLOW_HOME} ] ; then
   echo "CHEMFLOW_HOME is not defined"
   exit 0
 fi

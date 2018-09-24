@@ -35,6 +35,9 @@ class Ui_Logfile(object):
 
         self.retranslateUi(Logfile)
         QtCore.QMetaObject.connectSlotsByName(Logfile)
+        Logfile.setTabOrder(self.lineEdit, self.plainTextEdit_log)
+        Logfile.setTabOrder(self.plainTextEdit_log, self.pushButton_remove)
+        Logfile.setTabOrder(self.pushButton_remove, self.pushButton_close)
 
     def retranslateUi(self, Logfile):
         _translate = QtCore.QCoreApplication.translate

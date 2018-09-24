@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/cedric/Dropbox/work/ChemFlow/ChemFlow/src/GUI/qt_creator/run_local.ui'
+# Form implementation generated from reading ui file '/home/cedric/software/ChemFlow/ChemFlow/src/GUI/qt_creator/run_local.ui'
 #
-# Created by: PyQt5 UI code generator 5.10
+# Created by: PyQt5 UI code generator 5.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -36,6 +36,8 @@ class Ui_RunLocal(object):
 
         self.retranslateUi(RunLocal)
         QtCore.QMetaObject.connectSlotsByName(RunLocal)
+        RunLocal.setTabOrder(self.spinBox_cores, self.pushButton_ok)
+        RunLocal.setTabOrder(self.pushButton_ok, self.pushButton_cancel)
 
     def retranslateUi(self, RunLocal):
         _translate = QtCore.QCoreApplication.translate

@@ -21,7 +21,7 @@
 
 project = 'ChemFlow'
 copyright = '2018, Diego Enry Barreto Gomes'
-author = 'Diego Enry Barreto Gomes, Dona de Francquen'
+author = 'Diego Enry Barreto Gomes, Dona de Francquen, Cedric Bouysset'
 
 # The short X.Y version
 version = ''

@@ -90,9 +90,9 @@
    <property name="geometry">
     <rect>
      <x>400</x>
-     <y>71</y>
+     <y>68</y>
      <width>106</width>
-     <height>24</height>
+     <height>26</height>
     </rect>
    </property>
    <property name="toolTip">
@@ -424,9 +424,9 @@
    <property name="geometry">
     <rect>
      <x>400</x>
-     <y>99</y>
+     <y>97</y>
      <width>106</width>
-     <height>24</height>
+     <height>26</height>
     </rect>
    </property>
    <property name="toolTip">
@@ -531,6 +531,22 @@
    </property>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>doubleSpinBox_cx</tabstop>
+  <tabstop>doubleSpinBox_cy</tabstop>
+  <tabstop>doubleSpinBox_cz</tabstop>
+  <tabstop>doubleSpinBox_radius</tabstop>
+  <tabstop>comboBox_scoringFunction</tabstop>
+  <tabstop>comboBox_searchSpeed</tabstop>
+  <tabstop>spinBox_ants</tabstop>
+  <tabstop>doubleSpinBox_evaporationRate</tabstop>
+  <tabstop>doubleSpinBox_iterationScaling</tabstop>
+  <tabstop>doubleSpinBox_clusterRMSD</tabstop>
+  <tabstop>checkBox_water</tabstop>
+  <tabstop>pushButton_water</tabstop>
+  <tabstop>pushButton_ok</tabstop>
+  <tabstop>pushButton_cancel</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

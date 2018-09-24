@@ -1,11 +1,11 @@
 #!/bin/bash
 
-##################################################################### 
+#####################################################################
 #   ChemFlow  -   Computational Chemistry is great again            #
 #####################################################################
 #
 # Diego E. B. Gomes(1,2,3) - dgomes@pq.cnpq.br
-# Cedric Boysset (3,4) - cboysset@unice.fr
+# Cedric Bouysset (3,4) - cbouysset@unice.fr
 # Marco Cecchini (3) - cecchini@unistra.fr
 #
 # 1 - Instituto Nacional de Metrologia, Qualidade e Tecnologia - Brazil
@@ -18,14 +18,14 @@
 #          FILE:  DockFlow.bash
 #
 #         USAGE: ./DockFlow.bash -p myproject -r receptor.mol2 -l multilig.mol2 --center 2.2 -4.5 0.75 [-j SLURM] ..
-# 
+#
 #
 #         BRIEF: Main routine for DockFlow
 #   DESCRIPTION: Prepare and run a docking calculation.
 #    COMPLIANCY: The ChemFlow standard version 1.0
 #
 #     MANDATORY:  -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z
-#  MAIN OPTIONS: [-protocol default] [-nc 8] [-sf chemplp] [--radius 15] 
+#  MAIN OPTIONS: [-protocol default] [-nc 8] [-sf chemplp] [--radius 15]
 #  REQUIREMENTS:  PLANTS or VINA, [SLURM, PBS]
 #          BUGS:  ---
 #         NOTES:  ---
@@ -35,7 +35,7 @@
 #       CREATED:  lundi 28 mai 2018, 16:05:06 (UTC+0200)
 #      REVISION:  ---
 #===============================================================================
-if [ -z ${CHEMFLOW_HOME} ] ; then 
+if [ -z ${CHEMFLOW_HOME} ] ; then
   echo "CHEMFLOW_HOME is not defined"
   exit 0
 fi
@@ -75,9 +75,9 @@ else
     DockFlow_summary        # Show a summary of actions.
     DockFlow_prepare_input  # Organizes and convert required files
     DockFlow_dock           # Runs the docking
-fi 
+fi
 
-#DockFlow_Report          
+#DockFlow_Report
 echo "
 [ DockFlow ] Normal completion.
 "

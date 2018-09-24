@@ -49,9 +49,9 @@
    <property name="geometry">
     <rect>
      <x>350</x>
-     <y>28</y>
+     <y>26</y>
      <width>86</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="toolTip">
@@ -241,6 +241,16 @@
    </property>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>lineEdit_water</tabstop>
+  <tabstop>pushButton_water</tabstop>
+  <tabstop>doubleSpinBox_cx</tabstop>
+  <tabstop>doubleSpinBox_cy</tabstop>
+  <tabstop>doubleSpinBox_cz</tabstop>
+  <tabstop>doubleSpinBox_radius</tabstop>
+  <tabstop>pushButton_ok</tabstop>
+  <tabstop>pushButton_cancel</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -297,60 +297,6 @@ fi
 }
 
 
-DockFlow_rewrite_origin_ligands() {
-#===  FUNCTION  ================================================================
-#          NAME: DockFlow_rewrite_ligands
-#   DESCRIPTION: User interface for the rewrite ligands option.
-#                 - Read all ligand names from the header of a .MOL2 file.
-#                 - Split each ligand to it's own ".MOL2" file.
-#               #  - Create "ligand.lst" with the list of ligands to dock.
-#
-#    PARAMETERS: ${PROJECT}
-#                ${LIGAND_LIST}
-#                ${RUNDIR}
-#                ${DOCK_PROGRAM}
-#                ${WORKDIR}
-#                ${OVERWRITE}
-#
-#        Author: Dona de Francquen
-#
-#        UPDATE: fri. july 6 14:49:50 CEST 2018
-#
-#===============================================================================
-# Original
-
-if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
-    mkdir -p ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
-fi
-
-OLDIFS=$IFS
-IFS='%'
-n=-1
-while read line ; do
-    if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-        let n=$n+1
-        echo -e "${line}" > ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
-    else
-        echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND_LIST[$n]}.mol2
-    fi
-done < ${LIGAND_FILE}
-IFS=${OLDIFS}
-
-
-#
-# QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
-#
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    cd ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/
-    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -dr no &>/dev/null
-    mv tmp.mol2 ${LIGAND}.mol2
-done
-#
-#
-#
-}
-
-
 DockFlow_prepare_ligands() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_rewrite_ligands
@@ -384,12 +330,12 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     fi
     case ${DOCK_PROGRAM} in
     "PLANTS")
-        if [ ! -f ${LIGAND}/ligand.mol2 ]  || [ "${rewrite_ligands}" == 'yes' ] ; then
+        if [ ! -f ${LIGAND}/ligand.mol2 ] ; then
             cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
         fi
     ;;
     "VINA")
-        if [ ! -f  ${LIGAND}/ligand.pdbqt ] || [ "${rewrite_ligands}" == 'yes' ] ; then
+        if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
             ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
             -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
             -o ${LIGAND}/ligand.pdbqt
@@ -880,25 +826,25 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol
  --header          FILE : Header file provided to run on your cluster.
 
 [ Additional ]
- --overwrite         : Overwrite results
+ --overwrite            : Overwrite results
 
 [ Options for docking program ]
-*--center            : xyz coordinates of the center of the binding site, separated by a space
+*--center          LIST : xyz coordinates of the center of the binding site, separated by a space
 _________________________________________________________________________________
 [ PLANTS ]
- --radius            : Radius of the spheric binding site [15]
- --speed             : Search speed for Plants. 1, 2 or 4 [1]
- --ants              : Number of ants [20]
- --evap_rate         : Evaporation rate of pheromones [0.15]
- --iteration_scaling : Iteration scaling factor [1.0]
- --cluster_rmsd      : RMSD similarity threshold between poses, in Å [2.0]
- --water             : Path to a structural water molecule (.mol2)
- --water_xyzr        : xyz coordinates and radius of the water sphere, separated by a space
+ --radius         FLOAT : Radius of the spheric binding site [15]
+ --speed            INT : Search speed for Plants. 1, 2 or 4 [1]
+ --ants             INT : Number of ants [20]
+ --evap_rate      FLOAT : Evaporation rate of pheromones [0.15]
+ --iter_scaling   FLOAT : Iteration scaling factor [1.0]
+ --cluster_rmsd   FLOAT : RMSD similarity threshold between poses, in Å [2.0]
+ --water           FILE : Path to a structural water molecule (.mol2)
+ --water_xyzr      LIST : xyz coordinates and radius of the water sphere, separated by a space
 _________________________________________________________________________________
 [ Vina ]
- --size              : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
- --exhaustiveness    : Exhaustiveness of the global search [8]
- --energy_range      : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
+ --size            LIST : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
+ --exhaustiveness   INT : Exhaustiveness of the global search [8]
+ --energy_range   FLOAT : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
 _________________________________________________________________________________
 "
     # Not implemented in this version :
@@ -987,7 +933,7 @@ while [[ $# -gt 0 ]]; do
             SPEED="$2"
             shift
         ;;
-        "--iteration_scaling")
+        "--iter_scaling")
             ITERATION_SCALING="$2"
             shift
         ;;

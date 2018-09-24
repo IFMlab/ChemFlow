@@ -198,6 +198,10 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
             -l ${RUNDIR}/${LIGAND}/ligand.mol2 \
             -o ${RUNDIR}/${LIGAND}/ligand.pdbqt
     fi
+    # Get center and size of binding site
+    #binding_site=$(bounding_shape.py ${RUNDIR}/${LIGAND}/ligand.mol2 --box 2.0)
+    #DOCK_CENTER=($(echo "${binding_site}" | cut -d" " -f"1,2,3"))
+    #DOCK_LENGTH=($(echo "${binding_site}" | cut -d" " -f4))
     # Run vina
     vina --local_only --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
          --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
@@ -273,24 +277,22 @@ else
             echo -e "$(cat ../ScoreFlow.run)" >> ScoreFlow.run
         fi
 
-        if [ "${WRITE_ONLY}" != "yes" ] ; then
-            if [ ${JOB_SCHEDULLER} != "None" ] ; then
-                ScoreFlow_rescore_mmgbsa_write_HPC
-            fi
-
-            case "${JOB_SCHEDULLER}" in
-            "None")
-                echo -ne "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
-                bash ScoreFlow.run
-            ;;
-            "PBS")
-                qsub ScoreFlow.pbs
-            ;;
-            "SLURM")
-                sbatch ScoreFlow.slurm
-            ;;
-            esac
+        if [ ${JOB_SCHEDULLER} != "None" ] ; then
+            ScoreFlow_rescore_mmgbsa_write_HPC
         fi
+
+        case "${JOB_SCHEDULLER}" in
+        "None")
+            echo -ne "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
+            bash ScoreFlow.run
+        ;;
+        "PBS")
+            qsub ScoreFlow.pbs
+        ;;
+        "SLURM")
+            sbatch ScoreFlow.slurm
+        ;;
+        esac
     done
 fi
 }
@@ -828,13 +830,14 @@ ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] 
  --protocol         STR : Name for this specific protocol [default]
  -sf/--function     STR : vina, chemplp, plp, plp95, mmgbsa [chemplp]
 
-[ Charge Scheme - MMGBSA ]
- --gas                  : Default Gasteiger-Marsili (default)
- --bcc                  : BCC charges
+[ Charges for ligands - MMGBSA ]
+ --gas                  : Gasteiger-Marsili (default)
+ --bcc                  : AM1-BCC charges
  --resp                 : RESP charges (require gaussian)
 
-[ Simulation ]
- --water                : Explicit solvent [implicit solvent]
+[ Simulation - MMGBSA ]
+ --maxcyc           INT : Maximum number of energy minimization steps for implicit solvent simulations [1000]
+ --water                : Explicit solvent simulation
  --md                   : Molecular dynamics
 
 [ Parallel execution - MMGBSA ]
@@ -844,18 +847,26 @@ ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] 
  --write-only           : Write a template file (ScoreFlow.run.template) command without running.
  --run-only             : Run using the ScoreFlow.run.template file.
 
-
 [ Additional ]
  --overwrite            : Overwrite results
 
 [ Rescoring with vina or plants ]
 *--center           STR : xyz coordinates of the center of the binding site, separated by a space
+[ PLANTS ]
+ --radius         FLOAT : Radius of the spheric binding site [15]
+[ Vina ]
+ --size            LIST : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
 
 [ Post Processing ]
- --postprocess          : Process DockFlow output for the specified project/protocol/receptor.
+ --postprocess          : Process ScoreFlow output for the specified project/protocol/receptor.
 _________________________________________________________________________________
 "
 exit 0
+# TODO
+# Implement automatic detection of the center and size of the binding site from the input docking pose --> remove --center radius size flags.
+# Add a --padding parameter to adjust the size of the binding site. vina and plants both seem to perform a short local optimization /minimization
+# of the pose so the padding parameter should help the user control such optimization.
+# Implement archive
 }
 
 
@@ -938,8 +949,8 @@ while [[ $# -gt 0 ]]; do
             WATER='yes'
         ;;
         # Minimization specific options
-        "-maxcyc") # Maximun number of Energy minimization steps.
-            maxcyc="$2" # Same as above.
+        "--maxcyc") # Maximun number of Energy minimization steps.
+            MAXCYC="$2"
             shift
         ;;
         # HPC options

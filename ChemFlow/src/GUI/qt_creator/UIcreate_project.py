@@ -24,7 +24,7 @@ class Ui_CreateProject(object):
         self.label_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_2.setObjectName("label_2")
         self.pushButton_browse = QtWidgets.QPushButton(CreateProject)
-        self.pushButton_browse.setGeometry(QtCore.QRect(360, 40, 86, 21))
+        self.pushButton_browse.setGeometry(QtCore.QRect(360, 39, 86, 23))
         self.pushButton_browse.setObjectName("pushButton_browse")
         self.label_3 = QtWidgets.QLabel(CreateProject)
         self.label_3.setGeometry(QtCore.QRect(30, 70, 101, 20))
@@ -45,6 +45,10 @@ class Ui_CreateProject(object):
 
         self.retranslateUi(CreateProject)
         QtCore.QMetaObject.connectSlotsByName(CreateProject)
+        CreateProject.setTabOrder(self.lineEdit_path, self.pushButton_browse)
+        CreateProject.setTabOrder(self.pushButton_browse, self.lineEdit_name)
+        CreateProject.setTabOrder(self.lineEdit_name, self.pushButton_ok)
+        CreateProject.setTabOrder(self.pushButton_ok, self.pushButton_cancel)
 
     def retranslateUi(self, CreateProject):
         _translate = QtCore.QCoreApplication.translate

@@ -32,7 +32,7 @@ class Ui_DockingPlants(object):
         self.doubleSpinBox_evaporationRate.setProperty("value", 0.15)
         self.doubleSpinBox_evaporationRate.setObjectName("doubleSpinBox_evaporationRate")
         self.comboBox_scoringFunction = QtWidgets.QComboBox(DockingPlants)
-        self.comboBox_scoringFunction.setGeometry(QtCore.QRect(400, 71, 106, 24))
+        self.comboBox_scoringFunction.setGeometry(QtCore.QRect(400, 68, 106, 26))
         self.comboBox_scoringFunction.setObjectName("comboBox_scoringFunction")
         self.comboBox_scoringFunction.addItem("")
         self.comboBox_scoringFunction.addItem("")
@@ -129,7 +129,7 @@ class Ui_DockingPlants(object):
         self.label_10.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_10.setObjectName("label_10")
         self.comboBox_searchSpeed = QtWidgets.QComboBox(DockingPlants)
-        self.comboBox_searchSpeed.setGeometry(QtCore.QRect(400, 99, 106, 24))
+        self.comboBox_searchSpeed.setGeometry(QtCore.QRect(400, 97, 106, 26))
         self.comboBox_searchSpeed.setObjectName("comboBox_searchSpeed")
         self.comboBox_searchSpeed.addItem("")
         self.comboBox_searchSpeed.addItem("")
@@ -161,6 +161,19 @@ class Ui_DockingPlants(object):
 
         self.retranslateUi(DockingPlants)
         QtCore.QMetaObject.connectSlotsByName(DockingPlants)
+        DockingPlants.setTabOrder(self.doubleSpinBox_cx, self.doubleSpinBox_cy)
+        DockingPlants.setTabOrder(self.doubleSpinBox_cy, self.doubleSpinBox_cz)
+        DockingPlants.setTabOrder(self.doubleSpinBox_cz, self.doubleSpinBox_radius)
+        DockingPlants.setTabOrder(self.doubleSpinBox_radius, self.comboBox_scoringFunction)
+        DockingPlants.setTabOrder(self.comboBox_scoringFunction, self.comboBox_searchSpeed)
+        DockingPlants.setTabOrder(self.comboBox_searchSpeed, self.spinBox_ants)
+        DockingPlants.setTabOrder(self.spinBox_ants, self.doubleSpinBox_evaporationRate)
+        DockingPlants.setTabOrder(self.doubleSpinBox_evaporationRate, self.doubleSpinBox_iterationScaling)
+        DockingPlants.setTabOrder(self.doubleSpinBox_iterationScaling, self.doubleSpinBox_clusterRMSD)
+        DockingPlants.setTabOrder(self.doubleSpinBox_clusterRMSD, self.checkBox_water)
+        DockingPlants.setTabOrder(self.checkBox_water, self.pushButton_water)
+        DockingPlants.setTabOrder(self.pushButton_water, self.pushButton_ok)
+        DockingPlants.setTabOrder(self.pushButton_ok, self.pushButton_cancel)
 
     def retranslateUi(self, DockingPlants):
         _translate = QtCore.QCoreApplication.translate

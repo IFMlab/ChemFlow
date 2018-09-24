@@ -18,7 +18,7 @@ class DialogRunLocal(QDialog, Ui_RunLocal):
         self.setupUi(self)
         # Buttons
         self.pushButton_ok.clicked.connect(self.validate)
-        self.pushButton_cancel.clicked.connect(self.close)
+        self.pushButton_cancel.clicked.connect(self.cancel)
         self.spinBox_cores.setValue(os.cpu_count())
         # Settings
         self.values = {}
@@ -33,6 +33,10 @@ class DialogRunLocal(QDialog, Ui_RunLocal):
         self.values['NumCores'] = self.spinBox_cores.value()
         self.close()
 
+    def cancel(self):
+        del self.values
+        self.close()
+
 
 class DialogRunPbs(QDialog, Ui_RunPbs):
     def __init__(self, parent=None):
@@ -40,7 +44,7 @@ class DialogRunPbs(QDialog, Ui_RunPbs):
         self.setupUi(self)
         # Buttons
         self.pushButton_ok.clicked.connect(self.validate)
-        self.pushButton_cancel.clicked.connect(self.close)
+        self.pushButton_cancel.clicked.connect(self.cancel)
         self.pushButton_header.clicked.connect(self.browse_header)
         # Settings
         self.values = {}
@@ -52,9 +56,12 @@ class DialogRunPbs(QDialog, Ui_RunPbs):
         QDialog.closeEvent(self, event)
 
     def validate(self):
-        self.values['NumNodes'] = self.spinBox_nodes.value()
         self.values['NumCores'] = self.spinBox_cores.value()
         self.values['HeaderFile'] = self.lineEdit_header.text()
+        self.close()
+
+    def cancel(self):
+        del self.values
         self.close()
 
     def browse_header(self):
@@ -70,7 +77,7 @@ class DialogRunSlurm(QDialog, Ui_RunSlurm):
         self.setupUi(self)
         # Buttons
         self.pushButton_ok.clicked.connect(self.validate)
-        self.pushButton_cancel.clicked.connect(self.close)
+        self.pushButton_cancel.clicked.connect(self.cancel)
         self.pushButton_header.clicked.connect(self.browse_header)
         # Settings
         self.values = {}
@@ -82,9 +89,12 @@ class DialogRunSlurm(QDialog, Ui_RunSlurm):
         QDialog.closeEvent(self, event)
 
     def validate(self):
-        self.values['NumNodes'] = self.spinBox_nodes.value()
         self.values['NumCores'] = self.spinBox_cores.value()
         self.values['HeaderFile'] = self.lineEdit_header.text()
+        self.close()
+
+    def cancel(self):
+        del self.values
         self.close()
 
     def browse_header(self):
