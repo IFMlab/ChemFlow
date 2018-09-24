@@ -43,7 +43,7 @@ First for the b1-b7 from an undisclosed article (b1 = 1DWC crystal. b2-7 = Build
 
 The second set, with ligands from crystal structures, we also have the affinities.
 We superimposed 1DWC 1DWB 1DWD 1D3D 1D3P 1D3Q 1D3T (1DWC as reference) and saved all ligands as .mol2.
-Hydrogens were added using SPORES (from PLANTS). (SPORES_64bit --mode complete)
+Hydrogens were added using SPORES (from PLANTS). (SPORES_64bit \\-\\-mode complete)
 
 Now the Decoys from `DUD-E database <http://dude.docking.org/targets/thrb>`_.
 Download, and get the first 14.
@@ -72,7 +72,7 @@ To perform this action run:
 
 .. code-block:: bash
 
-    LigFlow -p tutorial -l compounds.mol2``
+    LigFlow -p tutorial -l compounds.mol2
 
 In addition Lig\ *Flow* can be used to  build up a compound database with **advanced** charges such as AM1-BCC and RESP and their associated
 optimized structures, we'll see it's use latter to compute appropriate charges for the free energy calculations.
@@ -84,7 +84,7 @@ we demonstrate how to derive the AM1-BCC and RESP charges using the two most wid
     LigFlow -p tutorial -l compounds.mol2 --bcc --pbs
     LigFlow -p tutorial -l compounds.mol2 --resp --slurm
 
-If a compound already exists in the ChemBase (Chem\ *Flow* database), Lig*Flow* won't compute the charges for this compound.
+If a compound already exists in the ChemBase (Chem\ *Flow* database), Lig\ *Flow* won't compute the charges for this compound.
 
 For each of these commands you will be asked:
 
@@ -104,7 +104,7 @@ For PLANTS it's enough to have only the center.
 
     python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --sphere 8.0
 
-For VINA you need the center AND the lenghts of X Y and Z.
+For VINA you need the center AND the lenghts of X, Y and Z.
 
 .. code-block:: bash
 
@@ -141,7 +141,7 @@ For each of these commands you will be asked:
 
 Step 5: Postprocess all the results
 -----------------------------------
-When tou are done, you can postprocess (--postprocess) the results. Here, we decided to keep only the best 3 poses for each ligand (-n 3)
+When tou are done, you can postprocess (\\-\\-postprocess) the results. Here, we decided to keep only the best 3 poses for each ligand (-n 3)
 
 .. code-block:: bash
 
@@ -165,14 +165,13 @@ Rescoring through the MMGBSA method, using two protocols in **implicit solvent**
 
 For each of these commands you will be asked:
 
-* Are you sure you want to OVERWRITE? > y
 * Continue? > y
 
-Note: You can turn on explicit solvation using the flag --water.
+Note: You can turn on explicit solvation using the flag \\-\\-water.
 
 Step 7: Postprocess the results
 -------------------------------
-When you are done, you can postprocess (--postprocess) the results:
+When you are done, you can postprocess (\\-\\-postprocess) the results:
 
 .. code-block:: bash
 
@@ -183,20 +182,20 @@ When you are done, you can postprocess (--postprocess) the results:
 Advanced
 --------
 
-Using the  **--write-only** flag, all files input files will be written in tutorial.chemflow/ScoreFlow/mmgbsa_md/receptor/:
+Using the  **\\-\\-write-only** flag, all input files will be written in tutorial.chemflow/ScoreFlow/mmgbsa_md/receptor/:
 
 * System Setup: You can modify the system setup (tleap.in file) inside your job.
 * Simulation protocol: The procedures for each protocol can also be modified, the user must review "ScoreFlow.run.template".
 * Run input files (Amber and MMGBSA): Namely min1.in, heat.in, equil.in, md.in ... can also be manually modified at wish :)
 
-* After the modifications, rerun Score\ *Flow* using **--run-only**.
+* After the modifications, rerun Score\ *Flow* using **\\-\\-run-only**.
 
 To run Dock\ *Flow* and Score\ *Flow* on a super computer
 *********************************************************
 
-If you have access to a cluster, you may profit from the HPC resources using --slurm or --pbs flags accordingly. :)
+If you have access to a cluster, you may profit from the HPC resources using \\-\\-slurm or \\-\\-pbs flags. :)
 
-To run it properly, you should provide a template for your scheduler using the --header FILE option. Here are examples for this header file.
+To run it properly, you should provide a template for your scheduler using the \\-\\-header FILE option. Here are examples for this header file.
 
 * Example for pbs::
 
@@ -264,3 +263,5 @@ Score\ *Flow*:
 For each of these commands you will be asked:
 
 * Continue? > y
+
+For Dock\ *Flow*, you also will have to answer how many compounds should be treated per job.

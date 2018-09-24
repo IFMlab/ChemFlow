@@ -803,8 +803,7 @@ ScoreFlow_help_full(){
 #
 #    PARAMETERS: -
 #==============================================================================
-echo "
-ScoreFlow is a bash script designed to work with PLANTS, Vina, IChem and AmberTools16+.
+echo "ScoreFlow is a bash script designed to work with PLANTS, Vina, IChem and AmberTools16+.
 It can perform an rescoring of molecular complexes such as protein-ligand
 
 ScoreFlow requires a project folder named 'myproject'.chemflow. If absent, one will be created.

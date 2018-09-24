@@ -84,13 +84,13 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
 
     if [ "${DONE_CHARGE}" == "false" ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 ] ; then
         if [ "$(grep ${LIGAND} ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)" == ${LIGAND} ] ; then
-            ${DONE_CHARGE} = "true"
+            DONE_CHARGE="true"
         fi
     fi
     if [ "${DONE_CHARGE}" == "false" ] && [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}.mol2 ] ; then
-        ${DONE_CHARGE} = "true"
+        DONE_CHARGE="true"
     fi
-    if [ ${DONE_CHARGE} == "false" ] ; then
+    if [ "${DONE_CHARGE}" == "false" ] ; then
         if [ ! -n "`echo ${NEW_LIGAND_LIST} | xargs -n1 echo | grep -e \"^${LIGAND}$\"`" ] ; then
             NEW_LIGAND_LIST="${NEW_LIGAND_LIST} $LIGAND"
         fi
@@ -153,7 +153,7 @@ NCHARGE=${#LIGAND_LIST[@]}
 if [ ${NCHARGE} == 0 ] ; then
     echo "[ LigFlow ] All charges already present ! " ; exit 0
 else
-    echo "There are ${NLIGANDS} compounds and ${NCHARGE} remaining to dock"
+    echo "There are ${NLIGANDS} compounds and ${NCHARGE} remaining to prepare"
 fi
 
 cd ${RUNDIR}
@@ -340,8 +340,7 @@ exit 0
 
 
 LigFlow_help_full(){
-echo "
-LigFlow is a bash script designed to prepare the ligand for DockFlow and ScoreFlow.
+echo "LigFlow is a bash script designed to prepare the ligand for DockFlow and ScoreFlow.
 
 Usage:
 LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]

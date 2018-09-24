@@ -845,8 +845,7 @@ exit 0
 
 
 DockFlow_help_full(){
-echo "
-DockFlow is a bash script designed to work with PLANTS or Vina.
+echo "DockFlow is a bash script designed to work with PLANTS or Vina.
 
 It can perform an automatic VS based on information given by the user :
 ligands, receptor, binding site info, and extra options.
