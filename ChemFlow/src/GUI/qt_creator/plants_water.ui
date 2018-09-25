@@ -239,6 +239,9 @@
      <height>20</height>
     </rect>
    </property>
+   <property name="placeholderText">
+    <string>Path to a MOL2 file</string>
+   </property>
   </widget>
  </widget>
  <tabstops>

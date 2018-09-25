@@ -9,7 +9,7 @@ QLineEdit, QMessageBox QTextEdit {
   font-family: 'Monospace';
   font-size: 9pt;
 }
-#label_logo_2 {
+#label_logo_text {
   font-family: 'Roboto';
   font-size: 28pt;
   font-weight: bold;

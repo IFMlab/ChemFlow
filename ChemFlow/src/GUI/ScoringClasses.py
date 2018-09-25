@@ -36,6 +36,10 @@ class DialogScoreVina(QDialog, Ui_ScoringVina):
         self.values['SizeX'] = self.spinBox_sx.value()
         self.values['SizeY'] = self.spinBox_sy.value()
         self.values['SizeZ'] = self.spinBox_sz.value()
+        if self.radioButton_local.isChecked():
+            self.values['RescoringMode'] = 'local_only'
+        else:
+            self.values['RescoringMode'] = 'score_only'
         self.values['ScoringFunction'] = 'vina'
         self.close()
 

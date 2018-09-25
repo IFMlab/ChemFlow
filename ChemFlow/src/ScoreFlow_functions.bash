@@ -198,12 +198,8 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
             -l ${RUNDIR}/${LIGAND}/ligand.mol2 \
             -o ${RUNDIR}/${LIGAND}/ligand.pdbqt
     fi
-    # Get center and size of binding site
-    #binding_site=$(bounding_shape.py ${RUNDIR}/${LIGAND}/ligand.mol2 --box 2.0)
-    #DOCK_CENTER=($(echo "${binding_site}" | cut -d" " -f"1,2,3"))
-    #DOCK_LENGTH=($(echo "${binding_site}" | cut -d" " -f4))
     # Run vina
-    vina --local_only --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
+    vina --${VINA_MODE} --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
          --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
          --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
          --out ${RUNDIR}/${LIGAND}/output.pdbqt --log ${RUNDIR}/${LIGAND}/output.log &> /dev/null
@@ -732,6 +728,7 @@ case ${SCORE_PROGRAM} in
 "VINA")
     echo "       CENTER: ${DOCK_CENTER[@]}"
     echo "         SIZE: ${DOCK_LENGHT[@]} (X,Y,Z)"
+    echo " SCORING MODE: ${VINA_MODE}"
 ;;
 "PLANTS")
     echo "       CENTER: ${DOCK_CENTER[@]}"
@@ -741,6 +738,7 @@ case ${SCORE_PROGRAM} in
     echo "           MD: ${MD}"
     if [ ${WATER} = 'no' ] ; then
         echo "      SOLVENT: implicit"
+        echo "       MAXCYC: ${MAXCYC}"
     else
         echo "      SOLVENT: explicit"
     fi
@@ -851,11 +849,13 @@ ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] 
  --overwrite            : Overwrite results
 
 [ Rescoring with vina or plants ]
+Note: You can automatically get the center and radius/size for a particular ligand .mol2 file by using the ${CHEMFLOW_HOME}/bin/bounding_shape.py script
 *--center           STR : xyz coordinates of the center of the binding site, separated by a space
 [ PLANTS ]
  --radius         FLOAT : Radius of the spheric binding site [15]
 [ Vina ]
  --size            LIST : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
+ --vina-mode        STR : local_only (local search then score) or score_only [local_only]
 
 [ Post Processing ]
  --postprocess          : Process ScoreFlow output for the specified project/protocol/receptor.
@@ -863,9 +863,6 @@ ________________________________________________________________________________
 "
 exit 0
 # TODO
-# Implement automatic detection of the center and size of the binding site from the input docking pose --> remove --center radius size flags.
-# Add a --padding parameter to adjust the size of the binding site. vina and plants both seem to perform a short local optimization /minimization
-# of the pose so the padding parameter should help the user control such optimization.
 # Implement archive
 }
 
@@ -927,6 +924,10 @@ while [[ $# -gt 0 ]]; do
             DOCK_RADIUS="$2"
             DOCK_LENGHT=("$2" "$2" "$2")
             shift # past argument
+        ;;
+        "--vina-mode")
+            VINA_MODE="$2"
+            shift
         ;;
         "-nc"|"--cores") # Number of Cores [1] (or cores/node)
             NCORES="$2" # Same as above.

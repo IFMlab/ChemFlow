@@ -33,6 +33,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.commandLinkButton_ligflow_run.setIcon(icon)
         self.commandLinkButton_docking_run.setIcon(icon)
         self.commandLinkButton_scoring_run.setIcon(icon)
+        self.commandLinkButton_tools_run.setIcon(icon)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(os.path.realpath(os.path.join(WORKDIR, "img", "process.png"))), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.commandLinkButton_docking_postprocess.setIcon(icon)
@@ -73,6 +74,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.commandLinkButton_scoring_run.clicked.connect(self.run_scoring)
         self.commandLinkButton_scoring_postprocess.clicked.connect(self.run_scoring_postprocess)
         self.commandLinkButton_scoring_archive.clicked.connect(self.run_scoring_archive)
+        self.commandLinkButton_tools_run.clicked.connect(self.run_tools)
         self.action_buttons = [
             self.commandLinkButton_ligflow_run,
             self.commandLinkButton_docking_run,
@@ -81,6 +83,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.commandLinkButton_scoring_run,
             self.commandLinkButton_scoring_postprocess,
             self.commandLinkButton_scoring_archive,
+            self.commandLinkButton_tools_run,
         ]
         # Output tab
         self.tabWidget.currentChanged.connect(lambda index: self.remove_notification(index))
@@ -164,7 +167,6 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.WORKDIR, self.input['Project'] = os.path.split(project_path)
                 self.input['Project'] = self.input['Project'][:-9]
 
-
     def browse_receptor(self):
         filetypes = "Mol2 Files (*.mol2);;All Files (*)"
         self.input['Receptor'], _ = QFileDialog.getOpenFileName(None,"Select receptor MOL2 file", os.getcwd(), filetypes)
@@ -240,7 +242,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 for kw in [
                 'CenterX','CenterY','CenterZ',
                 'SizeX','SizeY','SizeZ',
-                'ScoringFunction',
+                'ScoringFunction','RescoringMode',
                 ]:
                     self.input[kw] = self.scoring_protocol[kw]
             elif self.input['scoring_software'] == 'PLANTS':
@@ -488,6 +490,9 @@ class Main(QMainWindow, Ui_MainWindow):
             # Execute
             self.execute_command(self.build_scoring_command())
 
+    def run_tools(self):
+        pass
+
     def build_ligflow_command(self):
         command = ['LigFlow']
         # Project
@@ -529,12 +534,16 @@ class Main(QMainWindow, Ui_MainWindow):
             return command
         # Number of docking poses
         command.extend(['-n', self.input['NumDockingPoses']])
+        # Scoring functions
+        command.extend(['-sf', self.input['ScoringFunction']])
+        # Overwrite
+        if self.input['Overwrite']:
+            command.append('--overwrite')
         # Postprocess
         if self.input['PostProcess']:
             command.append('--postprocess')
             return command
         # Docking protocol
-        command.extend(['-sf', self.input['ScoringFunction']])
         command.extend(['--center',
             self.input['CenterX'],
             self.input['CenterY'],
@@ -548,8 +557,6 @@ class Main(QMainWindow, Ui_MainWindow):
                 command.append('--pbs')
             elif self.input['JobQueue'] == 'SLURM':
                 command.append('--slurm')
-        if self.input['Overwrite']:
-            command.append('--overwrite')
         # PLANTS
         if self.input['docking_software'] == 'PLANTS':
             command.extend(['--speed', self.input['SearchSpeed']])
@@ -590,15 +597,15 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.input['Archive']:
             command.append('--archive')
             return command
-        # Postprocess
-        if self.input['PostProcess']:
-            command.append('--postprocess')
-            return command
-        # Rescoring protocol
+        # Scoring functions
         command.extend(['-sf', self.input['ScoringFunction']])
         # Overwrite
         if self.input['Overwrite']:
             command.append('--overwrite')
+        # Postprocess
+        if self.input['PostProcess']:
+            command.append('--postprocess')
+            return command
         # Center of binding site for plants and vina
         if self.input['scoring_software'] in ['PLANTS', 'AutoDock Vina']:
             command.extend(['--center',
@@ -623,6 +630,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.input['SizeX'],
                 self.input['SizeY'],
                 self.input['SizeZ']])
+            command.extend(['--vina-mode', self.input['RescoringMode']])
         # MM/GBSA
         elif self.input['scoring_software'] == 'MM/GBSA':
             # Charges
@@ -726,6 +734,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 elif '?' in line:
                     # switch to the Output tab
                     self.tabWidget.setCurrentIndex(self.tabWidget.indexOf(self.tab_Output))
+                    self.remove_notification(self.tabWidget.indexOf(self.tab_Output))
                     # Yes No question
                     if '[y/n]' in line:
                         if len(self.summary_text):
@@ -778,8 +787,8 @@ if __name__ == '__main__':
         QtGui.QFontDatabase.addApplicationFont(font)
     stylesheet_path = os.path.realpath(os.path.join(WORKDIR, "qss", "chemflow.css"))
     with open(stylesheet_path, 'r') as f:
-        stylesheet = f.read()
-    app.setStyleSheet(stylesheet)
+        STYLESHEET = f.read()
+    app.setStyleSheet(STYLESHEET)
     # show app
     main = Main()
     main.show()

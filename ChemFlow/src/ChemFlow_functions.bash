@@ -35,8 +35,7 @@ ChemFlow_set_ligand_list() {
 if [ ! -s ${LIGAND_FILE} ] ; then
     ERROR_MESSAGE="The ligand file ${LIGAND_FILE} is empty" ; ChemFlow_error
 else
-    LIGAND_LIST=$(awk 'f{print;f=0} /MOLECULE/{f=1}' ${LIGAND_FILE})
-    LIGAND_LIST=(${LIGAND_LIST})  # transform a list into an array
+    LIGAND_LIST=($(awk 'f{print;f=0} /MOLECULE/{f=1}' ${LIGAND_FILE}))
     NLIGANDS=${#LIGAND_LIST[@]}
 fi
 }
@@ -112,27 +111,30 @@ case "${WORKFLOW}" in
 ;;
 "ScoreFlow")
     case "${SCORING_FUNCTION}" in
-    "chemplp"|"plp"|"plp95") # PLANTS is the default SCORE_PROGRAM
-    if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
-        ERROR_MESSAGE="Plants rescoring requires a mol2 file as receptor input"; ChemFlow_error ;
-    fi
-    ;;
-    "vina")
-        SCORE_PROGRAM="VINA" ;
-    if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
-        ERROR_MESSAGE="Vina rescoring requires a mol2 file as receptor input"; ChemFlow_error ;
-    fi
-    ;;
-    "mmgbsa") # mmgbsa as scoring function is only allowed for ScoreFlow.
-        SCORE_PROGRAM="AMBER"
-        RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .pdb)"
-        if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "pdb" ] ; then
-            ERROR_MESSAGE="mmgbsa rescoring requires a PDB file as receptor input"; ChemFlow_error ;
-        fi
-    ;;
-    *)
-        ERROR_MESSAGE="SCORING_FUNCTION ${SCORING_FUNCTION} not implemented"; ChemFlow_error ;
-    ;;
+        "chemplp"|"plp"|"plp95") # PLANTS is the default SCORE_PROGRAM
+            if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
+                ERROR_MESSAGE="Plants rescoring requires a mol2 file as receptor input"; ChemFlow_error ;
+            fi
+        ;;
+        "vina")
+            SCORE_PROGRAM="VINA" ;
+            if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
+                ERROR_MESSAGE="Vina rescoring requires a mol2 file as receptor input"; ChemFlow_error ;
+            fi
+            if [ "${VINA_MODE}" != "local_only" ] && [ "${VINA_MODE}" != "score_only" ] ; then
+                ERROR_MESSAGE="Vina rescoring mode ${VINA_MODE} does not exist"; ChemFlow_error ;
+            fi
+        ;;
+        "mmgbsa") # mmgbsa as scoring function is only allowed for ScoreFlow.
+            SCORE_PROGRAM="AMBER"
+            RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .pdb)"
+            if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "pdb" ] ; then
+                ERROR_MESSAGE="mmgbsa rescoring requires a PDB file as receptor input"; ChemFlow_error ;
+            fi
+        ;;
+        *)
+            ERROR_MESSAGE="SCORING_FUNCTION ${SCORING_FUNCTION} not implemented"; ChemFlow_error ;
+        ;;
     esac
 
     if [ "${SCORING_FUNCTION}" != "mmgbsa"  ] ; then
@@ -317,6 +319,9 @@ elif [ $1 == 'ScoreFlow' ] ; then
     DOCK_LENGTH=("15" "15" "15")
     DOCK_RADIUS="15"
     CHARGE="gas"
+
+    # Vina advanced options
+    VINA_MODE="local_only"
 
     # no MD
     MD="no"

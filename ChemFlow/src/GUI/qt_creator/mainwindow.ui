@@ -14,7 +14,7 @@
    <string>ChemFlow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QLabel" name="label_logo_2">
+   <widget class="QLabel" name="label_logo_text">
     <property name="geometry">
      <rect>
       <x>260</x>
@@ -147,6 +147,15 @@
       <property name="toolTip">
        <string>Ligands MOL2 file</string>
       </property>
+      <property name="whatsThis">
+       <string/>
+      </property>
+      <property name="accessibleName">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>Path to a MOL2 file</string>
+      </property>
      </widget>
      <widget class="QLabel" name="label_protocol">
       <property name="geometry">
@@ -277,7 +286,7 @@
        </font>
       </property>
       <property name="toolTip">
-       <string>Run the docking experiment</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Prepare the ligands&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
        <string>Prepare ligands</string>
@@ -642,6 +651,9 @@
       <property name="toolTip">
        <string>Receptor MOL2 file</string>
       </property>
+      <property name="placeholderText">
+       <string>Path to a MOL2 file</string>
+      </property>
      </widget>
      <widget class="QLineEdit" name="lineEdit_docking_lig">
       <property name="geometry">
@@ -659,6 +671,9 @@
       </property>
       <property name="toolTip">
        <string>Ligands MOL2 file</string>
+      </property>
+      <property name="placeholderText">
+       <string>Path to a MOL2 file</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_4">
@@ -768,7 +783,7 @@
        </font>
       </property>
       <property name="toolTip">
-       <string>Run the docking experiment</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Run the docking experiment&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
        <string>Dock</string>
@@ -799,7 +814,7 @@
        </font>
       </property>
       <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Process and standardize the outputs for the specified project, protocol, and receptor&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Process and standardize the outputs for the specified project, protocol, receptor, and scoring function&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
        <string>Postprocess</string>
@@ -966,6 +981,9 @@
       <property name="toolTip">
        <string>Receptor MOL2 file</string>
       </property>
+      <property name="placeholderText">
+       <string>Path to a PDB or MOL2 file</string>
+      </property>
      </widget>
      <widget class="QLabel" name="label_docking_3">
       <property name="geometry">
@@ -1003,6 +1021,9 @@
       </property>
       <property name="text">
        <string>default</string>
+      </property>
+      <property name="placeholderText">
+       <string>Name of your protocol</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_rec_3">
@@ -1064,7 +1085,7 @@
        </font>
       </property>
       <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Process and standardize the outputs for the specified project, protocol, and receptor&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Process and standardize the outputs for the specified project, protocol, receptor, and scoring function&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
        <string>Postprocess</string>
@@ -1096,6 +1117,9 @@
       </property>
       <property name="toolTip">
        <string>Ligands MOL2 file</string>
+      </property>
+      <property name="placeholderText">
+       <string>Path to a MOL2 file</string>
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_scoring_configure_job_queue">
@@ -1264,7 +1288,7 @@
        </font>
       </property>
       <property name="toolTip">
-       <string>Run the docking experiment</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Run the rescoring experiment&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
        <string>Rescore</string>
@@ -1326,6 +1350,156 @@
      <attribute name="title">
       <string>Tools</string>
      </attribute>
+     <widget class="QLabel" name="label_7">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>10</y>
+        <width>67</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Name</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_8">
+      <property name="geometry">
+       <rect>
+        <x>14</x>
+        <y>70</y>
+        <width>91</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Description</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="comboBox_tools">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>35</y>
+        <width>321</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="currentText">
+       <string/>
+      </property>
+      <property name="currentIndex">
+       <number>-1</number>
+      </property>
+      <property name="frame">
+       <bool>true</bool>
+      </property>
+      <item>
+       <property name="text">
+        <string>Bounding shape</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Extract MOL2</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>IFP</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>SMILES to 3D</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QLabel" name="label_tools_description">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>94</y>
+        <width>595</width>
+        <height>211</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_configure_tools">
+      <property name="geometry">
+       <rect>
+        <x>360</x>
+        <y>35</y>
+        <width>99</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Configure</string>
+      </property>
+     </widget>
+     <widget class="Line" name="line_5">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>320</y>
+        <width>640</width>
+        <height>3</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QCommandLinkButton" name="commandLinkButton_tools_run">
+      <property name="geometry">
+       <rect>
+        <x>268</x>
+        <y>330</y>
+        <width>101</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Run the ChemFlow tool&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Run</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>../img/run.png</normaloff>../img/run.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_Output">
      <attribute name="title">
@@ -1517,6 +1691,16 @@
   <action name="actionLogfile">
    <property name="text">
     <string>Logfile</string>
+   </property>
+  </action>
+  <action name="actionDefault_theme">
+   <property name="text">
+    <string>Light theme</string>
+   </property>
+  </action>
+  <action name="actionDark_theme">
+   <property name="text">
+    <string>Dark theme</string>
    </property>
   </action>
  </widget>
