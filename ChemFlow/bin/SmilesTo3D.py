@@ -1,9 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 # coding: utf8
-##################################################################### 
+#####################################################################
 #   ChemFlow  -   Computational Chemistry is great again            #
 #####################################################################
-# Authors: 
+# Authors:
 #         cbouy - Cédric Bouysset
 #         cbouysset@unice.fr
 #         Institut de Chimie de Nice - Université Côte d'Azur - France
@@ -153,9 +153,9 @@ if __name__ == '__main__':
 
 	group_args = parser.add_argument_group('Other arguments')
 	group_args.add_argument("-m", "--method", choices=['uff','mmff','etkdg'], default='etkdg', help=textwrap.dedent('''Use one of these algorithm :
-* uff   : distance geometry + force field minimization with UFF
-* mmff  : distance geometry + force field minimization with MMFF
-* etkdg : distance geometry with experimental torsion angles knowledge from the CSD. Used by default'''))
+		* uff   : distance geometry + force field minimization with UFF
+		* mmff  : distance geometry + force field minimization with MMFF
+		* etkdg : distance geometry with experimental torsion angles knowledge from the CSD. Used by default'''))
 	group_args.add_argument("--mpi", action="store_true", help="Run using MPI")
 	group_args.add_argument("--gpu", action="store_true", help="Run on GPU (not implemented yet)")
 	group_args.add_argument("-nt", "--nthreads", metavar='int', type=int, default=1, help="Specify the number of CPU threads to be used. Default: 1")

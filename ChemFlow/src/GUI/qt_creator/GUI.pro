@@ -44,4 +44,6 @@ FORMS += \
     logfile.ui \
     mmgbsa.ui \
     scoring_plants.ui \
-    scoring_vina.ui
+    scoring_vina.ui \
+    tool_boundingshape.ui \
+    tool_smiles_to_3d.ui

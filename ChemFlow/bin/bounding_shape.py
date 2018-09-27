@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # coding: utf8
 
 #####################################################################
@@ -120,7 +120,7 @@ def bounding_box(XYZ, padding):
 if __name__ == '__main__':
 	# Parse arguments
 	parser = ArgumentParser(
-		description="Reads a mol2 file and returns the center and radius/size of the smallest shape containing all the atoms")
+		description="Reads a mol2 file and returns the center and radius/size of the smallest shape containing all the atoms of the given molecule.")
 	parser.add_argument('inputfile',
 		help="Input ligand MOL2 file",
 		metavar="MOL2 FILE")

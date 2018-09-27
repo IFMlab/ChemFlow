@@ -168,7 +168,7 @@ def yesNoDialog(title="Question", message="", info="", details=""):
         return 'n'
 
 
-EMPTY_VALUES = [None, '', ' ']
+EMPTY_VALUES = [None, '', ' ', [], {}]
 PROCESS_STATE = {
     QProcess.NotRunning: "Not Running",
     QProcess.Starting: "Starting",
