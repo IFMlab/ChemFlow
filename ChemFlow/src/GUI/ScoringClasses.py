@@ -1,5 +1,3 @@
-import os, sys
-from PyQt5 import QtGui
 from PyQt5.QtWidgets import QDialog, QFileDialog
 from PyQt5.QtCore import QSettings
 from qt_creator.UIscoring_plants import Ui_ScoringPlants
@@ -36,6 +34,10 @@ class DialogScoreVina(QDialog, Ui_ScoringVina):
         self.values['SizeX'] = self.spinBox_sx.value()
         self.values['SizeY'] = self.spinBox_sy.value()
         self.values['SizeZ'] = self.spinBox_sz.value()
+        if self.radioButton_local.isChecked():
+            self.values['RescoringMode'] = 'local_only'
+        else:
+            self.values['RescoringMode'] = 'score_only'
         self.values['ScoringFunction'] = 'vina'
         self.close()
 
@@ -121,15 +123,9 @@ class DialogScoreMmgbsa(QDialog, Ui_ScoringMmgbsa):
 
     def validate(self):
         self.values['Charges'] = self.comboBox_charges.currentText()
-        if self.radioButton_implicit.isChecked():
-            self.values['ExplicitSolvent'] = False
-        else:
-            self.values['ExplicitSolvent'] = True
+        self.values['ExplicitSolvent'] = self.radioButton_explicit.isChecked()
         self.values['MaxCyc'] = self.spinBox_maxcyc.value()
-        if self.checkBox_MD.isChecked():
-            self.values['MD'] = True
-        else:
-            self.values['MD'] = False
+        self.values['MD'] = self.checkBox_MD.isChecked()
         self.values['ScoringFunction'] = 'mmgbsa'
         self.close()
 

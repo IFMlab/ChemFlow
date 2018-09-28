@@ -260,7 +260,7 @@ cat ${RUNDIR}/DockFlow.run >> ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
 }
 
 not_a_number() {
-re='^[0-9]+$'
+re=^[0-9]+$
 if ! [[ $nb =~ $re ]] ; then
    ERROR_MESSAGE="Not a number. I was expecting an integer." ; ChemFlow_error ;
 fi
@@ -746,15 +746,29 @@ RECEPTOR FILE: $(relpath "${RECEPTOR_FILE}" "${WORKDIR}")
       SCORING: ${SCORING_FUNCTION}
        CENTER: ${DOCK_CENTER[@]}"
 case ${DOCK_PROGRAM} in
- "VINA") echo "         SIZE: ${DOCK_LENGTH[@]} (X,Y,Z)" ;;
-      *) echo "       RADIUS: ${DOCK_RADIUS}"
+"VINA")
+    echo "         SIZE: ${DOCK_LENGTH[@]} (X,Y,Z)"
+    echo " EXHAUSTIVITY: ${EXHAUSTIVENESS}"
+    echo " ENERGY RANGE: ${ENERGY_RANGE}"
+;;
+"PLANTS")
+    echo "       RADIUS: ${DOCK_RADIUS}"
+    echo "        SPEED: ${SPEED}"
+    echo "         ANTS: ${ANTS}"
+    echo "   EVAP. RATE: ${EVAP_RATE}"
+    echo "ITER. SCALING: ${ITERATION_SCALING}"
+    echo " CLUSTER RMSD: ${CLUSTER_RMSD}"
+    if [ ! -z "${PLANTS_WATER}" ]; then
+        echo "   WATER FILE: ${WATER_FILE}"
+        echo " WATER CENTER: ${WATER_XYZR[@]:0:3}"
+        echo " WATER RADIUS: ${WATER_XYZR[3]}"
+    fi
 esac
 
 echo "
 [ Run options ]
 JOB SCHEDULLER: ${JOB_SCHEDULLER}
     CORES/NODE: ${NCORES}
-
      OVERWRITE: ${OVERWRITE}
 "
 

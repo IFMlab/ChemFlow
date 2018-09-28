@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # coding: utf8
 
 #####################################################################
@@ -8,24 +8,14 @@
 #         cbouysset@unice.fr
 #         Institut de Chimie de Nice - Université Côte d'Azur - France
 #
-# Brief: This script will read a mol2 file and return the center and radius of the smallest shape containing all the atoms
-#
-# Usage : python bounding_sphere.py file.mol2 --box/--sphere padding
-#         --box will return coordinates and sizes for a cuboid binding site
-#         --sphere will return coordinates and radius for a spheric binding site
-#         padding is a number added to each radius/size of the shape
-#         You can also add 'pymol' as the last argument to print the commands to show the shape on PyMol (just copy/paste them in the pymol console)
+# Brief: This script will read a mol2 file and return the center and radius/size of the smallest shape containing all the atoms
+
 
 
 from __future__ import print_function
+from argparse import ArgumentParser
 from math import sqrt
 import sys, re
-
-def help():
-	print("Usage: python bounding_shape.py file.mol2 --box/--sphere padding")
-	print("--sphere returns 4 values separated by a space: x, y, z coordinates of the center and radius of the sphere")
-	print("--box returns 6 values: x, y, z coordinates of the center, and size along the x, y, z dimensions")
-	print("padding is a number added to the radius/sizes of the shape to avoid having a too small binding site")
 
 def distance(a,b):
 	'''Euclidian distance between 2 points'''
@@ -39,7 +29,7 @@ def get_center(points):
 	'''Centroid for finite number of points'''
 	return [sum([point[i] for point in points])/len(points) for i in range(len(points[0]))]
 
-def average_bs(XYZ, padding=0.3):
+def average_bs(XYZ, padding):
 	'''Bounding sphere where the center is the centroid of the molecule, and the
 	 radius is incremented until all atoms fit inside the sphere'''
 	# Compute the center of the sphere as the average over x, y and z coordinates
@@ -64,7 +54,7 @@ def average_bs(XYZ, padding=0.3):
 	radius += padding
 	return center, radius
 
-def ritter_bs(XYZ, padding=0.3):
+def ritter_bs(XYZ, padding):
 	"""Bounding sphere using Ritter's algorithm"""
 	# start by picking a point p1
 	i1 = 0
@@ -112,7 +102,7 @@ def ritter_bs(XYZ, padding=0.3):
 	radius += padding
 	return center, radius
 
-def bounding_box(XYZ, padding=0.5):
+def bounding_box(XYZ, padding):
 	# get center
 	center = get_center(XYZ)
 	# get furthest point for each axis
@@ -128,24 +118,29 @@ def bounding_box(XYZ, padding=0.5):
 	return center, size
 
 if __name__ == '__main__':
-	if len(sys.argv) < 4:
-		help()
-		sys.exit()
-	elif any(h in sys.argv for h in ['-h','--help']):
-		help()
-		sys.exit()
+	# Parse arguments
+	parser = ArgumentParser(
+		description="Reads a mol2 file and returns the center and radius/size of the smallest shape containing all the atoms of the given molecule.")
+	parser.add_argument('inputfile',
+		help="Input ligand MOL2 file",
+		metavar="MOL2 FILE")
+	parser.add_argument('-s', '--shape',
+		help="Box will output the center (XYZ) coordinates and size (XYZ). Sphere will output the center (XYZ) and radius.",
+		default='sphere',
+		choices=['box','sphere'])
+	parser.add_argument('-p', '--padding',
+		help="Value systematically added to the radius/size. Avoids returning a shape that is too restrictive.",
+		default=0.5,
+		type=float,
+		metavar="FLOAT")
+	parser.add_argument('--pymol',
+		help="Additional output of PyMOL commands to visualize the shape",
+		action="store_true")
 
-	inputfile = sys.argv[1]
-	choice = sys.argv[2]
-	padding = float(sys.argv[3])
-	# print commands to show bounding box on pymol, for debugging
-	try:
-		pymol = True if sys.argv[4] == 'pymol' else False
-	except IndexError:
-		pymol = False
+	args = parser.parse_args()
 
 	# Read file
-	with open(inputfile, "r") as f:
+	with open(args.inputfile, "r") as f:
 		lines = f.readlines()
 
 	# Search for the line where the number of atoms is, and the first line where atom coordinates are readable
@@ -170,10 +165,10 @@ if __name__ == '__main__':
 	    XYZ.append([ float(data[i]) for i in [2,3,4] ])
 
 	# compute bounding shape
-	if choice == '--box':
-		center, size = bounding_box(XYZ, padding)
+	if args.shape == 'box':
+		center, size = bounding_box(XYZ, args.padding)
 		print(' '.join(['{:.3f}'.format(x) for x in center + size]))
-		if pymol:
+		if args.pymol:
 			print('pseudoatom a1, pos={}'.format([center[0]+size[0],center[1]+size[1],center[2]+size[2]]))
 			print('pseudoatom a2, pos={}'.format([center[0]+size[0],center[1]+size[1],center[2]-size[2]]))
 			print('pseudoatom a3, pos={}'.format([center[0]+size[0],center[1]-size[1],center[2]-size[2]]))
@@ -194,13 +189,11 @@ if __name__ == '__main__':
 			print('distance d72, a7, a2')
 			print('distance d54, a5, a4')
 			print('distance d63, a3, a6')
-	elif choice == '--sphere':
-		center, radius = average_bs(XYZ, padding)
+	elif args.shape == 'sphere':
+		center, radius = average_bs(XYZ, args.padding)
 		print(' '.join(['{:.3f}'.format(x) for x in center + [radius]]))
-		if pymol:
+		if args.pymol:
 			print('pseudoatom boundingsphere, pos={}, vdw={}'.format(center, radius))
 			print('show spheres, boundingsphere')
 			print('set sphere_quality, 4')
 			print('set sphere_transparency, 0.6')
-	else:
-		help()

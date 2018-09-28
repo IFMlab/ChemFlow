@@ -102,13 +102,13 @@ For PLANTS it's enough to have only the center.
 
 .. code-block:: bash
 
-    python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --sphere 8.0
+    python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --shape sphere --padding 8.0
 
 For VINA you need the center AND the lenghts of X, Y and Z.
 
 .. code-block:: bash
 
-    python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --box 8.0
+    python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --shape box --padding 8.0
 
 Step 4: Run Dock\ *Flow* to predict the docking poses.
 ------------------------------------------------------

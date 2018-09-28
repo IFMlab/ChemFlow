@@ -36,17 +36,16 @@ IFS=${OLDIFS}
 #
 # QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
 #
+cd ${RUNDIR}/original/
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    cd ${RUNDIR}/original/
     antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -dr no &>/dev/null
-    mv tmp.mol2 ${LIGAND}.mol2
+    if [ -f tmp.mol2 ]; then mv tmp.mol2 ${LIGAND}.mol2; fi
 done
-#
-#
-#
-
 rm -f ANTECHAMBER_*
 rm ATOMTYPE.INF
+#
+#
+#
 }
 
 

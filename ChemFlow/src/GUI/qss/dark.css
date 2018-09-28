@@ -1,0 +1,78 @@
+/*
+Custom theme settings
+*/
+QTabBar::tab {
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+  padding: 6px 12px;
+}
+QTabBar::tab:!selected {
+  margin-top: 3px;
+}
+[objectName^="tab_"] {
+  border-width: 1px;
+  border-style: solid;
+}
+/*
+Dark theme palette
+  Main color:       #424242
+  Secondary color:  #282828
+  Border color:     #606060
+  Highlight color:  #2e7bf7
+  Font color:       #fcfcfc
+  Font disabled:    #8e8e8e
+  Button disabled:  #474747
+*/
+* {
+  color: #fcfcfc;
+}
+QToolTip {
+  background-color: #424242;
+  color: #fcfcfc;
+}
+QCheckBox::indicator:checked,
+QMenuBar::item:selected,
+QMenuBar::item:hover,
+QMenu::item:selected,
+QMenu::item:hover,
+QTabBar::tab:hover {
+  background-color: #2e7bf7;
+}
+QComboBox {
+  selection-background-color: #2e7bf7;
+}
+QWidget {
+  background-color: #424242;
+}
+QPushButton:disabled {
+  background-color: #474747;
+  color: #8e8e8e;
+}
+QLabel,
+QCheckBox {
+  background-color: transparent;
+}
+[objectName^="tab_"],
+QTabBar::tab:selected,
+QMenu {
+  background-color: #282828;
+}
+QWidget {
+  border-color: #282828;
+}
+QTabBar::tab,
+QMenu,
+QTabWidget::pane {
+  border: 1px solid #606060;
+}
+QCheckBox::indicator {
+    border: 1px solid #606060;
+    border-radius: 3px;
+    background: white;
+}
+QTabWidget::pane {
+  border-top: none;
+}
+QTabBar::tab:selected {
+  border-bottom: none;
+}

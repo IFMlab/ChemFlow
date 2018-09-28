@@ -42,7 +42,6 @@ if [ -z ${CHEMFLOW_HOME} ] ; then
   exit 0
 fi
 
-
 # Corrigir o nome do receptor quando usar o PDB
 # Corrigir o SPLIT pois uso o echo " >> "
 # [project].chemflow/[action]/[protocol]/[target]/[query].

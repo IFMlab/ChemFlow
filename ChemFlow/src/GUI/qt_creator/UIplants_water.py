@@ -99,6 +99,7 @@ class Ui_PlantsWater(object):
         self.doubleSpinBox_cx.setToolTip(_translate("PlantsWater", "<html><head/><body><p>Sphere inside which the water molecule is allowed to move. If the water molecule is displaced by a ligand and moved outside the sphere, the water molecule has no score contribution.</p></body></html>"))
         self.doubleSpinBox_radius.setToolTip(_translate("PlantsWater", "<html><head/><body><p>Sphere inside which the water molecule is allowed to move. If the water molecule is displaced by a ligand and moved outside the sphere, the water molecule has no score contribution.</p></body></html>"))
         self.doubleSpinBox_cz.setToolTip(_translate("PlantsWater", "<html><head/><body><p>Sphere inside which the water molecule is allowed to move. If the water molecule is displaced by a ligand and moved outside the sphere, the water molecule has no score contribution.</p></body></html>"))
+        self.lineEdit_water.setPlaceholderText(_translate("PlantsWater", "Path to a MOL2 file"))
 
 
 if __name__ == "__main__":

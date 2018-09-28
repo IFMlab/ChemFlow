@@ -6,6 +6,7 @@ from PyQt5.QtCore import QProcess, QByteArray, QRegExp
 from webbrowser import open as browser_open
 from time import strftime, gmtime
 import sys, os, logging
+from logging.handlers import RotatingFileHandler
 from utils import (
     WORKDIR, CWDIR, EMPTY_VALUES, PROCESS_ERROR, PROCESS_STATE,
     cleanParameters, missingParametersDialog, errorDialog, yesNoDialog,
@@ -14,6 +15,7 @@ from MainClasses import DialogAbout, DialogNewProject, DialogQuestion, LogfileDi
 from DockingClasses import DialogDockVina, DialogDockPlants
 from ScoringClasses import DialogScoreVina, DialogScorePlants, DialogScoreMmgbsa
 from ExecutionClasses import DialogRunLocal, DialogRunPbs, DialogRunSlurm
+from ToolsClasses import DialogToolBoundingShape, DialogToolSmilesTo3D
 from qt_creator.UImainwindow import Ui_MainWindow
 
 
@@ -33,6 +35,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.commandLinkButton_ligflow_run.setIcon(icon)
         self.commandLinkButton_docking_run.setIcon(icon)
         self.commandLinkButton_scoring_run.setIcon(icon)
+        self.commandLinkButton_tools_run.setIcon(icon)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(os.path.realpath(os.path.join(WORKDIR, "img", "process.png"))), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.commandLinkButton_docking_postprocess.setIcon(icon)
@@ -49,6 +52,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionTutorial.triggered.connect(self.tutorial)
         self.actionDebug_mode.triggered.connect(self.debug_mode)
         self.actionLogfile.triggered.connect(self.read_logs)
+        self.actionDefault_theme.triggered.connect(lambda: self.set_theme('default'))
+        self.actionDark_theme.triggered.connect(lambda: self.set_theme('dark'))
         self.actionNew_project.triggered.connect(self.create_project)
         self.actionLoad_project.triggered.connect(self.load_project)
         self.actionExit.triggered.connect(self.close)
@@ -73,6 +78,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.commandLinkButton_scoring_run.clicked.connect(self.run_scoring)
         self.commandLinkButton_scoring_postprocess.clicked.connect(self.run_scoring_postprocess)
         self.commandLinkButton_scoring_archive.clicked.connect(self.run_scoring_archive)
+        self.commandLinkButton_tools_run.clicked.connect(self.run_tools)
         self.action_buttons = [
             self.commandLinkButton_ligflow_run,
             self.commandLinkButton_docking_run,
@@ -81,27 +87,36 @@ class Main(QMainWindow, Ui_MainWindow):
             self.commandLinkButton_scoring_run,
             self.commandLinkButton_scoring_postprocess,
             self.commandLinkButton_scoring_archive,
+            self.commandLinkButton_tools_run,
         ]
         # Output tab
         self.tabWidget.currentChanged.connect(lambda index: self.remove_notification(index))
         self.pushButton_kill.clicked.connect(self.kill_process)
+        # Tools
+        self.comboBox_tools.currentTextChanged.connect(lambda tool: self.describe_tools(tool))
+        self.pushButton_configure_tools.clicked.connect(self.configure_tools)
         # Validators
         validator = QtGui.QRegExpValidator(QRegExp('[\w\-\+\.]+')) # only accept letters/numbers and .+-_ as valid
         self.lineEdit_docking_protocol.setValidator(validator)
         self.lineEdit_scoring_protocol.setValidator(validator)
-        # Create dictionary that stores all ChemFlow variables
+        # Initialize ChemFlow variables
         self.input = {
             'PostProcess': False,
             'Archive': False,
         }
         self.output_nlines = 0
         self.DEBUG = False
-        # Logfile
+        # Logfile with 1 backup and max 10Mb size
         self.logfile = os.path.join(os.getenv('CHEMFLOW_HOME', os.environ['HOME']), 'chemflow.log')
-        logging.basicConfig(filename=self.logfile, level=logging.DEBUG,
-            format='%(asctime)s - %(message)s', datefmt='%H:%M:%S')
+        self.logger = logging.getLogger()
+        log_handler = RotatingFileHandler(self.logfile, mode='a', maxBytes=10*1024*1024, backupCount=1)
+        log_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s', datefmt='%H:%M:%S'))
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(log_handler)
         timestamp = strftime("%A %d %B %Y", gmtime())
-        logging.info('Launching ChemFlow GUI: {}'.format(timestamp))
+        self.display('Launching ChemFlow GUI: {}'.format(timestamp))
+        # Always open Output tab at first
+        self.tabWidget.setCurrentIndex(self.tabWidget.indexOf(self.tab_Output))
 
     def about(self):
         """Show the About section"""
@@ -133,10 +148,24 @@ class Main(QMainWindow, Ui_MainWindow):
     def read_logs(self):
         """Open the logfile"""
         if os.path.isfile(self.logfile):
-            logger = LogfileDialog(self.logfile, parent=main)
-            logger.show()
+            log_dialog = LogfileDialog(self.logfile, parent=main)
+            log_dialog.show()
         else:
             errorDialog(message='No logfile to show')
+
+    def set_theme(self, theme):
+        """Set the theme of the GUI"""
+        qss_path = os.path.realpath(os.path.join(WORKDIR, "qss"))
+        style = os.path.join(qss_path, "chemflow.css")
+        with open(style, 'r') as f:
+            base = f.read()
+        if theme == "default":
+            app.setStyleSheet(base)
+        elif theme == "dark":
+            style = os.path.join(qss_path, "dark.css")
+            with open(style, 'r') as f:
+                dark = f.read()
+            app.setStyleSheet(base +'\n'+ dark)
 
     def create_project(self):
         """Create a new ChemFlow project"""
@@ -164,10 +193,9 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.WORKDIR, self.input['Project'] = os.path.split(project_path)
                 self.input['Project'] = self.input['Project'][:-9]
 
-
     def browse_receptor(self):
         filetypes = "Mol2 Files (*.mol2);;All Files (*)"
-        self.input['Receptor'], _ = QFileDialog.getOpenFileName(None,"Select receptor MOL2 file", os.getcwd(), filetypes)
+        self.input['Receptor'], _ = QFileDialog.getOpenFileName(None,"Select receptor file", os.getcwd(), filetypes)
         if self.input['Receptor']:
             self.lineEdit_docking_rec.setText(self.input['Receptor'])
             self.lineEdit_scoring_rec.setText(self.input['Receptor'])
@@ -194,30 +222,8 @@ class Main(QMainWindow, Ui_MainWindow):
         except AttributeError:
             self.docking_protocol = None
         if self.docking_protocol:
-            if self.input['docking_software'] == 'AutoDock Vina':
-                # Protocol for Vina
-                for kw in [
-                'CenterX','CenterY','CenterZ',
-                'SizeX','SizeY','SizeZ',
-                'Exhaustiveness','EnergyRange','ScoringFunction'
-                ]:
-                    self.input[kw] = self.docking_protocol[kw]
-            elif self.input['docking_software'] == 'PLANTS':
-                # Protocol for PLANTS
-                for kw in [
-                'CenterX','CenterY','CenterZ',
-                'Radius','ScoringFunction','ClusterRMSD',
-                'Ants','EvaporationRate','IterationScaling','SearchSpeed'
-                ]:
-                    self.input[kw] = self.docking_protocol[kw]
-                # Protocol with Water
-                try:
-                    self.docking_protocol['WaterFile']
-                except KeyError:
-                    pass
-                else:
-                    for kw in ['WaterCenterX','WaterCenterY','WaterCenterZ','WaterRadius','WaterFile']:
-                        self.input[kw] = self.docking_protocol[kw]
+            for kw in self.docking_protocol:
+                self.input[kw] = self.docking_protocol[kw]
 
     def configure_scoring_protocol(self):
         """Configure the rescoring protocol"""
@@ -235,36 +241,8 @@ class Main(QMainWindow, Ui_MainWindow):
         except AttributeError:
             self.scoring_protocol = None
         if self.scoring_protocol:
-            if self.input['scoring_software'] == 'AutoDock Vina':
-                # Protocol for Vina
-                for kw in [
-                'CenterX','CenterY','CenterZ',
-                'SizeX','SizeY','SizeZ',
-                'ScoringFunction',
-                ]:
-                    self.input[kw] = self.scoring_protocol[kw]
-            elif self.input['scoring_software'] == 'PLANTS':
-                # Protocol for PLANTS
-                for kw in [
-                'CenterX','CenterY','CenterZ',
-                'Radius','ScoringFunction',
-                ]:
-                    self.input[kw] = self.scoring_protocol[kw]
-                # Protocol with Water
-                try:
-                    self.scoring_protocol['WaterFile']
-                except KeyError:
-                    pass
-                else:
-                    for kw in ['WaterCenterX','WaterCenterY','WaterCenterZ','WaterRadius','WaterFile']:
-                        self.input[kw] = self.scoring_protocol[kw]
-            elif self.input['scoring_software'] == 'MM/GBSA':
-                # Protocol for MM/GBSA
-                for kw in [
-                'Charges','ExplicitSolvent','MaxCyc','MD',
-                'ScoringFunction',
-                ]:
-                    self.input[kw] = self.scoring_protocol[kw]
+            for kw in self.scoring_protocol:
+                self.input[kw] = self.scoring_protocol[kw]
 
     def configure_workflow_execution(self):
         '''Configure how the workflow is going to run on the local machine'''
@@ -291,11 +269,8 @@ class Main(QMainWindow, Ui_MainWindow):
         except AttributeError:
             workflow_execution = None
         if workflow_execution:
-            if self.input['JobQueue'] == 'None':
-                self.input['NumCores'] = workflow_execution['NumCores']
-            elif self.input['JobQueue'] in ['PBS', 'SLURM']:
-                for kw in ['NumCores','HeaderFile']:
-                    self.input[kw] = workflow_execution[kw]
+            for kw in workflow_execution:
+                self.input[kw] = workflow_execution[kw]
             if self.tabWidget.currentIndex() == 0: # LigFlow
                 self.ligflow_execution = True
             elif self.tabWidget.currentIndex() == 1: # DockFlow
@@ -488,6 +463,69 @@ class Main(QMainWindow, Ui_MainWindow):
             # Execute
             self.execute_command(self.build_scoring_command())
 
+    def describe_tools(self, tool):
+        """Set the description label for ChemFlow tools"""
+        if tool == 'Bounding shape':
+            self.label_tools_description.setText('Reads a mol2 file and returns the center and radius/size of the smallest shape containing all the atoms of the given molecule.')
+        elif tool == 'SMILES to 3D':
+            self.label_tools_description.setText('Generates 3D structures in SDF format from SMILES, using RDKIT.')
+        else:
+            self.label_tools_description.setText('')
+
+    def configure_tools(self):
+        """Configure tools from ChemFlow"""
+        tool = self.comboBox_tools.currentText()
+        if tool in EMPTY_VALUES:
+            errorDialog(message="Please select a ChemFlow tool to configure")
+            tool = None
+        else:
+            self.input['Tool'] = tool
+            if tool == 'Bounding shape':
+                tool_dialog = DialogToolBoundingShape()
+            elif tool == 'SMILES to 3D':
+                tool_dialog = DialogToolSmilesTo3D()
+            tool_dialog.exec_()
+            try:
+                tool_parameters = tool_dialog.values
+            except AttributeError:
+                tool_parameters = None
+            if tool_parameters:
+                for kw in tool_parameters:
+                    self.input[kw] = tool_parameters[kw]
+
+    def run_tools(self):
+        """Run tools from ChemFlow"""
+        try:
+            self.input['Tool']
+        except KeyError:
+            errorDialog(message="Please configure a ChemFlow tool first")
+        else:
+            if self.input['Tool'] == 'Bounding shape':
+                command = ['bounding_shape.py']
+                command.append(self.input['InputFile'])
+                command.extend(['--shape', self.input['Shape']])
+                command.extend(['--padding', self.input['Padding']])
+                if self.input['PyMOL']:
+                    command.append('--pymol')
+            elif self.input['Tool'] == 'SMILES to 3D':
+                command = ['SmilesTo3D.py']
+                command.extend(['-i', self.input['InputFile']])
+                command.extend(['-o', self.input['OutputFile']])
+                command.extend(['-sc', self.input['SmilesColumn']])
+                command.extend(['-nc', self.input['NamesColumn']])
+                command.extend(['-d', self.input['Delimiter']])
+                command.extend(['-m', self.input['Method']])
+                command.extend(['-nt', self.input['NThreads']])
+                if self.input['Header']:
+                    command.append('--header')
+                if self.input['AllHydrogens']:
+                    command.append('--hydrogen')
+                if self.input['Verbose']:
+                    command.append('-v')
+                if self.input['MPI']:
+                    command.append('--mpi')
+            self.execute_command(command)
+
     def build_ligflow_command(self):
         command = ['LigFlow']
         # Project
@@ -529,12 +567,16 @@ class Main(QMainWindow, Ui_MainWindow):
             return command
         # Number of docking poses
         command.extend(['-n', self.input['NumDockingPoses']])
+        # Scoring functions
+        command.extend(['-sf', self.input['ScoringFunction']])
+        # Overwrite
+        if self.input['Overwrite']:
+            command.append('--overwrite')
         # Postprocess
         if self.input['PostProcess']:
             command.append('--postprocess')
             return command
         # Docking protocol
-        command.extend(['-sf', self.input['ScoringFunction']])
         command.extend(['--center',
             self.input['CenterX'],
             self.input['CenterY'],
@@ -548,8 +590,6 @@ class Main(QMainWindow, Ui_MainWindow):
                 command.append('--pbs')
             elif self.input['JobQueue'] == 'SLURM':
                 command.append('--slurm')
-        if self.input['Overwrite']:
-            command.append('--overwrite')
         # PLANTS
         if self.input['docking_software'] == 'PLANTS':
             command.extend(['--speed', self.input['SearchSpeed']])
@@ -590,15 +630,15 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.input['Archive']:
             command.append('--archive')
             return command
-        # Postprocess
-        if self.input['PostProcess']:
-            command.append('--postprocess')
-            return command
-        # Rescoring protocol
+        # Scoring functions
         command.extend(['-sf', self.input['ScoringFunction']])
         # Overwrite
         if self.input['Overwrite']:
             command.append('--overwrite')
+        # Postprocess
+        if self.input['PostProcess']:
+            command.append('--postprocess')
+            return command
         # Center of binding site for plants and vina
         if self.input['scoring_software'] in ['PLANTS', 'AutoDock Vina']:
             command.extend(['--center',
@@ -623,6 +663,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.input['SizeX'],
                 self.input['SizeY'],
                 self.input['SizeZ']])
+            command.extend(['--vina-mode', self.input['RescoringMode']])
         # MM/GBSA
         elif self.input['scoring_software'] == 'MM/GBSA':
             # Charges
@@ -664,7 +705,10 @@ class Main(QMainWindow, Ui_MainWindow):
             # create process
             self.process = QProcess()
             self.pushButton_kill.setEnabled(True)
-            self.process.setWorkingDirectory(self.WORKDIR)
+            try:
+                self.process.setWorkingDirectory(self.WORKDIR)
+            except AttributeError:
+                self.process.setWorkingDirectory(os.getcwd())
             # Merge STDOUT and STDERR
             self.process.setProcessChannelMode(QProcess.MergedChannels)
             # Capture STDIN
@@ -726,6 +770,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 elif '?' in line:
                     # switch to the Output tab
                     self.tabWidget.setCurrentIndex(self.tabWidget.indexOf(self.tab_Output))
+                    self.remove_notification(self.tabWidget.indexOf(self.tab_Output))
                     # Yes No question
                     if '[y/n]' in line:
                         if len(self.summary_text):
@@ -752,7 +797,7 @@ class Main(QMainWindow, Ui_MainWindow):
         """Print text on the Output tab and to the logfile"""
         self.output_display.insertPlainText(text + '\n')
         self.output_display.moveCursor(QtGui.QTextCursor.End)
-        logging.info(text)
+        self.logger.info(text)
         self.output_nlines += 1
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_Output), 'Output ({})'.format(self.output_nlines))
 
@@ -772,16 +817,13 @@ class Main(QMainWindow, Ui_MainWindow):
 if __name__ == '__main__':
     # create widget
     app = QtWidgets.QApplication(sys.argv)
-    # Use custom fonts and stylesheet
+    # Use custom fonts
     for filename in os.listdir(os.path.realpath(os.path.join(WORKDIR, "fonts"))):
         font = os.path.realpath(os.path.join(WORKDIR, "fonts", filename))
         QtGui.QFontDatabase.addApplicationFont(font)
-    stylesheet_path = os.path.realpath(os.path.join(WORKDIR, "qss", "chemflow.css"))
-    with open(stylesheet_path, 'r') as f:
-        stylesheet = f.read()
-    app.setStyleSheet(stylesheet)
     # show app
     main = Main()
+    main.set_theme('dark')
     main.show()
     # exit
     sys.exit(app.exec_())

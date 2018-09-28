@@ -10,7 +10,7 @@
 ##
 ###############################################################################
 
-RELEASE="v0.3-alpha"
+RELEASE="v0.6-beta"
 GUI_NAME="chemflow"
 
 # ChemFlow installation script
@@ -112,12 +112,11 @@ _check(){
   ## Softwares
   if [ -z "$(command -v babel)" ] ; then not_on_path ERROR OpenBabel ; fi
   if [ -z "$mgltools_folder" ]; then
-    _MGLToolsPckgs=$(find /home /bin /opt /soft* -type d -name 'MGLToolsPckgs' 2>/dev/null)
-    if [ -z "$_MGLToolsPckgs" ]; then
+    mgltools_folder=$(find /home /bin /opt /soft* -type d -name 'MGLToolsPckgs' 2>/dev/null | sed 's/\/MGLToolsPckgs//' | head -1)
+    if [ -z "$mgltools_folder" ]; then
       echo "[ WARNING ] MGLTools could not be found. Please install it and run this script if you plan on using Vina."
       let warning_count+=1
     else
-      mgltools_folder=$(echo $_MGLToolsPckgs | sed 's/\/MGLToolsPckgs//')
       if [ -z "$1" ]; then
         # Add to .bashrc
         echo "# MGLTools for ChemFlow" >> ~/.bashrc
