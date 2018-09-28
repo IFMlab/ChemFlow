@@ -1,6 +1,25 @@
 #!/usr/bin/env bash
 
 
+ChemFlow_echo_software_header() {
+echo "
+########################################################################
+#        ChemFlow  -   Computational Chemistry is great again          #
+########################################################################
+#                                                                      #
+#      +++++++++++++++++++                  ::  ++++  +   +            #
+#      + Université ||| |+                  ++  +     ++ ++            #
+#      +++++++++++++++++++++++              ++  +++   + + +            #
+#          + ||de Strasbourg +              ++  +     +   +            #
+#          +++++++++++++++++++              ++  +     +   + LAB        #
+#                                                                      #
+#         Laboratoire d'Ingenierie de la Fonction Moleculaire          #
+#                                                                      #
+# Marco Cecchini - cecchini@unistra.fr                                 #
+# Diego E. B. Gomes - dgomes@pq.cnpq.br                                #
+#======================================================================#"
+}
+
 ChemFlow_error() {
 #===  FUNCTION  ================================================================
 #          NAME: ChemFlow_error

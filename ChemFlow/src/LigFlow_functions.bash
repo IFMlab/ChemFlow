@@ -88,7 +88,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
             DONE_CHARGE="true"
         fi
     fi
-    if [ "${DONE_CHARGE}" == "false" ] && [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}.mol2 ] ; then
+    if [ "${DONE_CHARGE}" == "false" ] && [ -f ${RUNDIR}/${CHARGE}/${LIGAND}.mol2 ] ; then
         DONE_CHARGE="true"
     fi
     if [ "${DONE_CHARGE}" == "false" ] ; then
@@ -199,7 +199,7 @@ case ${JOB_SCHEDULLER} in
             g09 <${RUNDIR}/resp/${LIGAND}.gau>${RUNDIR}/resp/${LIGAND}.gout
 
             # Read Gaussian output and write new optimized ligand with RESP charges
-            antechamber -i ${RUNDIR}/resp/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${LIGAND}_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &> antechamber.log
+            antechamber -i ${RUNDIR}/resp/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no &> antechamber.log
         ;;
         esac
 

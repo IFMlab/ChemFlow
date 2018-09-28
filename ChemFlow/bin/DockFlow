@@ -40,27 +40,14 @@ if [ -z ${CHEMFLOW_HOME} ] ; then
   exit 0
 fi
 
-echo "
-########################################################################
-#        ChemFlow  -   Computational Chemistry is great again          #
-########################################################################
-#                                                                      #
-#   +++++++++++++++++++                                                #
-#   + Université ||| |+                                                #
-#   +++++++++++++++++++++++                                            #
-#       + ||de Strasbourg +                                            #
-#       +++++++++++++++++++                                            #
-#                                                                      #
-#                                                                      #
-# Diego E. B. Gomes - dgomes@pq.cnpq.br                                #
-# Cedric Boysset - cboysset@unice.fr                                   #
-# Marco Cecchini - cecchini@unistra.fr                                 #
-# Donatienne de Francquen - donatienne.de-francquen@etu.unistra.fr     #
-########################################################################"
-
 # Read out functions
 source ${CHEMFLOW_HOME}/src/DockFlow_functions.bash
 source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
+
+# Software header
+ChemFlow_echo_software_header
+
+# Programm
 ChemFlow_set_defaults 'DockFlow'   # Set default values for docking parameters.
 DockFlow_CLI "$@"        # Read the command line.
 ChemFlow_validate_input  # Sanity check. (parameters and input files)
