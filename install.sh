@@ -140,7 +140,7 @@ _check(){
 }
 
 _help(){
-echo"\
+echo "\
 Usage:  $0
         -h|--help             : show this help message and quit
         -d|--destination  STR : install ChemFlow at the specified destination
