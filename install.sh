@@ -41,6 +41,7 @@ _install(){
     echo "ChemFlow successfully installed !"
   else
     echo "ChemFlow would be installed in $DESTINATION"
+    CHEMFLOW_HOME="$DESTINATION/ChemFlow"
     if [ "$DESTINATION" != $(abspath "$PWD") ]; then
       echo "Would copy files from $PWD to $DESTINATION/"
       COPY=1
@@ -66,6 +67,7 @@ _update(){
     echo "Update successful"
   else
     echo "ChemFlow would be updated to $DESTINATION"
+    CHEMFLOW_HOME="$DESTINATION/ChemFlow"
     if [ "$DESTINATION" != $(abspath "$PWD") ]; then
       echo "Would copy files from $PWD to $DESTINATION/"
       COPY=1
@@ -76,9 +78,7 @@ _update(){
 _install_gui(){
   if [ -z "$1" ]; then
     echo "Installing GUI from release $RELEASE"
-    #TODO: uncomment when repository made public
-    #wget -P /tmp/ https://github.com/IFMlab/ChemFlow/releases/download/${RELEASE}/${GUI_NAME}
-    #mv /tmp/${GUI_NAME} ${CHEMFLOW_HOME}/bin/
+    wget -P ${CHEMFLOW_HOME}/bin/ https://github.com/IFMlab/ChemFlow/releases/download/${RELEASE}/${GUI_NAME}
   else
     echo "Would download GUI from release $RELEASE"
   fi
@@ -140,11 +140,11 @@ _check(){
 }
 
 _help(){
-echo"\
+echo "\
 Usage:  $0
         -h|--help             : show this help message and quit
         -d|--destination  STR : install ChemFlow at the specified destination
-        --gui                 : install GUI from release $RELEASE (not working yet)
+        --gui                 : install GUI from release $RELEASE
         --debug               : only verify the installation, don't do anything
 "
 }
