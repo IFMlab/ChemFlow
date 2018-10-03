@@ -772,6 +772,8 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
      OVERWRITE: ${OVERWRITE}
 "
 
+if [ "${YESTOALL}" != 'yes' ] ; then
+
 echo -n "
 Continue [y/n]? "
 read opt
@@ -779,6 +781,8 @@ case $opt in
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
 *)  echo "Exiting" ; exit 0 ;;
 esac
+
+fi
 }
 
 
@@ -841,6 +845,7 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol
 
 [ Additional ]
  --overwrite            : Overwrite results
+ --yes                  : Yes to all questions
 
 [ Options for docking program ]
 *--center          LIST : xyz coordinates of the center of the binding site, separated by a space
@@ -997,6 +1002,9 @@ while [[ $# -gt 0 ]]; do
         "--archive-all")
             ARCHIVE='yes'
             ARCHIVE_ALL="yes"
+        ;;
+        "--yes")
+            YESTOALL='yes'
         ;;
         *)
             unknown="$1"        # unknown option
