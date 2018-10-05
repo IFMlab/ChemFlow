@@ -478,8 +478,8 @@ while [[ $# -gt 0 ]]; do
         ;;
         # Features under Development 
         "--charges-file")
-           CHARGES_FILE=$(abspath "$2")
-           if [ ! -f ${CHARGES_FILE} ] ; then echo "Charge file \"${CHARGES_FILE}\" not found " ;  exit 1 ; fi
+           CHARGE_FILE=$(abspath "$2")
+           if [ ! -f ${CHARGE_FILE} ] ; then echo "Charge file \"${CHARGE_FILE}\" not found " ;  exit 1 ; fi
            shift
         ;;
         *)
