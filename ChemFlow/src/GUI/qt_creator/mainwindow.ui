@@ -2205,6 +2205,19 @@
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
   <tabstop>tabWidget</tabstop>
+  <tabstop>lineEdit_smiles_input</tabstop>
+  <tabstop>pushButton_smiles_input</tabstop>
+  <tabstop>spinBox_smiles_col</tabstop>
+  <tabstop>spinBox_names_col</tabstop>
+  <tabstop>comboBox_delimiter</tabstop>
+  <tabstop>checkBox_header</tabstop>
+  <tabstop>lineEdit_smiles_output</tabstop>
+  <tabstop>checkBox_hydrogen</tabstop>
+  <tabstop>checkBox_verbose</tabstop>
+  <tabstop>comboBox_method</tabstop>
+  <tabstop>spinBox_nthreads</tabstop>
+  <tabstop>checkBox_mpi</tabstop>
+  <tabstop>commandLinkButton_smiles_run</tabstop>
   <tabstop>lineEdit_ligflow_lig</tabstop>
   <tabstop>pushButton_ligflow_lig</tabstop>
   <tabstop>comboBox_charges</tabstop>
