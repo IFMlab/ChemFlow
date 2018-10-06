@@ -38,7 +38,8 @@ DockFlow_dock() {
 # Always work here
 cd ${RUNDIR}
 
-DockFlow_update_ligand_list
+#DockFlow_update_ligand_list
+DockFlow_update_ligand_list_DEV
 NDOCK=${#LIGAND_LIST[@]}
 
 if [ ${NDOCK} == 0 ] ; then
@@ -164,6 +165,55 @@ fi
 unset LIGAND_LIST
 LIGAND_LIST=(${DOCK_LIST[@]})
 }
+
+DockFlow_update_ligand_list_DEV() {
+# Creation of the docking list, checkpoint calculations.
+DOCK_LIST=""
+case ${DOCK_PROGRAM} in
+"PLANTS")
+    # If the folder exists but there's no "bestranking.csv" its incomplete.
+    FILE="bestranking.csv"
+;;
+"VINA")
+    # If the folder exists but there's no "output.pdbqt" its incomplete.
+    FILE="output.pdbqt"
+;;
+esac
+
+
+if [ "${OVERWRITE}" == "no" ] ; then # Useless to update ligand list if we overwrite
+
+    counter=0
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -f ${LIGAND}/${DOCK_PROGRAM}/${FILE} ] ; then
+#            echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+            rm -rf ${LIGAND}/${DOCK_PROGRAM}
+            DOCK_LIST[${counter}]="$LIGAND"
+        fi
+        if [ -f ${LIGAND}/${DOCK_PROGRAM}/${FILE} ] ; then
+            if [ $(wc -l  ${LIGAND}/${DOCK_PROGRAM}/${FILE} | cut -d' ' -f1) -lt 2 ] ; then
+#                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+                rm -rf ${LIGAND}/${DOCK_PROGRAM}
+                DOCK_LIST[${counter}]="$LIGAND"
+            fi
+        fi
+        if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
+                DOCK_LIST[${counter}]="$LIGAND"
+  # Still unused.
+        fi
+
+        let counter++
+    done
+else
+    DOCK_LIST=(${LIGAND_LIST[@]})
+fi
+
+unset LIGAND_LIST
+LIGAND_LIST=(${DOCK_LIST[@]})
+}
+
+
+
 
 
 DockFlow_write_plants_HPC() {
@@ -319,6 +369,7 @@ DockFlow_prepare_ligands() {
 #===============================================================================
 cd ${RUNDIR}
 
+echo "[Preparing ligands]"
 # Create ligand folder into the project
 for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -d  ${LIGAND} ] ; then
@@ -343,6 +394,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     ;;
     esac
 done
+echo "[ DONE ]"
 }
 
 
@@ -772,6 +824,8 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
      OVERWRITE: ${OVERWRITE}
 "
 
+if [ "${YESTOALL}" != 'yes' ] ; then
+
 echo -n "
 Continue [y/n]? "
 read opt
@@ -779,6 +833,8 @@ case $opt in
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
 *)  echo "Exiting" ; exit 0 ;;
 esac
+
+fi
 }
 
 
@@ -841,6 +897,7 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol
 
 [ Additional ]
  --overwrite            : Overwrite results
+ --yes                  : Yes to all questions
 
 [ Options for docking program ]
 *--center          LIST : xyz coordinates of the center of the binding site, separated by a space
@@ -997,6 +1054,9 @@ while [[ $# -gt 0 ]]; do
         "--archive-all")
             ARCHIVE='yes'
             ARCHIVE_ALL="yes"
+        ;;
+        "--yes")
+            YESTOALL='yes'
         ;;
         *)
             unknown="$1"        # unknown option

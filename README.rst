@@ -1,11 +1,14 @@
-========
-ChemFlow
-========
+===============
+ChemFlow |LOGO|
+===============
 
-.. image:: https://user-images.githubusercontent.com/27850535/29564754-6b07a548-8743-11e7-9463-8626675b9481.png
-        :alt: Logo
+.. |LOGO| image:: https://user-images.githubusercontent.com/27850535/29564754-6b07a548-8743-11e7-9463-8626675b9481.png
+               :alt: Logo
+               :align: middle
 
-* Free software: MIT license
+.. image:: https://readthedocs.org/projects/chemflow-docs/badge/?version=latest
+        :target: https://chemflow-docs.readthedocs.io/en/latest/?badge=latest
+        :alt: Documentation Status
 
 ChemFlow is a series of computational chemistry workflows designed to automatize and simplify the drug discovery pipeline and scoring function benchmarking.
 

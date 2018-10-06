@@ -42,27 +42,14 @@ if [ -z ${CHEMFLOW_HOME} ] ; then
   exit 0
 fi
 
-echo "
-########################################################################
-#        ChemFlow  -   Computational Chemistry is great again          #
-########################################################################
-#                                                                      #
-#   +++++++++++++++++++                                                #
-#   + Université ||| |+                                                #
-#   +++++++++++++++++++++++                                            #
-#       + ||de Strasbourg +                                            #
-#       +++++++++++++++++++                                            #
-#                                                                      #
-#                                                                      #
-# Diego E. B. Gomes - dgomes@pq.cnpq.br                                #
-# Cedric Bouysset - cbouysset@unice.fr                                   #
-# Marco Cecchini - cecchini@unistra.fr                                 #
-# Donatienne de Francquen - donatienne.de-francquen@etu.unistra.fr     #
-########################################################################"
-
 # Read out functions
 source ${CHEMFLOW_HOME}/src/LigFlow_functions.bash
 source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
+
+# Software header
+ChemFlow_echo_software_header
+
+# Programm
 ChemFlow_set_defaults 'LigFlow'   # Set default values for docking parameters.
 LigFlow_CLI "$@"        # Read the command line.
 ChemFlow_validate_input  # Sanity check. (parameters and input files)
