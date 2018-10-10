@@ -743,13 +743,16 @@ else
     echo "[ DockFlow ] Done with post-processing."
 
     # Archiving.
-    echo -n "[ DockFlow ] Archive the docking results (folders) in TAR files? [y/n] "
-    read opt
-    case ${opt} in
-    "y"|"yes"|"Yes"|"Y"|"YES")
-        DockFlow_archive
-    ;;
-    esac
+    if [ ! -z ${ARCHIVE} ] ; then
+        echo -n "[ DockFlow ] Archive the docking results (folders) in TAR files? [y/n] "
+        read opt
+        case ${opt} in
+        "y"|"yes"|"Yes"|"Y"|"YES")
+            DockFlow_archive
+        ;;
+        esac
+    fi
+
 fi
 
 unset FAIL
