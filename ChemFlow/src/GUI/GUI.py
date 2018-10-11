@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog, QMainWindow
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QDesktopWidget
 from PyQt5.QtCore import QProcess, QByteArray, QRegExp
 from webbrowser import open as browser_open
 from time import strftime, gmtime
@@ -23,6 +23,11 @@ class Main(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        # show the main window at the center of the screen
+        qtRectangle = self.frameGeometry()
+        centerPoint = QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
         # set window icon and logo
         icon = QtGui.QIcon()
         logo_path = os.path.realpath(os.path.join(WORKDIR, "img", "logo.png"))
@@ -271,11 +276,11 @@ class Main(QMainWindow, Ui_MainWindow):
     def configure_workflow_execution(self):
         '''Configure how the workflow is going to run on the local machine'''
         # get the selected execution mode
-        if self.tabWidget.currentIndex() == 0: # LigFlow
+        if self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_LigFlow): # LigFlow
             self.input['JobQueue'] = self.comboBox_ligflow_job_queue.currentText()
-        elif self.tabWidget.currentIndex() == 1: # DockFlow
+        elif self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_DockFlow): # DockFlow
             self.input['JobQueue'] = self.comboBox_docking_job_queue.currentText()
-        elif self.tabWidget.currentIndex() == 2: # ScoreFlow
+        elif self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_ScoreFlow): # ScoreFlow
             self.input['JobQueue'] = self.comboBox_scoring_job_queue.currentText()
 
         # launch appropriate dialog
@@ -295,11 +300,11 @@ class Main(QMainWindow, Ui_MainWindow):
         if workflow_execution:
             for kw in workflow_execution:
                 self.input[kw] = workflow_execution[kw]
-            if self.tabWidget.currentIndex() == 0: # LigFlow
+            if self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_LigFlow): # LigFlow
                 self.ligflow_execution = True
-            elif self.tabWidget.currentIndex() == 1: # DockFlow
+            elif self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_DockFlow): # DockFlow
                 self.docking_execution = True
-            elif self.tabWidget.currentIndex() == 2: # ScoreFlow
+            elif self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_ScoreFlow): # ScoreFlow
                 self.scoring_execution = True
 
     def check_ligflow_required_args(self):
@@ -366,7 +371,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.input['NamesColumn'] = self.spinBox_names_col.value()
         self.input['NThreads'] = self.spinBox_nthreads.value()
         self.input['Header'] = self.checkBox_header.isChecked()
-        self.input['AllHydrogens'] = self.checkBox_hydrogen.isChecked()
+        self.input['NoHydrogen'] = self.checkBox_hydrogen.isChecked()
         self.input['Verbose'] = self.checkBox_verbose.isChecked()
         self.input['MPI'] = self.checkBox_mpi.isChecked()
         value = self.comboBox_delimiter.currentText()
@@ -573,8 +578,8 @@ class Main(QMainWindow, Ui_MainWindow):
         command.extend(['-nt', self.input['NThreads']])
         if self.input['Header']:
             command.append('--header')
-        if self.input['AllHydrogens']:
-            command.append('--hydrogen')
+        if self.input['NoHydrogen']:
+            command.append('-noh')
         if self.input['Verbose']:
             command.append('-v')
         if self.input['MPI']:

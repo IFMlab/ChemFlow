@@ -75,10 +75,10 @@ def Generate3D(mol):
 				else:
 					AllChem.MMFFOptimizeMolecule(m_H)
 	# Keep hydrogens or not
-	if args.hydrogen:
-		m = m_H
-	else:
+	if args.no_hydrogen:
 		m = Chem.RemoveHs(m_H)
+	else:
+		m = m_H
 	return m
 
 def ExThreadSubmit(smiles, args):
@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
 	group_output = parser.add_argument_group('OUTPUT arguments')
 	group_output.add_argument("-o", "--output", metavar='filename', required=True, type=str, help="Path to the output SDF file")
-	group_output.add_argument("--hydrogen", action="store_true", help="Output with all hydrogen atoms" )
+	group_output.add_argument("-noh", "--no-hydrogen", action="store_true", help="Remove hydrogen atoms from the output" )
 	group_output.add_argument("-v", "--verbose", action="store_true", help="Increase terminal output verbosity")
 
 	group_args = parser.add_argument_group('Other arguments')

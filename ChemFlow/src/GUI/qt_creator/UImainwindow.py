@@ -593,6 +593,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralWidget)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
         self.menuBar.setGeometry(QtCore.QRect(0, 0, 662, 25))
+        self.menuBar.setNativeMenuBar(False)
         self.menuBar.setObjectName("menuBar")
         self.menuProject = QtWidgets.QMenu(self.menuBar)
         self.menuProject.setObjectName("menuProject")
@@ -730,7 +731,8 @@ class Ui_MainWindow(object):
         self.checkBox_mpi.setText(_translate("MainWindow", "Run with MPI"))
         self.lineEdit_smiles_input.setPlaceholderText(_translate("MainWindow", "Path to input SMILES file"))
         self.checkBox_header.setText(_translate("MainWindow", "Fist line is a header"))
-        self.checkBox_hydrogen.setText(_translate("MainWindow", "Write all Hydrogen atoms"))
+        self.checkBox_hydrogen.setToolTip(_translate("MainWindow", "<html><head/><body><p>Remove hydrogen atoms from the output</p></body></html>"))
+        self.checkBox_hydrogen.setText(_translate("MainWindow", "Remove hydrogen atoms"))
         self.spinBox_names_col.setToolTip(_translate("MainWindow", "<html><head/><body><p>Index of the column containing the names of your molecules. Leave to 2 if there are no names.</p></body></html>"))
         self.label_rec_2.setText(_translate("MainWindow", "Input"))
         self.label_11.setText(_translate("MainWindow", "File"))
@@ -895,4 +897,3 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-

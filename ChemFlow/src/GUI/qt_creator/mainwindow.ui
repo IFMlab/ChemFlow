@@ -253,8 +253,11 @@
         <height>22</height>
        </rect>
       </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove hydrogen atoms from the output&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="text">
-       <string>Write all Hydrogen atoms</string>
+       <string>Remove hydrogen atoms</string>
       </property>
      </widget>
      <widget class="QSpinBox" name="spinBox_names_col">
@@ -2098,6 +2101,9 @@
      <width>662</width>
      <height>25</height>
     </rect>
+   </property>
+   <property name="nativeMenuBar">
+    <bool>false</bool>
    </property>
    <widget class="QMenu" name="menuProject">
     <property name="title">

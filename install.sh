@@ -10,7 +10,7 @@
 ##
 ###############################################################################
 
-RELEASE="v0.6-beta"
+RELEASE="v0.7-beta"
 GUI_NAME="chemflow"
 
 # ChemFlow installation script
