@@ -343,7 +343,7 @@ if [ ${CHARGE} != 'gas' ] ; then
         echo "${CHARGE} charges found in LigFlow for ${LIGAND}"
 
         awk '/1 MOL/&&!/TEMP/ {print $9}' ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 > charges.dat
-        antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes &> /dev/null
+        antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes -dr no &> /dev/null
 
         # Done
         DONE_CHARGE="true"
@@ -750,13 +750,16 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
      OVERWRITE: ${OVERWRITE}
 "
 
-echo -n "
-Continue [y/n]? "
-read opt
-case $opt in
-"Y"|"YES"|"Yes"|"yes"|"y")  ;;
-*)  echo "Exiting" ; exit 0 ;;
-esac
+if [ "${YESTOALL}" != 'yes' ] ; then
+  echo -n "
+  Continue [y/n]? "
+  read opt
+  case $opt in
+  "Y"|"YES"|"Yes"|"yes"|"y")  ;;
+  *)  echo "Exiting" ; exit 0 ;;
+  esac
+fi
+
 }
 
 
@@ -986,6 +989,9 @@ while [[ $# -gt 0 ]]; do
         #    --archive)
         #      ARCHIVE='yes'
         #    ;;
+        "--yes")
+            YESTOALL='yes'
+        ;;
         *)
             unknown="$1"        # unknown option
             echo "Unknown flag \"$unknown\". RTFM"
