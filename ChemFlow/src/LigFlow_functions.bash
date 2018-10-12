@@ -250,9 +250,13 @@ case ${JOB_SCHEDULLER} in
     done
 
     # Actually compute AM1-BCC charges
-    if [ -f ${RUNDIR}/LigFlow.xargs ] ; then
-        cat ${RUNDIR}/LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-    fi
+    case ${CHARGE} in
+    "bcc")
+        if [ -f ${RUNDIR}/LigFlow.xargs ] ; then
+            cat ${RUNDIR}/LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+        fi
+    ;;
+    esac
 ;;
 
 "SLURM"|"PBS")
@@ -310,10 +314,14 @@ case ${JOB_SCHEDULLER} in
         done
 
         # Actually compute AM1-BCC charges
-        if [ -f ${RUNDIR}/LigFlow_bcc.${first}.xargs ] ; then
-            echo "cat ${RUNDIR}/LigFlow_bcc.${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}' " >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-            echo "rm -rf ${RUNDIR}/LigFlow_bcc.${first}.xargs" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-        fi
+        case ${CHARGE} in
+        "bcc")
+            if [ -f ${RUNDIR}/LigFlow_bcc.${first}.xargs ] ; then
+                echo "cat ${RUNDIR}/LigFlow_bcc.${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}' " >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+                echo "rm -rf ${RUNDIR}/LigFlow_bcc.${first}.xargs" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+            fi
+        ;;
+        esac
 
 
         if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
