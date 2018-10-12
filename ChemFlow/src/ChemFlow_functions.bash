@@ -170,9 +170,10 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
     case "${JOB_SCHEDULLER}" in
     "None") ;;
     "PBS"|"SLURM")
-        if [ -z ${NC_CHANGED} ] ; then
-            NCORES=16
-        fi
+#        if [ -z ${NC_CHANGED} ] ; then
+#            NCORES=16
+#        fi
+       echo "Using ${JOB_SCHEDULLER}"
     ;;
     *) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" ; ChemFlow_error ;
        ;;

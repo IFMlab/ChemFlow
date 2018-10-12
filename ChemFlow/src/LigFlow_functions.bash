@@ -469,7 +469,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         "-nc"|"--cores") # Number of Cores [1] (or cores/node)
             NCORES="$2" # Same as above.
-            NC_CHANGED="yes"
+            #NC_CHANGED="yes"
             shift # past argument
         ;;
         # HPC options
