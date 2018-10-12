@@ -93,7 +93,7 @@ fi
 
   # Step 3 - Populate COMPUTED_LIST of charges
 if [ -d ${RUNDIR}/${CHARGE}/ ] ; then
-    COMPUTED_LIST=$(ls -U ${RUNDIR}/${CHARGE}/ | sed s/\.mol2// )
+    COMPUTED_LIST=$(ls -U ${RUNDIR}/${CHARGE}/ | grep mol2 | sed s/\.mol2// )
     COMPUTED_LIST=($COMPUTED_LIST)
 else
     COMPUTED_LIST=''
