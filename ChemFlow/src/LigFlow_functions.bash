@@ -391,7 +391,7 @@ LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]
 
 [Options]
  -h/--help           : Show this help message and quit
- -hh/--fullhelp      : Detailed help
+ -hh/--full-help      : Detailed help
 
  -l/--ligand         : Ligands .mol2 input file.
  -p/--project        : ChemFlow project.
@@ -408,7 +408,7 @@ LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]
 
 [Help]
  -h/--help              : Show this help message and quit
- -hh/--fullhelp         : Detailed help
+ -hh/--full-help         : Detailed help
 
 [ Required ]
 *-p/--project       STR : ChemFlow project
