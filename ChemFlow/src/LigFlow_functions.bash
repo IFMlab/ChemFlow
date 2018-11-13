@@ -423,7 +423,7 @@ LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]
  --pbs/--slurm          : Workload manager, PBS or SLURM
  --header          FILE : Header file provided to run on your cluster.
 
-[ Develpment ] 
+[ Development ] 
  --charges-file    FILE : Contains the net charges for all ligands in a library.
                           ( name charge )  ( CHEMBL123 -1 ) 
 
