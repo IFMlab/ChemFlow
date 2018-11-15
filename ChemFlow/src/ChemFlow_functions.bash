@@ -234,7 +234,7 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
         else
 
             AMBER_EXEC="pmemd.cuda"
-            if [ ${CUDA_PRECISION} == "DOUBLE" ] ; then
+            if [ "${CUDA_PRECISION}" == "DOUBLE" ] ; then
                 AMBER_EXEC="pmemd.cuda_DPFP"
             fi
 
