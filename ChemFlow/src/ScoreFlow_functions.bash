@@ -516,9 +516,14 @@ done" >> ${RUNDIR}/ScoreFlow.run
 
 if [ ! -f MMPBSA.dat ] ; then
 echo "rm -rf com.top rec.top ligand.top
-ante-MMPBSA.py -p ${init}.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job
-MMPBSA.py -O -i ../GB2.in -sp ${init}.prmtop -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job
-rm -rf reference.frc " >> ${RUNDIR}/ScoreFlow.run
+ante-MMPBSA.py -p ${init}.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job" >>${RUNDIR}/ScoreFlow.run
+
+if [ "${WATER}" != "yes" ] ; then
+echo "MMPBSA.py -O -i ../GB2.in -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job" >>${RUNDIR}/ScoreFlow.run
+else
+echo "MMPBSA.py -O -i ../GB2.in -sp ${init}.prmtop -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job" >>${RUNDIR}/ScoreFlow.run
+fi
+echo "rm -rf reference.frc " >> ${RUNDIR}/ScoreFlow.run
 fi
 }
 
