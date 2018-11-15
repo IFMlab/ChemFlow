@@ -992,6 +992,9 @@ while [[ $# -gt 0 ]]; do
         "--yes")
             YESTOALL='yes'
         ;;
+        "--cuda-double")
+            CUDA_PRECISION="DOUBLE"
+        ;;      
         *)
             unknown="$1"        # unknown option
             echo "Unknown flag \"$unknown\". RTFM"
