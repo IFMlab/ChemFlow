@@ -441,8 +441,8 @@ for filename in ${scoreflow_protocol} ; do
     eval echo \""${file}"\" > ${RUNDIR}/${filename}.in
 done
 
-#mmgbsa input
-echo "$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/GB2.template)" > ${RUNDIR}/GB2.in
+#mm(pb,gb)sa input
+echo "$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/${SCORING_FUNCTION}.template)" > ${RUNDIR}/${SCORING_FUNCTION}.in
 }
 
 
@@ -834,7 +834,7 @@ ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] 
 
 [Optional]
  --protocol         STR : Name for this specific protocol [default]
- -sf/--function     STR : vina, chemplp, plp, plp95, mmgbsa [chemplp]
+ -sf/--function     STR : vina, chemplp, plp, plp95, mmgbsa, mmpbsa [chemplp]
 
 [ Charges for ligands - MMGBSA ]
  --gas                  : Gasteiger-Marsili (default)

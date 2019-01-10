@@ -134,6 +134,7 @@ case "${WORKFLOW}" in
             if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
                 ERROR_MESSAGE="Plants rescoring requires a mol2 file as receptor input"; ChemFlow_error ;
             fi
+            check_center
         ;;
         "vina")
             SCORE_PROGRAM="VINA" ;
@@ -143,12 +144,13 @@ case "${WORKFLOW}" in
             if [ "${VINA_MODE}" != "local_only" ] && [ "${VINA_MODE}" != "score_only" ] ; then
                 ERROR_MESSAGE="Vina rescoring mode ${VINA_MODE} does not exist"; ChemFlow_error ;
             fi
+            check_center
         ;;
-        "mmgbsa") # mmgbsa as scoring function is only allowed for ScoreFlow.
+        "mmgbsa"|"mmpbsa") # mmgbsa as scoring function is only allowed for ScoreFlow.
             SCORE_PROGRAM="AMBER"
             RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .pdb)"
             if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "pdb" ] ; then
-                ERROR_MESSAGE="mmgbsa rescoring requires a PDB file as receptor input"; ChemFlow_error ;
+                ERROR_MESSAGE="MM(PB,GB)SA rescoring requires a PDB file as receptor input"; ChemFlow_error ;
             fi
         ;;
         *)
@@ -156,10 +158,6 @@ case "${WORKFLOW}" in
         ;;
     esac
 
-    if [ "${SCORING_FUNCTION}" != "mmgbsa"  ] ; then
-        # Center is not required for mmgbsa rescoring.
-        check_center
-    fi
 ;;
 esac
 
