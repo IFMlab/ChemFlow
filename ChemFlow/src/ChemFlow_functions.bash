@@ -13,7 +13,7 @@ echo "
 #          + ||de Strasbourg +              ++  +     +   +            #
 #          +++++++++++++++++++              ++  +     +   + LAB        #
 #                                                                      #
-#         Laboratoire d'Ingenierie de la Fonction Moleculaire          #
+#         Laboratoire d'Ingenierie des Fonctions Moleculaires          #
 #                                                                      #
 # Marco Cecchini - cecchini@unistra.fr                                 #
 # Diego E. B. Gomes - dgomes@pq.cnpq.br                                #
