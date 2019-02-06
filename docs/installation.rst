@@ -25,7 +25,7 @@ Required software
 +-----------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
 | AmberTools            | http://ambermd.org/GetAmber.php                                                                                                           |
 +-----------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
-| Anaconda              | https://www.anaconda.com/download/#linux                                                                                                  |
+| Anaconda  (or PIP)    | https://www.anaconda.com/download/#linux                                                                                                  |
 |                       |                                                                                                                                           |
 |                       | After installing Anaconda, add some packages packages:                                                                                    |
 |                       |                                                                                                                                           |
@@ -33,6 +33,9 @@ Required software
 |                       |                                                                                                                                           |
 |                       |   ``conda install -c schrodinger pymol``                                                                                                  |
 +-----------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+
+[ NOTE ] One may alternatively use *pip* to install python-related libraries.
+
 
 
 Additional configuration
@@ -68,6 +71,5 @@ To run the jupyter-notebook tutorial, you may also install some python modules.
     ``conda install pandas seaborn``
 
 
-[ NOTE ] One may alternatively use *pip* to install python-related libraries.
 
 
