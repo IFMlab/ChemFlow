@@ -175,7 +175,7 @@ Step 6.1: Run Lig\ *Flow* to compute **RESP** charges.
 
 .. code-block:: bash
 
-LigFlow -p tutorial -l compounds.mol2 --resp
+    LigFlow -p tutorial -l compounds.mol2 --resp
 
 Step 6.2: Run Score\ *Flow* to rescore the previous docking poses (best 3 for each ligand)
 ----------------------------------------------------------------------------------------
