@@ -5,6 +5,16 @@ Tutorial
 Chem\ *Flow* - alpha-Thrombin
 +++++++++++++++++++++++++++++
 
+Copy the file "ChemFlow_tutorial_a-thrombin.tar.gz" present in ChemFlow/tutorial/ to place you want to run the tutorial.
+
+Now extract with
+
+``tar xvfz ChemFlow_tutorial_a-thrombin.tar.gz``
+
+Now go to the folder and start playing :)
+
+cd ChemFlow_tutorial_a-thrombin/
+
 Provided files
 **************
 
