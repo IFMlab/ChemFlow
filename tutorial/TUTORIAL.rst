@@ -88,15 +88,17 @@ To perform this action run:
 
     LigFlow -p tutorial -l compounds.mol2
 
-In addition Lig\ *Flow* can be used to  build up a compound database with **advanced** charges such as AM1-BCC and RESP and their associated
-optimized structures, we'll see it's use latter to compute appropriate charges for the free energy calculations.
+In addition Lig\ *Flow* can be used to  build up a compound database with **advanced** charges such as AM1-BCC (--bcc) and RESP (--resp) and their associated optimized structures, we'll see it's use latter to compute appropriate charges for the free energy calculations.
+
+
 Since these calculations are computationally expensive we recomend the users to use a cluster/supercomputer. In the examples bellow
-we demonstrate how to derive the AM1-BCC and RESP charges using the two most widespread queueing systems in supercomputers (PBS and SLURM)
+we demonstrate how to derive the AM1-BCC and RESP charges using the two most widespread queueing systems in supercomputers using --pbs for PBS or --slurm for SLURM).
+By Now, let's just generate **AM1-BCC** charges.
 
 .. code-block:: bash
 
-    LigFlow -p tutorial -l compounds.mol2 --bcc --pbs
-    LigFlow -p tutorial -l compounds.mol2 --resp --slurm
+    LigFlow -p tutorial -l compounds.mol2 --bcc
+
 
 If a compound already exists in the ChemBase (Chem\ *Flow* database), Lig\ *Flow* won't compute the charges for this compound.
 
@@ -166,11 +168,19 @@ When tou are done, you can postprocess (\\-\\-postprocess) the results. Here, we
 Score\ *Flow*
 *************
 
-Step 6: Run Score\ *Flow* to rescore the previous docking poses (best 3 for each ligand)
+Rescoring through the MMGBSA method, using two protocols in **implicit solvent** first just minimization, then 1ns md simulation. To obtain results with better correlation with experimental binding affinities you may use **RESP** charges.
+
+Step 6.1: Run Lig\ *Flow* to compute **RESP** charges.
+----------------------------------------------------------------------------------------
+
+.. code-block:: bash
+
+LigFlow -p tutorial -l compounds.mol2 --resp
+
+Step 6.2: Run Score\ *Flow* to rescore the previous docking poses (best 3 for each ligand)
 ----------------------------------------------------------------------------------------
 Here, we only keep on with plants results (tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2).
 
-Rescoring through the MMGBSA method, using two protocols in **implicit solvent** first just minimization, then 1ns md simulation :
 
 .. code-block:: bash
 
