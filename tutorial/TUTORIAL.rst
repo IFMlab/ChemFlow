@@ -46,9 +46,13 @@ We superimposed 1DWC 1DWB 1DWD 1D3D 1D3P 1D3Q 1D3T (1DWC as reference) and saved
 Hydrogens were added using SPORES (from PLANTS). (SPORES_64bit \\-\\-mode complete)
 
 Now the Decoys from `DUD-E database <http://dude.docking.org/targets/thrb>`_.
+
 Download, and get the first 14.
+
 wget http://dude.docking.org/targets/thrb/decoys_final.ism
+
 head -n 14  decoys_final.ism > decoys.smi
+
 [ WARNING ] On DUD-E the "field separator" is a SPACE instead of "\t", so you MUST specify it in SmilesTo3D.py.
 
 .. code-block:: bash
