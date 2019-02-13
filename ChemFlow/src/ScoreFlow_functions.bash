@@ -330,7 +330,7 @@ if [ ${CHARGE} != 'gas' ] ; then
         if [ "$(grep ${LIGAND_NAME} ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)" == ${LIGAND_NAME} ] ; then
             echo "${CHARGE} charges found in ChemBase for ${LIGAND}"
 
-            awk -v LIGAND=${LIGAND_NAME} '$0 ~ LIGAND {flag=1;next}/BOND/{flag=0}flag' ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 | awk '/1 MOL/&&!/TEMP/ {print $9}' > charges.dat
+            awk -v LIGAND=${LIGAND_NAME} '$0 ~ LIGAND {flag=1;next}/BOND/{flag=0}flag' ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 | awk '/ MOL/&&!/TEMP/ {print $9}' > charges.dat
             antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes &> /dev/null
 
             # Done
@@ -342,7 +342,7 @@ if [ ${CHARGE} != 'gas' ] ; then
     if [ "${DONE_CHARGE}" == "false" ] && [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 ] ; then
         echo "${CHARGE} charges found in LigFlow for ${LIGAND}"
 
-        awk '/1 MOL/&&!/TEMP/ {print $9}' ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 > charges.dat
+        awk '/ MOL/&&!/TEMP/ {print $9}' ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 > charges.dat
         antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes -dr no &> /dev/null
 
         # Done

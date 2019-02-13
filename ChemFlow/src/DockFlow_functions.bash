@@ -579,7 +579,9 @@ for LIGAND in ${LIGAND_LIST[@]}; do
     else
         # Fill the DockFlow.csv file
         echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}                              \r"
-        head -${DOCK_POSES} ${LIGAND}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' >> DockFlow.csv
+#        head -${DOCK_POSES} ${LIGAND}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' >> DockFlow.csv
+# Patch by Kgalentino & Dgomes
+        awk -F, -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v dock_poses=${DOCK_POSES} '!/LIGAND/{cc++; if(cc<=dock_poses){gsub(".*_entry_00001_conf_","",$1); print "PLANTS",protocol,target,ligand, $1,$2}}'  ${LIGAND}/PLANTS/ranking.csv >> DockFlow.csv
 
 
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
