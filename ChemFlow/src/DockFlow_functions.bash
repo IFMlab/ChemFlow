@@ -606,7 +606,7 @@ done
 # rename the ligand in the created file
 if [ -f docked_ligands.mol2 ] && [ -f DockFlow.csv ] ; then
     sed -i 's/\.*_entry_[[:digit:]]*//' docked_ligands.mol2
-    sed -i 's/[a-zA-Z0-9]*_entry_[[:digit:]]*_conf_//' DockFlow.csv
+# Patch by Kgalentino & Dgomes    sed -i 's/[a-zA-Z0-9]*_entry_[[:digit:]]*_conf_//' DockFlow.csv
 fi
 }
 
@@ -720,10 +720,12 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
     for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
         RUNDIR="${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}"
         cd ${RUNDIR}
-        if [ "${OVERWRITE}"  == 'yes' ] ; then
+
+# You should always overwrite docked_ligands.mol2 and DockFlow.csv
+#        if [ "${OVERWRITE}"  == 'yes' ] ; then
             rm -rf ${RUNDIR}/docked_ligands.mol2
             rm -rf ${RUNDIR}/DockFlow.csv
-        fi
+#        fi
 
         # Cleanup
         if [ ! -f ${RUNDIR}/DockFlow.csv ] ; then
