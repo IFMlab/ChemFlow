@@ -46,7 +46,7 @@ In addition to downloading the required software, you must be able to run then f
 | Program                          | action                                                                      |
 +==================================+=============================================================================+
 | ChemFlow                         | export CHEMFLOW_HOME=/home/USER/software/ChemFlow/ChemFlow/                 |
-|                                  | export PATH=${PATH}:${CHEMFLOW_HOME}/bin/                                   |
+|                                  |  export PATH=${PATH}:${CHEMFLOW_HOME}/bin/                                  |
 +----------------------------------+-----------------------------------------------------------------------------+
 | PLANTS                           | export PATH=${PATH}:/home/USER/software/plants/                             |
 +----------------------------------+-----------------------------------------------------------------------------+
