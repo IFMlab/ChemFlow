@@ -46,8 +46,9 @@ By design, the goal was to be as simple is possible and facilitate modifications
 
 How ChemFlow was born
 =====================
-   During virtual screening/ molecular dynamics study we were confronted with unintelligibly data from a previous collaborator and the challenge to produce our own. In fact that's an actually a very common scenario, everyone “\ *does their things their own way*”.
-   It would be valuable to standardize the directory structure and file naming. The whole point of a standard is to facilitate documentation, comprehension, data retention and reproducibility, so that future users or applications will not have to figure out this structure or migrate to new formats.
+During virtual screening/ molecular dynamics study we were confronted with unintelligibly data from a previous collaborator and the challenge to produce our own. In fact that's an actually a very common scenario, everyone “\ *does their things their own way*”.
+
+It would be valuable to standardize the directory structure and file naming. The whole point of a standard is to facilitate documentation, comprehension, data retention and reproducibility, so that future users or applications will not have to figure out this structure or migrate to new formats.
 
 Features
 ========
