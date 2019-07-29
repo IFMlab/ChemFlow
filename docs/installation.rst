@@ -27,23 +27,43 @@ https://docs.conda.io/en/latest/miniconda.html
 Step 3 - Install the software dependencies
 --------------------------------------------
 * rdkit
-``conda install -c rdkit rdkit``
+    ``conda install -c rdkit rdkit``
 
 * AmberTools
-``conda install -c ambermd ambertools``
+    ``conda install -c ambermd ambertools``
 
 * AutoDockTools (required for Vina)
-Download and install from: http://mgltools.scripps.edu/downloads
+    Download and install from: http://mgltools.scripps.edu/downloads
 
 * Autodock Vina
-Download and install from: http://vina.scripps.edu
+    Download and install from: http://vina.scripps.edu
 
 * PLANTS ( Requires free registration )
-Download and install from: https://uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/spores/
+    Download and install from: http://www.tcd.uni-konstanz.de/plants_download/
 
 * Amber18 (Optional, licence is required)
-Download and install from: http://ambermd.org
+    Download and install from: http://ambermd.org
 
 * Gaussian (Optional, licence is required)
-Download and install from: https://gaussian.com
+    Download and install from: https://gaussian.com
 
+Step 4 - Set PATHS
+------------------
+* AutoDockTools - "Utilities24" must be in the system PATH:
+    ``export PATH=${PATH}:[/home/user/myapps/]mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/``
+* PLANTS
+    ``export PATH=${PATH}:[/home/user/myapps/]PLANTS1.2_64bit``
+* AutoDock Vina
+    ``export PATH=${PATH}:[/home/user/myapps/]autodock_vina_1_1_2_linux_x86/bin/``
+    
+Step 4 <b>extra</b>.
+--------------------
+If you choose to manually install Amber18 and/or Gaussian, make sure they're also on ${PATH}
+
+* Amber18
+    source [/home/user/myapps/]amber18/amber.sh
+* Gaussian 09
+    ``export g09root=[/home/user/myapps/]``
+    ``export GAUSS_SCRDIR=/tmp``
+    ``source $g09root/g09/bsd/g09.profile``
+    
