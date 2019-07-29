@@ -56,8 +56,6 @@ Step 4 - Set PATHS
 * AutoDock Vina
     ``export PATH=${PATH}:[/home/user/myapps/]autodock_vina_1_1_2_linux_x86/bin/``
     
-Step 4 <b>extra</b>.
---------------------
 If you choose to manually install Amber18 and/or Gaussian, make sure they're also on ${PATH}
 
 * Amber18
