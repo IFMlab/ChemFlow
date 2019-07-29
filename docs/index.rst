@@ -48,11 +48,11 @@ How ChemFlow was born
 =====================
 During virtual screening/ molecular dynamics study we were confronted with unintelligibly data from a previous collaborator and the challenge to produce our own. In fact that's an actually a very common scenario, everyone “\ *does their things their own way*”.
 
-It would be valuable to standardize the directory structure and file naming. The whole point of a standard is to facilitate documentation, comprehension, data retention and reproducibility, so that future users or applications will not have to figure out this structure or migrate to new formats.
+We thought it would be valuable if we standardize the directory structure and file naming. The whole point of a standard is to facilitate documentation, comprehension, data retention and reproducibility, so that future users or applications will not have to figure out this structure or migrate to new formats.
 
 Features
 ========
-Chem\ *Flow* was designed as modular tool based on plain Bourne-again Shell (BASH) script, a ubiquitous environment and programming language in every UNIX environment. The code integrates freely available software for structure manipulation (Rdkit and openbabel), molecular docking (PLANTS and Autodock Vina), molecular dynamics (MD) simulation, binding free energy calculations (AmberTools18), and structure calculation (SQM). In addition, it contains optional routines for proprietary software Amber18 and Gaussian 09. 
+Chem\ *Flow* was designed as modular tool based on plain Bourne-again Shell (BASH) script, a ubiquitous environment and programming language in every UNIX environment. The code integrates freely available software for structure manipulation (Rdkit and openbabel), molecular docking (PLANTS and Autodock Vina), molecular dynamics (MD) simulation, binding free energy calculations (AmberTools18), and structure calculation (SQM). In addition, it contains optional routines for proprietary software Amber18 and Gaussian 09.
 
 * High Throughput: Chem\ *Flow* was tuned to optimally use the high performance and throughput of available computing resources, following architectural standards of SLURM and PBS queueing systems (SGE coming soon). The job distribution was designed to minimize I/O and maximize throughput. Simplified configuration files allow them to adapt this policy to the available topology. 
 
