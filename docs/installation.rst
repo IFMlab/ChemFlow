@@ -1,11 +1,11 @@
 .. highlight:: bash
 
-============
-Installation
-============
+=========================
+Installation instructions
+=========================
 
-From sources
-------------
+Step 1 - Download ChemFlow sources.
+-----------------------------------
 
 The sources for ChemFlow can be downloaded from the `Github repo`_.
 
@@ -16,23 +16,34 @@ You can either clone the public repository:
     ``git clone https://github.com/IFMlab/ChemFlow.git``
 
 
-Required software
------------------
+Step 2 - Install miniconda.
+---------------------------
+* Download and install miniconda, python 3.
+https://docs.conda.io/en/latest/miniconda.html
 
-+-----------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
-| Program               | Link to Download - Licencing may apply                                                                                                    |
-+=======================+===========================================================================================================================================+
-| PLANTS                | http://www.mnf.uni-tuebingen.de/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/plants.html  |
-+-----------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
-| AmberTools            | http://ambermd.org/GetAmber.php                                                                                                           |
-+-----------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
-| Anaconda              | https://www.anaconda.com/download/#linux                                                                                                  |
-|                       |                                                                                                                                           |
-|                       | After installing Anaconda, add some packages packages:                                                                                    |
-|                       |                                                                                                                                           |
-|                       |   ``conda install -c rdkit rdkit``                                                                                                        |
-|                       |                                                                                                                                           |
-|                       |   ``conda install -c schrodinger pymol``                                                                                                  |
-+-----------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+* Create an environment for ChemFlow.
+``conda create -n chemflow``
 
+Step 3 - Install the software dependencies
+--------------------------------------------
+* rdkit
+``conda install -c rdkit rdkit``
+
+* AmberTools
+``conda install -c ambermd ambertools``
+
+* AutoDockTools (required for Vina)
+Download and install from: http://mgltools.scripps.edu/downloads
+
+* Autodock Vina
+Download and install from: http://vina.scripps.edu
+
+* PLANTS ( Requires free registration )
+Download and install from: https://uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/spores/
+
+* Amber18 (Optional, licence is required)
+Download and install from: http://ambermd.org
+
+* Gaussian (Optional, licence is required)
+Download and install from: https://gaussian.com
 
