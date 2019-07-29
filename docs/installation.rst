@@ -89,8 +89,7 @@ In addition to downloading the required software, you must be able to run then f
 |                                  |                                                                             |
 |                                  | export PATH=${mgltools_folder}/bin:$PATH                                    |
 +----------------------------------+-----------------------------------------------------------------------------+
-| Gaussian (required for RESP)	   | # Setup some variables                                                      |
-|                                  | g09root=/home/user/myapps/                                                  |
+| Gaussian (required for RESP)	   | g09root=/home/user/myapps/                                                  |
 |                                  |                                                                             |
 |                                  | GAUSS_SCRDIR=”/home/user/myapps/scratch/”                                   |
 |                                  |                                                                             |
