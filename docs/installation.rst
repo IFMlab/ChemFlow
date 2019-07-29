@@ -62,6 +62,8 @@ If you choose to manually install Amber18 and/or Gaussian, make sure they're als
     source [/home/user/myapps/]amber18/amber.sh
 * Gaussian 09
     ``export g09root=[/home/user/myapps/]``
+    
     ``export GAUSS_SCRDIR=/tmp``
+    
     ``source $g09root/g09/bsd/g09.profile``
     
