@@ -309,9 +309,6 @@ ChemFlow_set_defaults(){
 #        Author: Dona de Francquen
 #===============================================================================
 
-# Source Chemflow install configuration
-source ~/.chemflow
-
 # General options
 WORKDIR="${PWD}"
 PROTOCOL="default"
