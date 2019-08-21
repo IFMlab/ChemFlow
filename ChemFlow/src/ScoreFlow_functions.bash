@@ -516,9 +516,9 @@ echo "rm -rf com.top rec.top ligand.top
 ante-MMPBSA.py -p ${init}.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job" >>${RUNDIR}/ScoreFlow.run
 
 if [ "${WATER}" != "yes" ] ; then
-echo "MMPBSA.py -O -i ../GB2.in -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job" >>${RUNDIR}/ScoreFlow.run
+echo "MMPBSA.py -O -i ../mmgbsa.in -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job" >>${RUNDIR}/ScoreFlow.run
 else
-echo "MMPBSA.py -O -i ../GB2.in -sp ${init}.prmtop -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job" >>${RUNDIR}/ScoreFlow.run
+echo "MMPBSA.py -O -i ../mmgbsa.in -sp ${init}.prmtop -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job" >>${RUNDIR}/ScoreFlow.run
 fi
 echo "rm -rf reference.frc " >> ${RUNDIR}/ScoreFlow.run
 fi
@@ -820,16 +820,16 @@ ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protoco
 # For MMGBSA only
 ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] -sf mmgbsa
 
-[Help]
+[ Help ]
  -h/--help              : Show this help message and quit
  -hh/--fullhelp         : Detailed help
 
-[Required]
-*-p/--project       STR : ChemFlow project
-*-r/--receptor     FILE : Receptor MOL2 file
-*-l/--ligand       FILE : Ligands  MOL2 file
+[ Required ]
+ -p/--project       STR : ChemFlow project
+ -r/--receptor     FILE : Receptor MOL2 file
+ -l/--ligand       FILE : Ligands  MOL2 file
 
-[Optional]
+[ Optional ]
  --protocol         STR : Name for this specific protocol [default]
  -sf/--function     STR : vina, chemplp, plp, plp95, mmgbsa, mmpbsa [chemplp]
 
@@ -854,16 +854,22 @@ ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] 
  --overwrite            : Overwrite results
 
 [ Rescoring with vina or plants ]
-Note: You can automatically get the center and radius/size for a particular ligand .mol2 file by using the ${CHEMFLOW_HOME}/bin/bounding_shape.py script
-*--center           STR : xyz coordinates of the center of the binding site, separated by a space
-[ PLANTS ]
+
+ --center           STR : xyz coordinates of the center of the binding site, separated by a space
+
+ [ PLANTS ]
  --radius         FLOAT : Radius of the spheric binding site [15]
-[ Vina ]
+
+ [ Vina ]
  --size            LIST : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
  --vina-mode        STR : local_only (local search then score) or score_only [local_only]
 
 [ Post Processing ]
  --postprocess          : Process ScoreFlow output for the specified project/protocol/receptor.
+
+Note: You can automatically get the center and radius/size 
+      for a particular ligand .mol2 file using the bounding_shape.py script
+
 _________________________________________________________________________________
 "
 exit 0
