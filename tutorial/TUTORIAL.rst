@@ -48,7 +48,13 @@ First for the b1-b7 from an undisclosed article (b1 = 1DWC crystal. b2-7 = Build
 
 .. code-block:: bash
 
-    python $(which SmilesTo3D.py) -i ligands.smi -o ligands.sdf --hydrogen -v
+    # Make sure you activate your ChemFlow environment
+    conda activate chemflow
+    
+    # Convert SMILES into 3D SDF structures.
+    SmilesTo3D.py -i ligands.smi -o ligands.sdf -v
+    
+    # Then into .MOL2 files.
     babel -isdf ligands.sdf -omol2 ligands.mol2
 
 The second set, with ligands from crystal structures, we also have the affinities.
@@ -67,7 +73,7 @@ head -n 14  decoys_final.ism > decoys.smi
 
 .. code-block:: bash
 
-    python $(which SmilesTo3D.py) -i decoys.smi -o decoys.sdf --hydrogen -v -d " "
+    SmilesTo3D.py -i decoys.smi -o decoys.sdf -v -d " "
     babel -isdf decoys.sdf -omol2 decoys.mol2
 
 To keep it simple, let's merge all compounds into a single mol2 file.
