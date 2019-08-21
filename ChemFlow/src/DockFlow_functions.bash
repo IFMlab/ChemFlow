@@ -329,7 +329,6 @@ DockFlow_prepare_receptor() {
 #    PARAMETERS: ${DOCK_PROGRAM}
 #                ${RUNDIR}
 #                ${RECEPTOR_FILE}
-#                ${mgltools_folder} (should be in the path)
 #
 #        Author: Dona de Francquen
 #
@@ -339,10 +338,9 @@ DockFlow_prepare_receptor() {
 cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 
 if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
-    ${mgltools_folder}/bin/python \
-    ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
+    pythonsh $(command -v prepare_receptor4.py) \
     -r ${RUNDIR}/receptor.mol2 \
-    -o ${RUNDIR}/receptor.pdbqt
+    -o ${RUNDIR}/receptor.pdbqt &>/dev/null
 fi
 }
 
@@ -387,9 +385,9 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     ;;
     "VINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
+            pythonsh $(command -v prepare_ligand4.py) \
             -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
-            -o ${LIGAND}/ligand.pdbqt
+            -o ${LIGAND}/ligand.pdbqt &>/dev/null
         fi
     ;;
     esac

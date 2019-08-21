@@ -195,7 +195,7 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
         if  [ -z "$(command -v vina)" ] ; then
             ERROR_MESSAGE="Autodock Vina is not installed or on PATH" ; ChemFlow_error ;
         fi
-        if [ -z "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" ] ; then
+        if [ -z "$(command -v prepare_ligand4.py)" ] ; then
             ERROR_MESSAGE="MglTools is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
@@ -211,7 +211,7 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
         if  [ -z "$(command -v vina)" ] ; then
             ERROR_MESSAGE="Autodock Vina is not installed or on PATH" ; ChemFlow_error ;
         fi
-        if [ -z "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" ] ; then
+        if [ -z "$(command -v prepare_ligand4.py)" ] ; then
             ERROR_MESSAGE="MglTools is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
@@ -308,6 +308,10 @@ ChemFlow_set_defaults(){
 #
 #        Author: Dona de Francquen
 #===============================================================================
+
+# Source Chemflow install configuration
+source ~/.chemflow
+
 # General options
 WORKDIR="${PWD}"
 PROTOCOL="default"

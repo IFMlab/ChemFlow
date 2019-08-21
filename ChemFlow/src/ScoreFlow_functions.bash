@@ -175,16 +175,14 @@ ScoreFlow_rescore_vina() {
 #
 #        Author: Dona de Francquen
 #
-#    PARAMETERS: ${mgltools_folder}
-#                ${RUNDIR}
+#    PARAMETERS: ${RUNDIR}
 #                ${LIGAND_LIST}
 #                ${DOCK_CENTER}
 #                ${DOCK_LENGHT}
 #===============================================================================
 # Prepare RECEPTOR
 if [ ! -f ${RUNDIR}/receptor.pdbqt ] ; then
-    ${mgltools_folder}/bin/python \
-    ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
+        pythonsh $(command -v prepare_receptor4.py) \
         -r ${RUNDIR}/receptor.mol2 \
         -o ${RUNDIR}/receptor.pdbqt
 fi
@@ -193,9 +191,8 @@ fi
 for LIGAND in ${LIGAND_LIST[@]} ; do
     # Prepare Ligands
     if [ ! -f ${RUNDIR}/${LIGAND}/ligand.pdbqt ] ; then
-        ${mgltools_folder}/bin/python \
-        ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
-            -l ${RUNDIR}/${LIGAND}/ligand.mol2 \
+	    pythonsh $(command -v prepare_ligand4.py) \
+	    -l ${RUNDIR}/${LIGAND}/ligand.mol2 \
             -o ${RUNDIR}/${LIGAND}/ligand.pdbqt
     fi
     # Run vina
