@@ -24,7 +24,10 @@ https://docs.conda.io/en/latest/miniconda.html
 * Create an environment for ChemFlow.
 ``conda create -n chemflow``
 
-Step 3 - Install the software dependencies
+* Activate chemflow environment
+``conda activate chemflow``
+
+Step 3 - Install the software dependencies.
 --------------------------------------------
 * rdkit
     ``conda install -c rdkit rdkit``
