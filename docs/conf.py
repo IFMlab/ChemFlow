@@ -20,13 +20,13 @@
 # -- Project information -----------------------------------------------------
 
 project = 'ChemFlow'
-copyright = '2018, Diego Enry Barreto Gomes'
+copyright = '2016-2019, Diego Enry Barreto Gomes, Cedric Bouysset, Marco Cecchini'
 author = 'Diego Enry Barreto Gomes, Dona de Francquen, Cedric Bouysset'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.91'
+release = '1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -101,7 +101,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ChemFlowdoc'
+htmlhelp_basename = 'ChemFlowDoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------

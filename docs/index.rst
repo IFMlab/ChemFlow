@@ -11,7 +11,9 @@ Welcome to ChemFlow's documentation!
    :caption: Contents:
 
    readme
+   overview
    installation
+   manual
    tutorial
    authors
 
