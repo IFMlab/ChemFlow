@@ -12,6 +12,9 @@ Welcome to ChemFlow's documentation!
 
    readme
    overview
+   workflows
+   features
+   HPC
    installation
    manual
    tutorial

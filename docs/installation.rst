@@ -1,8 +1,8 @@
 .. highlight:: bash
 
-=========================
-Installation instructions
-=========================
+=======
+Install
+=======
 
 Step 1 - Download ChemFlow sources.
 -----------------------------------
@@ -103,7 +103,4 @@ Additional software for the tutorial
 To run the jupyter-notebook tutorial, you may also install some python modules.
 
     ``conda install pandas seaborn``
-
-
-
-
+    
