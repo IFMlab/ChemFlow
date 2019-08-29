@@ -6,45 +6,57 @@ User Manual
 
 Lig\ *Flow*
 ============
-Lig\ *Flow* handles the curation of compound libraries, stored as SMILES or MOL2 files, automating 3D conformer generation, compound parameterization and charge calculation. It also probes the Chem\ *Base* to avoid redundancy. Lig\ *Flow* does it all through a series functions designed to prepare the compound for Dock\ *Flow* and Score\ *Flow*. 
+Lig\ *Flow* handles the curation of compound libraries, stored as SMILES or MOL2 files, automating 3D conformer generation, compound parameterization and charge calculation. It also probes the Chem\ *Base* to avoid redundancy. 
+
+Lig\ *Flow* does it all through a series functions designed to prepare the compound for Dock\ *Flow* and Score\ *Flow*. Lig\ *Flow* supports resuming of unfinished calculation.
 
 **.mol2** files are stored according to the following hierarchy, with file names determined by molecule name.
+
+
 
 .. code-block:: bash
 
     |--${project}.chemflow
     |  |--LigFlow
-    |     |--original/${molecule}.mol2 (Gasteiger-Marsili charges)
-    |     |--${charge/${molecule}.mol2 (bcc or resp charges)
+    |     |--original/${compound}.mol2 
+    |     |--${charge/${compound}.mol2 (gas, bcc or resp charges)
 
+**gas** - Gasteiger-Marsili charges ; **bcc** - Bond Charge Correction (AM1-BCC) ; **resp** - Restrained electrostatic fitted charges
 
 .. note:: Lig\ *Flow* uses /tmp/${molecule} during calculations, when running in parallel.
 
 
-Compound parameterization
--------------------------
-Docking 
-through assignment to the General Amber Force-Field (GAFF2), and charge calculation through QM methods. It may also probe the Chem\ *Base* to avoid redundancy.
 
-
-
-Starting from a *.smi* file. (SMILES)
----------------------------------------
-Conversion of a SMILES library to 3D and conformer generation can be achieved through integration with RDKit, OpenBabel or Chemaxon's molconvert (licence required), pick your favorite. 
+Step 1a - Starting from a *.smi* file. (SMILES)
+----------------------------------------------
+Conversion of a SMILES library to 3D and conformer generation can be achieved through integration with RDKit, OpenBabel or Chemaxon's molconvert (licence required), pick your favorite. A 3D structure for each compound will be generated and stored as individual **${compound}.mol2** file.
 
 By default only the most probable tautomer for pH 7.0, and 3D conformer is generated, therefore users are highly encouraged to provide isomeric (ism) smiles or carefully inspect the output library to avoid mistakes.
 
 
-Starting from a *.mol2* file.
--------------------------------
+Step 1b - Starting from a *.mol2* file.
+---------------------------------------
+One should provide a complete .mol2 file, all-hydrogen, correct bond valences. PERIOD. LigFlow will split multimol2 files and store as individual **${compound}.mol2** files.
 
 
 .. tip:: Chemical library curation is a crutial step. Consider using a specialized tool for compound tautomer and pka prediction.
 
 .. warning:: Lig\ *Flow* will **never** autogenerate names for your molecules, **never**. Make sure you provide proper input files.
 
+Step 2 - Compound parameterization
+----------------------------------
+Depending on the purpose, a different parameterization should take place. For docking, a Tripos .mol2 file sufices since Dock\ *Flow* has specific routine to prepare it to the target software. 
+
+If one however chooses to use rescore a complex using more accurate free energy methods Lig\ *Flow* automatizes the parameterization to the General Amber Force-Field (GAFF), and charge calculation through QM methods, either AM1 with BCC charges or HF/6-31G* with RESP charges.
+
+.. tip:: For large screenings we recomend using less accurate BCC charges to prioritiza compounds, migrating to more time consuming HF/6-31G* with RESP charges
+
+.. warning:: GAFF works great for small, drug-like molecules, but remember its a **general** force field. To improve accuracy one must carefully parameterize each molecule, search for warnings in the **${molecule}.frcmod** file.
+
+
 Usage
 -----
+To prepare a compound library for file **ligand.mol2**, for the project **myproject** use the command bellow. Make sure to choose the appropriate charge model for you project.
 
 .. code-block:: bash
 
@@ -52,6 +64,7 @@ Usage
 
 Options
 -------
+The compound file name  (.mol2 file) and project name are mandatory, and you're done. Check the advanced options bellow.
 
 .. code-block:: bash
 
@@ -59,20 +72,23 @@ Options
     -h/--help           : Show this help message and quit
     -hh/--full-help      : Detailed help
 
+    [Required]
     -l/--ligand         : Ligands .mol2 input file.
     -p/--project        : ChemFlow project.
 
 Advanced options
 ----------------
+These options let you better control the execution, including charge calculation, and parallel (local) or HPC execution. Refer to **HPC Run** topic for guidance on how to use a High Performance Computers.
 
 .. code-block:: bash
 
     [ Optional ]
+    --gas                  : Compute Gasteiger-Marsili charges
     --bcc                  : Compute bcc charges
     --resp                 : Compute resp charges
 
     [ Parallel execution ]
-    -nc/--cores        INT : Number of cores per node [${NCORES}]
+    -nc/--cores        INT : Number of cores per node [8]
     --pbs/--slurm          : Workload manager, PBS or SLURM
     --header          FILE : Header file provided to run on your cluster.
 
@@ -81,15 +97,17 @@ Advanced options
                             ( name charge )  ( CHEMBL123 -1 ) 
 
 
+
+
 Dock\ *Flow*
 ============
 
-Dock\ *Flow* is a bash script designed to work with PLANTS or Vina.
+Dock\ *Flow* covers docking and Virtual High Throughput Screening (vHTS) of compound(s) against a target (receptor) through the so far implemented docking software: Autodock Vina and PLANTS.
 
-It can perform an automatic VS based on information given by the user :
-ligands, receptor, binding site info, and extra options.
+The vHTS is efficiently distributed on the available computational resources based on information given by the user, including compounds, receptor, binding site center and dimentions, and some extra options.
 
-Usage:
+
+Usage
 ------
 .. code-block:: bash
 
