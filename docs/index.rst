@@ -18,6 +18,7 @@ Welcome to ChemFlow's documentation!
    installation
    manual
    tutorial
+   contributing
    authors
 
 ..   usage

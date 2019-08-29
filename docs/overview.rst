@@ -15,17 +15,17 @@ Chem\ *Flow* contains several features that set it apart from competition:
 #. Checkpointing, resuming of calculations, error reporting.
 
 #. Report facility for each protocol.
-#. A database.
-
+#. A database. (Chem\ **Base**)
+#. It's mostly written in BASH script ! There's no space fancy Python mambo-jambos.
 
 Why Chem\ *Flow*?
 =================
 
-During a virtual High Throughput computational chemistry study we were confronted with unintelligibly data from a previous collaborator and the challenge to produce our own. This is actually a very common scenario.
+During a virtual High Throughput computational chemistry study we were confronted with unintelligibly data from a previous collaborator and the challenge to produce our own. This is actually a very common scenario we've been confronted our whole carreers.
 
 .. warning:: Everyone does things their own way !
 
-We found it would be valuable to **standardize** the directory structure and file naming. Standardization facilitate documentation, comprehension, data retention and reproducibility, therefore future users or applications will not have to figure out this structure or migrate to new formats.
+We found it would be valuable to do just like proprietary tools and **standardize** the directory structure and file naming for projects. Standardization facilitate documentation, comprehension, data retention and reproducibility, therefore future users or applications will not have to figure out this structure or migrate to new formats.
 
 
 A standardization effort
@@ -35,7 +35,11 @@ Before being a software, Chem\ *Flow* is an initiative to fill a gap in the fiel
 Implementation
 --------------
 
-Chem\ *Flow* was designed as modular tool based on plain Bourne-again Shell (BASH) script, an ubiquitous environment and programming language in every UNIX environment. 
+Chem\ *Flow* was designed as modular tool based on plain Bourne-again Shell (BASH) script, an ubiquitous environment and programming language in every UNIX environment.
+
+.. note:: BASH is the **default shell** for the most popular Linux distributions, and for MacOS.
+
+.. tip:: If you've got to learn a scripting language, go for BASH, is an easy and powerfull.
 
 Middleware design
 -----------------

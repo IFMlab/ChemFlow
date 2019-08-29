@@ -38,7 +38,7 @@ IFS=${OLDIFS}
 #
 cd ${RUNDIR}/original/
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -dr no &>/dev/null
+    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -pf y -dr no &>/dev/null
     if [ -f tmp.mol2 ]; then mv tmp.mol2 ${LIGAND}.mol2; fi
 done
 rm -f ANTECHAMBER_*
