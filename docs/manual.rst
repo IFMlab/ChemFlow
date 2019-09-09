@@ -13,7 +13,6 @@ Lig\ *Flow* does it all through a series functions designed to prepare the compo
 **.mol2** files are stored according to the following hierarchy, with file names determined by molecule name.
 
 
-
 .. code-block:: bash
 
     |--${project}.chemflow
@@ -47,11 +46,11 @@ Step 2 - Compound parameterization
 ----------------------------------
 Depending on the purpose, a different parameterization should take place. For docking, a Tripos .mol2 file sufices since Dock\ *Flow* has specific routine to prepare it to the target software. 
 
-If one however chooses to use rescore a complex using more accurate free energy methods Lig\ *Flow* automatizes the parameterization to the General Amber Force-Field (GAFF), and charge calculation through QM methods, either AM1 with BCC charges or HF/6-31G* with RESP charges.
+If one however chooses to use rescore a complex using more accurate free energy methods Lig\ *Flow* automatizes the parameterization to the General Amber Force-Field (GAFF), and charge calculation through QM methods, either AM1 with BCC charges or HF/6-31G* with RESP charges. GAFF works great for small, drug-like molecules, but remember its a **general** force field.
 
-.. tip:: For large screenings we recomend using less accurate BCC charges to prioritiza compounds, migrating to more time consuming HF/6-31G* with RESP charges
+.. tip:: For large screenings we recomend using less accurate BCC charges to prioritize compounds, migrating to more time consuming HF/6-31G* with RESP charges
 
-.. warning:: GAFF works great for small, drug-like molecules, but remember its a **general** force field. To improve accuracy one must carefully parameterize each molecule, search for warnings in the **${molecule}.frcmod** file.
+.. tip:: To improve accuracy one must carefully parameterize each molecule, search for warnings in the **${molecule}.frcmod** file.
 
 
 Usage
@@ -61,6 +60,7 @@ To prepare a compound library for file **ligand.mol2**, for the project **myproj
 .. code-block:: bash
 
     LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]
+
 
 Options
 -------
@@ -73,12 +73,13 @@ The compound file name  (.mol2 file) and project name are mandatory, and you're 
     -hh/--full-help      : Detailed help
 
     [Required]
-    -l/--ligand         : Ligands .mol2 input file.
     -p/--project        : ChemFlow project.
+    -l/--ligand         : Ligands .mol2 input file.
 
 Advanced options
 ----------------
 These options let you better control the execution, including charge calculation, and parallel (local) or HPC execution. Refer to **HPC Run** topic for guidance on how to use a High Performance Computers.
+
 
 .. code-block:: bash
 
@@ -97,24 +98,41 @@ These options let you better control the execution, including charge calculation
                             ( name charge )  ( CHEMBL123 -1 ) 
 
 
-
+.. note:: RESP charges require a GAUSSIAN 09+ licence.
 
 Dock\ *Flow*
 ============
 
-Dock\ *Flow* covers docking and Virtual High Throughput Screening (vHTS) of compound(s) against a target (receptor) through the so far implemented docking software: Autodock Vina and PLANTS.
+Dock\ *Flow* covers docking and Virtual High Throughput Screening (vHTS) of compound(s) against a target (receptor) through the so far implemented docking software: Autodock Vina and PLANTS. The vHTS is efficiently distributed on the available computational resources.
 
-The vHTS is efficiently distributed on the available computational resources based on information given by the user, including compounds, receptor, binding site center and dimentions, and some extra options.
+
+Docking output files are stored according to the following hierarchy, with file names determined by molecule name.
+
+.. code-block:: bash
+
+    |--${project}.ChemFlow
+    |  |--DockFlow
+    |     |--${project}/${receptor}/${protocol}/${compound}/ligand.out
+    |     |--${project}/${receptor}/${protocol}/${compound}/ligand.pdbqt (VINA)
+    |     |--${project}/${receptor}/${protocol}/${compound}/ligand.mol2  (PLANTS)
+
 
 
 Usage
 ------
+The user should first curate the compound library (.smi or .mol2) using Lig\ *Flow* then provide that same input file. Dock\ *Flow* only uses the molecule name from this file and gets all structural data from the Lig\ *Flow*-generated library. 
+
 .. code-block:: bash
 
      DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-n 10] [-sf chemplp]
 
+.. note:: Make sure to use the same *project* name and *protocol*.
+
 Options
 -------
+Dock\ *Flow* requires the receptor and "ligands" files are required, together with the center of the binding site.
+
+
 .. code-block:: bash
 
     [Help]
@@ -129,12 +147,14 @@ Options
 
 Advanced options
 ----------------
+These options let you better control the execution, including the scoring function and specific parameters for each implemented docking software. In addition has options to control the parallel (local) or HPC execution. Refer to **HPC Run** topic for guidance on how to use a High Performance Computers.
+
 .. code-block:: bash
 
     [ Post Processing ]
     --postprocess          : Process DockFlow output for the specified 
                              project/protocol/receptor.
-    --postprocess-all      : Process DockFlow output in a ChemFlow project.
+    --postprocess-all      : Process all DockFlow outputs in a ChemFlow project.
     -n/--n-poses       INT : Number of docked poses to keep.
     --archive              : Compress the docking folder for a project/protocol/receptor.
     --archive-all          : Compress all docking folders in a ChemFLow project.
@@ -172,6 +192,20 @@ Advanced options
     _________________________________________________________________________________
 
 
+Options to Postprocess and Archive
+----------------------------------
+
+Docking produces a number of poses and their associated energies, but each software does it their way. --postprocess[--all] standardizes the output to two files: docked_ligands.mol2 and DockFlow.csv.
+
+.. code-block:: bash
+
+    |--${project}.ChemFlow
+    |  |--DockFlow
+    |     |--${project}/${receptor}/${protocol}/docked_ligands.mol2
+    |     |--${project}/${receptor}/${protocol}/DockFlow.csv
+
+
+
 Score\ *Flow*
 =============
 ScoreFlow is a bash script designed to work with PLANTS, Vina, IChem and AmberTools16+.
@@ -206,10 +240,6 @@ Advanced Options
 ----------------
 
 .. code-block:: bash
-
-    [ Help ]
-    -h/--help              : Show this help message and quit
-    -hh/--fullhelp         : Detailed help
 
     [ Required ]
     -p/--project       STR : ChemFlow project
