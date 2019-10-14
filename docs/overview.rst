@@ -43,10 +43,10 @@ Chem\ *Flow* was designed as modular tool based on plain Bourne-again Shell (BAS
 
 Middleware design
 -----------------
-The code integrates to freely available software for structure manipulation (RDKIT and openbabel), molecular docking (PLANTS and Autodock Vina), molecular dynamics (MD) simulation, binding free energy calculations (AmberTools), and structure calculation (SQM). Chem\ *Flow* also contains optional routines for proprietary software Amber18 and Gaussian 09. 
+The code integrates freely available softwares for structure manipulation (RDKIT and openbabel), molecular docking (PLANTS and Autodock Vina), molecular dynamics (MD) simulation, binding free energy calculations (AmberTools), and structure calculation (SQM). Chem\ *Flow* also contains optional routines for proprietary software Amber18 and Gaussian 09. 
 
 As simple is possible
 ---------------------
 
-By design, the goal was to make Chem\ *Flow* as simple is possible to require minimal installation and promote extension. The code is containerized and modular to allow methods to be applied only in a well-defined way which is **traceable and reproducible** following the ISO/IEC 17025 guidelines for assays. Chem\ *Flow* ships with protocols for common experiments and curated benchmarks to assess the performance of methods.  
+By design, the goal was to make Chem\ *Flow* as simple as possible to require minimal installation and promote extension. The code is containerized and modular to allow methods to be applied only in a well-defined way which is **traceable and reproducible** following the ISO/IEC 17025 guidelines for assays. Chem\ *Flow* ships with protocols for common experiments and curated benchmarks to assess the performance of methods.  
 
