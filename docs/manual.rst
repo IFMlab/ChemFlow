@@ -8,7 +8,7 @@ Lig\ *Flow*
 ============
 Lig\ *Flow* handles the curation of compound libraries, stored as SMILES or MOL2 files, automating 3D conformer generation, compound parameterization and charge calculation. It also probes the Chem\ *Base* to avoid redundancy. 
 
-Lig\ *Flow* does it all through a series functions designed to prepare the compound for Dock\ *Flow* and Score\ *Flow*. Lig\ *Flow* supports resuming of unfinished calculation.
+Lig\ *Flow* does it all through a series of functions designed to prepare compounds for Dock\ *Flow* and Score\ *Flow*. Lig\ *Flow* supports resuming unfinished calculation.
 
 **.mol2** files are stored according to the following hierarchy, with file names determined by molecule name.
 
@@ -46,7 +46,7 @@ Step 2 - Compound parameterization
 ----------------------------------
 Depending on the purpose, a different parameterization should take place. For docking, a Tripos .mol2 file sufices since Dock\ *Flow* has specific routine to prepare it to the target software. 
 
-If one however chooses to use rescore a complex using more accurate free energy methods Lig\ *Flow* automatizes the parameterization to the General Amber Force-Field (GAFF), and charge calculation through QM methods, either AM1 with BCC charges or HF/6-31G* with RESP charges. GAFF works great for small, drug-like molecules, but remember its a **general** force field.
+If one however chooses to rescore a complex using more accurate free energy methods Lig\ *Flow* automatizes the parameterization to the General Amber Force-Field (GAFF), and charge calculation through QM methods, either AM1 with BCC charges or HF/6-31G* with RESP charges. GAFF works great for small, drug-like molecules, but remember its a **general** force field.
 
 .. tip:: For large screenings we recomend using less accurate BCC charges to prioritize compounds, migrating to more time consuming HF/6-31G* with RESP charges
 
@@ -147,7 +147,7 @@ Dock\ *Flow* requires the receptor and "ligands" files are required, together wi
 
 Advanced options
 ----------------
-These options let you better control the execution, including the scoring function and specific parameters for each implemented docking software. In addition has options to control the parallel (local) or HPC execution. Refer to **HPC Run** topic for guidance on how to use a High Performance Computers.
+These options let you better control the execution, including the scoring function and specific parameters for each implemented docking software. In addition, it has options to control the parallel (local) or HPC execution. Refer to **HPC Run** topic for guidance on how to use a High Performance Computers.
 
 .. code-block:: bash
 
@@ -195,7 +195,7 @@ These options let you better control the execution, including the scoring functi
 Options to Postprocess and Archive
 ----------------------------------
 
-Docking produces a number of poses and their associated energies, but each software does it their way. --postprocess[--all] standardizes the output to two files: docked_ligands.mol2 and DockFlow.csv.
+Docking produces a number of poses and their associated energies, but each software does it their own way. --postprocess[--all] standardizes the output to two files: docked_ligands.mol2 and DockFlow.csv.
 
 .. code-block:: bash
 
@@ -209,7 +209,7 @@ Docking produces a number of poses and their associated energies, but each softw
 Score\ *Flow*
 =============
 ScoreFlow is a bash script designed to work with PLANTS, Vina, IChem and AmberTools16+.
-It can perform a rescoring of molecular complexes such as protein-ligand
+It can perform a rescoring of molecular complexes such as protein-ligand systems.
 
 ScoreFlow requires a project folder named 'myproject'.chemflow. If absent, one will be created.
 
@@ -300,7 +300,7 @@ Simulation protocol
     The procedures for each protocol can also be modified, the user must review "ScoreFlow.run.template".
 
 The *run input files* for Amber and MM(PB,GB)-SA, namely:
-min1.in, heat.in, equil.in, md.in ... can also be manually modified at wish :)
+min1.in, heat.in, equil.in, md.in ... can also be manually modified as you wish :)
 After the modifications, rerun ScoreFlow using \-\-run-only.
 Lig\ *Flow*
 ===========
