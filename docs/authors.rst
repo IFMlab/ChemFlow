@@ -16,9 +16,9 @@ Development Lead
 
 * Diego Enry Barreto Gomes <dgomes@pq.cnpq.br>
 
-@ Université de Nice
+@ Université Côte D'Azur
 
-* Cedric Bouysset <bouysset.cedric@gmail.com>
+* Cedric Bouysset <cedric.bouysset@univ-cotedazur.fr>
 
 Contributors
 ------------
