@@ -29,4 +29,4 @@ A full fledged workflow designed for Host-Guest systems such as molecular cages.
 
 .. hint:: Dock\ *Flow* and Score\ *Flow* were implemented to comply with docking/scoring benchmarks. One can test new search and scoring functions and directly compare with the competition (within Report\ *Flow*).
 
-.. Note:: Chem\ **Base** is the Chem\ *Flow* database for pre-calculated molecules, so far it contains a nearly 9000 drug-like compounds from the “Chimioteque Nationale du CNRS” with HF 6-31G* QM optimized geometries and assigned parameters for GAFF2. Access requires proof of "Chimioteque" licence.
+.. Note:: Chem\ **Base** is the Chem\ *Flow* database for pre-calculated molecules, so far it contains nearly 9000 drug-like compounds from the “Chimioteque Nationale du CNRS” with HF 6-31G* QM optimized geometries and assigned parameters for GAFF2. Access requires proof of "Chimioteque" licence.
