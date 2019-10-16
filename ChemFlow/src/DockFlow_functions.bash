@@ -51,15 +51,26 @@ fi
 if [ ${DOCK_PROGRAM} == "PLANTS" ] ; then
     # Write plants config
     RECEPTOR_FILE="../receptor.mol2"
-    if [ -z "${PLANTS_WATER}" ]; then
+    if [ -z "${PLANTS_WATER}" -a -z "${File_plants_pre}" -a -z "${File_plants_fil}" ]; then
         echo 'ptututututut'
-        echo "$(grep D_clustering ${RUNDIR}/receptor.mol2 | wc -l)"
-        if [ "$(grep D_clustering ${RUNDIR}/receptor.mol2 | wc -l)" -gt 0 ] ;then 
-            file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config_D.in)
-        else 
-            file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config_A_R.in)
-        fi
-    else
+        # echo "$(grep D_clustering ${RUNDIR}/receptor.mol2 | wc -l)"
+        # if [ "$(grep D_clustering ${RUNDIR}/receptor.mol2 | wc -l)" -gt 0 ] ;then 
+        #     file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config_D.in)
+        # elif [ "$(grep A_clustering ${RUNDIR}/receptor.mol2 | wc -l)" -gt 0 ] ;then
+        #     file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config_A_R.in)
+        # elif [ "$(grep R_clustering ${RUNDIR}/receptor.mol2 | wc -l)" -gt 0 ] ;then
+        #     file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config_A_R.in)
+        # else 
+            file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config_original.in)
+        # fi
+    fi 
+    if [ ! -z "${File_plants_pre}" ]; then
+       file=$(cat ${File_plants_pre})
+    fi
+    if [ ! -z "${File_plants_fil}" ]; then
+       file=$(cat ${File_plants_fil})
+    fi
+    if [ ! -z "${PLANTS_WATER}" ]; then
       file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_water_config.in)
     fi
     eval echo \""${file}"\" > ${RUNDIR}/dock_input.in
@@ -389,7 +400,8 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     "PLANTS")
         if [ ! -f ${LIGAND}/ligand.mol2 ] ; then
             #cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
-            cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/bcc/${LIGAND}/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+            #cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/bcc/${LIGAND}/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+            cp ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
         fi
     ;;
     "VINA")
@@ -404,6 +416,43 @@ done
 echo "[ DONE ]"
 }
 
+DockFlow_divide_input_ligands() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_rewrite_ligands
+#   DESCRIPTION: User interface for the rewrite ligands option.
+#                 - Read all ligand names from the header of a .MOL2 file.
+#                 - Split each ligand to it's own ".MOL2" file.
+#               #  - Create "ligand.lst" with the list of ligands do dock.
+#
+#    PARAMETERS: ${PROJECT}
+#                ${LIGAND_LIST}
+#                ${RUNDIR}
+#                ${DOCK_PROGRAM}
+#                ${WORKDIR}
+#
+#        Author: Dona de Francquen
+#
+#        UPDATE: fri. july 6 14:49:50 CEST 2018
+#                09 10 19 Sisquellas Marion
+#
+#===============================================================================
+OLDIFS=$IFS
+IFS='%'
+n=-1
+if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/ ] ; then
+    mkdir -p ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/
+fi
+while read line ; do
+    echo ${line}
+    if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
+        let n=$n+1
+        echo -e "${line}" > ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND_LIST[$n]}.mol2
+    else
+        echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND_LIST[$n]}.mol2
+    fi
+done < ${LIGAND_FILE}
+IFS=${OLDIFS}
+}
 
 DockFlow_prepare_input() {
 #===  FUNCTION  ================================================================
@@ -420,6 +469,7 @@ DockFlow_prepare_input() {
 #       RETURNS: -
 #
 #          TODO: Allow "extra PLANTS keywords from cmd line"
+#     Modify on 091019 to use the input file
 #===============================================================================
 # 1. Folder
 if [ ${OVERWRITE} == "yes" ] ; then
@@ -439,12 +489,25 @@ cd ${RUNDIR}
 DockFlow_prepare_receptor
 
 # 3. Ligands
-if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
-    echo "Please run LigFlow before DockFlow to prepare the input ligands."
-    exit 0
-else
-    DockFlow_prepare_ligands
+
+
+if [ -e ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/*.mol2 ] ; then
+    if [ $( diff ${LIGAND_FILE} ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/*.mol2 | wc -l ) == 0 ] ; then 
+    echo "Same input file as before"
+    fi
+else 
+    cp ${LIGAND_FILE} ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/
+    DockFlow_divide_input_ligands
 fi
+
+DockFlow_prepare_ligands
+
+#if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
+#    echo "Please run LigFlow before DockFlow to prepare the input ligands."
+#    exit 0
+#else
+#    DockFlow_prepare_ligands
+#fi
 }
 
 
@@ -830,6 +893,12 @@ case ${DOCK_PROGRAM} in
     echo "   EVAP. RATE: ${EVAP_RATE}"
     echo "ITER. SCALING: ${ITERATION_SCALING}"
     echo " CLUSTER RMSD: ${CLUSTER_RMSD}"
+    if [ ! -z "${File_plants_pre}" ]; then
+        echo " INPUT PLANTS: ${File_plants_pre}"
+    fi  
+    if [ ! -z "${File_plants_fil}" ]; then
+        echo " INPUT PLANTS: ${File_plants_fil}" 
+    fi   
     if [ ! -z "${PLANTS_WATER}" ]; then
         echo "   WATER FILE: ${WATER_FILE}"
         echo " WATER CENTER: ${WATER_XYZR[@]:0:3}"
@@ -931,6 +1000,8 @@ ________________________________________________________________________________
  --cluster_rmsd   FLOAT : RMSD similarity threshold between poses, in Å [2.0]
  --water           FILE : Path to a structural water molecule (.mol2)
  --water_xyzr      LIST : xyz coordinates and radius of the water sphere, separated by a space
+ --file_prefil     FILE : File input pre filled for PLANTS (.in)
+ --file_filed      FILE : File input filled for PLANTS (.in)
 _________________________________________________________________________________
 [ Vina ]
  --size            LIST : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
@@ -997,6 +1068,14 @@ while [[ $# -gt 0 ]]; do
         "--radius")
             DOCK_RADIUS="$2"
             DOCK_LENGTH=("$2" "$2" "$2")
+            shift # past argument
+        ;;
+        "--file_prefil")
+            File_plants_pre=$(abspath "$2")
+            shift # past argument
+        ;;
+        "--file_filed")
+            File_plants_fil=$(abspath "$2")
             shift # past argument
         ;;
         "-n"|"--n-poses")
