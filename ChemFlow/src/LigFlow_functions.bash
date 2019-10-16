@@ -278,7 +278,7 @@ case ${JOB_SCHEDULLER} in
             echo -e "\n\n\n" >> antechamber_gauss.log
         esac
         cat ${RUNDIR}/${CHARGE}/${LIGAND}/${LIGAND}.mol2 >> ALL_${CHARGE}.mol2
-        echo -e "\n\n\n" >> ALL_${CHARGE}.mol2
+        #echo -e "\n\n\n" >> ALL_${CHARGE}.mol2
         # add in the chembase
         echo ${LIGAND} ${NEW_LIGAND_LIST_INCHI[$cpt_inch]} ${NEW_LIGAND_LIST_INCHIKEY[$cpt_inch]} >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst
         cat ${RUNDIR}/${CHARGE}/${LIGAND}/${LIGAND}.mol2 >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2
