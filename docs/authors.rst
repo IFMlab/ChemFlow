@@ -18,7 +18,7 @@ Development Lead
 
 @ Université Côte D'Azur
 
-* Cedric Bouysset <cedric.bouysset@univ-cotedazur.fr>
+* Cédric Bouysset <cedric.bouysset@univ-cotedazur.fr>
 
 Contributors
 ------------
