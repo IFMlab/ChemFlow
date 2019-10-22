@@ -100,6 +100,10 @@ These options let you better control the execution, including charge calculation
 
 .. note:: RESP charges require a GAUSSIAN 09+ licence.
 
+
+================================================================================
+
+
 Dock\ *Flow*
 ============
 
@@ -206,22 +210,30 @@ Docking produces a number of poses and their associated energies, but each softw
 
 
 
+================================================================================
+
+
 Score\ *Flow*
 =============
-ScoreFlow is a bash script designed to work with PLANTS, Vina, IChem and AmberTools16+.
-It can perform a rescoring of molecular complexes such as protein-ligand systems.
+Score\ *Flow* handles *rescoring** of molecular complexes such as protein-ligand systems using empirical or physics-based scoring functions in a High Throughput fashion. Computation is efficiently distributed on the available computational resources. 
 
-ScoreFlow requires a project folder named 'myproject'.chemflow. If absent, one will be created.
+**Empirical scoring functions** are the same as implemented in docking, Autodock Vina and PLANTs. While scoring a local search and/or optimization is performed before the producing the final score.
+
+**Physics-based scoring functions** can be currently obtained through MM/PBSA methods. The user can choose between Poisson-Boltzmann (PB) and Generalized Born solvation (GB) models and their parameters. Also, the user is can to perform diffent protocols from a simple system optimization up to a full molecular dynamics simulation of the complex, also choosing to do it in implicit or explicit solvent. AmberTools16+ is the default simulation engine, and users can profit form GPU with an Amber16+ licence.
+
+.. note:: Future implementations will address Machine Learning routines VinaRF and DLSCORE.
+
 
 Usage:
 ------
+ScoreFlow requires a project folder named 'myproject'.chemflow. If absent, one will be created.
 
-# For VINA and PLANTS scoring functions:
-ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-sf vina]
-Usage:
+.. code-block:: bash
+    # For VINA and PLANTS scoring functions:
+    ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-sf vina]
 
-# For MMGBSA only
-ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] -sf mmgbsa
+    # For MMGBSA only
+    ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] -sf mmgbsa
 
 Options
 -------
