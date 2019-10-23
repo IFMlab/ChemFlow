@@ -6,6 +6,9 @@ Overview
 Chem\ *Flow* is a computational software composed of a series of tools within the domain of computational chemistry, and subdomain drug discovery and development. 
 It was designed to contain simple and integrated workflows to perform common protocols in the early stages of drug discovery and protein design.
 
+Chem\ *Flow* is a modular platform for computational chemistry workflows using high performance environments.
+The workflows address common **computational chemistry** tasks and are named with a prefix followed by *Flow*, Dock\ *Flow*, Score\ *Flow* and Lig\ *Flow*.
+
 Chem\ *Flow* contains several features that set it apart from competition:
 
 #. Ready to use protocols for drug discovery and drug repurposing.

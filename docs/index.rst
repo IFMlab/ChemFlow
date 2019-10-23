@@ -6,8 +6,6 @@
 ****************************************
 Welcome to Chem\ *Flow*'s documentation!
 ****************************************
-Chem\ *Flow* is a modular platform for computational chemistry workflows using high performance environments.
-The workflows address common **computational chemistry** tasks and are named with a prefix followed by *Flow*, Dock\ *Flow*, Score\ *Flow* and Lig\ *Flow*.
 
 .. toctree::
    :maxdepth: 2

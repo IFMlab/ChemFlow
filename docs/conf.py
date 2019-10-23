@@ -21,7 +21,7 @@
 
 project = 'ChemFlow'
 copyright = '2016-2019, Diego Enry Barreto Gomes, Cedric Bouysset, Marco Cecchini'
-author = 'Diego Enry Barreto Gomes, Dona de Francquen, Cedric Bouysset'
+author = 'Diego Enry Barreto Gomes, Cedric Bouysset, Marco Cecchini'
 
 # The short X.Y version
 version = ''
@@ -129,7 +129,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'ChemFlow.tex', 'ChemFlow Documentation',
-     'Diego Enry Barreto Gomes', 'manual'),
+     'Diego E. B. Gomes, Cedric Bouysset, Marco Cecchini', 'manual'),
 ]
 
 
