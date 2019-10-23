@@ -110,7 +110,7 @@ Standard Minimization and Molecular Dynamics Simulaton in explicit solvent, with
 
 .. Tip::
 
-    Use the **--write-only** flag to run a test before launching High Throughput calculations.
+    Use the **\\-\\-write-only** flag to run a test before launching High Throughput calculations.
 
 .. Warning::
 

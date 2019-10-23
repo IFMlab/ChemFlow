@@ -8,26 +8,28 @@ Manager
 -------
 @ Université de Strasbourg
 
-* Marco Cecchini <mcecchini@unistra.fr>
+Marco Cecchini <mcecchini@unistra.fr>
 
 Development Lead
 ----------------
 @ Universidade Federal de Juiz de Fora
 
-* Diego Enry Barreto Gomes <dgomes@pq.cnpq.br>
+Diego Enry Barreto Gomes <dgomes@pq.cnpq.br>
 
 @ Université Côte D'Azur
 
-* Cédric Bouysset <cedric.bouysset@univ-cotedazur.fr>
+Cédric Bouysset <cedric.bouysset@univ-cotedazur.fr>
 
 Contributors
 ------------
 @ Conseil de l'Europe.
 
-* Donatienne de Francquen <donat.defrancquen@gmail.com>
+Donatienne de Francquen <donat.defrancquen@gmail.com>
 
 @ Université de Strasbourg
 
-* Gilberto Pereira  <gilberto.pereiraportugal@gmail.com>
-* Marion Sisquellas <Sisquellas.marion@gmail.com>
-* Adrien Cerdan <cerdan.adrien@gmail.com>
+Gilberto Pereira  <gilberto.pereiraportugal@gmail.com>
+
+Marion Sisquellas <Sisquellas.marion@gmail.com>
+
+Adrien Cerdan <cerdan.adrien@gmail.com>

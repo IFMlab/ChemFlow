@@ -55,7 +55,8 @@ If one however chooses to rescore a complex using more accurate free energy meth
 
 Usage
 -----
-To prepare a compound library for file **ligand.mol2**, for the project **myproject** use the command bellow. Make sure to choose the appropriate charge model for you project.
+To prepare a compound library for file **ligand.mol2**, for the project **myproject** use the command bellow. Make sure to choose the appropriate charge model for you project. Refer to **HPC** topic on how to use in a High Performance Environment.
+
 
 .. code-block:: bash
 
@@ -124,7 +125,8 @@ Docking output files are stored according to the following hierarchy, with file 
 
 Usage
 ------
-The user should first curate the compound library (.smi or .mol2) using Lig\ *Flow* then provide that same input file. Dock\ *Flow* only uses the molecule name from this file and gets all structural data from the Lig\ *Flow*-generated library. 
+The user should first curate the compound library (.smi or .mol2) using Lig\ *Flow* then provide that same input file. Dock\ *Flow* only uses the molecule name from this file and gets all structural data from the Lig\ *Flow*-generated library. Refer to **HPC** topic on how to use in a High Performance Environment.
+
 
 .. code-block:: bash
 
@@ -203,6 +205,7 @@ Docking produces a number of poses and their associated energies, but each softw
 
 .. code-block:: bash
 
+    # Directory structure
     |--${project}.ChemFlow
     |  |--DockFlow
     |     |--${project}/${receptor}/${protocol}/docked_ligands.mol2
@@ -215,28 +218,54 @@ Docking produces a number of poses and their associated energies, but each softw
 
 Score\ *Flow*
 =============
-Score\ *Flow* handles *rescoring** of molecular complexes such as protein-ligand systems using empirical or physics-based scoring functions in a High Throughput fashion. Computation is efficiently distributed on the available computational resources. 
+Score\ *Flow* handles *rescoring** of molecular complexes such as protein-ligand systems using empirical or physics-based scoring functions in a High Throughput fashion. Computation is efficiently distributed on the available computational resources. Score\ *Flow* can resume calculations.
 
 **Empirical scoring functions** are the same as implemented in docking, Autodock Vina and PLANTs. While scoring a local search and/or optimization is performed before the producing the final score.
 
-**Physics-based scoring functions** can be currently obtained through MM/PBSA methods. The user can choose between Poisson-Boltzmann (PB) and Generalized Born solvation (GB) models and their parameters. Also, the user is can to perform diffent protocols from a simple system optimization up to a full molecular dynamics simulation of the complex, also choosing to do it in implicit or explicit solvent. AmberTools16+ is the default simulation engine, and users can profit form GPU with an Amber16+ licence.
+**Physics-based scoring functions** can be currently obtained through MM/PBSA methods. The user can choose between Poisson-Boltzmann (PB) and Generalized Born solvation (GB) models and their parameters. Also, the user is can to perform diffent protocols from a simple system **optimization** up to a full **molecular dynamics simulation** of the complex, also choosing to do it in implicit or explicit solvent. AmberTools16+ is the default simulation engine, and users can profit form GPU with an Amber16+ licence.
 
 .. note:: Future implementations will address Machine Learning routines VinaRF and DLSCORE.
 
+Preparing the receptor: 
+    While preparing the receptor one should carefully inspect the structure for missing atoms or residues and assign the proper protonation states for the sidechains. One should complete the missing atoms and decide to model the missing parts (normally flexible loops) or neutralize the terminals. Finally one should save the PDB following the amber PDB naming scheme.
+
+.. tip:: Use UCSF Chimera (https://www.cgl.ucsf.edu/chimera/) and its interfaces to PDB2PQR/PROPKA and Modeller.
+
+Preparing the ligand(s):
+    One should first curate the ligand library (.mol2) using Lig\ *Flow* then provide that same input file. Score\ *Flow* only uses the molecule name from this file and gets all structural data from the Lig\ *Flow*-generated library. MM/(PB,GB)SA requires either AM1-BCC or RESP charges for accuracy, make sure to prepare your Lig\ *Flow* library accordingly (--bcc or --resp).
 
 Usage:
 ------
-ScoreFlow requires a project folder named 'myproject'.chemflow. If absent, one will be created.
+Score\ *Flow* requires a **receptor** in PDB format and a **ligand** in MOL2. Score\ *Flow* creates a project folder named 'myproject'.chemflow/ScoreFlow. Refer to **HPC** topic on how to use in a High Performance Environment.
 
 .. code-block:: bash
+
     # For VINA and PLANTS scoring functions:
     ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-sf vina]
 
     # For MMGBSA only
     ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] -sf mmgbsa
 
+Post-Processing
+---------------
+
+Rescoring produces new energies for each complex in their own folder for each protocol. Also, each software (Vina/PLANTS/AMBER) does it their own way. --postprocess standardizes the output to a single file: **ScoreFlow.csv**.
+
+.. code-block:: bash
+    
+    # Usage:
+     ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] -sf mmgbsa --postprocess
+
+    # Directory structure:
+    |--${project}.ChemFlow
+    |  |--ScoreFlow
+       |     |--${project}/${receptor}/${protocol}/ScoreFlow.csv
+
+
 Options
 -------
+Score\ *Flow* requires the receptor and "ligands" files are required. In addition, when using Autodock Vina or PLANTS to **rescore**, one must provide the center of the binding site.
+
 .. code-block:: bash
 
     [Help]
@@ -250,6 +279,7 @@ Options
 
 Advanced Options
 ----------------
+These options let you better control the execution, including the scoring function and specific parameters for each implemented software. In addition, it has options to control the parallel (local) or HPC execution. Refer to **HPC Run** topic for guidance on how to use a High Performance Computers.
 
 .. code-block:: bash
 
@@ -296,29 +326,53 @@ Advanced Options
     [ Post Processing ]
     --postprocess          : Process ScoreFlow output for the specified project/protocol/receptor.
 
-    Note: You can automatically get the center and radius/size 
-        for a particular ligand .mol2 file using the bounding_shape.py script
 
-    _________________________________________________________________________________
+.. note:: Note: You can automatically get the center and radius/size 
+    for a particular ligand .mol2 file using the bounding_shape.py script
+
+.. tip:: Score\ *Flow* automatically resumes incomplete calculations. To overwrite just use the flag **\\-\\-overwrite**
+
+
 Advanced Use
 ------------
-By using the **--write-only** flag, all input files will be written in the following scheme:
+One may want to further customize the rescoring, or advanced features of the system preparation such as addition of non-standard residues or co-factors to the receptor. With that in mind we implemented the flag  **\\-\\-write-only**. After the modifications, rerun ScoreFlow using **\\-\\-run-only**.
+
+All input files will be written in the following scheme:
+
 **PROJECT**.chemflow/ScoreFlow/**PROTOCOL**/**receptor**/
 
+For instance when using MM/PBSA family of methods, features of AmberTools16+/Amber (tleap, sander/pmemd, cpptraj, MMPBSA.py) may be adjusted.
+
 System Setup
-    One can customize the system setup (**tleap.in**) inside a job.
+    One can customize the system setup (**tleap.in**) inside a job, modify the default ions, add co-fators, change the waterbox shape etc.
 
 Simulation protocol
     The procedures for each protocol can also be modified, the user must review "ScoreFlow.run.template".
+    Simulation details such as lengh, cut-offs, thermostat and barostat etc.
 
-The *run input files* for Amber and MM(PB,GB)-SA, namely:
-min1.in, heat.in, equil.in, md.in ... can also be manually modified as you wish :)
-After the modifications, rerun ScoreFlow using \-\-run-only.
-Lig\ *Flow*
-===========
+One may also choose to directly modify the templates at e.g.:
 
-Options
--------
+.. code-block:: bash
 
-Advanced Options
-----------------
+    ${CHEMFLOW_HOME}/ChemFlow/templates/mmgbsa/
+    .
+    ├── explicit
+    │   ├── heat_npt.template
+    │   ├── heat_nvt.template
+    │   ├── min1.template
+    │   ├── min2.template
+    │   ├── min3.template
+    │   ├── min4.template
+    │   └── prod.template
+    ├── implicit
+    │   ├── md.template
+    │   └── min.template
+    ├── job_scheduller
+    │   ├── pbs.template
+    │   └── slurm.template
+    ├── mmgbsa.template
+    ├── mmpbsa.template
+    └── tleap
+        ├── tleap_explicit.template
+        └── tleap_implicit.template
+
