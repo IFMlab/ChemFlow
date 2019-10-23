@@ -3,6 +3,7 @@
 ========
 Features
 ========
+Chem\ *Flow* was designed as modular tool based on plain Bourne-again Shell (BASH) script, a ubiquitous environment and programming language in every UNIX environment. The code integrates freely available software for structure manipulation (Rdkit and openbabel), molecular docking (PLANTS and Autodock Vina), molecular dynamics (MD) simulation, binding free energy calculations (AmberTools18), and structure calculation (SQM). In addition, it contains optional routines for proprietary software Amber18 and Gaussian 09.
 
 High Throughput
 ===============

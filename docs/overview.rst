@@ -50,3 +50,8 @@ As simple is possible
 
 By design, the goal was to make Chem\ *Flow* as simple as possible to require minimal installation and promote extension. The code is containerized and modular to allow methods to be applied only in a well-defined way which is **traceable and reproducible** following the ISO/IEC 17025 guidelines for assays. Chem\ *Flow* ships with protocols for common experiments and curated benchmarks to assess the performance of methods.  
 
+How ChemFlow was born
+---------------------
+During virtual screening/ molecular dynamics study we were confronted with unintelligibly data from a previous collaborator and the challenge to produce our own. In fact that's an actually a very common scenario, everyone “\ *does their things their own way*”.
+
+We thought it would be valuable if we standardize the directory structure and file naming. The whole point of a standard is to facilitate documentation, comprehension, data retention and reproducibility, so that future users or applications will not have to figure out this structure or migrate to new formats.
