@@ -114,7 +114,7 @@ def bounding_box(XYZ, padding):
 			if d > dmax:
 				dmax = d
 		dmax += padding
-		size.append(dmax)
+		size.append(dmax*2)
 	return center, size
 
 if __name__ == '__main__':
@@ -167,16 +167,16 @@ if __name__ == '__main__':
 	# compute bounding shape
 	if args.shape == 'box':
 		center, size = bounding_box(XYZ, args.padding)
-		print(' '.join(['{:.3f}'.format(x) for x in center + size*2]))
+		print(' '.join(['{:.3f}'.format(x) for x in center + size]))
 		if args.pymol:
-			print('pseudoatom a1, pos={}'.format([center[0]+size[0],center[1]+size[1],center[2]+size[2]]))
-			print('pseudoatom a2, pos={}'.format([center[0]+size[0],center[1]+size[1],center[2]-size[2]]))
-			print('pseudoatom a3, pos={}'.format([center[0]+size[0],center[1]-size[1],center[2]-size[2]]))
-			print('pseudoatom a4, pos={}'.format([center[0]+size[0],center[1]-size[1],center[2]+size[2]]))
-			print('pseudoatom a5, pos={}'.format([center[0]-size[0],center[1]-size[1],center[2]+size[2]]))
-			print('pseudoatom a6, pos={}'.format([center[0]-size[0],center[1]-size[1],center[2]-size[2]]))
-			print('pseudoatom a7, pos={}'.format([center[0]-size[0],center[1]+size[1],center[2]-size[2]]))
-			print('pseudoatom a8, pos={}'.format([center[0]-size[0],center[1]+size[1],center[2]+size[2]]))
+			print('pseudoatom a1, pos={}'.format([center[0]+size[0]/2,center[1]+size[1]/2,center[2]+size[2]/2]))
+			print('pseudoatom a2, pos={}'.format([center[0]+size[0]/2,center[1]+size[1]/2,center[2]-size[2]/2]))
+			print('pseudoatom a3, pos={}'.format([center[0]+size[0]/2,center[1]-size[1]/2,center[2]-size[2]/2]))
+			print('pseudoatom a4, pos={}'.format([center[0]+size[0]/2,center[1]-size[1]/2,center[2]+size[2]/2]))
+			print('pseudoatom a5, pos={}'.format([center[0]-size[0]/2,center[1]-size[1]/2,center[2]+size[2]/2]))
+			print('pseudoatom a6, pos={}'.format([center[0]-size[0]/2,center[1]-size[1]/2,center[2]-size[2]/2]))
+			print('pseudoatom a7, pos={}'.format([center[0]-size[0]/2,center[1]+size[1]/2,center[2]-size[2]/2]))
+			print('pseudoatom a8, pos={}'.format([center[0]-size[0]/2,center[1]+size[1]/2,center[2]+size[2]/2]))
 			print('distance d12, a1, a2')
 			print('distance d23, a2, a3')
 			print('distance d34, a3, a4')
