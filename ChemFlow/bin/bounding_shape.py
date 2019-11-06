@@ -167,7 +167,7 @@ if __name__ == '__main__':
 	# compute bounding shape
 	if args.shape == 'box':
 		center, size = bounding_box(XYZ, args.padding)
-		print(' '.join(['{:.3f}'.format(x) for x in center + size]))
+		print(' '.join(['{:.3f}'.format(x) for x in center + size*2]))
 		if args.pymol:
 			print('pseudoatom a1, pos={}'.format([center[0]+size[0],center[1]+size[1],center[2]+size[2]]))
 			print('pseudoatom a2, pos={}'.format([center[0]+size[0],center[1]+size[1],center[2]-size[2]]))

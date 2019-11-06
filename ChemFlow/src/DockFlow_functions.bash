@@ -84,7 +84,7 @@ case ${JOB_SCHEDULLER} in
                 --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
                 --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} \
                 --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
-                --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
+                --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} --cpu 1 &>/dev/null " >> dock.xargs
         done
     ;;
     esac
@@ -362,7 +362,7 @@ DockFlow_prepare_ligands() {
 #
 #        Author: Dona de Francquen
 #
-#        UPDATE: fri. july 6 14:49:50 CEST 2018
+#        UPDATE: Ter Nov  5 12:10:24 -03 2019
 #
 #===============================================================================
 cd ${RUNDIR}
@@ -380,18 +380,21 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     case ${DOCK_PROGRAM} in
     "PLANTS")
         if [ ! -f ${LIGAND}/ligand.mol2 ] ; then
-            cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+            echo "cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2"
         fi
     ;;
     "VINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-            pythonsh $(command -v prepare_ligand4.py) \
+            echo "pythonsh $(command -v prepare_ligand4.py) \
             -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
-            -o ${LIGAND}/ligand.pdbqt &>/dev/null
+            -o ${LIGAND}/ligand.pdbqt &>/dev/null"
         fi
     ;;
     esac
-done
+done > LigFlow.xargs
+
+cat LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+
 echo "[ DONE ]"
 }
 

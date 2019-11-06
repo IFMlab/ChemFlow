@@ -14,9 +14,9 @@ LigFlow_write_origin_ligands() {
 #                ${DOCK_PROGRAM}
 #                ${WORKDIR}
 #
-#        Author: Dona de Francquen
+#        Author: Dona de Francquen, Diego Enry Barreto Gomes.
 #
-#        UPDATE: fri. july 6 14:49:50 CEST 2018
+#        UPDATE: Ter Nov  5 10:08:11 -03 2019
 #
 #===============================================================================
 OLDIFS=$IFS
@@ -33,16 +33,17 @@ done < ${LIGAND_FILE}
 IFS=${OLDIFS}
 
 
+# Removed Ter Nov  5 10:50:45 -03 2019
 #
 # QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
 #
-cd ${RUNDIR}/original/
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -pf y -dr no &>/dev/null
-    if [ -f tmp.mol2 ]; then mv tmp.mol2 ${LIGAND}.mol2; fi
-done
-rm -f ANTECHAMBER_*
-rm ATOMTYPE.INF
+#cd ${RUNDIR}/original/
+#for LIGAND in ${LIGAND_LIST[@]} ; do
+#    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -pf y -dr no &>/dev/null
+#    if [ -f tmp.mol2 ]; then mv tmp.mol2 ${LIGAND}.mol2; fi
+#done
+#rm -f ANTECHAMBER_*
+#rm ATOMTYPE.INF
 #
 #
 #
