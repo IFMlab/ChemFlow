@@ -86,3 +86,11 @@ ELAPSED_TIME=$(($SECONDS - $START_TIME))
 echo "
 [ LigFlow ] Normal completion in ${ELAPSED_TIME} seconds.
 "
+case ${CHARGE} in
+"bcc")
+    echo -e "[ LigFlow ] Normal completion in ${ELAPSED_TIME} seconds." >> TIME_BCC.log
+;;
+"resp")
+    echo -e "[ LigFlow ] Normal completion in ${ELAPSED_TIME} seconds." >> TIME_RESP.log
+esac
+
