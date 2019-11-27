@@ -103,6 +103,7 @@ LigFlow_filter_ligand_list() {
 NEW_LIGAND_LIST=""
 NEW_LIGAND_LIST_INCHIKEY=""
 NEW_LIGAND_LIST_INCHI=""
+NEW_LIGAND_SMILES=""
 
 # Step 1 - Check if ChemBase and ChemBase.lst exist
 #if [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.sdf ] ; then
@@ -113,7 +114,7 @@ then
     CHEMBASE_LIST=($CHEMBASE_LIST)
 else
     CHEMBASE_LIST=''
-    echo "#name InChI InChIKey" > ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst
+    echo "#name InChI InChIKey Unique_smile" > ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst
     echo -n > ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2
 fi
   # Step 3 - Populate COMPUTED_LIST of charges
@@ -132,6 +133,7 @@ fi
     for LIGAND in ${LIGAND_LIST[@]} ; do 
         inchi=$(molconvert -g inchi:AuxNone,key ${RUNDIR}/original/${LIGAND}.sdf | grep InChI= |  cut -d'=' -f2)
         inchikey=$(molconvert -g inchi:AuxNone,key ${RUNDIR}/original/${LIGAND}.sdf | grep InChIKey |  cut -d'=' -f2)
+        smile_unique=$(molconvert smiles:+u ${RUNDIR}/original/${LIGAND}.sdf)
         # If found at LigFlow, proceed to next LIGAND.
         #case "${COMPUTED_LIST[@]}" in  *"${LIGAND}"*) continue ;; esac
  
@@ -139,14 +141,16 @@ fi
         #case "${CHEMBASE_LIST[@]}" in  *"${LIGAND}"*) continue ;; esac
         # Add list of ligands to compute
         #if [ "$(cat ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst | grep ${LIGAND})" != "${LIGAND}" ] 
-         if [ "$(cat ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst | cut -d' ' -f2 | grep ${inchikey})" != "${inchikey}" ]       
+         #if [ "$(cat ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst | cut -d' ' -f2 | grep ${inchikey})" != "${inchikey}" ]    
+        if [ "$(cat ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst | grep ${smile_unique})" != "${smile_unique}" ]    
         then    
             NEW_LIGAND_LIST[$counter]=${LIGAND}
             NEW_LIGAND_LIST_INCHIKEY[$counter]=${inchikey}
             NEW_LIGAND_LIST_INCHI[$counter]=${inchi}
+            NEW_LIGAND_LIST_SMILES[$counter]=${smile_unique}
             let counter++
         else :
-            echo ${LIGAND} ${inchi} ${inchikey} >> ${RUNDIR}/README.txt
+            echo ${LIGAND} ${inchi} ${inchikey} ${smile_unique} >> ${RUNDIR}/README.txt
             cpt=1
         fi     
     done
@@ -158,6 +162,38 @@ fi
 unset LIGAND_LIST
 LIGAND_LIST=(${NEW_LIGAND_LIST[@]})
 unset NEW_LIGAND_LIST
+}
+
+LigFlow_write_HPC_header2() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_write_HPC_header
+#   DESCRIPTION: Add the HPC header to DockFlow.run.
+#                Default or provided header.
+#
+#    PARAMETERS: ${RUNDIR}
+#                ${CHEMFLOW_HOME}
+#                ${JOB_SCHEDULLER}
+#                ${WORKDIR}
+#                ${HEADER_PROVIDED}
+#                ${HEADER_FILE}
+#
+#       RETURNS: ScoreFlow.pbs for ${LIGAND}
+#===============================================================================
+if [ ${HEADER_PROVIDED} != "yes" ] ; then
+    file=$(cat ${CHEMFLOW_HOME}/templates/dock_${JOB_SCHEDULLER,,}.template)
+    eval echo \""${file}"\" > ${RUNDIR}/LigFlow.header
+else
+    cp ${HEADER_FILE} ${RUNDIR}/LigFlow.header
+fi
+case "${JOB_SCHEDULLER}" in
+        "PBS")
+            sed "/PBS -N .*$/ s/$/_${first}/" ${RUNDIR}/LigFlow.header > ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+        ;;
+        "SLURM")
+            sed "/--job-name=.*$/  s/$/_${LIGAND}/" ${RUNDIR}/LigFlow.header > ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+        ;;
+        esac
+
 }
 
 LigFlow_write_HPC_header() {
@@ -243,6 +279,7 @@ case ${JOB_SCHEDULLER} in
         echo ${LIGAND}  >> antechamber_prep_${CHARGE}.log   
         case ${CHARGE} in
         "bcc")
+            START_TIME_BCC=$SECONDS
             echo  "Starting the AM1-bcc calculation for ligand ${LIGAND}. This will serve as a structure sanity check. Please look at the log file for more information."
             if [ "${CHARGE_FILE}" == '' ] ; then
             # Compute am1-bcc charges
@@ -254,12 +291,17 @@ case ${JOB_SCHEDULLER} in
                 #antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr y -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log 
                 antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log
             fi
+            ELAPSED_TIME_BCC=$(($SECONDS - $START_TIME_BCC))
+            echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_BCC} seconds."
+            echo -e "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_BCC} seconds." >> TIME_BCC.log
+            echo -e "\n\n\n" >> TIME_BCC.log
             echo -e "AM1-BCC calculation finished for ligand ${LIGAND}. Remember to check the log file for error messages.\n\n"
             echo -e "\n\n\n" >> antechamber_prep_${CHARGE}.log
             checkpoint1
         ;;
         "resp")
         #   Prepare Gaussian
+            START_TIME_RESP=$SECONDS
             if [ "${CHARGE_FILE}" == '' ] ; then  
                 antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/resp/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${LIGAND}/${LIGAND} -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y &>> antechamber_prep_resp.log   
             else
@@ -276,11 +318,15 @@ case ${JOB_SCHEDULLER} in
             echo ${LIGAND}  >> antechamber_gauss.log
             antechamber -i ${RUNDIR}/resp/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn ${LIGAND} -pf y -dr y -at gaff2 &>> antechamber_gauss.log
             echo -e "\n\n\n" >> antechamber_gauss.log
+            ELAPSED_TIME_RESP=$(($SECONDS - $START_TIME_RESP))
+            echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_RESP} seconds."
+            echo -e "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_RESP} seconds." >> TIME_RESP.log
+            echo -e "\n\n\n" >> TIME_RESP.log
         esac
         cat ${RUNDIR}/${CHARGE}/${LIGAND}/${LIGAND}.mol2 >> ALL_${CHARGE}.mol2
         #echo -e "\n\n\n" >> ALL_${CHARGE}.mol2
         # add in the chembase
-        echo ${LIGAND} ${NEW_LIGAND_LIST_INCHI[$cpt_inch]} ${NEW_LIGAND_LIST_INCHIKEY[$cpt_inch]} >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst
+        echo ${LIGAND} ${NEW_LIGAND_LIST_INCHI[$cpt_inch]} ${NEW_LIGAND_LIST_INCHIKEY[$cpt_inch]} ${NEW_LIGAND_LIST_SMILES[$cpt_inch]} >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst
         cat ${RUNDIR}/${CHARGE}/${LIGAND}/${LIGAND}.mol2 >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2
         echo -e "\n\n\n" >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2
         let  cpt_inch++     
@@ -297,12 +343,52 @@ case ${JOB_SCHEDULLER} in
 ;;
 
 "SLURM"|"PBS")
-    echo -ne "\nHow many compounds per PBS/SLURM job? "
-    read nlig
+    #echo -ne "\nHow many Dockings per PBS/SLURM job? "
+    #read nlig
     # Check if the user gave a int
+    #nb=${nlig}
+    nlig=1
     nb=${nlig}
     not_a_number
+###
+if [ "${nb}" -eq "${nlig}" ] ; then
+	for LIGAND in ${LIGAND_LIST[@]} ; do
+		jobname="${LIGAND}"
+		LigFlow_write_HPC_header2
+		case ${CHARGE} in
+		    "bcc")
+		        # Compute am1-bcc charges
+		        if [ "${CHARGE_FILE}" == '' ] ; then
+		            echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/">>  LigFlow_bcc.${LIGAND}.xargs
+		        else
+		            net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
+		            echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 -nc ${net_charge} &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/">>  LigFlow_bcc.${LIGAND}.xargs
+		        fi
+		    ;;
+		    "resp")
+		    #   Prepare Gaussian
+		        if [ "${CHARGE_FILE}" == '' ] ; then
+		            echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch  ${RUNDIR}/resp/${LIGAND}  -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ;rm -rf /tmp/${USER}/${LIGAND}/" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+		        else
+		            net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
+		            echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch  ${RUNDIR}/resp/${LIGAND}  -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no -nc ${net_charge} &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+		        fi
+		        # Run Gaussian to optimize structure and generate electrostatic potential grid
+		        echo "g09 <${RUNDIR}/resp/${LIGAND}.gau>${RUNDIR}/resp/${LIGAND}.gout" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
 
+		        # Read Gaussian output and write new optimized ligand with RESP charges
+		        echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/resp/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+		    ;;
+		    esac
+		if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
+			sbatch LigFlow.slurm
+		elif [ "${JOB_SCHEDULLER}" == "PBS" ] ; then
+			qsub LigFlow.pbs
+		fi
+	done
+
+else 
+####
     for (( first=0;${first}<${#LIGAND_LIST[@]} ; first=${first}+${nlig} )) ; do
 #        echo -ne "Docking $first         \r"
         jobname="${first}"
@@ -354,6 +440,9 @@ case ${JOB_SCHEDULLER} in
             qsub LigFlow.pbs
         fi
     done
+###
+fi
+###
 ;;
 esac
 }
