@@ -249,6 +249,10 @@ else
     for LIGAND in ${LIGAND_LIST[@]} ; do
     cd ${RUNDIR}/${LIGAND}
 
+        if [ ! -f ligand.frcmod ] ; then
+            parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -f mol2 -s 2
+        fi
+
         if [ ${RUN_ONLY} == 'yes' ] ; then
             echo -e "cd ${RUNDIR}/${LIGAND}" > ScoreFlow.run
 

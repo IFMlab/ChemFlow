@@ -197,13 +197,17 @@ case ${JOB_SCHEDULLER} in
     if [ -f  LigFlow.run ] ; then
       rm -rf LigFlow.run
     fi
+    
+    if [ -f ${RUNDIR}/LigFlow.xargs ] ; then
+        rm ${RUNDIR}/LigFlow.xargs
+    fi
 
     for LIGAND in ${LIGAND_LIST[@]} ; do
         case ${CHARGE} in
         "bcc")
             if [ "${CHARGE_FILE}" == '' ] ; then
             # Compute am1-bcc charges
-                echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/">> ${RUNDIR}/LigFlow.xargs
+                echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ;  antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${LIGAND}_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; antechamber -i ${LIGAND}_gas.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log  ; rm -rf /tmp/${USER}/${LIGAND}/">> ${RUNDIR}/LigFlow.xargs
             else
                 net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
                 echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 -nc ${net_charge} &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/">> ${RUNDIR}/LigFlow.xargs
@@ -213,7 +217,8 @@ case ${JOB_SCHEDULLER} in
         "resp")
         #   Prepare Gaussian
             if [ "${CHARGE_FILE}" == '' ] ; then
-                antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch ${RUNDIR}/resp/${LIGAND} -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
+               antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o /tmp/${LIGAND}.mol2 -fo mol2 -s 2 -pf y -dr no -c gas &> antechamber.log 
+               antechamber -i /tmp/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch ${RUNDIR}/resp/${LIGAND} -gm %mem=8Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
 
             else
                 net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
