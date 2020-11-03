@@ -53,16 +53,7 @@ if [ ${DOCK_PROGRAM} == "PLANTS" ] ; then
     RECEPTOR_FILE="../receptor.mol2"
     if [ -z "${PLANTS_WATER}" -a -z "${File_plants_pre}" -a -z "${File_plants_fil}" ]; then
         echo 'ptututututut'
-        # echo "$(grep D_clustering ${RUNDIR}/receptor.mol2 | wc -l)"
-        # if [ "$(grep D_clustering ${RUNDIR}/receptor.mol2 | wc -l)" -gt 0 ] ;then 
-        #     file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config_D.in)
-        # elif [ "$(grep A_clustering ${RUNDIR}/receptor.mol2 | wc -l)" -gt 0 ] ;then
-        #     file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config_A_R.in)
-        # elif [ "$(grep R_clustering ${RUNDIR}/receptor.mol2 | wc -l)" -gt 0 ] ;then
-        #     file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config_A_R.in)
-        # else 
             file=$(cat ${CHEMFLOW_HOME}/templates/plants/plants_config_original.in)
-        # fi
     fi 
     if [ ! -z "${File_plants_pre}" ]; then
        file=$(cat ${File_plants_pre})
@@ -75,6 +66,22 @@ if [ ${DOCK_PROGRAM} == "PLANTS" ] ; then
     fi
     eval echo \""${file}"\" > ${RUNDIR}/dock_input.in
 fi
+
+if [ ${DOCK_PROGRAM} == "SMINA" ] ; then
+    # Write smina config
+    RECEPTOR_FILE="../receptor.mol2"
+    if [ -z "${File_vina_config}" -a -z "${File_vina_fil}" ]; then
+            file=$(cat ${CHEMFLOW_HOME}/templates/vina/config-basic.txt)
+    fi
+    if [ ! -z "${File_vina_config}" ]; then
+       file=$(cat ${File_vina_config})
+    fi
+    if [ ! -z "${File_vina_fil}" ]; then
+       file=$(cat ${File_vina_fil})
+    fi
+    eval echo \""${file}"\" > ${RUNDIR}/dock_input.txt
+fi
+
 
 case ${JOB_SCHEDULLER} in
 "None")
@@ -92,16 +99,34 @@ case ${JOB_SCHEDULLER} in
             echo "cd ${RUNDIR}/${LIGAND} ; echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ;  PLANTS1.2_64bit --mode screen ../dock_input.in &> PLANTS.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}" >> dock.xargs
         done
     ;;
+    "SMINA")
+        for LIGAND in ${LIGAND_LIST[@]} ; do
+            if [ ! -d ${RUNDIR}/${LIGAND}/SMINA ] ; then
+                echo "mkdir -p ${RUNDIR}/${LIGAND}/SMINA " >> dock.xargs
+            fi
+	    if [ ! -z  "${WORKDIR}/${conf_file}" ] ; then
+		    
+            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --config ${WORKDIR}/${conf_file} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/SMINA/output.log " >> dock.xargs
+            else
+	    echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --accurate_line --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/SMINA/output.log " >> dock.xargs
+            fi
+    done
+    
+    ;;
+    "QVINA")
+        for LIGAND in ${LIGAND_LIST[@]} ; do
+            if [ ! -d ${RUNDIR}/${LIGAND}/QVINA ] ; then
+                echo "mkdir -p ${RUNDIR}/${LIGAND}/QVINA " >> dock.xargs
+            fi
+            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; qvina02 --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/QVINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
+        done
+    ;;
     "VINA")
         for LIGAND in ${LIGAND_LIST[@]} ; do
             if [ ! -d ${RUNDIR}/${LIGAND}/VINA ] ; then
                 echo "mkdir -p ${RUNDIR}/${LIGAND}/VINA " >> dock.xargs
             fi
-            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
-                --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-                --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} \
-                --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
-                --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
+            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
         done
     ;;
     esac
@@ -127,6 +152,10 @@ case ${JOB_SCHEDULLER} in
             DockFlow_write_plants_HPC
         elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
             DockFlow_write_vina_HPC
+	elif [ "${DOCK_PROGRAM}" == "SMINA" ] ; then
+            DockFlow_write_smina_HPC
+        elif [ "${DOCK_PROGRAM}" == "QVINA" ] ; then
+            DockFlow_write_qvina_HPC
         fi
 
         DockFlow_write_HPC_header
@@ -151,6 +180,14 @@ case ${DOCK_PROGRAM} in
     FILE="bestranking.csv"
 ;;
 "VINA")
+    # If the folder exists but there's no "output.pdbqt" its incomplete.
+    FILE="output.pdbqt"
+;;
+"SMINA")
+    # If the folder exists but there's no "output.pdbqt" its incomplete.
+    FILE="output.pdbqt"
+;;
+"QVINA")
     # If the folder exists but there's no "output.pdbqt" its incomplete.
     FILE="output.pdbqt"
 ;;
@@ -191,12 +228,19 @@ case ${DOCK_PROGRAM} in
     # If the folder exists but there's no "bestranking.csv" its incomplete.
     FILE="bestranking.csv"
 ;;
+"QVINA")
+    # If the folder exists but there's no "output.pdbqt" its incomplete.
+    FILE="output.pdbqt"
+;;
+"SMINA")
+    # If the folder exists but there's no "output.pdbqt" its incomplete.
+    FILE="output.pdbqt"
+;;
 "VINA")
     # If the folder exists but there's no "output.pdbqt" its incomplete.
     FILE="output.pdbqt"
 ;;
 esac
-
 
 if [ "${OVERWRITE}" == "no" ] ; then # Useless to update ligand list if we overwrite
 
@@ -228,9 +272,6 @@ fi
 unset LIGAND_LIST
 LIGAND_LIST=(${DOCK_LIST[@]})
 }
-
-
-
 
 
 DockFlow_write_plants_HPC() {
@@ -284,7 +325,68 @@ for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
         --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
-        --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --cpu 1 &>/dev/null \" >> ${first}.xargs
+        --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/VINA/output.log --cpu 1 &>/dev/null \" >> ${first}.xargs
+done
+cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+"> DockFlow.run
+}
+
+DockFlow_write_qvina_HPC() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_write_qvina_HPC
+#   DESCRIPTION: Writes the vina script for each ligand (or range of ligands). for VINA
+#                Filenames and parameters are hardcoded.
+#    PARAMETERS:
+#               ${list[@]}  -   Array with all ligand names
+#               ${first}    -   First ligand in the array
+#               ${$nlig}    -   Number of compounds to dock
+#               ${NCORES}   -   Number of cores/node
+#
+#          NOTE: Must be run while at "${RUNDIR}
+#       RETURNS: -
+#===============================================================================
+echo "
+cd ${RUNDIR}
+
+if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
+for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
+    # qvina command.
+    echo \"mkdir -p ${RUNDIR}/\${LIGAND}/QVINA/ ; qvina02 --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
+        --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
+        --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
+        --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
+        --out ${RUNDIR}/\${LIGAND}/QVINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/QVINA/output.log --cpu 1 &>/dev/null \" >> ${first}.xargs
+done
+cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+"> DockFlow.run
+}
+
+DockFlow_write_smina_HPC() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_write_smina_HPC
+#   DESCRIPTION: Writes the vina script for each ligand (or range of ligands). for VINA
+#                Filenames and parameters are hardcoded.
+#    PARAMETERS:
+#               ${list[@]}  -   Array with all ligand names
+#               ${first}    -   First ligand in the array
+#               ${$nlig}    -   Number of compounds to dock
+#               ${NCORES}   -   Number of cores/node
+#
+#          NOTE: Must be run while at "${RUNDIR}
+#       RETURNS: -
+#===============================================================================
+echo "
+cd ${RUNDIR}
+
+if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
+for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
+    # Vina command.
+    echo \"mkdir -p ${RUNDIR}/\${LIGAND}/SMINA/ ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
+        --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
+        --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
+        --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
+	--accurate_line --scoring vinardo
+        --out ${RUNDIR}/\${LIGAND}/SMINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/SMINA/output.log --cpu 1 &>/dev/null \" >> ${first}.xargs
 done
 cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 "> DockFlow.run
@@ -340,7 +442,7 @@ DockFlow_prepare_receptor() {
 #   DESCRIPTION: Prepare the receptor for the docking:
 #                Copy the receptor file into the rundir folder as receptor.mol2
 #                 - PLANTS uses the mol2 file,
-#                 - VINA uses a pdbqt file. It is converted using AutoDockTools
+#                 - VINA, QVINA,SMINA use a pdbqt file. It is converted using AutoDockTools
 #                   and saved into the rundir folder as receptor.pdbqt
 #
 #    PARAMETERS: ${DOCK_PROGRAM}
@@ -354,14 +456,27 @@ DockFlow_prepare_receptor() {
 #
 #===============================================================================
 cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
+ case ${DOCK_PROGRAM} in
 
-if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
-    ${mgltools_folder}/bin/python \
-    ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
-    -r ${RUNDIR}/receptor.mol2 \
-    -o ${RUNDIR}/receptor.pdbqt
-fi
+   "VINA" )
+        if  [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
+    ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py -r ${RUNDIR}/receptor.mol2 -o ${RUNDIR}/receptor.pdbqt
+        fi
+   ;;
+   "QVINA")
+        if  [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
+    ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py -r ${RUNDIR}/receptor.mol2 -o ${RUNDIR}/receptor.pdbqt
+        fi
+   ;;
+   "SMINA")
+        if  [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
+    ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py -r ${RUNDIR}/receptor.mol2 -o ${RUNDIR}/receptor.pdbqt
+        fi
+   ;;
+
+    esac
 }
+
 
 
 DockFlow_prepare_ligands() {
@@ -399,22 +514,29 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     case ${DOCK_PROGRAM} in
     "PLANTS")
         if [ ! -f ${LIGAND}/ligand.mol2 ] ; then
-            #cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
-            #cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/bcc/${LIGAND}/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
             cp ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
         fi
     ;;
     "VINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
-            -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
-            -o ${LIGAND}/ligand.pdbqt
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -o ${LIGAND}/ligand.pdbqt
+        fi
+    ;;
+    "SMINA")
+        if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -o ${LIGAND}/ligand.pdbqt
+        fi
+    ;;
+    "QVINA")
+        if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -o ${LIGAND}/ligand.pdbqt
         fi
     ;;
     esac
 done
 echo "[ DONE ]"
 }
+
 
 DockFlow_divide_input_ligands() {
 #===  FUNCTION  ================================================================
@@ -743,6 +865,142 @@ if [ -f DockFlow.csv ] ; then
 fi
 }
 
+DockFlow_postdock_smina_results() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_PostDock_SminaResults
+#   DESCRIPTION: Post processing DockFlow run while using vina.
+#                Extract results and organize files to ChemFlow standard.
+#
+#    PARAMETERS: ${PROJECT}
+#                ${LIGAND_LIST}
+#
+#       RETURNS: docked_ligands.mol2, DockFlow.csv, top.csv
+#
+#        Author: Dona de Francquen
+#
+#        UPDATE: fri. July 6 14:49:50 CEST 2018
+#
+#===============================================================================
+
+
+if [ ! -z ${POSTPROCESS_ALL} ] ; then
+  unset LIGAND_LIST
+  LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
+fi
+
+for LIGAND in ${LIGAND_LIST[@]}; do
+    if [ ! -f  ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt ] ; then
+        echo "[ ERROR ] Smina's result for ligand ${LIGAND} does not exists."
+        FAIL="true"
+    else
+        # Fill the DockFlow.csv file
+	unset value
+	value=$(awk '/REMARK minimizedAffinity/ {print $3;exit;}' ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt )
+	zero=0
+
+	if awk 'BEGIN {exit !('$value' != '$zero')}' ; then
+        awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK minimizedAffinity / {print "SMINA",protocol,target,ligand,conf,$3; conf++}' ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt |  head -${DOCK_POSES}  >> DockFlow.csv
+	
+	else
+	awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK minimizedRMSD / {print "SMINA-MIN",protocol,target,ligand,conf,$3; conf++}' ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt |  head -${DOCK_POSES}  >> DockFlow-min.csv
+        fi
+
+	# Create the docked_ligands.mol2, a file containing every conformations of every ligands.
+        if [ ! -f  ${RUNDIR}/${LIGAND}/SMINA/output.mol2 ] ; then
+            babel -h -ipdbqt ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt -omol2 ${RUNDIR}/${LIGAND}/SMINA/output.mol2
+        fi
+
+        OLDIFS=$IFS
+        IFS='%'
+        n=0
+        nt=0
+        while read line  && [ "${n}" -le ${DOCK_POSES} ] ; do
+            if [ "${line}" == "@<TRIPOS>MOLECULE" ] ; then
+                let n++
+                if [ "${n}" -le ${DOCK_POSES} ] ; then
+                    echo "${line}" >>  ${RUNDIR}/docked_ligands.mol2
+                fi
+            elif [ "${line}" == "${RUNDIR}/${LIGAND}/SMINA/output.pdbqt" ] ; then
+                let nt++
+                echo ${LIGAND}_conf_${nt} >>  ${RUNDIR}/docked_ligands.mol2
+            else
+                echo "${line}" >> ${RUNDIR}/docked_ligands.mol2
+            fi
+        done < ${RUNDIR}/${LIGAND}/SMINA/output.mol2
+        IFS=${OLDIFS}
+fi
+done
+
+if [ -f DockFlow.csv ] ; then
+    sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
+    elif [ -f DockFlow-min.csv ] ; then
+    sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow-min.csv
+fi
+}
+
+
+DockFlow_postdock_qvina_results() {
+#===  FUNCTION  ================================================================
+#          NAME: DockFlow_PostDock_QvinaResults
+#   DESCRIPTION: Post processing DockFlow run while using vina.
+#                Extract results and organize files to ChemFlow standard.
+#
+#    PARAMETERS: ${PROJECT}
+#                ${LIGAND_LIST}
+#
+#       RETURNS: docked_ligands.mol2, DockFlow.csv, top.csv
+#
+#        Author: Dona de Francquen
+#
+#        UPDATE: fri. July 6 14:49:50 CEST 2018
+#
+#===============================================================================
+
+
+if [ ! -z ${POSTPROCESS_ALL} ] ; then
+  unset LIGAND_LIST
+  LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
+fi
+
+for LIGAND in ${LIGAND_LIST[@]}; do
+    if [ ! -f  ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt ] ; then
+        echo "[ ERROR ] Qvina's result for ligand ${LIGAND} does not exists."
+        FAIL="true"
+    else
+        # Fill the DockFlow.csv file
+        awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK VINA RESULT/ {print "QVINA",protocol,target,ligand,conf,$4; conf++}' ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt |  head -${DOCK_POSES}  >> DockFlow.csv
+
+        # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
+        if [ ! -f  ${RUNDIR}/${LIGAND}/QVINA/output.mol2 ] ; then
+            babel -h -ipdbqt ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt -omol2 ${RUNDIR}/${LIGAND}/QVINA/output.mol2
+        fi
+
+        OLDIFS=$IFS
+        IFS='%'
+        n=0
+        nt=0
+        while read line  && [ "${n}" -le ${DOCK_POSES} ] ; do
+            if [ "${line}" == "@<TRIPOS>MOLECULE" ] ; then
+                let n++
+                if [ "${n}" -le ${DOCK_POSES} ] ; then
+                    echo "${line}" >>  ${RUNDIR}/docked_ligands.mol2
+                fi
+            elif [ "${line}" == "${RUNDIR}/${LIGAND}/QVINA/output.pdbqt" ] ; then
+                let nt++
+                echo ${LIGAND}_conf_${nt} >>  ${RUNDIR}/docked_ligands.mol2
+            else
+                echo "${line}" >> ${RUNDIR}/docked_ligands.mol2
+            fi
+        done < ${RUNDIR}/${LIGAND}/QVINA/output.mol2
+        IFS=${OLDIFS}
+    fi
+done
+
+if [ -f DockFlow.csv ] ; then
+    sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
+fi
+}
+
 
 DockFlow_postdock() {
 #===  FUNCTION  ================================================================
@@ -799,7 +1057,7 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
 
         # Cleanup
         if [ ! -f ${RUNDIR}/DockFlow.csv ] ; then
-            echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE" > DockFlow.csv
+		echo "DOCK_PROGRAM PROTOCOL RECEPTOR LIGAND POSE SCORE/RMSD(SMINA-MIN)" > DockFlow.csv
         fi
 
         # Organize to ChemFlow standard.
@@ -807,6 +1065,10 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
             DockFlow_postdock_plants_results
         elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
             DockFlow_postdock_vina_results
+        elif [ "${DOCK_PROGRAM}" == "SMINA" ] ; then
+            DockFlow_postdock_smina_results
+        elif [ "${DOCK_PROGRAM}" == "QVINA" ] ; then
+	    DockFlow_postdock_qvina_results 
         fi
 
     done
@@ -857,6 +1119,7 @@ DockFlow_summary() {
 #                ${JOB_SCHEDULLER}
 #                ${NCORES}
 #                ${OVERWRITE}
+#                
 #       RETURNS: -
 #
 #===============================================================================
@@ -877,7 +1140,7 @@ RECEPTOR FILE: $(relpath "${RECEPTOR_FILE}" "${WORKDIR}")
   LIGAND FILE: $(relpath "${LIGAND_FILE}"   "${WORKDIR}")
      NLIGANDS: ${NLIGANDS}
        NPOSES: ${DOCK_POSES}
-      PROGRAM: ${DOCK_PROGRAM}
+ DOCKING PROG: ${DOCKING_PROGRAM}
       SCORING: ${SCORING_FUNCTION}
        CENTER: ${DOCK_CENTER[@]}"
 case ${DOCK_PROGRAM} in
@@ -885,6 +1148,27 @@ case ${DOCK_PROGRAM} in
     echo "         SIZE: ${DOCK_LENGTH[@]} (X,Y,Z)"
     echo " EXHAUSTIVITY: ${EXHAUSTIVENESS}"
     echo " ENERGY RANGE: ${ENERGY_RANGE}"
+;;
+"QVINA")
+    echo "         SIZE: ${DOCK_LENGTH[@]} (X,Y,Z)"
+    echo " EXHAUSTIVITY: ${EXHAUSTIVENESS}"
+    echo " ENERGY RANGE: ${ENERGY_RANGE}"
+;;
+"SMINA")
+    echo "         SIZE: ${DOCK_LENGTH[@]} (X,Y,Z)"
+    echo " EXHAUSTIVITY: ${EXHAUSTIVENESS}"
+    echo " ENERGY RANGE: ${ENERGY_RANGE}"
+#    echo "  CONFIG FILE: ${conf_file}"
+    if [ ! -z "${File_vina_config}" ]; then
+        echo " INPUT SMINA: ${File_vina_config}"
+    fi
+    if [ ! -z "${File_vina_fil}" ]; then
+        echo " INPUT SMINA: ${File_vina_fil}" 
+    fi
+    if [ -n "${conf_file}" ] ; then
+	    echo " CONFIG FILE : ${conf_file}"
+    fi
+    echo " ACCURATE_LINE: yes "
 ;;
 "PLANTS")
     echo "       RADIUS: ${DOCK_RADIUS}"
@@ -938,6 +1222,7 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol
  -r/--receptor       : Receptor's mol2 file.
  -l/--ligand         : Ligands .mol2 input file.
  -p/--project        : ChemFlow project.
+ -dp/--program	     : Docking program
 
 Dock:
  --center            : X Y Z coordinates of the center of the binding site, separated by a space.
@@ -950,7 +1235,7 @@ exit 0
 
 
 DockFlow_help_full(){
-echo "DockFlow is a bash script designed to work with PLANTS or Vina.
+echo "DockFlow is a bash script designed to work with PLANTS, Vina, Qvina or Smina.
 
 It can perform an automatic VS based on information given by the user :
 ligands, receptor, binding site info, and extra options.
@@ -966,6 +1251,7 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol
 *-p/--project       STR : ChemFlow project
 *-r/--receptor     FILE : Receptor MOL2 file
 *-l/--ligand       FILE : Ligands  MOL2 file
+*-dp/--program	    STR : plants, vina, qvina, smina
 
 [ Post Processing ]
  --postprocess          : Process DockFlow output for the specified project/protocol/receptor.
@@ -977,7 +1263,7 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol
 [ Optional ]
  --protocol         STR : Name for this specific protocol [default]
  -n/--n-poses       INT : Number of poses per ligand to generate while docking [10]
- -sf/--function     STR : vina, chemplp, plp, plp95  [chemplp]
+ -sf/--function     STR : vina, chemplp, plp, plp95, vinardo, dkoes_fast, dkoes_scoring  [chemplp]
 
 [ Parallel execution ]
  -nc/--cores        INT : Number of cores per node [${NCORES}]
@@ -1003,11 +1289,43 @@ ________________________________________________________________________________
  --file_prefil     FILE : File input pre filled for PLANTS (.in)
  --file_filed      FILE : File input filled for PLANTS (.in)
 _________________________________________________________________________________
-[ Vina ]
+[ Vina & qvina ]
  --size            LIST : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
  --exhaustiveness   INT : Exhaustiveness of the global search [8]
  --energy_range   FLOAT : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
-_________________________________________________________________________________
+________________________________________________________________________________
+[ Smina option for config file ]
+
+ --size            LIST      : Size of the grid along the x, y and z axis, separated by a space [15 15 15]
+ --exhaustiveness   INT      : Exhaustiveness of the global search [8]
+ --energy_range   FLOAT      : Max energy difference (kcal/mol) between the best and worst poses displayed [3.00]
+ --flexres CHAIN:RESID       : flexible side chains specified by comma separated list 
+                               of chain:resid
+ --flexdist_ligand FILE      :Ligand MOL2 to use for flexdist 
+ --flexdist FLOAT            :Set all side chains within specified distance to 
+                              flexdist_ligand to flexible (to use with flex_ligand)
+ --autobox_ligand FILE       : Ligand to use for autobox
+ --autobox_add FLOAT         : Amount of buffer space to add to auto-generated box 
+                               (default +4 on all six sides) 
+ --no_lig                    : No ligand; for sampling/minimizing flexible residues
+ --scoring                   : Specify alternative scoring function [e.g. vinardo,dkoes_fast,dkoes_scoring]
+ --custom_scoring FILE       : Custom scoring function file
+ --custom_atoms FILE         : Custom atom type parameters file
+ --local_only                : Local search only using autobox (you probably
+                                want to use --minimize)
+ --minimize                  :  Energy minimization
+ --minimize_iters arg (=0)   : Number iterations of steepest descent; default 
+                               scales with rotors and usually isn't sufficient 
+                               for convergence
+ --accurate_line             : Use accurate line search
+ --out_flex FILE             : Ouput file for flexible receptor residues
+
+ --file_config          FILE : File input pre filled for SMINA (.in)
+ --file_filed_vina      FILE : File input filled for SMINA (.in)
+
+ [ For all the other possible options please consult : https://github.com/mwojcikowski/smina/blob/master/README ]
+__________________________________________________________________________________________________________________
+
 "
     # Not implemented in this version :
     # [ Post Processing ]
@@ -1016,7 +1334,6 @@ ________________________________________________________________________________
 
     exit 0
 }
-
 
 DockFlow_CLI() {
 if [ "$1" == "" ] ; then
@@ -1057,6 +1374,10 @@ while [[ $# -gt 0 ]]; do
             SCORING_FUNCTION="$2"
             shift
         ;;
+	"-dp"|"--program")
+	    DOCKING_PROGRAM="$2"
+	    shift
+	;;
         "--center")
             DOCK_CENTER=("$2" "$3" "$4")
             shift 3 # past argument
@@ -1076,6 +1397,14 @@ while [[ $# -gt 0 ]]; do
         ;;
         "--file_filed")
             File_plants_fil=$(abspath "$2")
+            shift # past argument
+        ;;
+        "--file_config")
+            File_vina_config=$(abspath "$2")
+            shift # past argument
+        ;;
+        "--file_filed-vina")
+            File_vina_fil=$(abspath "$2")
             shift # past argument
         ;;
         "-n"|"--n-poses")
@@ -1136,6 +1465,33 @@ while [[ $# -gt 0 ]]; do
             ENERGY_RANGE="$2"
             shift
         ;;
+	### QVINA arguments
+        "--exhaustiveness")
+            EXHAUSTIVENESS="$2"
+            shift
+        ;;
+        "--energy_range")
+            ENERGY_RANGE="$2"
+            shift
+        ;;
+        ### SMINA arguments
+        "--exhaustiveness")
+            EXHAUSTIVENESS="$2"
+            shift
+        ;;
+        "--energy_range")
+            ENERGY_RANGE="$2"
+            shift
+	;;
+        "--local_only")
+	   LOCAL="$2"
+           shift
+	;;
+        "--config")
+	  # conf_file=$(abspath "$2")
+	   conf_file="$2"
+	   shift
+	;;
         ## Final arguments
         "--overwrite")
             OVERWRITE="yes"
