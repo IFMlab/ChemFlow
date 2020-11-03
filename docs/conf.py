@@ -20,13 +20,13 @@
 # -- Project information -----------------------------------------------------
 
 project = 'ChemFlow'
-copyright = '2018, Diego Enry Barreto Gomes'
-author = 'Diego Enry Barreto Gomes, Dona de Francquen, Cedric Bouysset'
+copyright = '2016-2019, Diego Enry Barreto Gomes, Cedric Bouysset, Marco Cecchini'
+author = 'Diego Enry Barreto Gomes, Cedric Bouysset, Marco Cecchini'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.9'
+release = '1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -101,7 +101,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ChemFlowdoc'
+htmlhelp_basename = 'ChemFlowDoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -129,7 +129,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'ChemFlow.tex', 'ChemFlow Documentation',
-     'Diego Enry Barreto Gomes', 'manual'),
+     'Diego E. B. Gomes, Cedric Bouysset, Marco Cecchini', 'manual'),
 ]
 
 

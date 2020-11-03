@@ -1,6 +1,9 @@
 /*
 Custom theme settings
 */
+QMenuBar {
+  border-bottom: 1px solid red;
+}
 QTabBar::tab {
   border-top-left-radius: 2px;
   border-top-right-radius: 2px;
@@ -46,6 +49,13 @@ QWidget {
 }
 QPushButton:disabled {
   background-color: #474747;
+  color: #8e8e8e;
+}
+QCheckBox::indicator:disabled {
+  background-color: #8e8e8e;
+}
+QLabel:disabled,
+QCheckBox:disabled {
   color: #8e8e8e;
 }
 QLabel,

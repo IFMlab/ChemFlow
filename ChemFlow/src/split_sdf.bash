@@ -1,4 +1,7 @@
-#!/bin/bashi
+#!/bin/bash
+# 
+# Split SDF
+#
 OLDIFS=${IFS}
 IFS='%'
 

@@ -48,7 +48,13 @@ First for the b1-b7 from an undisclosed article (b1 = 1DWC crystal. b2-7 = Build
 
 .. code-block:: bash
 
-    python $(which SmilesTo3D.py) -i ligands.smi -o ligands.sdf --hydrogen -v
+    # Make sure you activate your ChemFlow environment
+    conda activate chemflow
+    
+    # Convert SMILES into 3D SDF structures.
+    SmilesTo3D.py -i ligands.smi -o ligands.sdf -v
+    
+    # Then into .MOL2 files.
     babel -isdf ligands.sdf -omol2 ligands.mol2
 
 The second set, with ligands from crystal structures, we also have the affinities.
@@ -56,14 +62,18 @@ We superimposed 1DWC 1DWB 1DWD 1D3D 1D3P 1D3Q 1D3T (1DWC as reference) and saved
 Hydrogens were added using SPORES (from PLANTS). (SPORES_64bit \\-\\-mode complete)
 
 Now the Decoys from `DUD-E database <http://dude.docking.org/targets/thrb>`_.
+
 Download, and get the first 14.
+
 wget http://dude.docking.org/targets/thrb/decoys_final.ism
+
 head -n 14  decoys_final.ism > decoys.smi
+
 [ WARNING ] On DUD-E the "field separator" is a SPACE instead of "\t", so you MUST specify it in SmilesTo3D.py.
 
 .. code-block:: bash
 
-    python $(which SmilesTo3D.py) -i decoys.smi -o decoys.sdf --hydrogen -v -d " "
+    SmilesTo3D.py -i decoys.smi -o decoys.sdf -v -d " "
     babel -isdf decoys.sdf -omol2 decoys.mol2
 
 To keep it simple, let's merge all compounds into a single mol2 file.
@@ -84,15 +94,17 @@ To perform this action run:
 
     LigFlow -p tutorial -l compounds.mol2
 
-In addition Lig\ *Flow* can be used to  build up a compound database with **advanced** charges such as AM1-BCC and RESP and their associated
-optimized structures, we'll see it's use latter to compute appropriate charges for the free energy calculations.
+In addition Lig\ *Flow* can be used to  build up a compound database with **advanced** charges such as AM1-BCC (--bcc) and RESP (--resp) and their associated optimized structures, we'll see it's use latter to compute appropriate charges for the free energy calculations.
+
+
 Since these calculations are computationally expensive we recomend the users to use a cluster/supercomputer. In the examples bellow
-we demonstrate how to derive the AM1-BCC and RESP charges using the two most widespread queueing systems in supercomputers (PBS and SLURM)
+we demonstrate how to derive the AM1-BCC and RESP charges using the two most widespread queueing systems in supercomputers using --pbs for PBS or --slurm for SLURM).
+By Now, let's just generate **AM1-BCC** charges.
 
 .. code-block:: bash
 
-    LigFlow -p tutorial -l compounds.mol2 --bcc --pbs
-    LigFlow -p tutorial -l compounds.mol2 --resp --slurm
+    LigFlow -p tutorial -l compounds.mol2 --bcc
+
 
 If a compound already exists in the ChemBase (Chem\ *Flow* database), Lig\ *Flow* won't compute the charges for this compound.
 
@@ -112,13 +124,13 @@ For PLANTS it's enough to have only the center.
 
 .. code-block:: bash
 
-    python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --shape sphere --padding 8.0
+    bounding_shape.py reference_ligand.mol2 --shape sphere --padding 8.0
 
 For VINA you need the center AND the lenghts of X, Y and Z.
 
 .. code-block:: bash
 
-    python $CHEMFLOW_HOME/bin/bounding_shape.py reference_ligand.mol2 --shape box --padding 8.0
+    bounding_shape.py reference_ligand.mol2 --shape box --padding 8.0
 
 Step 4: Run Dock\ *Flow* to predict the docking poses.
 ------------------------------------------------------
@@ -162,11 +174,19 @@ When tou are done, you can postprocess (\\-\\-postprocess) the results. Here, we
 Score\ *Flow*
 *************
 
-Step 6: Run Score\ *Flow* to rescore the previous docking poses (best 3 for each ligand)
+Rescoring through the MMGBSA method, using two protocols in **implicit solvent** first just minimization, then 1ns md simulation. To obtain results with better correlation with experimental binding affinities you may use **RESP** charges.
+
+Step 6.1: Run Lig\ *Flow* to compute **RESP** charges.
+----------------------------------------------------------------------------------------
+
+.. code-block:: bash
+
+    LigFlow -p tutorial -l compounds.mol2 --resp
+
+Step 6.2: Run Score\ *Flow* to rescore the previous docking poses (best 3 for each ligand)
 ----------------------------------------------------------------------------------------
 Here, we only keep on with plants results (tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2).
 
-Rescoring through the MMGBSA method, using two protocols in **implicit solvent** first just minimization, then 1ns md simulation :
 
 .. code-block:: bash
 

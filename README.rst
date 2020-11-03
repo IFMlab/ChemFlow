@@ -2,7 +2,7 @@
 ChemFlow |LOGO|
 ===============
 
-.. |LOGO| image:: https://user-images.githubusercontent.com/27850535/29564754-6b07a548-8743-11e7-9463-8626675b9481.png
+.. |LOGO| image:: CHEMFLOW_LOGO.PNG
                :alt: Logo
                :align: middle
 
@@ -30,3 +30,4 @@ PLANTS_ and SPORES_ are both available under a free academic license.
 
 .. _PLANTS: http://www.uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/plants.html
 .. _SPORES: http://www.mnf.uni-tuebingen.de/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/spores.html
+

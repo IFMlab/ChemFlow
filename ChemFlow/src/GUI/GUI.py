@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog, QMainWindow
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QDesktopWidget
 from PyQt5.QtCore import QProcess, QByteArray, QRegExp
 from webbrowser import open as browser_open
 from time import strftime, gmtime
@@ -15,7 +15,7 @@ from MainClasses import DialogAbout, DialogNewProject, DialogQuestion, LogfileDi
 from DockingClasses import DialogDockVina, DialogDockPlants
 from ScoringClasses import DialogScoreVina, DialogScorePlants, DialogScoreMmgbsa
 from ExecutionClasses import DialogRunLocal, DialogRunPbs, DialogRunSlurm
-from ToolsClasses import DialogToolBoundingShape, DialogToolSmilesTo3D
+from ToolsClasses import DialogToolBoundingShape
 from qt_creator.UImainwindow import Ui_MainWindow
 
 
@@ -23,6 +23,11 @@ class Main(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        # show the main window at the center of the screen
+        qtRectangle = self.frameGeometry()
+        centerPoint = QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
         # set window icon and logo
         icon = QtGui.QIcon()
         logo_path = os.path.realpath(os.path.join(WORKDIR, "img", "logo.png"))
@@ -32,6 +37,7 @@ class Main(QMainWindow, Ui_MainWindow):
         # set other icons
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(os.path.realpath(os.path.join(WORKDIR, "img", "run.png"))), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.commandLinkButton_smiles_run.setIcon(icon)
         self.commandLinkButton_ligflow_run.setIcon(icon)
         self.commandLinkButton_docking_run.setIcon(icon)
         self.commandLinkButton_scoring_run.setIcon(icon)
@@ -49,6 +55,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.actionAbout.triggered.connect(self.about)
         self.actionGitHub.triggered.connect(self.github)
         self.actionReport_issue.triggered.connect(self.report_issue)
+        self.actionDocumentation.triggered.connect(self.documentation)
         self.actionTutorial.triggered.connect(self.tutorial)
         self.actionDebug_mode.triggered.connect(self.debug_mode)
         self.actionLogfile.triggered.connect(self.read_logs)
@@ -63,6 +70,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.pushButton_docking_lig.clicked.connect(self.browse_ligand)
         self.pushButton_scoring_rec.clicked.connect(self.browse_receptor)
         self.pushButton_scoring_lig.clicked.connect(self.browse_ligand)
+        self.pushButton_smiles_input.clicked.connect(self.select_smiles_input)
+        self.lineEdit_smiles_input.textChanged.connect(lambda text: self.set_smiles_output(text))
         ## Protocol
         self.pushButton_docking_configure_protocol.clicked.connect(self.configure_docking_protocol)
         self.pushButton_scoring_configure_protocol.clicked.connect(self.configure_scoring_protocol)
@@ -71,6 +80,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.pushButton_docking_configure_job_queue.clicked.connect(self.configure_workflow_execution)
         self.pushButton_scoring_configure_job_queue.clicked.connect(self.configure_workflow_execution)
         ## Actions
+        self.commandLinkButton_smiles_run.clicked.connect(self.run_smiles)
         self.commandLinkButton_ligflow_run.clicked.connect(self.run_ligflow)
         self.commandLinkButton_docking_run.clicked.connect(self.run_docking)
         self.commandLinkButton_docking_postprocess.clicked.connect(self.run_docking_postprocess)
@@ -80,6 +90,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.commandLinkButton_scoring_archive.clicked.connect(self.run_scoring_archive)
         self.commandLinkButton_tools_run.clicked.connect(self.run_tools)
         self.action_buttons = [
+            self.commandLinkButton_smiles_run,
             self.commandLinkButton_ligflow_run,
             self.commandLinkButton_docking_run,
             self.commandLinkButton_docking_postprocess,
@@ -133,8 +144,11 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def tutorial(self):
         """Open the tutorial section in a web browser"""
-        # TODO update link when commit to master branch
-        browser_open('https://github.com/IFMlab/ChemFlow/blob/devel/tutorial/TUTORIAL.rst')
+        browser_open('https://chemflow-docs.readthedocs.io/en/latest/tutorial.html')
+
+    def documentation(self):
+        """Open the documentation in a web browser"""
+        browser_open('http://chemflow.cc')
 
     def debug_mode(self):
         """Activate the debug mode. Prints commands instead of running them"""
@@ -208,6 +222,21 @@ class Main(QMainWindow, Ui_MainWindow):
             self.lineEdit_docking_lig.setText(self.input['Ligand'])
             self.lineEdit_scoring_lig.setText(self.input['Ligand'])
 
+    def select_smiles_input(self):
+        filetypes =  "All Files (*)"
+        value, _ = QFileDialog.getOpenFileName(None,"Select input SMILES file", os.getcwd(), filetypes)
+        if value:
+            self.lineEdit_smiles_input.setText(value)
+
+    def set_smiles_output(self, text):
+        """Suggest path to SDF output file automatically from SMILES input file"""
+        output = self.lineEdit_smiles_output.text()
+        output_dir = os.path.dirname(output)
+        input_dir = os.path.dirname(text)
+        if (output_dir[:len(input_dir)] in input_dir) or (output in EMPTY_VALUES):
+            filename, file_extension = os.path.splitext(text)
+            self.lineEdit_smiles_output.setText('{}.sdf'.format(filename))
+
     def configure_docking_protocol(self):
         '''Configure the docking protocol'''
         self.input['docking_software'] = self.comboBox_docking_software.currentText()
@@ -247,11 +276,11 @@ class Main(QMainWindow, Ui_MainWindow):
     def configure_workflow_execution(self):
         '''Configure how the workflow is going to run on the local machine'''
         # get the selected execution mode
-        if self.tabWidget.currentIndex() == 0: # LigFlow
+        if self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_LigFlow): # LigFlow
             self.input['JobQueue'] = self.comboBox_ligflow_job_queue.currentText()
-        elif self.tabWidget.currentIndex() == 1: # DockFlow
+        elif self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_DockFlow): # DockFlow
             self.input['JobQueue'] = self.comboBox_docking_job_queue.currentText()
-        elif self.tabWidget.currentIndex() == 2: # ScoreFlow
+        elif self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_ScoreFlow): # ScoreFlow
             self.input['JobQueue'] = self.comboBox_scoring_job_queue.currentText()
 
         # launch appropriate dialog
@@ -271,11 +300,11 @@ class Main(QMainWindow, Ui_MainWindow):
         if workflow_execution:
             for kw in workflow_execution:
                 self.input[kw] = workflow_execution[kw]
-            if self.tabWidget.currentIndex() == 0: # LigFlow
+            if self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_LigFlow): # LigFlow
                 self.ligflow_execution = True
-            elif self.tabWidget.currentIndex() == 1: # DockFlow
+            elif self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_DockFlow): # DockFlow
                 self.docking_execution = True
-            elif self.tabWidget.currentIndex() == 2: # ScoreFlow
+            elif self.tabWidget.currentIndex() == self.tabWidget.indexOf(self.tab_ScoreFlow): # ScoreFlow
                 self.scoring_execution = True
 
     def check_ligflow_required_args(self):
@@ -332,6 +361,37 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.input['Protocol'] in EMPTY_VALUES:
             missing.append('- Protocol name')
         return missing
+
+    def run_smiles(self):
+        """Run SmilesTo3D.py to create a single 3D conformation per SMILES"""
+        missing = []
+        self.input['InputFile'] = self.lineEdit_smiles_input.text()
+        self.input['OutputFile'] = self.lineEdit_smiles_output.text()
+        self.input['SmilesColumn'] = self.spinBox_smiles_col.value()
+        self.input['NamesColumn'] = self.spinBox_names_col.value()
+        self.input['NThreads'] = self.spinBox_nthreads.value()
+        self.input['Header'] = self.checkBox_header.isChecked()
+        self.input['NoHydrogen'] = self.checkBox_hydrogen.isChecked()
+        self.input['Verbose'] = self.checkBox_verbose.isChecked()
+        self.input['MPI'] = self.checkBox_mpi.isChecked()
+        value = self.comboBox_delimiter.currentText()
+        if value == 'Tab':
+            delimiter = '\t'
+        elif value == 'Space':
+            delimiter = ' '
+        else:
+            delimiter = value
+        self.input['Delimiter'] = delimiter
+        self.input['Method'] = self.comboBox_method.currentText().lower()
+        if self.input['InputFile'] in EMPTY_VALUES:
+            missing.append('- Input SMILES file')
+        if self.input['OutputFile'] in EMPTY_VALUES:
+            missing.append('- Output SDF file')
+        if missing:
+            missingParametersDialog(*missing)
+        else:
+            # Execute
+            self.execute_command(self.build_smiles_command())
 
     def run_ligflow(self):
         '''Run ligand preparation with LigFlow'''
@@ -467,8 +527,6 @@ class Main(QMainWindow, Ui_MainWindow):
         """Set the description label for ChemFlow tools"""
         if tool == 'Bounding shape':
             self.label_tools_description.setText('Reads a mol2 file and returns the center and radius/size of the smallest shape containing all the atoms of the given molecule.')
-        elif tool == 'SMILES to 3D':
-            self.label_tools_description.setText('Generates 3D structures in SDF format from SMILES, using RDKIT.')
         else:
             self.label_tools_description.setText('')
 
@@ -482,8 +540,6 @@ class Main(QMainWindow, Ui_MainWindow):
             self.input['Tool'] = tool
             if tool == 'Bounding shape':
                 tool_dialog = DialogToolBoundingShape()
-            elif tool == 'SMILES to 3D':
-                tool_dialog = DialogToolSmilesTo3D()
             tool_dialog.exec_()
             try:
                 tool_parameters = tool_dialog.values
@@ -500,6 +556,7 @@ class Main(QMainWindow, Ui_MainWindow):
         except KeyError:
             errorDialog(message="Please configure a ChemFlow tool first")
         else:
+            # Bounding shape
             if self.input['Tool'] == 'Bounding shape':
                 command = ['bounding_shape.py']
                 command.append(self.input['InputFile'])
@@ -507,24 +564,27 @@ class Main(QMainWindow, Ui_MainWindow):
                 command.extend(['--padding', self.input['Padding']])
                 if self.input['PyMOL']:
                     command.append('--pymol')
-            elif self.input['Tool'] == 'SMILES to 3D':
-                command = ['SmilesTo3D.py']
-                command.extend(['-i', self.input['InputFile']])
-                command.extend(['-o', self.input['OutputFile']])
-                command.extend(['-sc', self.input['SmilesColumn']])
-                command.extend(['-nc', self.input['NamesColumn']])
-                command.extend(['-d', self.input['Delimiter']])
-                command.extend(['-m', self.input['Method']])
-                command.extend(['-nt', self.input['NThreads']])
-                if self.input['Header']:
-                    command.append('--header')
-                if self.input['AllHydrogens']:
-                    command.append('--hydrogen')
-                if self.input['Verbose']:
-                    command.append('-v')
-                if self.input['MPI']:
-                    command.append('--mpi')
+            # Run
             self.execute_command(command)
+
+    def build_smiles_command(self):
+        command = ['SmilesTo3D.py']
+        command.extend(['-i', self.input['InputFile']])
+        command.extend(['-o', self.input['OutputFile']])
+        command.extend(['-sc', self.input['SmilesColumn']])
+        command.extend(['-nc', self.input['NamesColumn']])
+        command.extend(['-d', '\"' + self.input['Delimiter'] + '\"'])
+        command.extend(['-m', self.input['Method']])
+        command.extend(['-nt', self.input['NThreads']])
+        if self.input['Header']:
+            command.append('--header')
+        if self.input['NoHydrogen']:
+            command.append('-noh')
+        if self.input['Verbose']:
+            command.append('-v')
+        if self.input['MPI']:
+            command.append('--mpi')
+        return command
 
     def build_ligflow_command(self):
         command = ['LigFlow']
@@ -730,6 +790,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.display(command)
         self.summary_text = ''
         self.display('[ ChemFlow ] {} was spawned with PID {}'.format(self.process.program(), self.process.processId()))
+        self.statusBar.showMessage('Running {}'.format(self.process.program()), 3000)
         # Prevent user from launching other commands
         for button in self.action_buttons:
             button.setEnabled(False)
@@ -738,6 +799,7 @@ class Main(QMainWindow, Ui_MainWindow):
         """Routine launched when a QProcess is finished"""
         self.display('[ ChemFlow ] {} process ended with exit status {}'.format(self.process.program(), status))
         self.pushButton_kill.setEnabled(False)
+        self.statusBar.showMessage('Finished running {}'.format(self.process.program()), 3000)
         # Allow user to send new commands
         for button in self.action_buttons:
             button.setEnabled(True)

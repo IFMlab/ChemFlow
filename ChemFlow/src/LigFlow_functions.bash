@@ -14,9 +14,9 @@ LigFlow_write_origin_ligands() {
 #                ${DOCK_PROGRAM}
 #                ${WORKDIR}
 #
-#        Author: Dona de Francquen
+#        Author: Dona de Francquen, Diego Enry Barreto Gomes.
 #
-#        UPDATE: fri. july 6 14:49:50 CEST 2018
+#        UPDATE: Ter Nov  5 10:08:11 -03 2019
 #
 #===============================================================================
 OLDIFS=$IFS
@@ -33,16 +33,17 @@ done < ${LIGAND_FILE}
 IFS=${OLDIFS}
 
 
+# Removed Ter Nov  5 10:50:45 -03 2019
 #
 # QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
 #
-cd ${RUNDIR}/original/
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -dr no &>/dev/null
-    if [ -f tmp.mol2 ]; then mv tmp.mol2 ${LIGAND}.mol2; fi
-done
-rm -f ANTECHAMBER_*
-rm ATOMTYPE.INF
+#cd ${RUNDIR}/original/
+#for LIGAND in ${LIGAND_LIST[@]} ; do
+#    antechamber -i ${LIGAND}.mol2 -o tmp.mol2 -fi mol2 -fo mol2 -at sybyl -pf y -dr no &>/dev/null
+#    if [ -f tmp.mol2 ]; then mv tmp.mol2 ${LIGAND}.mol2; fi
+#done
+#rm -f ANTECHAMBER_*
+#rm ATOMTYPE.INF
 #
 #
 #
@@ -76,31 +77,52 @@ fi
 }
 
 
+
 LigFlow_filter_ligand_list() {
+
 NEW_LIGAND_LIST=""
 
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    DONE_CHARGE="false"
+# Step 1 - Check if ChemBase and ChemBase.lst exist
+if [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 ] ; then
 
-    if [ "${DONE_CHARGE}" == "false" ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst ] && [ -s ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 ] ; then
-        if [ "$(grep ${LIGAND} ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)" == ${LIGAND} ] ; then
-            DONE_CHARGE="true"
-        fi
-    fi
-    if [ "${DONE_CHARGE}" == "false" ] && [ -f ${RUNDIR}/${CHARGE}/${LIGAND}.mol2 ] ; then
-        DONE_CHARGE="true"
-    fi
-    if [ "${DONE_CHARGE}" == "false" ] ; then
-        if [ ! -n "`echo ${NEW_LIGAND_LIST} | xargs -n1 echo | grep -e \"^${LIGAND}$\"`" ] ; then
-            NEW_LIGAND_LIST="${NEW_LIGAND_LIST} $LIGAND"
-        fi
-    fi
-done
+  # Step 2 - Populate CHEMBASE_LIST
+    CHEMBASE_LIST=$(cat ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)
+    CHEMBASE_LIST=($CHEMBASE_LIST)
+else
+    CHEMBASE_LIST=''
+fi
+
+  # Step 3 - Populate COMPUTED_LIST of charges
+if [ -d ${RUNDIR}/${CHARGE}/ ] ; then
+    COMPUTED_LIST=$(ls -U ${RUNDIR}/${CHARGE}/ | grep mol2 | sed s/\.mol2// )
+    COMPUTED_LIST=($COMPUTED_LIST)
+else
+    COMPUTED_LIST=''
+fi
+
+  # Step 3 - Check if LIGAND already exists on CHEMBASE
+    echo "Checking for precomputed charges. Please wait ..."
+
+    conter=0
+    for LIGAND in ${LIGAND_LIST[@]} ; do 
+
+        # If found at LigFlow, proceed to next LIGAND.
+        case "${COMPUTED_LIST[@]}" in  *"${LIGAND}"*) continue ;; esac
+ 
+        # If found at ChemBase, proceed to next LIGAND.
+        case "${CHEMBASE_LIST[@]}" in  *"${LIGAND}"*) continue ;; esac
+
+        # Add list of ligands to compute
+        NEW_LIGAND_LIST[$counter]=${LIGAND}
+        let counter++     
+        
+    done
 
 unset LIGAND_LIST
 LIGAND_LIST=(${NEW_LIGAND_LIST[@]})
-}
+unset NEW_LIGAND_LIST
 
+}
 
 LigFlow_write_HPC_header() {
 #===  FUNCTION  ================================================================
@@ -146,8 +168,10 @@ fi
 
 LigFlow_prepare_ligands_charges() {
 
-# Actualize the ligand list
+
+# UPDATE the ligand list
 LigFlow_filter_ligand_list
+
 NCHARGE=${#LIGAND_LIST[@]}
 
 if [ ${NCHARGE} == 0 ] ; then
@@ -156,11 +180,13 @@ else
     echo "There are ${NLIGANDS} compounds and ${NCHARGE} remaining to prepare"
 fi
 
+
 cd ${RUNDIR}
 
 if [ ! -d ${RUNDIR}/gas ] ; then
     mkdir -p ${RUNDIR}/gas
 fi
+
 
 if [ ! -d ${RUNDIR}/${CHARGE} ] ; then
     mkdir -p ${RUNDIR}/${CHARGE}
@@ -171,28 +197,33 @@ case ${JOB_SCHEDULLER} in
     if [ -f  LigFlow.run ] ; then
       rm -rf LigFlow.run
     fi
-
-    for LIGAND in ${LIGAND_LIST[@]} ; do
-        if [ ! -f ${RUNDIR}/gas/${LIGAND}.mol2 ] ; then
-            echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/gas/${LIGAND}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/" >>  ${RUNDIR}/LigFlow.xargs
-        fi
-    done
-
+    
     if [ -f ${RUNDIR}/LigFlow.xargs ] ; then
-        cat ${RUNDIR}/LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+        rm ${RUNDIR}/LigFlow.xargs
     fi
-    # Clean up
-    rm -rf ${RUNDIR}/LigFlow.xargs
 
     for LIGAND in ${LIGAND_LIST[@]} ; do
         case ${CHARGE} in
         "bcc")
+            if [ "${CHARGE_FILE}" == '' ] ; then
             # Compute am1-bcc charges
-            echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/">> ${RUNDIR}/LigFlow.xargs
+                echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ;  antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${LIGAND}_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; antechamber -i ${LIGAND}_gas.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log  ; rm -rf /tmp/${USER}/${LIGAND}/">> ${RUNDIR}/LigFlow.xargs
+            else
+                net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
+                echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 -nc ${net_charge} &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/">> ${RUNDIR}/LigFlow.xargs
+
+            fi
         ;;
         "resp")
         #   Prepare Gaussian
-            antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch ${RUNDIR}/resp/${LIGAND} -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
+            if [ "${CHARGE_FILE}" == '' ] ; then
+               antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o /tmp/${LIGAND}.mol2 -fo mol2 -s 2 -pf y -dr no -c gas &> antechamber.log 
+               antechamber -i /tmp/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch ${RUNDIR}/resp/${LIGAND} -gm %mem=8Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
+
+            else
+                net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
+                antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch ${RUNDIR}/resp/${LIGAND} -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no -nc ${net_charge} &> antechamber.log
+            fi
 
             # Run Gaussian to optimize structure and generate electrostatic potential grid
             g09 <${RUNDIR}/resp/${LIGAND}.gau>${RUNDIR}/resp/${LIGAND}.gout
@@ -205,9 +236,13 @@ case ${JOB_SCHEDULLER} in
     done
 
     # Actually compute AM1-BCC charges
-    if [ -f ${RUNDIR}/LigFlow.xargs ] ; then
-        cat ${RUNDIR}/LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-    fi
+    case ${CHARGE} in
+    "bcc")
+        if [ -f ${RUNDIR}/LigFlow.xargs ] ; then
+            cat ${RUNDIR}/LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+        fi
+    ;;
+    esac
 ;;
 
 "SLURM"|"PBS")
@@ -224,42 +259,42 @@ case ${JOB_SCHEDULLER} in
         LigFlow_write_HPC_header
 
         for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
-            if [ ! -f ${RUNDIR}/gas/${LIGAND}.mol2 ] ; then
-                echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/\${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/gas/${LIGAND}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/" >>  LigFlow_gas.${first}.xargs
-            fi
-        done
-
-        # Actually compute Gasteiger charges
-        if [ -f ${RUNDIR}/LigFlow_gas.${first}.xargs ] ; then
-            echo "cat ${RUNDIR}/LigFlow_gas.${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}' " >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-            echo "rm -rf ${RUNDIR}/LigFlow_gas.${first}.xargs" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-        fi
-
-
-        for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
             case ${CHARGE} in
             "bcc")
                 # Compute am1-bcc charges
-                echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/">>  LigFlow_bcc.${first}.xargs
+                if [ "${CHARGE_FILE}" == '' ] ; then
+                    echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/">>  LigFlow_bcc.${first}.xargs
+                else
+                    net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
+                    echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/bcc/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr no -at gaff2 -nc ${net_charge} &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/">>  LigFlow_bcc.${first}.xargs
+                fi
             ;;
             "resp")
             #   Prepare Gaussian
-                echo "antechamber -i ${RUNDIR}/gas/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch  ${RUNDIR}/resp/${LIGAND}  -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-
+                if [ "${CHARGE_FILE}" == '' ] ; then
+                    echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch  ${RUNDIR}/resp/${LIGAND}  -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log ;rm -rf /tmp/${USER}/${LIGAND}/" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+                else
+                    net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
+                    echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/original/${LIGAND}.mol2 -fi mol2 -o ${RUNDIR}/resp/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${LIGAND}.gesp -ch  ${RUNDIR}/resp/${LIGAND}  -gm %mem=16Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr no -nc ${net_charge} &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+                fi
                 # Run Gaussian to optimize structure and generate electrostatic potential grid
                 echo "g09 <${RUNDIR}/resp/${LIGAND}.gau>${RUNDIR}/resp/${LIGAND}.gout" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
 
                 # Read Gaussian output and write new optimized ligand with RESP charges
-                echo "antechamber -i ${RUNDIR}/resp/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${LIGAND}_resp.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+                echo "mkdir -p /tmp/${USER}/${LIGAND}; cd /tmp/${USER}/${LIGAND} ; antechamber -i ${RUNDIR}/resp/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr no -at gaff2 &> antechamber.log ; rm -rf /tmp/${USER}/${LIGAND}/" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
             ;;
             esac
         done
 
         # Actually compute AM1-BCC charges
-        if [ -f ${RUNDIR}/LigFlow_bcc.${first}.xargs ] ; then
-            echo "cat ${RUNDIR}/LigFlow_bcc.${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}' " >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-            echo "rm -rf ${RUNDIR}/LigFlow_bcc.${first}.xargs" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-        fi
+        case ${CHARGE} in
+        "bcc")
+            if [ -f ${RUNDIR}/LigFlow_bcc.${first}.xargs ] ; then
+                echo "cat ${RUNDIR}/LigFlow_bcc.${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}' " >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+                echo "rm -rf ${RUNDIR}/LigFlow_bcc.${first}.xargs" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+            fi
+        ;;
+        esac
 
 
         if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
@@ -329,7 +364,7 @@ LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]
 
 [Options]
  -h/--help           : Show this help message and quit
- -hh/--fullhelp      : Detailed help
+ -hh/--full-help      : Detailed help
 
  -l/--ligand         : Ligands .mol2 input file.
  -p/--project        : ChemFlow project.
@@ -346,7 +381,7 @@ LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]
 
 [Help]
  -h/--help              : Show this help message and quit
- -hh/--fullhelp         : Detailed help
+ -hh/--full-help         : Detailed help
 
 [ Required ]
 *-p/--project       STR : ChemFlow project
@@ -360,6 +395,10 @@ LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp]
  -nc/--cores        INT : Number of cores per node [${NCORES}]
  --pbs/--slurm          : Workload manager, PBS or SLURM
  --header          FILE : Header file provided to run on your cluster.
+
+[ Development ] 
+ --charges-file    FILE : Contains the net charges for all ligands in a library.
+                          ( name charge )  ( CHEMBL123 -1 ) 
 
 "
     exit 0
@@ -403,7 +442,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         "-nc"|"--cores") # Number of Cores [1] (or cores/node)
             NCORES="$2" # Same as above.
-            NC_CHANGED="yes"
+            #NC_CHANGED="yes"
             shift # past argument
         ;;
         # HPC options
@@ -417,6 +456,12 @@ while [[ $# -gt 0 ]]; do
             HEADER_PROVIDED="yes"
             HEADER_FILE=$(abspath "$2")
             shift
+        ;;
+        # Features under Development 
+        "--charges-file")
+           CHARGE_FILE=$(abspath "$2")
+           if [ ! -f ${CHARGE_FILE} ] ; then echo "Charge file \"${CHARGE_FILE}\" not found " ;  exit 1 ; fi
+           shift
         ;;
         *)
             unknown="$1"        # unknown option

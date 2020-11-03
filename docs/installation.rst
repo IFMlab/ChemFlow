@@ -1,76 +1,76 @@
 .. highlight:: bash
 
-=========================
-Installation instructions
-=========================
+=======
+Install
+=======
 
 Step 1 - Download ChemFlow sources.
 -----------------------------------
 
-The sources for ChemFlow can be downloaded from the `Github repo`_.
+The sources for ChemFlow can be downloaded from the `Github repo`_. 
 
-.. _Github repo: https://github.com/IFMlab/ChemFlow.git
+.. _Github repo: https://github.com/IFMlab/ChemFlow.git 
 
-You can either clone the public repository:
+.. code-block:: bash
 
-    ``git clone https://github.com/IFMlab/ChemFlow.git``
+    # Clone ChemFlow to the install location of your choice:
+    git clone https://github.com/IFMlab/ChemFlow.git
 
 
 Step 2 - Install miniconda.
 ---------------------------
-* Download and install miniconda, python 3.
+Download and install the latest version of miniconda for python 3.x 
 https://docs.conda.io/en/latest/miniconda.html
 
-* Create an environment for ChemFlow.
-``conda create -n chemflow``
+.. code-block:: bash
 
-Step 3 - Install the software dependencies
+    # Download the latest version of miniconda for python 3.x
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    
+    # Install miniconda
+    chmod +x  Miniconda3-latest-Linux-x86_64.sh
+    ./Miniconda3-latest-Linux-x86_64.sh
+      
+    #Create an environment for ChemFlow
+    conda create -n chemflow
+
+    # Activate chemflow environment
+    conda activate chemflow
+
+Step 3 - Install the software dependencies.
 --------------------------------------------
-* rdkit
-    ``conda install -c rdkit rdkit``
+.. code-block:: bash
 
-* AmberTools
-    ``conda install -c ambermd ambertools``
+    # rdkit
+    conda install -c rdkit rdkit
 
-* AutoDockTools (required for Vina)
+    # AmberTools (use Amber18 if you have a licence)
+    conda install -c ambermd ambertools
+
+    # AutoDockTools (required for Vina)
     Download and install from: http://mgltools.scripps.edu/downloads
 
-* Autodock Vina
+    # Autodock Vina
     Download and install from: http://vina.scripps.edu
 
-* PLANTS ( Requires free registration )
+    # PLANTS ( Requires free registration )
     Download and install from: http://www.tcd.uni-konstanz.de/plants_download/
 
-* Amber18 (Optional, licence is required)
+    # Amber18 (Optional, licence is required)
     Download and install from: http://ambermd.org
 
-* Gaussian (Optional, licence is required)
+    # Gaussian (Optional, licence is required. Required for RESP charges)
     Download and install from: https://gaussian.com
+
 
 Step 4 - Set PATHS
 ------------------
-* AutoDockTools - "Utilities24" must be in the system PATH:
-    ``export PATH=${PATH}:[/home/user/myapps/]mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/``
-* PLANTS
-    ``export PATH=${PATH}:[/home/user/myapps/]PLANTS1.2_64bit``
-* AutoDock Vina
-    ``export PATH=${PATH}:[/home/user/myapps/]autodock_vina_1_1_2_linux_x86/bin/``
-    
-If you choose to manually install Amber18 and/or Gaussian, make sure they're also on ${PATH}
 
-* Amber18
-    source [/home/user/myapps/]amber18/amber.sh
-* Gaussian 09
-    ``export g09root=[/home/user/myapps/]``
-    
-    ``export GAUSS_SCRDIR=/tmp``
-    
-    ``source $g09root/g09/bsd/g09.profile``
-
-# Instructions for the impacient:
+In addition to downloading the required software, you must be able to run then flawlessly.
+Set up the PATHS to their install locations, as following and add to your .bashrc.
 
 .. code-block:: bash
-    # Please modify the following paths and add them to your .bashrc
+
 
     # ChemFlow
     export CHEMFLOW_HOME=~/software/ChemFlow/ChemFlow/
@@ -87,13 +87,20 @@ If you choose to manually install Amber18 and/or Gaussian, make sure they're als
     export PATH="${PATH}:~/software/PLANTS/"
 
     # Optional (paid software)
-    
+
     # Amber18 (Ambertools19 and Amber18)
     source ~/software/amber18/amber.sh
-    
+
     # Gaussian 09
     export g09root=~/software/
     export GAUSS_SCRDIR=/tmp
     source $g09root/g09/bsd/g09.profile
 
 
+
+Additional software for the tutorial
+------------------------------------
+To run the jupyter-notebook tutorial, you may also install some python modules.
+
+    ``conda install pandas seaborn``
+    

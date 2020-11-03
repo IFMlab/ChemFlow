@@ -13,7 +13,7 @@ echo "
 #          + ||de Strasbourg +              ++  +     +   +            #
 #          +++++++++++++++++++              ++  +     +   + LAB        #
 #                                                                      #
-#         Laboratoire d'Ingenierie de la Fonction Moleculaire          #
+#         Laboratoire d'Ingenierie des Fonctions Moleculaires          #
 #                                                                      #
 # Marco Cecchini - cecchini@unistra.fr                                 #
 # Diego E. B. Gomes - dgomes@pq.cnpq.br                                #
@@ -134,6 +134,7 @@ case "${WORKFLOW}" in
             if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "mol2" ] ; then
                 ERROR_MESSAGE="Plants rescoring requires a mol2 file as receptor input"; ChemFlow_error ;
             fi
+            check_center
         ;;
         "vina")
             SCORE_PROGRAM="VINA" ;
@@ -143,12 +144,13 @@ case "${WORKFLOW}" in
             if [ "${VINA_MODE}" != "local_only" ] && [ "${VINA_MODE}" != "score_only" ] ; then
                 ERROR_MESSAGE="Vina rescoring mode ${VINA_MODE} does not exist"; ChemFlow_error ;
             fi
+            check_center
         ;;
-        "mmgbsa") # mmgbsa as scoring function is only allowed for ScoreFlow.
+        "mmgbsa"|"mmpbsa") # mmgbsa as scoring function is only allowed for ScoreFlow.
             SCORE_PROGRAM="AMBER"
             RECEPTOR_NAME="$(basename ${RECEPTOR_FILE} .pdb)"
             if [ "$(basename ${RECEPTOR_FILE} | cut -d. -f2 )" != "pdb" ] ; then
-                ERROR_MESSAGE="mmgbsa rescoring requires a PDB file as receptor input"; ChemFlow_error ;
+                ERROR_MESSAGE="MM(PB,GB)SA rescoring requires a PDB file as receptor input"; ChemFlow_error ;
             fi
         ;;
         *)
@@ -156,10 +158,6 @@ case "${WORKFLOW}" in
         ;;
     esac
 
-    if [ "${SCORING_FUNCTION}" != "mmgbsa"  ] ; then
-        # Center is not required for mmgbsa rescoring.
-        check_center
-    fi
 ;;
 esac
 
@@ -170,13 +168,21 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
     case "${JOB_SCHEDULLER}" in
     "None") ;;
     "PBS"|"SLURM")
-        if [ -z ${NC_CHANGED} ] ; then
-            NCORES=16
-        fi
+#        if [ -z ${NC_CHANGED} ] ; then
+#            NCORES=16
+#        fi
+       echo "Using ${JOB_SCHEDULLER}"
     ;;
     *) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" ; ChemFlow_error ;
        ;;
     esac
+
+
+    # AmberTools must be installed because we use AnteChamber everywhere
+    if  [ -z "$(command -v antechamber)" ] ; then
+        ERROR_MESSAGE="AmberTools 17+ is not installed or on PATH" ; ChemFlow_error ;
+    fi
+
 
     # Check program locations ---------------------------------------------------
     case "${DOCK_PROGRAM}" in
@@ -189,7 +195,7 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
         if  [ -z "$(command -v vina)" ] ; then
             ERROR_MESSAGE="Autodock Vina is not installed or on PATH" ; ChemFlow_error ;
         fi
-        if [ -z "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" ] ; then
+        if [ -z "$(command -v prepare_ligand4.py)" ] ; then
             ERROR_MESSAGE="MglTools is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
@@ -205,7 +211,7 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
         if  [ -z "$(command -v vina)" ] ; then
             ERROR_MESSAGE="Autodock Vina is not installed or on PATH" ; ChemFlow_error ;
         fi
-        if [ -z "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" ] ; then
+        if [ -z "$(command -v prepare_ligand4.py)" ] ; then
             ERROR_MESSAGE="MglTools is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
@@ -231,7 +237,12 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
                 fi
             fi
         else
+
             AMBER_EXEC="pmemd.cuda"
+            if [ "${CUDA_PRECISION}" == "DOUBLE" ] ; then
+                AMBER_EXEC="pmemd.cuda_DPFP"
+            fi
+
         fi
      ;;
     esac
@@ -297,6 +308,7 @@ ChemFlow_set_defaults(){
 #
 #        Author: Dona de Francquen
 #===============================================================================
+
 # General options
 WORKDIR="${PWD}"
 PROTOCOL="default"

@@ -38,7 +38,8 @@ DockFlow_dock() {
 # Always work here
 cd ${RUNDIR}
 
-DockFlow_update_ligand_list
+#DockFlow_update_ligand_list
+DockFlow_update_ligand_list_DEV
 NDOCK=${#LIGAND_LIST[@]}
 
 if [ ${NDOCK} == 0 ] ; then
@@ -83,7 +84,7 @@ case ${JOB_SCHEDULLER} in
                 --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
                 --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} \
                 --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
-                --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
+                --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt  --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} --cpu 1 &>/dev/null " >> dock.xargs
         done
     ;;
     esac
@@ -164,6 +165,55 @@ fi
 unset LIGAND_LIST
 LIGAND_LIST=(${DOCK_LIST[@]})
 }
+
+DockFlow_update_ligand_list_DEV() {
+# Creation of the docking list, checkpoint calculations.
+DOCK_LIST=""
+case ${DOCK_PROGRAM} in
+"PLANTS")
+    # If the folder exists but there's no "bestranking.csv" its incomplete.
+    FILE="bestranking.csv"
+;;
+"VINA")
+    # If the folder exists but there's no "output.pdbqt" its incomplete.
+    FILE="output.pdbqt"
+;;
+esac
+
+
+if [ "${OVERWRITE}" == "no" ] ; then # Useless to update ligand list if we overwrite
+
+    counter=0
+    for LIGAND in ${LIGAND_LIST[@]} ; do
+        if [ -d ${LIGAND}/${DOCK_PROGRAM} ] && [ ! -f ${LIGAND}/${DOCK_PROGRAM}/${FILE} ] ; then
+#            echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+            rm -rf ${LIGAND}/${DOCK_PROGRAM}
+            DOCK_LIST[${counter}]="$LIGAND"
+        fi
+        if [ -f ${LIGAND}/${DOCK_PROGRAM}/${FILE} ] ; then
+            if [ $(wc -l  ${LIGAND}/${DOCK_PROGRAM}/${FILE} | cut -d' ' -f1) -lt 2 ] ; then
+#                echo "[ NOTE ] ${RECEPTOR_NAME} and ${LIGAND} incomplete... redoing it !"
+                rm -rf ${LIGAND}/${DOCK_PROGRAM}
+                DOCK_LIST[${counter}]="$LIGAND"
+            fi
+        fi
+        if [ ! -d ${LIGAND}/${DOCK_PROGRAM} ] ; then
+                DOCK_LIST[${counter}]="$LIGAND"
+  # Still unused.
+        fi
+
+        let counter++
+    done
+else
+    DOCK_LIST=(${LIGAND_LIST[@]})
+fi
+
+unset LIGAND_LIST
+LIGAND_LIST=(${DOCK_LIST[@]})
+}
+
+
+
 
 
 DockFlow_write_plants_HPC() {
@@ -279,7 +329,6 @@ DockFlow_prepare_receptor() {
 #    PARAMETERS: ${DOCK_PROGRAM}
 #                ${RUNDIR}
 #                ${RECEPTOR_FILE}
-#                ${mgltools_folder} (should be in the path)
 #
 #        Author: Dona de Francquen
 #
@@ -289,10 +338,9 @@ DockFlow_prepare_receptor() {
 cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 
 if [ ${DOCK_PROGRAM} == 'VINA' ] && [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
-    ${mgltools_folder}/bin/python \
-    ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py \
+    pythonsh $(command -v prepare_receptor4.py) \
     -r ${RUNDIR}/receptor.mol2 \
-    -o ${RUNDIR}/receptor.pdbqt
+    -o ${RUNDIR}/receptor.pdbqt &>/dev/null
 fi
 }
 
@@ -314,11 +362,12 @@ DockFlow_prepare_ligands() {
 #
 #        Author: Dona de Francquen
 #
-#        UPDATE: fri. july 6 14:49:50 CEST 2018
+#        UPDATE: Ter Nov  5 12:10:24 -03 2019
 #
 #===============================================================================
 cd ${RUNDIR}
 
+echo "[Preparing ligands]"
 # Create ligand folder into the project
 for LIGAND in ${LIGAND_LIST[@]} ; do
     if [ ! -d  ${LIGAND} ] ; then
@@ -331,18 +380,22 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     case ${DOCK_PROGRAM} in
     "PLANTS")
         if [ ! -f ${LIGAND}/ligand.mol2 ] ; then
-            cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+            echo "cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 ${LIGAND}/ligand.mol2"
         fi
     ;;
     "VINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
+            echo "pythonsh $(command -v prepare_ligand4.py) \
             -l ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/${LIGAND}.mol2 \
-            -o ${LIGAND}/ligand.pdbqt
+            -o ${LIGAND}/ligand.pdbqt &>/dev/null"
         fi
     ;;
     esac
-done
+done > LigFlow.xargs
+
+cat LigFlow.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+
+echo "[ DONE ]"
 }
 
 
@@ -515,6 +568,11 @@ if [ ! -z ${POSTPROCESS_ALL} ] ; then
 fi
 
 
+# First, a clean up.
+if [ -f ${RUNDIR}/docked_ligands.mol2 ] ; then
+    rm -rf ${RUNDIR}/docked_ligands.mol2
+fi
+
 for LIGAND in ${LIGAND_LIST[@]}; do
     if [ ! -f ${LIGAND}/PLANTS/docked_ligands.mol2 ] ; then
         echo "[ ERROR ] Plants result for ligand ${LIGAND} does not exists."
@@ -522,7 +580,10 @@ for LIGAND in ${LIGAND_LIST[@]}; do
     else
         # Fill the DockFlow.csv file
         echo -ne "PostDock: ${PROTOCOL} - ${LIGAND}                              \r"
-        head -${DOCK_POSES} ${LIGAND}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' >> DockFlow.csv
+#        head -${DOCK_POSES} ${LIGAND}/PLANTS/ranking.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -F, '!/LIGAND_ENTRY/ {print "PLANTS",protocol,target,ligand,$1,$2}' >> DockFlow.csv
+# Patch by Kgalentino & Dgomes
+        awk -F, -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v dock_poses=${DOCK_POSES} '!/LIGAND/{cc++; if(cc<=dock_poses){gsub(".*_entry_00001_conf_","",$1); print "PLANTS",protocol,target,ligand, $1,$2}}'  ${LIGAND}/PLANTS/ranking.csv >> DockFlow.csv
+
 
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         OLDIFS=$IFS
@@ -546,7 +607,7 @@ done
 # rename the ligand in the created file
 if [ -f docked_ligands.mol2 ] && [ -f DockFlow.csv ] ; then
     sed -i 's/\.*_entry_[[:digit:]]*//' docked_ligands.mol2
-    sed -i 's/[a-zA-Z0-9]*_entry_[[:digit:]]*_conf_//' DockFlow.csv
+# Patch by Kgalentino & Dgomes    sed -i 's/[a-zA-Z0-9]*_entry_[[:digit:]]*_conf_//' DockFlow.csv
 fi
 }
 
@@ -660,10 +721,12 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
     for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
         RUNDIR="${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}"
         cd ${RUNDIR}
-        if [ "${OVERWRITE}"  == 'yes' ] ; then
+
+# You should always overwrite docked_ligands.mol2 and DockFlow.csv
+#        if [ "${OVERWRITE}"  == 'yes' ] ; then
             rm -rf ${RUNDIR}/docked_ligands.mol2
             rm -rf ${RUNDIR}/DockFlow.csv
-        fi
+#        fi
 
         # Cleanup
         if [ ! -f ${RUNDIR}/DockFlow.csv ] ; then
@@ -686,13 +749,16 @@ else
     echo "[ DockFlow ] Done with post-processing."
 
     # Archiving.
-    echo -n "[ DockFlow ] Archive the docking results (folders) in TAR files? [y/n] "
-    read opt
-    case ${opt} in
-    "y"|"yes"|"Yes"|"Y"|"YES")
-        DockFlow_archive
-    ;;
-    esac
+    if [ ! -z ${ARCHIVE} ] ; then
+        echo -n "[ DockFlow ] Archive the docking results (folders) in TAR files? [y/n] "
+        read opt
+        case ${opt} in
+        "y"|"yes"|"Yes"|"Y"|"YES")
+            DockFlow_archive
+        ;;
+        esac
+    fi
+
 fi
 
 unset FAIL
@@ -772,6 +838,8 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
      OVERWRITE: ${OVERWRITE}
 "
 
+if [ "${YESTOALL}" != 'yes' ] ; then
+
 echo -n "
 Continue [y/n]? "
 read opt
@@ -779,6 +847,8 @@ case $opt in
 "Y"|"YES"|"Yes"|"yes"|"y")  ;;
 *)  echo "Exiting" ; exit 0 ;;
 esac
+
+fi
 }
 
 
@@ -841,6 +911,7 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol
 
 [ Additional ]
  --overwrite            : Overwrite results
+ --yes                  : Yes to all questions
 
 [ Options for docking program ]
 *--center          LIST : xyz coordinates of the center of the binding site, separated by a space
@@ -997,6 +1068,9 @@ while [[ $# -gt 0 ]]; do
         "--archive-all")
             ARCHIVE='yes'
             ARCHIVE_ALL="yes"
+        ;;
+        "--yes")
+            YESTOALL='yes'
         ;;
         *)
             unknown="$1"        # unknown option
