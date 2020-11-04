@@ -211,7 +211,7 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
     ;;
     "SMINA")
         if  [ -z "$(command -v smina.static)" ] ; then
-            ERROR_MESSAGE="smina is not installed or on PATH" ; ChemFlow_error ;
+            ERROR_MESSAGE="Smina is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
     "VINA")
@@ -301,13 +301,13 @@ fi
 }
 
 
-#check_config(){
-#if [ "${DOCK_PROGRAM}" == "SMINA" ] ; then
-  #if [ -z "${config}" ]; then
-       #ERROR_MESSAGE="No configuration file defined (--config config.txt)" ; ChemFlow_error 
-  #fi
-#fi
-#}
+check_config(){
+if [ "${DOCK_PROGRAM}" == "SMINA" ] ; then
+  if [ -z "${conf_file}" ]; then
+       ERROR_MESSAGE="No configuration file defined (--config config.txt)" ; ChemFlow_error 
+  fi
+fi
+}
 
 check_water(){
 if [ "${DOCK_PROGRAM}" == "PLANTS" ]; then
@@ -401,67 +401,3 @@ elif [ $1 == 'LigFlow' ] ; then
     RESP="no"
 fi
 }
-
-
-ChemFlow_set_defaults_vina(){
-#===  FUNCTION  ================================================================
-#          NAME: ChemFlow_set_defaults
-#   DESCRIPTION: Set a default for parameters.
-#
-#    PARAMETERS: -
-#       RETURNS: -
-#
-#        Author: Dona de Francquen
-#===============================================================================
-# General options
-WORKDIR="${PWD}"
-PROTOCOL="default"
-SCORING_FUNCTION="vina"
-
-# Run options
-JOB_SCHEDULLER="None"
-NCORES=$(getconf _NPROCESSORS_ONLN)
-OVERWRITE="no"    # Don't overwrite stuff.
-HEADER_PROVIDED="no"
-
-if [ $1 == 'DockFlow' ] ; then
-    WORKFLOW="DockFlow"
-
-    # Docking options
-    DOCK_PROGRAM="VINA"|"QVINA"|"SMINA"
-    DOCK_LENGTH=("15" "15" "15")
-    DOCK_POSES="10"
-   # Vina advanced options
-    EXHAUSTIVENESS="8"
-    ENERGY_RANGE="3.00"
-
-    # Run options
-    RESUME="No"
-elif [ $1 == 'ScoreFlow' ] ; then
-    WORKFLOW="ScoreFlow"
-
-    # Scoring options
-    SCORE_PROGRAM="VINA"
-    DOCK_LENGTH=("15" "15" "15")
-    CHARGE="gas"
-
-    # Vina advanced options
-    VINA_MODE="local_only"
-
-    # no MD
-    MD="no"
-    WATER="no"
-    MAXCYC="1000"
-
-    # run option
-    WRITE_ONLY="no"
-    RUN_ONLY="no"
-elif [ $1 == 'LigFlow' ] ; then
-    WORKFLOW="LigFlow"
-
-    CHARGE="gas"
-    BCC="no"
-    RESP="no"
-fi
-}
-

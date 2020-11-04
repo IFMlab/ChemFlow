@@ -110,8 +110,7 @@ case ${JOB_SCHEDULLER} in
             else
 	    echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --accurate_line --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/SMINA/output.log " >> dock.xargs
             fi
-    done
-    
+        done
     ;;
     "QVINA")
         for LIGAND in ${LIGAND_LIST[@]} ; do
@@ -334,7 +333,7 @@ cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 DockFlow_write_qvina_HPC() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_write_qvina_HPC
-#   DESCRIPTION: Writes the vina script for each ligand (or range of ligands). for VINA
+#   DESCRIPTION: Writes the qvina script for each ligand (or range of ligands). for VINA
 #                Filenames and parameters are hardcoded.
 #    PARAMETERS:
 #               ${list[@]}  -   Array with all ligand names
@@ -364,7 +363,7 @@ cat ${first}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 DockFlow_write_smina_HPC() {
 #===  FUNCTION  ================================================================
 #          NAME: DockFlow_write_smina_HPC
-#   DESCRIPTION: Writes the vina script for each ligand (or range of ligands). for VINA
+#   DESCRIPTION: Writes the smina script for each ligand (or range of ligands). for VINA
 #                Filenames and parameters are hardcoded.
 #    PARAMETERS:
 #               ${list[@]}  -   Array with all ligand names
@@ -928,7 +927,7 @@ for LIGAND in ${LIGAND_LIST[@]}; do
             fi
         done < ${RUNDIR}/${LIGAND}/SMINA/output.mol2
         IFS=${OLDIFS}
-fi
+    fi
 done
 
 if [ -f DockFlow.csv ] ; then
@@ -937,7 +936,6 @@ if [ -f DockFlow.csv ] ; then
     sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow-min.csv
 fi
 }
-
 
 DockFlow_postdock_qvina_results() {
 #===  FUNCTION  ================================================================
@@ -1053,6 +1051,7 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
 #        if [ "${OVERWRITE}"  == 'yes' ] ; then
             rm -rf ${RUNDIR}/docked_ligands.mol2
             rm -rf ${RUNDIR}/DockFlow.csv
+            rm -rf ${RUNDIR}/DockFlow-min.csv
 #        fi
 
         # Cleanup
