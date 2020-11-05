@@ -1319,9 +1319,6 @@ ________________________________________________________________________________
  --accurate_line             : Use accurate line search
  --out_flex FILE             : Ouput file for flexible receptor residues
 
- --file_config          FILE : File input pre filled for SMINA (.in)
- --file_filed_vina      FILE : File input filled for SMINA (.in)
-
  [ For all the other possible options please consult : https://github.com/mwojcikowski/smina/blob/master/README ]
 __________________________________________________________________________________________________________________
 
