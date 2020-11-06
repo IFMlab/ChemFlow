@@ -121,12 +121,12 @@ case "${WORKFLOW}" in
         DOCK_PROGRAM="VINA" ;
        # Center is required for docking.
     check_center	
-    "vina")
+    "qvina")
         DOCK_PROGRAM="QVINA" ;
        # Center is required for docking.
     check_center
     ;;
-    "vina"|"vinardo"|"dkoes_fast"|"dkoes_scoring")
+    "svina"|"vinardo"|"dkoes_fast"|"dkoes_scoring")
         DOCK_PROGRAM="SMINA" ;
 	#check if you put the config input file
         check_config
