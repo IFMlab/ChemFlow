@@ -1262,7 +1262,7 @@ DockFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol
 [ Optional ]
  --protocol         STR : Name for this specific protocol [default]
  -n/--n-poses       INT : Number of poses per ligand to generate while docking [10]
- -sf/--function     STR : vina, chemplp, plp, plp95, vinardo, dkoes_fast, dkoes_scoring  [chemplp]
+ -sf/--function     STR : vina, qvina, svina, chemplp, plp, plp95, vinardo, dkoes_fast, dkoes_scoring  [chemplp]
 
 [ Parallel execution ]
  -nc/--cores        INT : Number of cores per node [${NCORES}]
