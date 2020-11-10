@@ -117,7 +117,7 @@ case ${JOB_SCHEDULLER} in
             if [ ! -d ${RUNDIR}/${LIGAND}/QVINA ] ; then
                 echo "mkdir -p ${RUNDIR}/${LIGAND}/QVINA " >> dock.xargs
             fi
-            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; qvina02 --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/QVINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
+            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; qvina2.1 --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/QVINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
         done
     ;;
     "VINA")
@@ -350,7 +350,7 @@ cd ${RUNDIR}
 if [ -f ${first}.xargs ] ; then rm -rf ${first}.xargs ; fi
 for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
     # qvina command.
-    echo \"mkdir -p ${RUNDIR}/\${LIGAND}/QVINA/ ; qvina02 --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
+    echo \"mkdir -p ${RUNDIR}/\${LIGAND}/QVINA/ ; qvina2.1 --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
         --size_x ${DOCK_RADIUS} --size_y ${DOCK_RADIUS} --size_z ${DOCK_RADIUS} \
         --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
