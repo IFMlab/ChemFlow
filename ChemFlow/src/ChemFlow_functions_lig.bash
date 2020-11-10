@@ -205,7 +205,7 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
         fi
     ;;
     "QVINA")
-        if  [ -z "$(command -v qvina02)" ] ; then
+        if  [ -z "$(command -v qvina2.1)" ] ; then
             ERROR_MESSAGE="QVina is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
