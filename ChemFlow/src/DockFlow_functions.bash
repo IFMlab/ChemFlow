@@ -518,17 +518,17 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     ;;
     "VINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -o ${LIGAND}/ligand.pdbqt
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -U 'lps' -o ${LIGAND}/ligand.pdbqt
         fi
     ;;
     "SMINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -o ${LIGAND}/ligand.pdbqt
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -U 'lps' -o ${LIGAND}/ligand.pdbqt
         fi
     ;;
     "QVINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -o ${LIGAND}/ligand.pdbqt
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -U 'lps' -o ${LIGAND}/ligand.pdbqt
         fi
     ;;
     esac
