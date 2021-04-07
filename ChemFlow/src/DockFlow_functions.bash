@@ -835,7 +835,7 @@ for LIGAND in ${LIGAND_LIST[@]}; do
 
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.mol2 ] ; then
-            babel -h -ipdbqt ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -omol2 ${RUNDIR}/${LIGAND}/VINA/output.mol2
+            obabel -ipdbqt ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -omol2 -O${RUNDIR}/${LIGAND}/VINA/output.mol2 -m
         fi
 
         OLDIFS=$IFS
@@ -906,7 +906,7 @@ for LIGAND in ${LIGAND_LIST[@]}; do
 
 	# Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         if [ ! -f  ${RUNDIR}/${LIGAND}/SMINA/output.mol2 ] ; then
-            babel -h -ipdbqt ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt -omol2 ${RUNDIR}/${LIGAND}/SMINA/output.mol2
+            obabel -ipdbqt ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt -omol2 -O${RUNDIR}/${LIGAND}/SMINA/output.mol2 -m
         fi
 
         OLDIFS=$IFS
@@ -970,7 +970,7 @@ for LIGAND in ${LIGAND_LIST[@]}; do
 
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         if [ ! -f  ${RUNDIR}/${LIGAND}/QVINA/output.mol2 ] ; then
-            babel -h -ipdbqt ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt -omol2 ${RUNDIR}/${LIGAND}/QVINA/output.mol2
+            obabel -ipdbqt ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt -omol2 -O${RUNDIR}/${LIGAND}/QVINA/output.mol2 -m
         fi
 
         OLDIFS=$IFS
