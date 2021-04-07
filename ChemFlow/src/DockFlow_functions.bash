@@ -1318,7 +1318,7 @@ ________________________________________________________________________________
                                for convergence
  --accurate_line             : Use accurate line search
  --out_flex FILE             : Ouput file for flexible receptor residues
-
+ --config   ARG		     : the above options can be put here
  [ For all the other possible options please consult : https://github.com/mwojcikowski/smina/blob/master/README ]
 __________________________________________________________________________________________________________________
 
