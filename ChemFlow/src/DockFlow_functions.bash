@@ -835,7 +835,13 @@ for LIGAND in ${LIGAND_LIST[@]}; do
 
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.mol2 ] ; then
-            obabel -ipdbqt ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -omol2 -O${RUNDIR}/${LIGAND}/VINA/output.mol2 -m
+#           obabel -ipdbqt ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -omol2 -O${RUNDIR}/${LIGAND}/VINA/output.mol2 -m
+                ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/pdbqt_to_pdb.py -f ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -o${RUNDIR}/${LIGAND}/VINA/${LIGAND}.pdb
+
+                obabel -ipdb ${RUNDIR}/${LIGAND}/VINA/${LIGAND}.pdb -omol2 -O${RUNDIR}/${LIGAND}/VINA/${LIGAND}_conv.mol2 -m
+                sed -i "s/${LIGAND}.pdb/MOL/g" ${RUNDIR}/${LIGAND}/VINA/${LIGAND}_conv1.mol2
+                id=`grep -A 1 "@<TRIPOS>MOLECULE" ${RUNDIR}/${LIGAND}/VINA/${LIGAND}_conv1.mol2 | tail -1`
+
         fi
 
         OLDIFS=$IFS
@@ -854,7 +860,8 @@ for LIGAND in ${LIGAND_LIST[@]}; do
             else
                 echo "${line}" >> ${RUNDIR}/docked_ligands.mol2
             fi
-        done < ${RUNDIR}/${LIGAND}/VINA/output.mol2
+#        done < ${RUNDIR}/${LIGAND}/VINA/output.mol2
+	 done < ${RUNDIR}/${LIGAND}/VINA/${LIGAND}_conv1.mol2
         IFS=${OLDIFS}
     fi
 done
