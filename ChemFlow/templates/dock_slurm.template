@@ -1,7 +1,0 @@
-#! /bin/bash
-# 1 noeud 8 coeurs
-#SBATCH -p public
-#SBATCH --job-name=${WORKFLOW}
-#SBATCH -N 1
-#SBATCH -n ${NCORES}
-#SBATCH -t 1:00:00

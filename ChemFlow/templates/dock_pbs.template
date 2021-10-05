@@ -1,7 +1,0 @@
-#! /bin/bash
-# 1 noeud 8 coeurs
-#PBS -q  route
-#PBS -N ${WORKFLOW}
-#PBS -l nodes=1:ppn=${NCORES}
-#PBS -l walltime=1:00:00
-#PBS -V
