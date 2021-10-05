@@ -1,0 +1,289 @@
+#!/bin/bash
+################################################################################
+# ChemFlow - Computational Chemistry is Great Again
+#
+# Complies with:
+# The ChemFlow standard version 1.0
+# 
+# Routine:
+# ChemFlow_tools
+#
+# Brief: Usefull tools to process ChemFlow workflow outputs
+#
+# Description: Extract molecules from .MOL2 or .CSV files from ChemFlow workflows. 
+#              Can extract ligands from a list of names, or a feature from a .CSV file.
+#
+# Author:
+# dgomes    - Diego Enry Barreto Gomes - dgomes@pq.cnpq.br
+# 
+# Last Update: (date, by who and where ) 
+# vendredi 1 juin 2018, 10:55:28 (UTC+0200) by dgomes @ Universite de Strasbourg.
+#
+###############################################################################
+
+
+# DO NOT TOUCH THE PROGRAM, DIEGO IS FIXING BUGS
+
+ChemFlowTools_help() {
+echo "Example usage: 
+ChemFlowTools -r receptor.mol2 -p myproject [--protocol default]
+
+[Options]
+ -h/--help           : Show this help message and quit
+ -p/--project        : Project name 
+ --protocol          : Protocol name
+ -r/--receptor       : Receptor's mol2 file
+ -l/--ligand         : Ligands .mol2 input file. (optional)
+ -o/--output         : Output .mol2 file.
+"
+exit 0
+}
+
+set_filenames() {
+# Default values:
+project="test"
+protocol="default"
+target="1yv3"
+
+read -e -p "Please enter project name : "     project
+read -e -p "Please enter the protocol name: " protocol
+read -e -p "Please enter the target name : "  target 
+
+# Configuration ---------------------------------------------------------------
+
+#SDF_FILE=compound.sdf
+#
+
+MOL2_IN="${project}.chemflow/DockFlow/${protocol}/${target}/docked_ligands.mol2"     # Input .mol2 file
+MOL2_OUT='output.mol2'   # Output .mol2 file
+
+CSV_IN="${project}.chemflow/DockFlow/${protocol}/${target}/rank.csv"        # Input energy file
+CSV_OUT='rank_out.csv'   # Output energy file
+
+LST_IN='list.lst'        # Input list of molecules [Optional]
+LST_OUT='list_out.lst'   # Output list of selected molecules
+}
+
+# Functions -------------------------------------------------------------------
+user_interface() {
+echo "
+***************
+Before running, please edit ${CHEMFLOW_HOME}/bin/ChemFlow_tools to configure.
+*************** 
+"
+
+read -p "
+1 - Extract a number of ligands.
+2 - Extract ligands from a list.
+3 - Extract BEST docking pose/compound, based on a ranking.
+4 - Extract TOP \"N\" docking poses per compound
+5 - Extract TOP \"N\" docking poses per compound for \"N\" compounds (sorted)
+6 - Compute the IFP
+7 - Compute the IFP based on a reference molecule
+
+Option: " opt
+
+case ${opt} in
+[1-5]) 
+echo ${opt}
+validate_cmd
+;;
+[1-7]) echo ${opt} ;; 
+*) echo "Invalid option" ; exit 0
+esac
+}
+
+validate_cmd() {
+if [ -f ${MOL2_OUT} ] && [ "${OVERWRITE}" == "no" ] ; then
+  echo "${MOL2_OUT} already exists. Remove or rerun using '--overwrite'" ; exit 0
+fi
+}
+
+list_molecules() {
+# Get the compound list
+
+case ${opt} in
+1|2|5) read -p "How many compounds to extract? : " ncompounds
+esac
+
+case ${opt} in 
+4|5)     read -p "How many poses/compound to extract? : " nposes
+esac
+
+case $opt in 
+1) 
+if [ -f ${MOL2_IN} ] ; then 
+  awk 'f{print;f=0} /MOLECULE/{f=1}' ${MOL2_IN} | head -n ${ncompounds} > ${LST_OUT}
+else
+  echo "[ERROR] Ligand file '${MOL2_IN}' not found"
+  exit 0
+fi
+;;
+
+2)
+if [ -f ${LST_IN} ] ; then
+  head -n ${ncompounds} ${LST_IN} > ${LST_OUT}
+else
+  echo "[ERROR] Ligand list '${LST_IN}' not found"
+  exit 0
+fi
+;;
+
+3) # Best pose of EACH compound
+python << END
+import pandas as pd
+df=pd.read_csv('${CSV_IN}',delim_whitespace=True)
+compounds=df.groupby('LIGAND').min()
+# sorted list
+#compounds=df.groupby('LIGAND').min().sort_values('SCORE')
+compounds['POSE'].to_csv('${LST_OUT}',header=None,index=None)
+compounds.to_csv('${CSV_OUT}',index=None)
+END
+;;
+
+4) # All Top "N" pose(s) of each compound
+python << END
+import pandas as pd
+df=pd.read_csv('${CSV_IN}',delim_whitespace=True)
+compounds=df.sort_values('SCORE').groupby('LIGAND').head(${nposes})
+compounds['POSE'].sort_index().to_csv('${LST_OUT}',header=None,index=None)
+compounds.to_csv('${CSV_OUT}',header=None,index=None)
+END
+;;
+
+5) # Top "N" pose(s) of Top N compounds
+python << END
+import pandas as pd
+df=pd.read_csv('${CSV_IN}',delim_whitespace=True)
+compounds=df.sort_values('SCORE').groupby('LIGAND').head(${nposes}).head($ncompounds)
+compounds['POSE'].sort_index().to_csv('${LST_OUT}',header=None,index=None)
+compounds.to_csv('${CSV_OUT}',index=None)
+END
+;;
+
+6) # IFP 
+echo "Computing the IFP"
+IChem --extended IFP 1yv3_for_IChem.mol2 output.mol2 &> IFP.dat
+;;
+
+7) # IFP 
+echo "Computing the IFP and similarity against blebbistatin.mol2"
+IChem --extended IFP 1yv3_for_IChem.mol2 output.mol2 blebbistatin.mol2  &> IFP.dat
+awk '/blebbistatin\t1/{f=1}f' IFP.dat > IFP.tanimoto
+
+;;
+esac
+
+
+case ${opt} in 
+[1-5])
+${CHEMFLOW_HOME}/bin/extract_mol2 <<EOF
+"${PWD}/${MOL2_IN}"
+EOF
+;;
+esac
+
+# Read the compound list
+COMPOUND_LIST=$(cat ${LST_OUT})
+COMPOUND_LIST=($COMPOUND_LIST)
+}
+
+
+extract_compounds() {
+# Extract compounds is not working.
+# We're missing something in the logics to keep it all BASH
+echo ${COMPOUND_LIST[@]}
+
+for compound in ${COMPOUND_LIST[@]} ; do 
+  echo "${compound}..."
+  extract=0
+
+  while read line ; do
+
+    if [ "${line}" == "${compound}" ]; then
+      echo '@<TRIPOS>MOLECULE' >> ${MOL2_OUT}
+      extract=1
+      echo -ne "${i}\r"
+    fi
+
+    if [ ${extract} -eq 1 ] ; then
+      if [ "${i}" == "@<TRIPOS>MOLECULE" ] ; then 
+        echo "Breaking"
+        break
+      else
+        echo -e "${line}" >> ${MOL2_OUT}
+      fi
+    fi
+
+  done
+
+done < ${MOL2_IN}
+}
+
+
+# Command line parser
+ChemFlow_tools_CLI() {
+
+#if [ "$1" == "" ] ; then
+#  echo -ne "\n[ ERROR ] ChemFlow_tools called without arguments\n\n"
+#  ChemFlow_tools
+#fi
+
+# THIS IS UGLY
+OVERWRITE="no"
+
+while [[ $# -gt 0 ]]; do
+key="$1"
+
+case $key in
+# ChemFlow API (A.K.A. commom names)
+   -r|--receptor)
+     RECEPTOR="$2"
+     shift # past argument
+   ;;
+   -p|--project)
+     PROJECT="$2"
+     shift
+    ;;
+    --protocol)
+      PROTOCOL="$2"
+      shift
+    ;;
+# Specific arguments
+   --list)
+     LST_IN="$2"
+     shift # past argument  
+   ;;
+## Final arguments
+    --overwrite)
+      OVERWRITE="yes"
+    ;;
+    "-h"|"--help")
+      ChemFlowTools_help
+      exit 0
+      shift # past argument
+    ;;
+    *)
+      unknown="$1"        # unknown option
+      echo "Unknown flag \"$unknown\""
+    ;;
+esac
+
+shift # past argument or value
+done
+}
+
+
+# Program ---------------------------------------------------------------------
+
+source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
+
+ChemFlow_tools_CLI "$@"
+set_filenames
+user_interface
+list_molecules
+#extract_compounds
+
+echo ${PWD}/${MOL2_IN}
+#exit 0
+

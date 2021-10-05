@@ -1,0 +1,101 @@
+#!/bin/bash
+
+#####################################################################
+#   ChemFlow  -   Computational Chemistry is great again            #
+#####################################################################
+#
+# Diego E. B. Gomes(1,2,3) - dgomes@pq.cnpq.br
+# Cedric Bouysset (3,4) - cbouysset@unice.fr
+# Marco Cecchini (3) - cecchini@unistra.fr
+# Dona de Francquen (3) - donatienne.de-francquen@etu.unistra.fr
+#
+# 1 - Instituto Nacional de Metrologia, Qualidade e Tecnologia - Brazil
+# 2 - Coordenacao Aperfeicoamento de Pessoal de Ensino Superior - CAPES - Brazil.
+# 3 - Universite de Strasbourg - France
+# 4 - Universite de Nice - France
+#
+#===============================================================================
+#
+#          FILE:  LigFlow.bash
+#
+#         USAGE: ./LigFlow.bash -p myproject -l multilig.mol2
+#
+#
+#         BRIEF: Main routine for LigFlow
+#   DESCRIPTION: Prepare the ligand.
+#    COMPLIANCY: The ChemFlow standard version 1.0
+#
+#     MANDATORY:  -l ligand.mol2 -p myproject
+#  MAIN OPTIONS: [-protocol default] [--bcc/--resp]
+#  REQUIREMENTS:
+#          BUGS:  ---
+#         NOTES:  ---
+#        AUTHOR:  Diego E. B. Gomes, dgomes@pq.cnpq.br
+#       COMPANY:  Universite de Strasbourg / CAPES
+#       VERSION:  1.0
+#       CREATED:  lundi 12 septembre 2018, 16:05:06 (UTC+0200)
+#      REVISION:  ---
+#===============================================================================
+
+
+if [ -z ${CHEMFLOW_HOME} ] ; then
+  echo "CHEMFLOW_HOME is not defined"
+  exit 0
+fi
+
+# Read out functions
+source ${CHEMFLOW_HOME}/src/LigFlow_functions.bash
+#source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
+source ${CHEMFLOW_HOME}/src/ChemFlow_functions_lig.bash
+# Software header
+ChemFlow_echo_software_header
+
+# Programm
+ChemFlow_set_defaults 'LigFlow'   # Set default values for docking parameters.
+LigFlow_CLI "$@"        # Read the command line.
+ChemFlow_validate_input  # Sanity check. (parameters and input files)
+
+
+
+if [ -z "$(command -v antechamber)" ] ; then
+    echo "AmberTools 17+ is not installed or on PATH" ; exit 1;
+fi
+
+if [ "${CHARGE}" == "resp" ] && [ -z "$(command -v g09)" ] ; then
+    echo "Gaussian is not installed or on PATH" ; exit 1
+fi
+
+if [ -z "$(command -v g09)" ] ; then
+exit 0
+fi
+
+
+
+RUNDIR=${WORKDIR}/${PROJECT}.chemflow/LigFlow/
+
+LigFlow_summary                 # Show a summary of actions.
+START_TIME=$SECONDS
+LigFlow_prepare_input           # Organizes and convert required files
+if [ ! ${CHARGE} == "gas" ] ; then
+    LigFlow_prepare_ligands_charges # Compute the charges
+fi
+ELAPSED_TIME=$(($SECONDS - $START_TIME))
+echo "
+[ LigFlow ] Normal completion in ${ELAPSED_TIME} seconds.
+"
+case ${CHARGE} in
+"bcc")
+    echo -e "[ LigFlow ] Normal completion in ${ELAPSED_TIME} seconds." >> TIME.log
+    mv TIME.log TIME_BCC.log
+;;
+"resp")
+    echo -e "[ LigFlow ] Normal completion in ${ELAPSED_TIME} seconds." >> TIME.log
+    case ${ATOM_TYPE} in
+        "gaff2")
+        mv TIME.log TIME_resp_gaff2.log
+        ;;
+        "sybyl")
+        mv TIME.log TIME_resp_sybyl.log
+    esac
+esac
+
