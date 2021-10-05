@@ -1,0 +1,35 @@
+#CENTER DEFINITION
+
+center_x=
+center_y=
+center_z=
+
+#SIZE BOX
+
+size_x=
+size_y=
+size_z=
+
+#SCORING FUNCTION
+
+scoring=vinardo
+
+#REFERENCE LIGAND
+
+flexdist_ligand= 	#reference molecule mol2
+
+#DISTANCE FLKEX SIDE CHAINS
+
+flexdist=		#angstrom 
+
+#FLEX SIDE CHAINS RESID (side chains not too far) 
+
+flexres=X:,X:711,X:712	#resid of chosen flexible residues written as following chainID:resid 
+
+#USE ACCURATE LINE SEARCH
+
+accurate_line=yes
+
+#OUTPUT
+
+out_flex=rec_flex.pdbqt		

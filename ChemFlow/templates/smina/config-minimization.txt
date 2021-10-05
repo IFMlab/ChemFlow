@@ -1,0 +1,25 @@
+#CENTER DEFINITION
+
+center_x=
+center_y=
+center_z=
+
+#SIZE BOX
+
+size_x=
+size_y=
+size_z=
+
+#SCORING FUNCTION
+
+scoring=vinardo
+
+
+#USE ACCURATE LINE SEARCH
+
+accurate_line=yes
+
+#MINIMIZATION
+
+minimize=yes
+

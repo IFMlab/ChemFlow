@@ -1,0 +1,20 @@
+#CENTER DEFINITION
+
+center_x=${DOCK_CENTER[0]}
+center_y=${DOCK_CENTER[1]}
+center_z=${DOCK_CENTER[2]}
+
+#SIZE BOX
+
+size_x=${DOCK_LENGTH[0]}
+size_y=${DOCK_LENGTH[1]}
+size_z=${DOCK_LENGTH[2]}
+
+#SCORING FUNCTION
+
+scoring=${SCORING_FUNCTION}
+
+#USE ACCURATE LINE SEARCH
+
+accurate_line=yes
+
