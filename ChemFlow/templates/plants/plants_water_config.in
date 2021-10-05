@@ -1,0 +1,34 @@
+# input files
+protein_file ${RECEPTOR_FILE}
+ligand_file  ligand.mol2
+
+# output
+output_dir PLANTS
+
+# scoring function and search settings
+scoring_function ${SCORING_FUNCTION}
+search_speed ${SPEED}
+aco_ants ${ANTS}
+aco_evap ${EVAP_RATE}
+aco_sigma ${ITERATION_SCALING}
+
+# binding site definition
+bindingsite_center ${DOCK_CENTER[@]}
+bindingsite_radius ${DOCK_RADIUS}
+
+# structural water molecule
+water_molecule_definition ${WATER_FILE}
+water_molecule ${WATER_XYZR[@]}
+
+# write mol2 files as a single (1) or multiple (0) mol2 files
+write_multi_mol2 1
+
+# cluster algorithm, save the best DOCK_POSES.
+cluster_structures ${DOCK_POSES}
+cluster_rmsd ${CLUSTER_RMSD}
+
+# write
+write_ranking_links 0
+write_protein_bindingsite 1
+write_protein_conformations 0
+####
