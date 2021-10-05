@@ -1,0 +1,7 @@
+Input file for running PB
+&general
+   verbose=1,keep_files=0,interval=10
+/
+&pb
+   istrng=0.000,inp=1,radiopt=0,indi=4,
+/
