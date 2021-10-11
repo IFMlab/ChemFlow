@@ -30,7 +30,7 @@ charge complex
 AddIons2 complex Cl- 0
 AddIons2 complex Na+ 0
 
-# Add enough ions to put the concentration high
+# Add enough ions to put the physiological concentration
 AddIons2 complex Cl- ${ncl}
 AddIons2 complex Na+ ${nna}
 
