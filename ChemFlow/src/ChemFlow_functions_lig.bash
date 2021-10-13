@@ -54,7 +54,8 @@ ChemFlow_set_ligand_list() {
 if [ ! -s ${LIGAND_FILE} ] ; then
     ERROR_MESSAGE="The ligand file ${LIGAND_FILE} is empty" ; ChemFlow_error
 else
-    LIGAND_LIST=($(sed -n '/Mrv/{g;1!p;};h' ${LIGAND_FILE}))
+#    LIGAND_LIST=($(sed -n '/Mrv/{g;1!p;};h' ${LIGAND_FILE}))
+    LIGAND_LIST=($(sed -n '1p ; /$$$$/{n;p}'  ${LIGAND_FILE}))
     NLIGANDS=${#LIGAND_LIST[@]}
 fi
 }
