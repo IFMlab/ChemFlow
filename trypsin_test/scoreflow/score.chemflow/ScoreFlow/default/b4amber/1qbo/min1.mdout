@@ -1,0 +1,182 @@
+
+          -------------------------------------------------------
+          Amber 20 PMEMD                              2020
+          -------------------------------------------------------
+
+| PMEMD implementation of SANDER, Release 18
+
+|  Compiled date/time: Wed Sep 15 00:41:14 2021
+| Run on 10/12/2021 at 23:17:31
+
+|   Executable path: pmemd.cuda
+| Working directory: /scratch/dgomes/CHEMFLOW_TRYPSIN/scoreflow/score.chemflow/ScoreFlow/default/b4amber/1qbo
+|          Hostname: Unknown
+  [-O]verwriting output
+
+File Assignments:
+|   MDIN: ../min1.in                                                            
+|  MDOUT: min1.mdout                                                            
+| INPCRD: ionized_solvated_SALT.rst7                                            
+|   PARM: ionized_solvated_SALT.prmtop                                          
+| RESTRT: min1.rst7                                                             
+|   REFC: ionized_solvated_SALT.rst7                                            
+|  MDVEL: min1.mdvel                                                            
+|   MDEN: min1.mden                                                             
+|  MDCRD: min1.nc                                                               
+| MDINFO: min1.mdinfo                                                           
+|  MDFRC: mdfrc                                                                 
+
+
+ Here is the input file:
+
+INMETRO     - Instituto Nacional de Metrologia, Qualidade e Tecnologia         
+   LAMAC    - Laboratorio de Macromoleculas                                    
+      GBIC  - Grupo de Biologia Computacional                                  
+                                                                               
+RESPONSAVEL:                                                                   
+Diego Enry Barreto Gomes                                                       
+   - dgomes@pq.cnpq.br                                                         
+   - (21) 2145 3070                                                            
+                                                                               
+PROGRAMA:                                                                      
+sander                                                                         
+   - AmberTools 15                                                             
+   - Amber14                                                                   
+                                                                               
+DESCRICAO:                                                                     
+Arquivo de entrada para minimizacao de energia                                 
+   - restricoes de posicao bem fracas para o todos os heavy-atoms              
+   - only hydrogen move                                                        
+                                                                               
+ATUALIZACAO:                                                                   
+Thu Oct  6 11:45:01 BRT 2016                                                   
+                                                                               
+ &cntrl                                                                        
+! General flags                                                                
+!----------------------------------------------------------------------        
+ imin=1,          ! (0 = molecular dynamics, 1 = energy minimization)          
+                                                                               
+! Energy Minimization                                                          
+!----------------------------------------------------------------------        
+ maxcyc=1000,                                                                  
+ ncyc=500, !(RTFM)                                                             
+ ntmin=1,   !(0 full, 1 SD then CG after ncyc . RTFM)                          
+ dx0=0.01,  !default                                                           
+ drms=0.01  ! (default=1E-04)                                                  
+                                                                               
+! Nature and format of the input                                               
+!----------------------------------------------------------------------        
+! irest=0,         ! restart md (0 no, 1 yes)                                  
+! ntx=0,           ! coordinates & velocities (0 = coor only, 5 = restart MD)  
+!                                                                              
+! Run control options                                                          
+!----------------------------------------------------------------------        
+! nstlim=250000,   ! nsteps  500ps                                             
+! dt=0.002,        ! time step                                                 
+  cut=10.0,        !                                                           
+                                                                               
+! Constraints                                                                  
+!----------------------------------------------------------------------        
+ ntc=1,            ! (1 = no shake ; SHAKE 2 = bonds involving hydrogen)       
+ ntf=1,            ! (1 = no shake ; 2 = bond inter involving H-atoms omitted S
+                                                                               
+! Frozen or restrained atoms                                                   
+!----------------------------------------------------------------------        
+! ibelly,                                                                      
+! bellymask,                                                                   
+ ntr=1,                                                                        
+ restraintmask='!@H=',                                                         
+ restraint_wt=5.0,                                                             
+                                                                               
+! Temperature coupling                                                         
+!----------------------------------------------------------------------        
+! ntt=3,           ! Langevin                                                  
+! gamma_ln=2.0,    !                                                           
+! tempi=0.0,       ! Start temperature                                         
+! temp0=310,       ! Target temperature                                        
+                                                                               
+! Ensemble & Barostat                                                          
+!----------------------------------------------------------------------        
+ ntb=1,            ! (PBC for constant 1 = VOLUME 2 = PRESSURE)                
+! ntp=1,           ! (1 = isotropic scaling)                                   
+! barostat=1,      ! (1 = Berendsen)                                           
+! taup=1.0,        !                                                           
+                                                                               
+!Nature and format of the output                                               
+!----------------------------------------------------------------------        
+ ntxo=2,           ! Write Final coor, vel & box to restr as (1 ASCII, 2 NetCDF
+ ntpr=100,         ! Write energy to mdout and mdinfo                          
+ ntwr=1000,        ! Write restart to rst                                      
+ ntwx=100,        ! Write coordinates to mdcrd                                 
+! ntwf=1000,        ! Write force to mfrc                                      
+ ntwe=100,         ! Write energy to mden                                      
+ iwrap=1,          ! Wrap (off not to mess up with diffusion)                  
+ ioutfm=1,         ! Format of coor, vel & traj files (0 ASCII, 1 NetCDF)      
+/                                                                              
+end                                                                            
+
+
+Note: ig = -1. Setting random seed to   905630 based on wallclock time in 
+      microseconds.
+| irandom = 1, using AMBER's internal random number generator (default).
+ 
+|--------------------- INFORMATION ----------------------
+| GPU (CUDA) Version of PMEMD in use: NVIDIA GPU IN USE.
+|                    Version 18.0.0
+| 
+|                      03/25/2018
+| 
+| Implementation by:
+|                    Ross C. Walker     (SDSC)
+|                    Scott Le Grand     (nVIDIA)
+| 
+| Version 18 performance extensions by:
+|                    David Cerutti     (Rutgers)
+| 
+| Precision model in use:
+|      [SPFP] - Single Precision Forces, 64-bit Fixed Point
+|               Accumulation. (Default)
+| 
+|--------------------------------------------------------
+ 
+|----------------- CITATION INFORMATION -----------------
+|
+|    When publishing work that utilized the CUDA version
+|    of AMBER, please cite the following in addition to
+|    the regular AMBER citations:
+|
+|  - Romelia Salomon-Ferrer; Andreas W. Goetz; Duncan
+|    Poole; Scott Le Grand; Ross C. Walker "Routine
+|    microsecond molecular dynamics simulations with
+|    AMBER - Part II: Particle Mesh Ewald", J. Chem.
+|    Theory Comput., 2013, 9 (9), pp3878-3888,
+|    DOI: 10.1021/ct400314y.
+|
+|  - Andreas W. Goetz; Mark J. Williamson; Dong Xu;
+|    Duncan Poole; Scott Le Grand; Ross C. Walker
+|    "Routine microsecond molecular dynamics simulations
+|    with AMBER - Part I: Generalized Born", J. Chem.
+|    Theory Comput., 2012, 8 (5), pp1542-1555.
+|
+|  - Scott Le Grand; Andreas W. Goetz; Ross C. Walker
+|    "SPFP: Speed without compromise - a mixed precision
+|    model for GPU accelerated molecular dynamics
+|    simulations.", Comp. Phys. Comm., 2013, 184
+|    pp374-380, DOI: 10.1016/j.cpc.2012.09.022
+|
+|--------------------------------------------------------
+ 
+|------------------- GPU DEVICE INFO --------------------
+|
+|            CUDA_VISIBLE_DEVICES: not set
+|   CUDA Capable Devices Detected:      2
+|           CUDA Device ID in use:      0
+|                CUDA Device Name: NVIDIA RTX A5000
+|     CUDA Device Global Mem Size:  24256 MB
+| CUDA Device Num Multiprocessors:     64
+|           CUDA Device Core Freq:   1.70 GHz
+|
+|--------------------------------------------------------
+ 
+
+  Unit    9 Error on OPEN: ionized_solvated_SALT.rst7                                                                                                                                                                                                                                      

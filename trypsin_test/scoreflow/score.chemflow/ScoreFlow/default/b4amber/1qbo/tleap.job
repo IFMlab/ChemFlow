@@ -1,0 +1,239 @@
+-I: Adding /home/dgomes/software/amber20/dat/leap/prep to search path.
+-I: Adding /home/dgomes/software/amber20/dat/leap/lib to search path.
+-I: Adding /home/dgomes/software/amber20/dat/leap/parm to search path.
+-I: Adding /home/dgomes/software/amber20/dat/leap/cmd to search path.
+-f: Source ../tleap.in.
+
+Welcome to LEaP!
+(no leaprc in search path)
+Sourcing: ../tleap.in
+----- Source: /home/dgomes/software/amber20/dat/leap/cmd/leaprc.protein.ff14SB
+----- Source of /home/dgomes/software/amber20/dat/leap/cmd/leaprc.protein.ff14SB done
+Log file: ./leap.log
+Loading parameters: /home/dgomes/software/amber20/dat/leap/parm/parm10.dat
+Reading title:
+PARM99 + frcmod.ff99SB + frcmod.parmbsc0 + OL3 for RNA
+Loading parameters: /home/dgomes/software/amber20/dat/leap/parm/frcmod.ff14SB
+Reading force field modification type file (frcmod)
+Reading title:
+ff14SB protein backbone and sidechain parameters
+Loading library: /home/dgomes/software/amber20/dat/leap/lib/amino12.lib
+Loading library: /home/dgomes/software/amber20/dat/leap/lib/aminoct12.lib
+Loading library: /home/dgomes/software/amber20/dat/leap/lib/aminont12.lib
+----- Source: /home/dgomes/software/amber20/dat/leap/cmd/leaprc.water.tip3p
+----- Source of /home/dgomes/software/amber20/dat/leap/cmd/leaprc.water.tip3p done
+Loading library: /home/dgomes/software/amber20/dat/leap/lib/atomic_ions.lib
+Loading library: /home/dgomes/software/amber20/dat/leap/lib/solvents.lib
+Loading parameters: /home/dgomes/software/amber20/dat/leap/parm/frcmod.tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+This is the additional/replacement parameter set for TIP3P water
+Loading parameters: /home/dgomes/software/amber20/dat/leap/parm/frcmod.ions1lm_126_tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+Li/Merz ion parameters of monovalent ions for TIP3P water model (12-6 normal usage set)
+Loading parameters: /home/dgomes/software/amber20/dat/leap/parm/frcmod.ionsjc_tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+Monovalent ion parameters for Ewald and TIP3P water from Joung & Cheatham JPCB (2008)
+Loading parameters: /home/dgomes/software/amber20/dat/leap/parm/frcmod.ions234lm_126_tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+Li/Merz ion parameters of divalent to tetravalent ions for TIP3P water model (12-6 normal usage set)
+----- Source: /home/dgomes/software/amber20/dat/leap/cmd/leaprc.gaff2
+----- Source of /home/dgomes/software/amber20/dat/leap/cmd/leaprc.gaff2 done
+Log file: ./leap.log
+Loading parameters: /home/dgomes/software/amber20/dat/leap/parm/gaff2.dat
+Reading title:
+AMBER General Force Field for organic molecules (Version 2.11, May 2016)
+Using H(N)-modified Bondi radii
+Loading PDB file: ../receptor.pdb
+  Added missing heavy atom: .R<CASN 223>.A<OXT 15>
+  total atoms in file: 1628
+  Leap added 1592 missing atoms according to residue templates:
+       1 Heavy
+       1591 H / lone pairs
+Checking Unit.
+
+/home/dgomes/software/amber20/bin/teLeap: Warning!
+The unperturbed charge of the unit (6.000000) is not zero.
+
+/home/dgomes/software/amber20/bin/teLeap: Note.
+Ignoring the warning from Unit Checking.
+
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 641 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+  (Residues lacking connect0/connect1 - 
+   these don't have chain types marked:
+
+	res	total affected
+
+	CASN	1
+	NILE	1
+  )
+ (no restraints)
+Writing pdb file: ptn.pdb
+
+/home/dgomes/software/amber20/bin/teLeap: Warning!
+ Converting N-terminal residue name to PDB format: NILE -> ILE
+
+/home/dgomes/software/amber20/bin/teLeap: Warning!
+ Converting C-terminal residue name to PDB format: CASN -> ASN
+Total unperturbed charge:   6.000000
+Total perturbed charge:     6.000000
+Loading parameters: ./ligand.frcmod
+Reading force field modification type file (frcmod)
+Reading title:
+Remark line goes here
+Loading Mol2 file: ./ligand_gas.mol2
+Reading MOLECULE named MOL
+Checking Unit.
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 24 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+  (Residues lacking connect0/connect1 - 
+   these don't have chain types marked:
+
+	res	total affected
+
+	MOL	1
+  )
+ (no restraints)
+Writing pdb file: ligand.pdb
+Total unperturbed charge:  -0.000005
+Total perturbed charge:    -0.000005
+Checking Unit.
+
+/home/dgomes/software/amber20/bin/teLeap: Warning!
+The unperturbed charge of the unit (5.999995) is not zero.
+
+/home/dgomes/software/amber20/bin/teLeap: Note.
+Ignoring the warning from Unit Checking.
+
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 665 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+  (Residues lacking connect0/connect1 - 
+   these don't have chain types marked:
+
+	res	total affected
+
+	CASN	1
+	MOL	1
+	NILE	1
+  )
+ (no restraints)
+Writing pdb file: complex.pdb
+
+/home/dgomes/software/amber20/bin/teLeap: Warning!
+ Converting N-terminal residue name to PDB format: NILE -> ILE
+
+/home/dgomes/software/amber20/bin/teLeap: Warning!
+ Converting C-terminal residue name to PDB format: CASN -> ASN
+Total unperturbed charge:   5.999995
+Total perturbed charge:     5.999995
+6 Cl- ions required to neutralize.
+Adding 6 counter ions to "complex" using 1A grid
+Grid extends from solute vdw + 2.51  to  8.51
+Resolution:      1.00 Angstrom.
+Calculating grid charges
+Placed Cl- in complex at (15.01, -23.02, 71.02).
+Placed Cl- in complex at (1.01, -3.02, 55.02).
+Placed Cl- in complex at (9.01, 13.98, 60.02).
+Placed Cl- in complex at (31.01, -0.02, 86.02).
+Placed Cl- in complex at (18.01, 8.98, 43.02).
+Placed Cl- in complex at (24.01, -19.02, 48.02).
+
+Done adding ions.
+ 0.000005 0 1 0
+0 Na+ ion required to neutralize.
+Adding 0 counter ions to "complex" using 1A grid
+Checking Unit.
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 665 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+  (Residues lacking connect0/connect1 - 
+   these don't have chain types marked:
+
+	res	total affected
+
+	CASN	1
+	MOL	1
+	NILE	1
+  )
+ (no restraints)
+Scaling up box by a factor of 1.186644 to meet diagonal cut criterion
+  Solute vdw bounding box:              37.428 46.801 52.645
+  Total bounding box for atom centers:  85.871 85.871 85.871
+      (box expansion for 'iso' is  30.4%)
+  Solvent unit box:                     18.774 18.774 18.774
+  Volume: 327790.837 A^3 (oct)
+  Total mass 175159.036 amu,  Density 0.887 g/cc
+  Added 8392 residues.
+Checking Unit.
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 665 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+  (Residues lacking connect0/connect1 - 
+   these don't have chain types marked:
+
+	res	total affected
+
+	CASN	1
+	MOL	1
+	NILE	1
+	WAT	8392
+  )
+ (no restraints)
+Writing pdb file: ionized_solvated.pdb
+   printing CRYST1 record to PDB file with box info
+
+/home/dgomes/software/amber20/bin/teLeap: Warning!
+ Converting N-terminal residue name to PDB format: NILE -> ILE
+
+/home/dgomes/software/amber20/bin/teLeap: Warning!
+ Converting C-terminal residue name to PDB format: CASN -> ASN
+	Quit
+
+Exiting LEaP: Errors = 0; Warnings = 8; Notes = 2.

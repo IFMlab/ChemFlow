@@ -1,0 +1,7 @@
+Input file for running GB2
+&general
+   verbose=1,keep_files=0,interval=10
+/
+&gb
+  igb=2, saltcon=0.150
+/

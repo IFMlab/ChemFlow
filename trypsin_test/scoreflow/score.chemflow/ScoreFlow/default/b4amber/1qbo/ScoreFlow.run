@@ -1,0 +1,32 @@
+cd /scratch/dgomes/CHEMFLOW_TRYPSIN/scoreflow/score.chemflow/ScoreFlow/default/b4amber//1qbo
+tleap -f ../tleap.in &> tleap.job
+init=ionized_solvated_SALT
+prev=ionized_solvated_SALT
+
+for run in min1 min2 min3 min4 ; do
+    input="../${run}"
+    var=''
+
+    # Check if run finished.
+    if [ -f ${run}.mdout ] ; then
+        var=$(tail -1 ${run}.mdout | awk '/Total wall time/{print $1}')
+    fi
+
+    if [ "${var}" == '' ] ; then
+        pmemd.cuda -O  -i ${input}.in -o ${run}.mdout -e ${run}.mden -r ${run}.rst7  -x ${run}.nc -v  ${run}.mdvel -inf ${run}.mdinfo -c ${prev}.rst7 -p ${init}.prmtop -ref ${prev}.rst7 &> ${run}.job
+    fi
+
+    if [ -f ${run}.mdout ] ; then
+        var=$(tail -1 ${run}.mdout | awk '/Total wall time/{print $1}')
+    fi
+    if [ "${var}" == '' ] ; then
+        echo "[ ERROR ]Fail in step ${run}"
+        exit 1
+    fi
+
+    prev=${run}
+done
+rm -rf com.top rec.top ligand.top
+ante-MMPBSA.py -p ionized_solvated_SALT.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job
+MMPBSA.py -O -i ../GB2.in -sp ionized_solvated_SALT.prmtop -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y min4.rst7 &> MMPBSA.job
+rm -rf reference.frc 
