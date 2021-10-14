@@ -1586,10 +1586,10 @@ while [[ $# -gt 0 ]]; do
     esac
     ###
     if [[ -n ${conf_file} ]] ; then
-        #x_val=$(grep center_x dock_input.txt | cut -d= -f2);
-        #y_val=$(grep center_y dock_input.txt | cut -d= -f2);
-        #z_val=$(grep center_z dock_input.txt | cut -d= -f2);
-        #DOCK_CENTER="${x_val} ${y_val} ${z_val}";
+        x_val=$(grep center_x "${conf_file}" | cut -d= -f2);
+        y_val=$(grep center_y "${conf_file}" | cut -d= -f2);
+        z_val=$(grep center_z "${conf_file}" | cut -d= -f2);
+        DOCK_CENTER=("${x_val}" "${y_val}" "${z_val}");
         scoring_sf_name=$(grep scoring "${conf_file}" | cut -d= -f2);
         SCORING_FUNCTION="${scoring_sf_name}";
     fi
