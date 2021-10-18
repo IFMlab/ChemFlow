@@ -53,7 +53,6 @@ if [ -f ${RUNDIR}/${LIGAND}/ionized_solvated.prmtop ] ; then
 	echo $nna $ncl
 else
 	tleap -f ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_water.template
-#	WAT=$(cat ${RUNDIR}/${LIGAND}/ionized_solvated.prmtop | grep WAT | sed 's/ /\n/g' | grep WAT | wc -l)
 	WAT=$(grep -c ${RUNDIR}/${LIGAND}/ionized_solvated.prmtop)
 
 	nsalt=$(awk -v R=0.0187 -v C=0.15 -v WAT=$WAT 'BEGIN{print R*C*WAT}')
