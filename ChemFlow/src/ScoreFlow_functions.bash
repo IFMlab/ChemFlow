@@ -340,8 +340,8 @@ ScoreFlow_rescore_mmgbsa_write_compute_charges() {
 LIGAND_NAME=`echo ${LIGAND} | sed -e 's/_conf_[0-9]*//'`
 
 # Mandatory Gasteiger charges
-if [ ! -f ligand_gas.mol2 ] ; then
-    antechamber -i ligand.mol2 -fi mol2 -o ligand_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
+if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/gas/${LIGAND}/${LIGAND}.mol2 ] ; then
+    antechamber -i ${RUNDIR}/${LIGAND}/ligand.mol2 -fi mol2 -o ${RUNDIR}/${LIGAND}/ligand_gas.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf y -dr no &> antechamber.log
 fi
 
 if [ ${CHARGE} != 'gas' ] ; then
@@ -369,7 +369,7 @@ if [ ${CHARGE} != 'gas' ] ; then
         echo "${CHARGE} charges found in LigFlow for ${LIGAND}"
 
         awk '/ MOL/&&!/TEMP/ {print $9}' ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2 > charges.dat
-        antechamber -i ligand_gas.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes -dr no &> /dev/null
+        antechamber -i ${RUNDIR}/${LIGAND}/ligand_gas.mol2 -o ${RUNDIR}/${LIGAND}/ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -pf yes -dr no &> /dev/null
 
         # Done
         DONE_CHARGE="true"
@@ -399,21 +399,21 @@ if [ ${CHARGE} != 'gas' ] ; then
 fi
 
 if [ ! -f ligand.frcmod ] && [ -f ligand_gas.mol2 ] ; then
-    parmchk2 -i ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
+    parmchk2 -i ${RUNDIR}/${LIGAND}/ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
 
-    if [ ! -f ligand.frcmod ]  ; then
+    if [ ! -f ${RUNDIR}/${LIGAND}/ligand.frcmod ]  ; then
         echo "${LIGAND} gas" >> ${RUNDIR}/antechamber_errors.lst
     fi
 fi
 
 case ${CHARGE} in
 "bcc")
-    if [ ! -f ligand_bcc.mol2 ] ; then
+    if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/bcc/${LIGAND}/${LIGAND}.mol2 ] ; then
         echo "${LIGAND} bcc" >> ${RUNDIR}/antechamber_errors.lst
     fi
 ;;
 "resp")
-    if [ ! -f ligand_resp.mol2 ]; then
+    if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/resp/${LIGAND}/${LIGAND}.mol2 ]; then
         echo "${LIGAND} resp">> ${RUNDIR}/antechamber_errors.lst
     fi
 ;;
