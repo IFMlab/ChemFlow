@@ -381,7 +381,7 @@ if [ ${CHARGE} != 'gas' ] ; then
         case ${CHARGE} in
         "bcc")
             # Compute am1-bcc charges
-            if [ ! -f ligand_bcc.mol2 ] ; then
+            if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/bcc/${LIGAND}/${LIGAND}.mol2 ] ; then
                 echo "You asked for bcc charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later."
                 exit
             fi
@@ -389,7 +389,7 @@ if [ ${CHARGE} != 'gas' ] ; then
             ;;
         "resp")
             # Prepare Gaussian
-            if [ ! -f ligand_resp.mol2 ] ; then
+            if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/resp/${LIGAND}/${LIGAND}.mol2 ] ; then
                 echo "You asked for resp charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later."
                 exit
             fi
