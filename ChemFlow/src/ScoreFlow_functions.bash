@@ -398,8 +398,8 @@ if [ ${CHARGE} != 'gas' ] ; then
     fi
 fi
 
-if [ ! -f ligand.frcmod ] && [ -f ligand_gas.mol2 ] ; then
-    parmchk2 -i ${RUNDIR}/${LIGAND}/ligand_gas.mol2 -o ligand.frcmod -s 2 -f mol2
+if [ ! -f ${RUNDIR}/${LIGAND}/ligand.frcmod ] && [ -f ${RUNDIR}/${LIGAND}/ligand_gas.mol2 ] ; then
+    parmchk2 -i ${RUNDIR}/${LIGAND}/ligand_gas.mol2 -o ${RUNDIR}/${LIGAND}/ligand.frcmod -s 2 -f mol2
 
     if [ ! -f ${RUNDIR}/${LIGAND}/ligand.frcmod ]  ; then
         echo "${LIGAND} gas" >> ${RUNDIR}/antechamber_errors.lst
