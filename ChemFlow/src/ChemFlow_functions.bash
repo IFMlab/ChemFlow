@@ -341,6 +341,23 @@ if [ "${DOCK_PROGRAM}" == "PLANTS" ]; then
   fi
 fi
 }
+check_tleap(){
+if [  "${WATER}" = "yes" ] ; then
+ if [ -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] ; then
+#        rsync -auvLP ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.bash ${RUNDIR}/ &>/dev/null
+         eval echo ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.bash ${RUNDIR}/ &>/dev/null
+         cd ${RUNDIR}/${LIGAND}
+         bash ../tleap_SALT.bash  &>/dev/null
+ else
+         tleap -f ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_water.in &>/dev/null
+ #       rsync -auvLP ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.bash ${RUNDIR}/ &>/dev/null
+         eval echo ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_water.in &>/dev/null
+         cd ${RUNDIR}/${LIGAND}
+         bash ../tleap_SALT.bash  &>/dev/null
+ fi
+fi
+
+}
 
 relpath(){
   # returns path relative to the specified directory
