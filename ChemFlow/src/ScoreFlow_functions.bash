@@ -444,8 +444,6 @@ else
 #    template="tleap_water.template"
 fi
 
-echo "MADONNA"
-
 file=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/${template})
 eval echo \""${file}"\" >> ${RUNDIR}/tleap.in
 #printf '\n%s\n'"${file}"\" >> ${RUNDIR}/tleap_SALT.bash
@@ -454,7 +452,6 @@ eval echo \""${file}"\" >> ${RUNDIR}/tleap.in
 echo "MODIFICATO GIU"
 #salt=$(cat ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.template)
 #eval echo \""${salt}"\" >> ${RUNDIR}/tleap_salt.in
-
 
 
 # Simulation inputs
