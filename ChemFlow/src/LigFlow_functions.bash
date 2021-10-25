@@ -293,7 +293,7 @@ case ${JOB_SCHEDULLER} in
             echo  "Starting the AM1-bcc calculation for ligand ${LIGAND}. This will serve as a structure sanity check. Please look at the log file for more information."
             if [ "${CHARGE_FILE}" == '' ] ; then
             # Compute am1-bcc charges
-                antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr y -at sybyl  &>> antechamber_prep_bcc.log 
+                antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr y -at sybyl  &>> antechamber_prep_bcc.log 
             else
                 net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
                 echo "Charges file founded"
@@ -390,11 +390,11 @@ if [ "${nb}" -eq "${nlig}" ] ; then
 		    echo  "Starting the AM1-bcc calculation for ligand ${LIGAND}. This will serve as a structure sanity check. Please look at the log file for more information."
 		    if [ "${CHARGE_FILE}" == '' ] ; then
 		    # Compute am1-bcc charges
-		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr y -at sybyl  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
+		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr y -at sybyl  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
 		    else
 		        net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
 		        #antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr y -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log 
-		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
+		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
 		    fi
 		    ELAPSED_TIME_BCC=$(($SECONDS - $START_TIME_BCC))
 		    #echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_BCC} seconds."
