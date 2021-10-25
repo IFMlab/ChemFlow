@@ -299,7 +299,7 @@ case ${JOB_SCHEDULLER} in
                 echo "Charges file founded"
                 echo ${net_charge}
                 #antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr y -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log 
-                antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log
+                antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log
             fi
             ELAPSED_TIME_BCC=$(($SECONDS - $START_TIME_BCC))
             echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_BCC} seconds."
@@ -328,7 +328,7 @@ case ${JOB_SCHEDULLER} in
             
             echo ${LIGAND}  >> antechamber_gauss_resp_${ATOM_TYPE}.log
             #antechamber -i ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn ${LIGAND} -pf y -dr y -at gaff2 &>> antechamber_gauss.log
-            antechamber -i ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn ${LIGAND} -pf y -dr y -at ${ATOM_TYPE} &>> antechamber_gauss_resp_${ATOM_TYPE}.log
+            antechamber -i ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr y -at ${ATOM_TYPE} &>> antechamber_gauss_resp_${ATOM_TYPE}.log
 	    echo -e "\n\n\n" >> antechamber_gauss_resp_${ATOM_TYPE}.log
             ELAPSED_TIME_RESP=$(($SECONDS - $START_TIME_RESP))
             echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_RESP} seconds."
@@ -423,7 +423,7 @@ if [ "${nb}" -eq "${nlig}" ] ; then
 		    
 		    echo ${LIGAND}  >> antechamber_gauss.log
 		    #echo "antechamber -i ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn ${LIGAND} -pf y -dr y -at gaff2 &>> antechamber_gauss.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-		   echo "antechamber -i ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn ${LIGAND} -pf y -dr y -at ${ATOM_TYPE} &>> antechamber_gauss.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+		   echo "antechamber -i ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr y -at ${ATOM_TYPE} &>> antechamber_gauss.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
 		    echo -e "\n\n\n" >> antechamber_gauss.log
 		    ELAPSED_TIME_RESP=$(($SECONDS - $START_TIME_RESP))
 		    echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_RESP} seconds."
