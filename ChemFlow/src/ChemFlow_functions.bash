@@ -341,23 +341,38 @@ if [ "${DOCK_PROGRAM}" == "PLANTS" ]; then
   fi
 fi
 }
-check_tleap(){
-if [  "${WATER}" = "yes" ] ; then
- if [ -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] ; then
-#        rsync -auvLP ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.bash ${RUNDIR}/ &>/dev/null
-         eval echo ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.bash ${RUNDIR}/ &>/dev/null
-         cd ${RUNDIR}/${LIGAND}
-         bash ../tleap_SALT.bash  &>/dev/null
- else
-         tleap -f ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_water.in &>/dev/null
- #       rsync -auvLP ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.bash ${RUNDIR}/ &>/dev/null
-         eval echo ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_water.in &>/dev/null
-         cd ${RUNDIR}/${LIGAND}
-         bash ../tleap_SALT.bash  &>/dev/null
+
+copy_tleap(){
+if [  "${WATER}" != "yes" ] ; then
+
+        sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_implicit.template >> ${RUNDIR}/tleap_implicit.in
+
+else
+sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_water.template >> ${RUNDIR}/tleap_water.in
+#       sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.bash >> ${RUNDIR}/tleap.bash
+sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.template >> ${RUNDIR}/tleap_salt.in
+
+
  fi
-fi
 
 }
+
+run_salt(){
+if [ ${RUN_ONLY} == "yes" ] && [ "${WATER}" == 'yes' ] ; then
+        tleap -f ../tleap_water.in &> water.job
+        WAT=$(grep -c 'WAT' ${RUNDIR}/${LIGAND}/ionized_solvated.prmtop)
+        eval echo \""${WAT}"\" > ${RUNDIR}/${LIGAND}/water.dat
+        nsalt=$(awk -v R=0.0187 -v C=0.15 -v WAT=$WAT 'BEGIN{print R*C*WAT}')
+        ncl=$(awk -v nsalt=$nsalt 'BEGIN{print int(nsalt)}')
+        nna=$(awk -v nsalt=$nsalt 'BEGIN{print int(nsalt)}')
+        #echo $nna $ncl
+        sed "s/nna/${nna}/g" ${RUNDIR}/tleap_salt.in >> ${RUNDIR}/tleap_salt-na.in
+        sed "s/ncl/${ncl}/g" ${RUNDIR}/tleap_salt-na.in >> ${RUNDIR}/tleap_salt-tot.in
+        rm -rf ${RUNDIR}/tleap_salt-na.in
+        tleap -f ${RUNDIR}/tleap_salt-tot.in &> tleap.job
+fi
+}
+
 
 relpath(){
   # returns path relative to the specified directory
