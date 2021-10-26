@@ -31,8 +31,8 @@ AddIons2 complex Cl- 0
 AddIons2 complex Na+ 0
 
 # Add enough ions to put the physiological concentration
-AddIons2 complex Cl- ${ncl}
-AddIons2 complex Na+ ${nna}
+AddIons2 complex Cl- ncl
+AddIons2 complex Na+ nna
 
 # Save ligand with ions: topology and coordinates
 saveamberparm complex ionized_SALT.prmtop ionized_SALT.rst7
