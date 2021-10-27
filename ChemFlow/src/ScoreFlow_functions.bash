@@ -332,6 +332,7 @@ if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/gas/${LIGAND}/${LIGAND}.mol2 ] 
 	
 	antechamber -i ${RUNDIR}/${LIGAND}/ligand.mol2 -fi mol2 -o ${WORKDIR}/${PROJECT}.chemflow/LigFlow/gas/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf yes -dr no &> antechamber.log
 fi
+        cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/gas/${LIGAND}/${LIGAND}.mol2 ${RUNDIR}/${LIGAND}/ligand_gas.mol2
 
 if [ ${CHARGE} != 'gas' ] ; then
     DONE_CHARGE="false"
