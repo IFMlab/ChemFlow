@@ -244,12 +244,9 @@ if [ ${WRITE_ONLY} == 'yes' ] ; then
         echo "tleap -f ../tleap_implicit.in &> tleap.job" > ScoreFlow.run.template
     fi
     if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ "${WATER}" == 'yes' ] ; then
-#        echo "bash ../tleap.bash &> tleap.job" > ScoreFlow.template
+
        echo -e "tleap -f ../tleap_water.in &> water.job\ntleap -f ../tleap_salt-tot.in  &> tleap.job " > ScoreFlow.run.template
 
-
-#	echo "tleap -f ${RUNDIR}/tleap_salt-tot.in &> tleap.job " > ScoreFlow.run.template
-	#echo	 "bash ../tleap.bash &> tleap.job" > ${RUNDIR}/ScoreFlow.run.template
 
     fi
     echo -e "$(cat ${RUNDIR}/ScoreFlow.run)" >> ScoreFlow.run.template
