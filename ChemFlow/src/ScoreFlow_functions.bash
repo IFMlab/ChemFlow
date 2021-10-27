@@ -784,7 +784,10 @@ echo "Example usage:
 ScoreFlow -r receptor.mol2 -l ligand.mol2 -p myproject --center X Y Z [--protocol protocol-name] [-sf vina]
 
 # For MMGBSA only
-ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [--protocol protocol-name] -sf mmgbsa
+ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [--protocol protocol-name] -sf mmgbsa --write-only
+
+ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [--protocol protocol-name] -sf mmgbsa --run-only
+
 
 [Options]
  -h/--help           : Show this help message and quit
