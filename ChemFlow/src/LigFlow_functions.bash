@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-
+echo "OHOH"
 
 checkpoint1() {
 if [ ! -f ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 ] ; then
@@ -34,6 +34,9 @@ LigFlow_write_origin_ligands() {
 #===============================================================================
 OLDIFS=$IFS
 IFS='%'
+
+if [ "${end_file}" == "sdf" ]; then
+echo "popoposds"
 n=0
 p=0
 cpt_sdf=0
@@ -54,6 +57,26 @@ while read line ; do
     fi
 done < ${LIGAND_FILE}
 IFS=${OLDIFS}
+fi
+
+echo "popopo"
+
+if [ "${end_file}" == "mol2" ]; then
+echo "popopo2"
+n=-1
+while read line ; do
+    #echo ${line}
+    if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
+        let n=$n+1
+        echo 'TEST'
+        #echo ${line}
+        echo -e "${line}" > ${RUNDIR}/original/${LIGAND_LIST[$n]}.mol2
+    else
+        echo -e "${line}" >> ${RUNDIR}/original/${LIGAND_LIST[$n]}.mol2
+    fi
+done < ${LIGAND_FILE}
+IFS=${OLDIFS}
+fi
 
 
 #
@@ -81,7 +104,7 @@ fi
 
 
 for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ ! -f ${RUNDIR}/original/${LIGAND}.sdf ] ; then
+    if [ ! -f ${RUNDIR}/original/${LIGAND}.$end_file ] ; then
         REWRITE="yes"
         break
     fi
@@ -112,7 +135,7 @@ then
 if [ -f ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst ] && [ -f ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2 ]  ;
 then
 # Step 2 - Populate CHEMBASE_LIST
-    CHEMBASE_LIST=$(cat ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)
+    CHEMBASE_LIST=$(${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst)
     CHEMBASE_LIST=($CHEMBASE_LIST)
 else
     CHEMBASE_LIST=''
@@ -123,7 +146,7 @@ fi
   # Step 3 - Populate COMPUTED_LIST of charges
 if [ -d ${RUNDIR}/${CHARGE}/${ATOM_TYPE} ]
 then
-    COMPUTED_LIST=$(ls -U ${RUNDIR}/original/ | grep sdf | sed s/\.sdf// )
+    COMPUTED_LIST=$(ls -U ${RUNDIR}/original/ | grep $end_file | sed s/\.$end_file// )
     COMPUTED_LIST=($COMPUTED_LIST)
 else
     COMPUTED_LIST=''
@@ -134,9 +157,9 @@ fi
     conter=0
     cpt=0
     for LIGAND in ${LIGAND_LIST[@]} ; do 
-        inchi=$(molconvert -g inchi:AuxNone,key ${RUNDIR}/original/${LIGAND}.sdf | grep InChI= |  cut -d'=' -f2)
-        inchikey=$(molconvert -g inchi:AuxNone,key ${RUNDIR}/original/${LIGAND}.sdf | grep InChIKey |  cut -d'=' -f2)
-        smile_unique=$(molconvert smiles:+u ${RUNDIR}/original/${LIGAND}.sdf)
+        inchi=$(molconvert -g inchi:AuxNone,key ${RUNDIR}/original/${LIGAND}.$end_file | grep InChI= |  cut -d'=' -f2)
+        inchikey=$(molconvert -g inchi:AuxNone,key ${RUNDIR}/original/${LIGAND}.$end_file | grep InChIKey |  cut -d'=' -f2)
+        smile_unique=$(molconvert smiles:+u ${RUNDIR}/original/${LIGAND}.$end_file)
         # If found at LigFlow, proceed to next LIGAND.
         #case "${COMPUTED_LIST[@]}" in  *"${LIGAND}"*) continue ;; esac
  
@@ -293,13 +316,13 @@ case ${JOB_SCHEDULLER} in
             echo  "Starting the AM1-bcc calculation for ligand ${LIGAND}. This will serve as a structure sanity check. Please look at the log file for more information."
             if [ "${CHARGE_FILE}" == '' ] ; then
             # Compute am1-bcc charges
-                antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr y -at sybyl  &>> antechamber_prep_bcc.log 
+                antechamber -i ${RUNDIR}/original/${LIGAND}.${end_file} -fi ${end_file} -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr y -at sybyl  &>> antechamber_prep_bcc.log 
             else
                 net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
                 echo "Charges file founded"
                 echo ${net_charge}
                 #antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr y -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log 
-                antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log
+                antechamber -i ${RUNDIR}/original/${LIGAND}.${end_file} -fi ${end_file} -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log
             fi
             ELAPSED_TIME_BCC=$(($SECONDS - $START_TIME_BCC))
             echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_BCC} seconds."
@@ -314,11 +337,11 @@ case ${JOB_SCHEDULLER} in
             echo ${LIGAND}  >> antechamber_prep_${CHARGE}_${ATOM_TYPE}.log   
             START_TIME_RESP=$SECONDS
             if [ "${CHARGE_FILE}" == '' ] ; then  
-                antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y &>> antechamber_prep_resp_${ATOM_TYPE}.log   
+                antechamber -i ${RUNDIR}/original/${LIGAND}.${end_file} -fi ${end_file} -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y &>> antechamber_prep_resp_${ATOM_TYPE}.log   
             else
                 net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
                 echo  "Charges file founded"
-                antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y -nc ${net_charge}  &>> antechamber_prep_resp_${ATOM_TYPE}.log
+                antechamber -i ${RUNDIR}/original/${LIGAND}.${end_file} -fi ${end_file} -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y -nc ${net_charge}  &>> antechamber_prep_resp_${ATOM_TYPE}.log
             fi
             echo -e "\n\n\n" >> antechamber_prep_resp_${ATOM_TYPE}.log
             # Run Gaussian to optimize structure and generate electrostatic potential grid
@@ -390,11 +413,11 @@ if [ "${nb}" -eq "${nlig}" ] ; then
 		    echo  "Starting the AM1-bcc calculation for ligand ${LIGAND}. This will serve as a structure sanity check. Please look at the log file for more information."
 		    if [ "${CHARGE_FILE}" == '' ] ; then
 		    # Compute am1-bcc charges
-		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr y -at sybyl  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
+		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr y -at sybyl  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
 		    else
 		        net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
-		        #antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr y -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log 
-		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
+		        #antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr y -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log 
+		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
 		    fi
 		    ELAPSED_TIME_BCC=$(($SECONDS - $START_TIME_BCC))
 		    #echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_BCC} seconds."
@@ -409,11 +432,11 @@ if [ "${nb}" -eq "${nlig}" ] ; then
 		#   Prepare Gaussian
 		    START_TIME_RESP=$SECONDS
 		    if [ "${CHARGE_FILE}" == '' ] ; then  
-		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y &>> antechamber_prep_resp_${ATOM_TYPE}.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}   
+		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y &>> antechamber_prep_resp_${ATOM_TYPE}.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}   
 		    else
 		        net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
 		        #echo  "Charges file founded"
-		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.sdf -fi sdf -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y -nc ${net_charge}  &>> antechamber_prep_resp_${ATOM_TYPE}.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y -nc ${net_charge}  &>> antechamber_prep_resp_${ATOM_TYPE}.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
 		    fi
 		    echo -e "\n\n\n" >> antechamber_prep_${CHARGE}_${ATOM_TYPE}.log
 		    # Run Gaussian to optimize structure and generate electrostatic potential grid
@@ -561,7 +584,9 @@ esac
 
 LigFlow_help() {
 echo "Example usage:
-LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp][--resp_sybyl]
+LigFlow -l ligand.sdf -p myproject [--bcc] [--resp][--resp_sybyl] --charges-file mychargefile.dat
+or
+LigFlow -l ligand.mol2 -p myproject [--bcc] [--resp][--resp_sybyl] 
 
 [Options]
  -h/--help           : Show this help message and quit
@@ -627,6 +652,9 @@ while [[ $# -gt 0 ]]; do
         ;;
         "-l"|"--ligand")
             LIGAND_FILE=$(abspath "$2")
+            #echo "$LIGAND_FILE"
+            IFS=. read var1 end_file <<< $LIGAND_FILE
+            echo $end_file
             shift # past argument
         ;;
         "-p"|"--project")
