@@ -54,8 +54,14 @@ ChemFlow_set_ligand_list() {
 if [ ! -s ${LIGAND_FILE} ] ; then
     ERROR_MESSAGE="The ligand file ${LIGAND_FILE} is empty" ; ChemFlow_error
 else
-#    LIGAND_LIST=($(sed -n '/Mrv/{g;1!p;};h' ${LIGAND_FILE}))
-    LIGAND_LIST=($(sed -n '1p ; /$$$$/{n;p}'  ${LIGAND_FILE}))
+    #LIGAND_LIST=($(awk 'f{print;f=0} /MOLECULE/{f=1}' ${LIGAND_FILE}))
+    #LIGAND_LIST=($(awk 'NR==1{print $1}' ${LIGAND_FILE}))
+    if [ "${end_file}" == "sdf" ]; then
+        LIGAND_LIST=($(sed -n '/Mrv/{g;1!p;};h' ${LIGAND_FILE}))
+    fi
+    if [ "${end_file}" == "mol2" ]; then
+    LIGAND_LIST=($(awk 'f{print;f=0} /@<TRIPOS>MOLECULE/{f=1}' ${LIGAND_FILE}))    
+    fi
     NLIGANDS=${#LIGAND_LIST[@]}
 fi
 }
@@ -102,7 +108,7 @@ if [ -z "${LIGAND_FILE}" ] ; then
     ChemFlow_error ;
 fi
 
-# Check if the ligand file exists------------------------------------------
+# Check if the receptor file exists------------------------------------------
 if [ ! -f "${LIGAND_FILE}" ] ; then
     ERROR_MESSAGE="The ligand file ${LIGAND_FILE} does not exist." ;
     ChemFlow_error ;
@@ -115,23 +121,9 @@ case "${WORKFLOW}" in
     "chemplp"|"plp"|"plp95") # PLANTS is the default DOCK_PROGRAM
         # check if docking with water
         check_water
-	# Center is required for docking.
-    check_center
     ;;
     "vina")
         DOCK_PROGRAM="VINA" ;
-       # Center is required for docking.
-    check_center
-    ;;	
-    "qvina")
-        DOCK_PROGRAM="QVINA" ;
-       # Center is required for docking.
-    check_center
-    ;;
-    "svina"|"vinardo"|"dkoes_fast"|"dkoes_scoring")
-        DOCK_PROGRAM="SMINA" ;
-	#check if you put the config input file
-        check_config
     ;;
     *)
         ERROR_MESSAGE="SCORING_FUNCTION ${SCORING_FUNCTION} not implemented"; ChemFlow_error;
@@ -141,7 +133,7 @@ case "${WORKFLOW}" in
         ERROR_MESSAGE="Docking requires a mol2 file as receptor input"; ChemFlow_error;
     fi
     # Center is required for docking.
-    #check_center
+    check_center
 ;;
 "ScoreFlow")
     case "${SCORING_FUNCTION}" in
@@ -204,16 +196,6 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
     "PLANTS")
         if [ -z "$(command -v PLANTS1.2_64bit)" ] ; then
             ERROR_MESSAGE="PLANTS is not installed or on PATH" ; ChemFlow_error ;
-        fi
-    ;;
-    "QVINA")
-        if  [ -z "$(command -v qvina2.1)" ] ; then
-            ERROR_MESSAGE="QVina is not installed or on PATH" ; ChemFlow_error ;
-        fi
-    ;;
-    "SMINA")
-        if  [ -z "$(command -v smina.static)" ] ; then
-            ERROR_MESSAGE="Smina is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
     "VINA")
@@ -296,18 +278,9 @@ ChemFlow_set_ligand_list ${LIGAND_FILE}
 
 check_center(){
 if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ]; then
-   if [ -z "${DOCK_CENTER}" ] ; then
-       ERROR_MESSAGE="No DOCKING CENTER defined (--center x y z)" ; ChemFlow_error ;
-   fi
-fi
-}
-
-
-check_config(){
-if [ "${DOCK_PROGRAM}" == "SMINA" ] ; then
-  if [ -z "${conf_file}" ]; then
-       ERROR_MESSAGE="No configuration file defined (--config config.txt)" ; ChemFlow_error ;
-  fi
+    if [ -z "${DOCK_CENTER}" ] ; then
+        ERROR_MESSAGE="No DOCKING CENTER defined (--center x y z)" ; ChemFlow_error ;
+    fi
 fi
 }
 
