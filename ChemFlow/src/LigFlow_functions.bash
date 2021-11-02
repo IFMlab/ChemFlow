@@ -78,8 +78,8 @@ done < ${LIGAND_FILE}
 IFS=${OLDIFS}
 fi
 
-<<<<<<< HEAD
-=======
+#<<<<<<< HEAD
+#=======
 python3 ${CHEMFLOW_HOME}/src/Charges_prog.py -i ${RUNDIR}/original/Name.txt -o ${RUNDIR}/original/Charges.dat -f ${end_file}
 CHARGE_FILE=${RUNDIR}/original/Charges.dat
 
@@ -96,7 +96,7 @@ CHARGE_FILE=${RUNDIR}/original/Charges.dat
 #
 #
 #
->>>>>>> 11577829f54634cab78841ca43d4ad8ca97d5473
+#>>>>>>> 11577829f54634cab78841ca43d4ad8ca97d5473
 }
 
 
