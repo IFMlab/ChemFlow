@@ -36,12 +36,13 @@ OLDIFS=$IFS
 IFS='%'
 
 if [ "${end_file}" == "sdf" ]; then
-echo "popoposds"
 n=0
 p=0
 cpt_sdf=0
+echo "popoposds"
 while read line ; do   
     if  [ "${line}" == "${LIGAND_LIST[$n]}" ] && [ "${n}" -lt "${NLIGANDS}" ]; then    
+        echo -e ${RUNDIR}/original/${LIGAND_LIST[$n]} >> ${RUNDIR}/original/Name.txt
         cpt_sdf=0
         echo -e "${line}" > ${RUNDIR}/original/${LIGAND_LIST[$n]}.sdf
         let n=$n+1
@@ -59,7 +60,6 @@ done < ${LIGAND_FILE}
 IFS=${OLDIFS}
 fi
 
-echo "popopo"
 
 if [ "${end_file}" == "mol2" ]; then
 echo "popopo2"
@@ -68,9 +68,9 @@ while read line ; do
     #echo ${line}
     if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
         let n=$n+1
-        echo 'TEST'
         #echo ${line}
         echo -e "${line}" > ${RUNDIR}/original/${LIGAND_LIST[$n]}.mol2
+        echo -e ${RUNDIR}/original/${LIGAND_LIST[$n]} >> ${RUNDIR}/original/Name.txt
     else
         echo -e "${line}" >> ${RUNDIR}/original/${LIGAND_LIST[$n]}.mol2
     fi
@@ -78,6 +78,25 @@ done < ${LIGAND_FILE}
 IFS=${OLDIFS}
 fi
 
+<<<<<<< HEAD
+=======
+python3 ${CHEMFLOW_HOME}/src/Charges_prog.py -i ${RUNDIR}/original/Name.txt -o ${RUNDIR}/original/Charges.dat -f ${end_file}
+CHARGE_FILE=${RUNDIR}/original/Charges.dat
+
+#
+# QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
+#
+#cd ${RUNDIR}/original/
+#for LIGAND in ${LIGAND_LIST[@]} ; do
+#    antechamber -i ${LIGAND}.sdf -o tmp.sdf -fi sdf -fo mol2 -at sybyl -dr no &>/dev/null
+##    if [ -f tmp.mol2 ]; then mv tmp.mol2 ${LIGAND}.mol2; fi
+#done
+#rm -f ANTECHAMBER_*
+#rm ATOMTYPE.INF
+#
+#
+#
+>>>>>>> 11577829f54634cab78841ca43d4ad8ca97d5473
 }
 
 
@@ -687,9 +706,9 @@ while [[ $# -gt 0 ]]; do
         ;;
         # Features under Development 
         "--charges-file")
-           CHARGE_FILE=$(abspath "$2")
-           if [ ! -f ${CHARGE_FILE} ] ; then echo "Charge file \"${CHARGE_FILE}\" not found " ;  exit 1 ; fi
-           shift
+        #   CHARGE_FILE=$(abspath "$2")
+        #   if [ ! -f ${CHARGE_FILE} ] ; then echo "Charge file \"${CHARGE_FILE}\" not found " ;  exit 1 ; fi
+        #   shift
         ;;
         *)
             unknown="$1"        # unknown option
