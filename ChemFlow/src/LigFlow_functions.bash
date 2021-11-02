@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-echo "OHOH"
 
 checkpoint1() {
 if [ ! -f ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 ] ; then
@@ -39,7 +38,7 @@ if [ "${end_file}" == "sdf" ]; then
 n=0
 p=0
 cpt_sdf=0
-echo "popoposds"
+
 while read line ; do   
     if  [ "${line}" == "${LIGAND_LIST[$n]}" ] && [ "${n}" -lt "${NLIGANDS}" ]; then    
         echo -e ${RUNDIR}/original/${LIGAND_LIST[$n]} >> ${RUNDIR}/original/Name.txt
@@ -62,7 +61,7 @@ fi
 
 
 if [ "${end_file}" == "mol2" ]; then
-echo "popopo2"
+
 n=-1
 while read line ; do
     #echo ${line}
