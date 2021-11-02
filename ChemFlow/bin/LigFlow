@@ -38,10 +38,13 @@
 #===============================================================================
 
 
+# SANITY CHECKS SHOULD BE MOVED TO A SEPARATE ROUTINE
+
 if [ -z ${CHEMFLOW_HOME} ] ; then
   echo "CHEMFLOW_HOME is not defined"
   exit 0
 fi
+
 
 # Read out functions
 source ${CHEMFLOW_HOME}/src/LigFlow_functions.bash
@@ -52,11 +55,11 @@ ChemFlow_echo_software_header
 
 # Programm
 ChemFlow_set_defaults 'LigFlow'   # Set default values for docking parameters.
-LigFlow_CLI "$@"        # Read the command line.
-ChemFlow_validate_input  # Sanity check. (parameters and input files)
+LigFlow_CLI "$@"                  # Read the command line.
+ChemFlow_validate_input           # Sanity check. (parameters and input files)
 
 
-
+# PUT ALL SANITY CHECKS TOGETHER
 if [ -z "$(command -v antechamber)" ] ; then
     echo "AmberTools 17+ is not installed or on PATH" ; exit 1;
 fi
@@ -74,7 +77,11 @@ fi
 RUNDIR=${WORKDIR}/${PROJECT}.chemflow/LigFlow/
 
 LigFlow_summary                 # Show a summary of actions.
+
+
 START_TIME=$SECONDS
+
+
 LigFlow_prepare_input           # Organizes and convert required files
 if [ ! ${CHARGE} == "gas" ] ; then
     LigFlow_prepare_ligands_charges # Compute the charges

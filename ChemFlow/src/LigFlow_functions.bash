@@ -78,20 +78,6 @@ done < ${LIGAND_FILE}
 IFS=${OLDIFS}
 fi
 
-
-#
-# QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
-#
-#cd ${RUNDIR}/original/
-#for LIGAND in ${LIGAND_LIST[@]} ; do
-#    antechamber -i ${LIGAND}.sdf -o tmp.sdf -fi sdf -fo mol2 -at sybyl -dr no &>/dev/null
-##    if [ -f tmp.mol2 ]; then mv tmp.mol2 ${LIGAND}.mol2; fi
-#done
-#rm -f ANTECHAMBER_*
-#rm ATOMTYPE.INF
-#
-#
-#
 }
 
 

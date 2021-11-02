@@ -1,0 +1,65 @@
+#! /bin/bash
+#SBATCH -p public
+#SBATCH -N 1
+#SBATCH -n 16
+#SBATCH --sockets-per-node=1
+#SBATCH -t 04:00:00
+#SBATCH --job-name=LigFlow_LIGAND_NAME
+
+# Variable Setup
+LIGAND=LigFlow_LIGAND
+CHARGE=LigFlow_CHARGE
+OUT_FOLDER=LigFlow_OUT_FOLDER
+
+# Create tmp directory
+tmp_dir=$(mktemp -d -t ligflow-XXXXXXXXXX)
+
+# Go to tmp_dir
+cd ${tmp_dir}
+
+# Extract one molecule from a .mol2 file
+awk -v id=${LIGAND} -v line='@<TRIPOS>MOLECULE' 'BEGIN {print line}; $0~id{flag=1} /MOLECULE/{flag=0} flag'  ${LIGAND_FILE} > ligand.mol2
+        
+if [ "$CHARGE" == "bcc" ] ; then 
+    antechamber -fi mol2  -i ligand.mol2 \
+                -fo mol2  -o bcc.mol2 \
+                -at gaff2 -c bcc -eq 2 \
+                -rn MOL -dr no -pf y
+fi
+
+if [ "$CHARGE" == "resp" ] ; then
+    antechamber -fi mol2 -i ligand.mol2 \
+                -fo gcrt -o ligand.gau  \
+                -ge ligand.gesp \
+                -ch ligand -eq 1 -gv 1 \
+                -gm %mem=8Gb -gn %nproc=16 \
+                -rn MOL -dr no -pf y
+
+    if [ -f ligand.gau ] ; then 
+        g09 <ligand.gau>ligand.gout
+
+        if [ -f ligand.gesp ] ; then
+            antechamber -fi gout -i ligand.gout  \
+                        -fo mol2 -o resp.mol2 \
+                        -c resp  -at gaff2 \
+                        -rn MOL -pf y -dr y 
+        fi
+
+    fi
+fi
+
+# Wrap up
+if [ -f ${CHARGE}.mol2 ] ; then
+
+    # Copy results
+    cp ${CHARGE}.mol2 $OUT_FOLDER/${LIGAND}.mol2
+
+    # Clean up tmp files.
+    rm -rf ${tmp_dir}
+
+else 
+
+    echo "[ Error ] Failed to create ${LIGAND} with ${CHARGE} charges.
+    check output at ${tmp_dir}"
+
+fi
