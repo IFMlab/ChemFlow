@@ -9,11 +9,9 @@ export ROOT_DIR=$PWD
 
 # Config
 PROJECT='mytest'
-CHARGE='bcc'
+CHARGE='resp'
 
 LIGAND_FILE="ligands_crystal.mol2"
-LIGAND_FILE="ligands_crystal_msketch.mol2"
-
 
 # LigFlow variables
 NCPUS=16
@@ -22,7 +20,6 @@ MAXMEM=8
 # HPC
 HPC='slurm'
 HPC_HEADER='slurm.header'
-HPC_SUBMIT='false'
 
 
 #####################################################################
@@ -36,11 +33,11 @@ LigFlow_prepare() {
 
         if [ ${HPC} == 'slurm' ] ; then
             run_LigFlow_prepare_HPC > LigFlow.run
-            sbatch LigFlow.run
+#            sbatch LigFlow.run
         
         elif [ ${HPC} == 'pbs' ] ; then
             run_LigFlow_prepare_HPC > LigFlow.run
-            qsub LigFlow.run
+ #           qsub LigFlow.run
         
         else 
             run_LigFlow_prepare
@@ -120,12 +117,12 @@ run_LigFlow_prepare_HPC() {
 #######################################
 # Config
 #######################################
-LIGAND=${LIGAND}
-LIGAND_FILE=${LIGAND_FILE}
-CHARGE=${CHARGE}
-OUT_FOLDER=${OUT_FOLDER}
-NCPUS=${NCPUS}
-MAXMEM=${MAXMEM}
+CHARGE=\"${CHARGE}\"
+LIGAND=\"${LIGAND}\"
+LIGAND_FILE=\"${LIGAND_FILE}\"
+OUT_FOLDER=\"${OUT_FOLDER}\"
+NCPUS=\"${NCPUS}\"
+MAXMEM=\"${MAXMEM}\"
 
 #######################################
 # Functions
