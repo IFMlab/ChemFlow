@@ -9,16 +9,20 @@ export ROOT_DIR=$PWD
 
 # Config
 PROJECT='mytest'
-CHARGE='resp'
+CHARGE='bcc'
 
 LIGAND_FILE="ligands_crystal.mol2"
-
+LIGAND_FILE="ligands_crystal_msketch.mol2"
 
 
 # LigFlow variables
 NCPUS=16
 MAXMEM=8
 
+# HPC
+HPC='slurm'
+HPC_HEADER='slurm.header'
+HPC_SUBMIT='false'
 
 
 #####################################################################
@@ -29,7 +33,18 @@ LigFlow_prepare() {
     if [ -f $OUT_FOLDER/${LIGAND}.mol2 ] ; then
         echo "$OUT_FOLDER/${LIGAND}.mol2 ready"
     else
-        run_LigFlow_prepare
+
+        if [ ${HPC} == 'slurm' ] ; then
+            run_LigFlow_prepare_HPC > LigFlow.run
+            sbatch LigFlow.run
+        
+        elif [ ${HPC} == 'pbs' ] ; then
+            run_LigFlow_prepare_HPC > LigFlow.run
+            qsub LigFlow.run
+        
+        else 
+            run_LigFlow_prepare
+        fi
     fi
 
 }
@@ -57,13 +72,14 @@ run_LigFlow_prepare () {
                     -fo gcrt -o ligand.gau  \
                     -ge ligand.gesp \
                     -ch ligand -eq 1 -gv 1 \
-                    -gm %mem=8Gb -gn %nproc=16 \
+                    -gm %mem=${MAXMEM}Gb -gn %nproc=${NCPUS} \
                     -rn MOL -dr no -pf y
 
         if [ -f ligand.gau ] ; then 
             g09 <ligand.gau>ligand.gout
 
-            if [ -f ligand.gesp ] ; then
+            # If gaussian ended normally
+            if [ "$(awk '/Normal/' ligand.gout )" != '' ] ; then
                 antechamber -fi gout -i ligand.gout  \
                             -fo mol2 -o resp.mol2 \
                             -c resp  -at gaff2 \
@@ -84,16 +100,46 @@ run_LigFlow_prepare () {
 
     else 
 
-      echo "[ Error ] Failed to create ${LIGAND} with ${CHARGE} charges.
-      check output at ${tmp_dir}"
+      echo "
+[ Error ] Failed to create ${LIGAND} with ${CHARGE} charges.
+      
+Check output at ${tmp_dir}
+"
 
     fi
 }
 
 run_LigFlow_prepare_HPC() {
-    sed -e "s/LigFlow_LIGAND/${LIGAND}" \
-        -e "/LigFlow_CHARGE/${CHARGE}/" \
-        -e "/LigFlow_OUT_FOLDER/${OUT_FOLDER}/" LigFlow.slurm.TEMPLATE > LigFlow.slurm #| sbatch
+    # Writes content of this function to stdout
+
+    # Copy HPC header to run file
+    cat ${HPC_HEADER}
+
+    # Write out relevant variables
+    echo "
+#######################################
+# Config
+#######################################
+LIGAND=${LIGAND}
+LIGAND_FILE=${LIGAND_FILE}
+CHARGE=${CHARGE}
+OUT_FOLDER=${OUT_FOLDER}
+NCPUS=${NCPUS}
+MAXMEM=${MAXMEM}
+
+#######################################
+# Functions
+#######################################
+"
+    declare -f run_LigFlow_prepare
+    
+    echo "
+#######################################
+# Program
+#######################################
+run_LigFlow_prepare
+
+    "
 }
 
 
@@ -118,7 +164,7 @@ fi
 # Extract a ligand on demand. (Fine for Thousands of ligands... Not quite efficient for Milions of ligands)
 # It is faster than splitting .mol2 file anyway.
 for LIGAND in ${LIGAND_LIST} ; do 
-    run_LigFlow_prepare
+    LigFlow_prepare
 done
 
 

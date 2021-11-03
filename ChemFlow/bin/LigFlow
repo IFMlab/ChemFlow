@@ -82,6 +82,7 @@ LigFlow_summary                 # Show a summary of actions.
 START_TIME=$SECONDS
 
 
+
 LigFlow_prepare_input           # Organizes and convert required files
 if [ ! ${CHARGE} == "gas" ] ; then
     LigFlow_prepare_ligands_charges # Compute the charges
