@@ -8,10 +8,10 @@
 export ROOT_DIR=$PWD
 
 # Config
-PROJECT='mytest'
-CHARGE='resp'
+PROJECT='all'
+CHARGE='bcc'
 
-LIGAND_FILE="ligands_crystal.mol2"
+LIGAND_FILE="all.mol2"
 
 # LigFlow variables
 NCPUS=16
@@ -33,11 +33,11 @@ LigFlow_prepare() {
 
         if [ ${HPC} == 'slurm' ] ; then
             run_LigFlow_prepare_HPC > LigFlow.run
-#            sbatch LigFlow.run
+            sbatch LigFlow.run
         
         elif [ ${HPC} == 'pbs' ] ; then
             run_LigFlow_prepare_HPC > LigFlow.run
- #           qsub LigFlow.run
+            qsub LigFlow.run
         
         else 
             run_LigFlow_prepare
@@ -163,5 +163,3 @@ fi
 for LIGAND in ${LIGAND_LIST} ; do 
     LigFlow_prepare
 done
-
-
