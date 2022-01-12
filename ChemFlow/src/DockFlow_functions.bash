@@ -136,35 +136,37 @@ case ${JOB_SCHEDULLER} in
 "SLURM"|"PBS")
     echo -ne "\nHow many Dockings per PBS/SLURM job? "
     read nlig
+###
+### Marion! WHAT THE HELL WHAT THIS ?
+
     # Check if the user gave a int
     #nb=${nlig}
     #nlig=1
-    nb=${nlig}
-    not_a_number
-###
-if [ "${nb}" -eq "${nlig}" ] ; then
-	for LIGAND in ${LIGAND_LIST[@]} ; do
-		jobname="${LIGAND}"
-		if [ -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
-            		rm -rf ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
-        	fi
-		if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
-echo "
-#SBATCH --output=${LIGAND}.out
+#    nb=${nlig}
+#    not_a_number
+# if [ "${nb}" -eq "${nlig}" ] ; then
+# 	for LIGAND in ${LIGAND_LIST[@]} ; do
+# 		jobname="${LIGAND}"
+# 		if [ -f ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,} ] ; then
+#             		rm -rf ${RUNDIR}/DockFlow.${JOB_SCHEDULLER,,}
+#         	fi
+# 		if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
+# echo "
+# #SBATCH --output=${LIGAND}.out
 
-cd ${RUNDIR}
+# cd ${RUNDIR}
 
-    # plants command.
-echo \"cd ${RUNDIR}/${LIGAND} ; time PLANTS1.2_64bit --mode screen ../dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${LIGAND}.xargs
-cat ${LIGAND}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
-"> DockFlow.run
-            	fi	
-		DockFlow_write_HPC_header2	
-	        if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
-            		sbatch DockFlow.slurm
-		fi
-	done
-else
+#     # plants command.
+# echo \"cd ${RUNDIR}/${LIGAND} ; time PLANTS1.2_64bit --mode screen ../dock_input.in &> docking.log ; rm -rf PLANTS/{protein.log,descent_ligand_1.dat,protein_bindingsite_fixed.mol2}\" >> ${LIGAND}.xargs
+# cat ${LIGAND}.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
+# "> DockFlow.run
+#             	fi	
+# 		DockFlow_write_HPC_header2	
+# 	        if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
+#             		sbatch DockFlow.slurm
+# 		fi
+# 	done
+# else
 ###
     for (( first=0;${first}<${NDOCK} ; first=${first}+${nlig} )) ; do
 #        echo -ne "Docking $first         \r"
@@ -176,10 +178,13 @@ else
 
         if [ "${DOCK_PROGRAM}" == "PLANTS" ] ; then
             DockFlow_write_plants_HPC
+
         elif [ "${DOCK_PROGRAM}" == "VINA" ] ; then
             DockFlow_write_vina_HPC
-	elif [ "${DOCK_PROGRAM}" == "SMINA" ] ; then
+
+	    elif [ "${DOCK_PROGRAM}" == "SMINA" ] ; then
             DockFlow_write_smina_HPC
+
         elif [ "${DOCK_PROGRAM}" == "QVINA" ] ; then
             DockFlow_write_qvina_HPC
         fi
@@ -192,7 +197,9 @@ else
             qsub DockFlow.pbs
         fi
     done
-fi
+### fi
+### [END] WHAT THE HELL WHAT THIS ?
+
 ;;
 esac
 }

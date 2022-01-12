@@ -299,6 +299,7 @@ if [ ! -d ${RUNDIR}/${CHARGE} ] ; then
     mkdir -p ${RUNDIR}/${CHARGE}/${ATOM_TYPE}
 fi
 
+
 case ${JOB_SCHEDULLER} in
 "None")
     if [ -f  LigFlow.run ] ; then
@@ -392,88 +393,92 @@ case ${JOB_SCHEDULLER} in
 ;;
 
 "SLURM"|"PBS")
-    #echo -ne "\nHow many Dockings per PBS/SLURM job? "
-    #read nlig
-    # Check if the user gave a int
-    #nb=${nlig}
-    nlig=1
-    nb=${nlig}
-    not_a_number
-###
-if [ "${nb}" -eq "${nlig}" ] ; then
-    cpt_inch=0 
-    for LIGAND in ${LIGAND_LIST[@]} ; do
-	jobname="${LIGAND}"
-	LigFlow_write_HPC_header2
-    mkdir -p /${ATOM_TYPE}/${LIGAND}  
-    echo ${LIGAND}  >> antechamber_prep_${CHARGE}.log
-	case ${CHARGE} in
-	    #LigFlow_filter_ligand_list
-	    #standardize ${RUNDIR}/original/${LIGAND}.sdf -c clean3d -f sdf -o ${RUNDIR}/original/${LIGAND}_marvin_3d.sdf
-	    #standardize ${RUNDIR}/original/${LIGAND}_marvin_3d.sdf -f sdf -c dearomatize -o ${RUNDIR}/original/${LIGAND}_clean.sdf
-	    #standardize ${RUNDIR}/original/${LIGAND}.sdf -c clean3d -f sdf -o ${RUNDIR}/original/${LIGAND}_clean.sdf
-		"bcc")
-		    START_TIME_BCC=$SECONDS
-		    echo  "Starting the AM1-bcc calculation for ligand ${LIGAND}. This will serve as a structure sanity check. Please look at the log file for more information."
-		    if [ "${CHARGE_FILE}" == '' ] ; then
-		    # Compute am1-bcc charges
-		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr y -at sybyl  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
-		    else
-		        net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
-		        #antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr y -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log 
-		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
-		    fi
-		    ELAPSED_TIME_BCC=$(($SECONDS - $START_TIME_BCC))
-		    #echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_BCC} seconds."
-		    echo -e "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_BCC} seconds." >> TIME.log
-		    echo -e "\n\n\n" >> TIME.log
-		    #echo -e "AM1-BCC calculation finished for ligand ${LIGAND}. Remember to check the log file for error messages.\n\n"
-		    echo -e "\n\n\n" >> antechamber_prep_${CHARGE}.log
-		    checkpoint1
+  echo -ne "\nHow many Dockings per PBS/SLURM job? "
+  read nlig
+#     # Check if the user gave a int
+#     #nb=${nlig}
+#     nlig=1
+#     nb=${nlig}
+#     not_a_number
+# ###
 
-    	;;
-		"resp")
-		#   Prepare Gaussian
-		    START_TIME_RESP=$SECONDS
-		    if [ "${CHARGE_FILE}" == '' ] ; then  
-		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y &>> antechamber_prep_resp_${ATOM_TYPE}.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}   
-		    else
-		        net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
-		        #echo  "Charges file founded"
-		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y -nc ${net_charge}  &>> antechamber_prep_resp_${ATOM_TYPE}.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-		    fi
-		    echo -e "\n\n\n" >> antechamber_prep_${CHARGE}_${ATOM_TYPE}.log
-		    # Run Gaussian to optimize structure and generate electrostatic potential grid
-		    echo "g09 <${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau>${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout " >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+### WHAT THE HELL WAS THIS ?
+# if [ "${nb}" -eq "${nlig}" ] ; then
+#     cpt_inch=0 
+#     for LIGAND in ${LIGAND_LIST[@]} ; do
+# 	jobname="${LIGAND}"
+# 	LigFlow_write_HPC_header2
+#     mkdir -p /${ATOM_TYPE}/${LIGAND}  
+#     echo ${LIGAND}  >> antechamber_prep_${CHARGE}.log
+# 	case ${CHARGE} in
+# 	    #LigFlow_filter_ligand_list
+# 	    #standardize ${RUNDIR}/original/${LIGAND}.sdf -c clean3d -f sdf -o ${RUNDIR}/original/${LIGAND}_marvin_3d.sdf
+# 	    #standardize ${RUNDIR}/original/${LIGAND}_marvin_3d.sdf -f sdf -c dearomatize -o ${RUNDIR}/original/${LIGAND}_clean.sdf
+# 	    #standardize ${RUNDIR}/original/${LIGAND}.sdf -c clean3d -f sdf -o ${RUNDIR}/original/${LIGAND}_clean.sdf
+# 		"bcc")
+# 		    START_TIME_BCC=$SECONDS
+# 		    echo  "Starting the AM1-bcc calculation for ligand ${LIGAND}. This will serve as a structure sanity check. Please look at the log file for more information."
+# 		    if [ "${CHARGE_FILE}" == '' ] ; then
+# 		    # Compute am1-bcc charges
+# 		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr y -at sybyl  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
+# 		    else
+# 		        net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
+# 		        #antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn ${LIGAND} -pf y -dr y -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log 
+# 		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c bcc -s 2 -eq 1 -rn MOL -pf y -dr n -at sybyl -nc ${net_charge}  &>> antechamber_prep_bcc.log">>  LigFlow_bcc.${LIGAND}.xargs
+# 		    fi
+# 		    ELAPSED_TIME_BCC=$(($SECONDS - $START_TIME_BCC))
+# 		    #echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_BCC} seconds."
+# 		    echo -e "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_BCC} seconds." >> TIME.log
+# 		    echo -e "\n\n\n" >> TIME.log
+# 		    #echo -e "AM1-BCC calculation finished for ligand ${LIGAND}. Remember to check the log file for error messages.\n\n"
+# 		    echo -e "\n\n\n" >> antechamber_prep_${CHARGE}.log
+# 		    checkpoint1
 
-		    # Read Gaussian output and write new optimized ligand with RESP charges
+#     	;;
+# 		"resp")
+# 		#   Prepare Gaussian
+# 		    START_TIME_RESP=$SECONDS
+# 		    if [ "${CHARGE_FILE}" == '' ] ; then  
+# 		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y &>> antechamber_prep_resp_${ATOM_TYPE}.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}   
+# 		    else
+# 		        net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
+# 		        #echo  "Charges file founded"
+# 		        echo "antechamber -i ${RUNDIR}/original/${LIGAND}.$end_file -fi sdf -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau -fo gcrt -gv 1 -ge ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gesp -ch ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND} -gm %mem=32Gb -gn %nproc=${NCORES} -s 2 -eq 1 -rn MOL -pf y -dr y -nc ${net_charge}  &>> antechamber_prep_resp_${ATOM_TYPE}.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+# 		    fi
+# 		    echo -e "\n\n\n" >> antechamber_prep_${CHARGE}_${ATOM_TYPE}.log
+# 		    # Run Gaussian to optimize structure and generate electrostatic potential grid
+# 		    echo "g09 <${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gau>${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout " >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+
+# 		    # Read Gaussian output and write new optimized ligand with RESP charges
 		    
-		    echo ${LIGAND}  >> antechamber_gauss.log
-		    #echo "antechamber -i ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn ${LIGAND} -pf y -dr y -at gaff2 &>> antechamber_gauss.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-		   echo "antechamber -i ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr y -at ${ATOM_TYPE} &>> antechamber_gauss.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
-		    echo -e "\n\n\n" >> antechamber_gauss.log
-		    ELAPSED_TIME_RESP=$(($SECONDS - $START_TIME_RESP))
-		    echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_RESP} seconds."
-		    echo -e "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_RESP} seconds." >> TIME.log
-		    echo -e "\n\n\n" >> TIME.log
+# 		    echo ${LIGAND}  >> antechamber_gauss.log
+# 		    #echo "antechamber -i ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn ${LIGAND} -pf y -dr y -at gaff2 &>> antechamber_gauss.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+# 		   echo "antechamber -i ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.gout -fi gout -o ${RUNDIR}/resp/${ATOM_TYPE}/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c resp -s 2 -rn MOL -pf y -dr y -at ${ATOM_TYPE} &>> antechamber_gauss.log" >> ${RUNDIR}/LigFlow.${JOB_SCHEDULLER,,}
+# 		    echo -e "\n\n\n" >> antechamber_gauss.log
+# 		    ELAPSED_TIME_RESP=$(($SECONDS - $START_TIME_RESP))
+# 		    echo "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_RESP} seconds."
+# 		    echo -e "${LIGAND} : [ LigFlow ] Normal completion in ${ELAPSED_TIME_RESP} seconds." >> TIME.log
+# 		    echo -e "\n\n\n" >> TIME.log
  
-		esac	    
-		    #cat ${RUNDIR}/${CHARGE}/${LIGAND}/${LIGAND}.mol2 >> ALL_${CHARGE}.mol2
-		    #echo -e "\n\n\n" >> ALL_${CHARGE}.mol2
-		    # add in the chembase
-		    #echo ${LIGAND} ${NEW_LIGAND_LIST_INCHI[$cpt_inch]} ${NEW_LIGAND_LIST_INCHIKEY[$cpt_inch]} ${NEW_LIGAND_LIST_SMILES[$cpt_inch]} >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst
-		    #echo ${LIGAND} ${NEW_LIGAND_LIST_SMILES[$cpt_inch]} >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst
-		    #cat ${RUNDIR}/${CHARGE}/${LIGAND}/${LIGAND}.mol2 >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2
-		    #echo -e "\n\n\n" >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2
-		    #let  cpt_inch++   
-		if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
-			sbatch LigFlow.slurm
-		elif [ "${JOB_SCHEDULLER}" == "PBS" ] ; then
-			qsub LigFlow.pbs
-		fi
-	done
+# 		esac	    
+# 		    #cat ${RUNDIR}/${CHARGE}/${LIGAND}/${LIGAND}.mol2 >> ALL_${CHARGE}.mol2
+# 		    #echo -e "\n\n\n" >> ALL_${CHARGE}.mol2
+# 		    # add in the chembase
+# 		    #echo ${LIGAND} ${NEW_LIGAND_LIST_INCHI[$cpt_inch]} ${NEW_LIGAND_LIST_INCHIKEY[$cpt_inch]} ${NEW_LIGAND_LIST_SMILES[$cpt_inch]} >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst
+# 		    #echo ${LIGAND} ${NEW_LIGAND_LIST_SMILES[$cpt_inch]} >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.lst
+# 		    #cat ${RUNDIR}/${CHARGE}/${LIGAND}/${LIGAND}.mol2 >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2
+# 		    #echo -e "\n\n\n" >> ${CHEMFLOW_HOME}/ChemBase/${CHARGE}/ChemBase_${CHARGE}.mol2
+# 		    #let  cpt_inch++   
+# 		if [ "${JOB_SCHEDULLER}" == "SLURM" ] ; then
+# 			sbatch LigFlow.slurm
+# 		elif [ "${JOB_SCHEDULLER}" == "PBS" ] ; then
+# 			qsub LigFlow.pbs
+# 		fi
+# 	done
 
-else 
+# else 
+### WHAT THE HELL WAS THIS ?
+
 ####
     for (( first=0;${first}<${#LIGAND_LIST[@]} ; first=${first}+${nlig} )) ; do
 #        echo -ne "Docking $first         \r"
@@ -528,8 +533,9 @@ else
         fi
     done
 ###
-fi
-###
+### [END] WHAT THE HELL WAS THIS ?
+# fi
+# ###
 ;;
 esac
 }

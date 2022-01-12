@@ -14,7 +14,7 @@ charge ptn
 # Ligand --------------------------------------------------
 # Load ligand parameters
 loadAmberParams ligand.frcmod
-ligand = loadmol2 ligand_${CHARGE}.mol2 
+ligand = loadmol2 ligand_CHARGE.mol2 
 saveamberparm ligand ligand.prmtop ligand.rst7
 savePDB ligand ligand.pdb
 charge ligand

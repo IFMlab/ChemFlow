@@ -205,9 +205,9 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
 
 
     # AmberTools must be installed because we use AnteChamber everywhere
-    if  [ -z "$(command -v antechamber)" ] ; then
-        ERROR_MESSAGE="AmberTools 17+ is not installed or on PATH" ; ChemFlow_error ;
-    fi
+    #if  [ -z "$(command -v antechamber)" ] ; then
+    #    ERROR_MESSAGE="AmberTools 17+ is not installed or on PATH" ; ChemFlow_error ;
+    #fi
 
 
     # Check program locations ---------------------------------------------------
