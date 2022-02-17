@@ -76,10 +76,10 @@ ChemFlow/ChemFlow/templates/smina/
 
 9- POSTPROCESS the results:
 
-DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 31.50 13.74 24.36 --radius 20 --postprocess --overwrite -n 3
+DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757  --radius 15 --postprocess --overwrite -n 3
 
-DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina -dp vina --postprocess --overwrite -n 3
+DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757  --size 22.500 24.160 22.500 -sf vina -dp vina --postprocess --overwrite -n 3
 
-DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina -dp qvina --postprocess --overwrite -n 3
+DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757  --size 22.500 24.160 22.500 -sf vina -dp qvina --postprocess --overwrite -n 3
 
-DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -dp smina --postprocess --overwrite -n 3
+DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 ---center 32.418 13.468 24.757  --size 22.500 24.160 22.500 -dp smina --postprocess --overwrite -n 3
