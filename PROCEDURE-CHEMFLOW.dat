@@ -59,13 +59,13 @@ you will find the mol2 file for the ligands, prepared by PrepFlow (REF) and the 
 
 8- Run the DOCKING using DockFlow:
 
-DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 31.50 13.74 24.36 --radius 20
+DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --radius 15
 
-DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina -dp vina
+DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500 -sf vina -dp vina
 
-DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -sf vina -dp qvina
+DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500 -sf vina -dp qvina
 
-DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 --center 31.50 13.74 24.36 --size 11.83 14.96 12.71 -dp smina
+DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500 -dp smina
 
 For smina you can also run the Docking with a configuration file, in which you specify the center and the size of the box and a different scoring function to use:
 
