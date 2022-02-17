@@ -18,7 +18,7 @@ Then in the bashrc:
 
 export PATH="/your/path/smina:$PATH
 
-DOWNLOAD AND ADD the binary  smina in your bashrc:
+DOWNLOAD AND ADD the binary  vina in your bashrc:
 
 download from : https://vina.scripps.edu/downloads/
 
