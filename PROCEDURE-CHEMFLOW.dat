@@ -69,7 +69,7 @@ DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 --center 31.50
 
 For smina you can also run the Docking with a configuration file, in which you specify the center and the size of the box and a different scoring function to use:
 
-DockFlow -p tutorial --protocol config -r vmd-rec.mol2 -l all.mol2 --config config.txt -dp smina
+DockFlow -p tutorial --protocol config -r vmd-rec.mol2 -l all.mol2 --config_smina config.txt -dp smina
 
 Some examples of the configuration files that one can use are provided in the folder 
 ChemFlow/ChemFlow/templates/smina/
