@@ -16,30 +16,37 @@ You can either clone the public repository:
     ``git clone https://github.com/IFMlab/ChemFlow.git``
 
 
-Step 2 - Install miniconda.
+Step 2 - Install anaconda3.
 ---------------------------
-* Download and install miniconda, python 3.
-https://docs.conda.io/en/latest/miniconda.html
+* Download and install anaconda3.
+https://www.anaconda.com/products/individual#linux
+
+-Go to the folder where you downloaded the script of anaconda and type:
+chmod +x Anaconda3-2021.11-Linux-x86_64.sh
+
+-execute: ./Anaconda3-2021.11-Linux-x86_64.sh
 
 * Create an environment for ChemFlow.
-``conda create -n chemflow``
+``conda create -n ChemFlow --file env-file.txt``
 
 Step 3 - Install the software dependencies
 --------------------------------------------
-* rdkit
-    ``conda install -c rdkit rdkit``
-
-* AmberTools
-    ``conda install -c ambermd ambertools``
-
-* AutoDockTools (required for Vina)
-    Download and install from: http://mgltools.scripps.edu/downloads
 
 * Autodock Vina
-    Download and install from: http://vina.scripps.edu
+    Download from: https://vina.scripps.edu/downloads/
+    Add in your ~/.bashrc : export PATH="/your/path/autodock_vina_1_1_2_linux_x86/bin:$PATH"
+
+* Qvina
+    Download from: https://github.com/QVina/qvina/blob/master/bin/qvina2.1
+    Add in your ~/.bashrc : export PATH="/your/path/qvina/bin:$PATH"
+    
+* Smina
+    Download from: https://sourceforge.net/projects/smina/
+    Add in your ~/.bashrc : export PATH="/your/path/smina:$PATH
 
 * PLANTS ( Requires free registration )
     Download and install from: http://www.tcd.uni-konstanz.de/plants_download/
+    Add in your ~/.bashrc:     export PATH="${PATH}:~/software/PLANTS/"
 
 * Amber18 (Optional, licence is required)
     Download and install from: http://ambermd.org
@@ -49,13 +56,7 @@ Step 3 - Install the software dependencies
 
 Step 4 - Set PATHS
 ------------------
-* AutoDockTools - "Utilities24" must be in the system PATH:
-    ``export PATH=${PATH}:[/home/user/myapps/]mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/``
-* PLANTS
-    ``export PATH=${PATH}:[/home/user/myapps/]PLANTS1.2_64bit``
-* AutoDock Vina
-    ``export PATH=${PATH}:[/home/user/myapps/]autodock_vina_1_1_2_linux_x86/bin/``
-    
+   
 If you choose to manually install Amber18 and/or Gaussian, make sure they're also on ${PATH}
 
 * Amber18
@@ -75,16 +76,6 @@ If you choose to manually install Amber18 and/or Gaussian, make sure they're als
     # ChemFlow
     export CHEMFLOW_HOME=~/software/ChemFlow/ChemFlow/
     export PATH=${PATH}:${CHEMFLOW_HOME}/bin/
-
-    # MGLTools
-    export PATH="${PATH}:~/software/mgltools_x86_64Linux2_1.5.6/bin/"
-    export PATH="${PATH}:~/software/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/"
-
-    # Autodock Vina
-    export PATH="${PATH}:~/software/autodock_vina_1_1_2_linux_x86/bin/"
-
-    # PLANTS
-    export PATH="${PATH}:~/software/PLANTS/"
 
     # Optional (paid software)
     
