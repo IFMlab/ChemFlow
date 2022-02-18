@@ -126,7 +126,7 @@ case ${JOB_SCHEDULLER} in
             if [ ! -d ${RUNDIR}/${LIGAND}/VINA ] ; then
                 echo "mkdir -p ${RUNDIR}/${LIGAND}/VINA " >> dock.xargs
             fi
-            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/VINA/output.log --cpu 1 ${VINA_EXTRA} &>/dev/null " >> dock.xargs
+            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
         done
     ;;
     esac
@@ -486,7 +486,7 @@ DockFlow_prepare_receptor() {
 #    PARAMETERS: ${DOCK_PROGRAM}
 #                ${RUNDIR}
 #                ${RECEPTOR_FILE}
-#                ${mgltools_folder} (should be in the path) 
+#                ${mgltools_folder} (should be in the path)
 #
 #        Author: Dona de Francquen
 #
@@ -498,18 +498,18 @@ cp ${RECEPTOR_FILE} ${RUNDIR}/receptor.mol2
 
    "VINA" )
         if  [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
-		python2 $(which prepare_receptor4.py) -r ${RUNDIR}/receptor.mol2 -o ${RUNDIR}/receptor.pdbqt
+    ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py -r ${RUNDIR}/receptor.mol2 -o ${RUNDIR}/receptor.pdbqt
         fi
    ;;
    "QVINA")
         if  [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
-	        python2 $(which prepare_receptor4.py) -r ${RUNDIR}/receptor.mol2 -o ${RUNDIR}/receptor.pdbqt
-	fi
+    ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py -r ${RUNDIR}/receptor.mol2 -o ${RUNDIR}/receptor.pdbqt
+        fi
    ;;
    "SMINA")
         if  [ ! -f  ${RUNDIR}/receptor.pdbqt ] ; then
-        	python2 $(which prepare_receptor4.py) -r ${RUNDIR}/receptor.mol2 -o ${RUNDIR}/receptor.pdbqt
-	fi
+    ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py -r ${RUNDIR}/receptor.mol2 -o ${RUNDIR}/receptor.pdbqt
+        fi
    ;;
 
     esac
@@ -556,29 +556,19 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
         fi
     ;;
     "VINA")
-    	    if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-		cp ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
-		cd ${LIGAND}/
-		python2 $(which prepare_ligand4.py) -l  ligand.mol2 -o  ligand.pdbqt -U 'lps'
-#        fi
-		cd ${RUNDIR}
-	fi
-    ;; 
+        if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -o ${LIGAND}/ligand.pdbqt -U 'lps'
+        fi
+    ;;
     "SMINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-                cp ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
-                cd ${LIGAND}/
-		python2 $(which prepare_ligand4.py) -l ligand.mol2 -o ligand.pdbqt -U 'lps'
-	fi
-		cd ${RUNDIR}
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -o ${LIGAND}/ligand.pdbqt -U 'lps'
+        fi
     ;;
     "QVINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-		cp ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
-		cd ${LIGAND}/
-		python2 $(which prepare_ligand4.py) -l ligand.mol2 -o ligand.pdbqt -U 'lps'
+            ${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 -o ${LIGAND}/ligand.pdbqt -U 'lps'
         fi
-		cd ${RUNDIR}
     ;;
     esac
 done
@@ -891,7 +881,7 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.mol2 ] ; then
             obabel -h -ipdbqt ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -omol2 -O${RUNDIR}/${LIGAND}/VINA/output.mol2
-		#${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/pdbqt_to_pdb.py -f ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -o${RUNDIR}/${LIGAND}/VINA/${LIGAND}.pdb
+		${mgltools_folder}/bin/python ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/pdbqt_to_pdb.py -f ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -o${RUNDIR}/${LIGAND}/VINA/${LIGAND}.pdb
 
 #		obabel -ipdb ${RUNDIR}/${LIGAND}/VINA/${LIGAND}.pdb -omol2 -O${RUNDIR}/${LIGAND}/VINA/${LIGAND}_conv.mol2 -m --title MOL
 #	sed -i "s/${LIGAND}.pdb/MOL/g" ${RUNDIR}/${LIGAND}/VINA/${LIGAND}_conv1.mol2 
@@ -975,7 +965,7 @@ for LIGAND in ${LIGAND_LIST[@]}; do
 
 	# Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         if [ ! -f  ${RUNDIR}/${LIGAND}/SMINA/output.mol2 ] ; then
-           obabel -h -ipdbqt ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt -omol2 -O${RUNDIR}/${LIGAND}/SMINA/output.mol2 
+            obabel -h -ipdbqt ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt -omol2 ${RUNDIR}/${LIGAND}/SMINA/output.mol2 
         fi
 
         OLDIFS=$IFS

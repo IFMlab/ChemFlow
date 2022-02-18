@@ -231,7 +231,7 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
         if  [ -z "$(command -v vina)" ] ; then
             ERROR_MESSAGE="Autodock Vina is not installed or on PATH" ; ChemFlow_error ;
         fi
-        if [ -z "$(command -v $(which prepare_ligand4.py))" ] ; then
+        if [ -z "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" ] ; then
             ERROR_MESSAGE="MglTools is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
@@ -257,7 +257,7 @@ if [ -z "${POSTPROCESS}" ] && [ -z "${ARCHIVE}" ] ; then
         if  [ -z "$(command -v vina)" ] ; then
             ERROR_MESSAGE="Autodock Vina is not installed or on PATH" ; ChemFlow_error ;
         fi
-	if [ -z "$(command -v $(which prepare_ligand4.py))" ] ; then
+        if [ -z "$(command -v ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py)" ] ; then
             ERROR_MESSAGE="MglTools is not installed or on PATH" ; ChemFlow_error ;
         fi
     ;;
@@ -443,7 +443,7 @@ elif [ $1 == 'ScoreFlow' ] ; then
     SCORE_PROGRAM="PLANTS"
     DOCK_LENGTH=("15" "15" "15")
     DOCK_RADIUS="15"
-    CHARGE="bcc"
+    CHARGE="gas"
 
     # Vina advanced options
     VINA_MODE="local_only"
@@ -459,8 +459,8 @@ elif [ $1 == 'ScoreFlow' ] ; then
 elif [ $1 == 'LigFlow' ] ; then
     WORKFLOW="LigFlow"
 
-    CHARGE="bcc"
-    BCC="yes"
+    CHARGE="gas"
+    BCC="no"
     RESP="no"
 fi
 }
