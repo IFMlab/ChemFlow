@@ -1,127 +1,152 @@
 #!/usr/bin/env bash
 
+LigFlow_sanity() {
+    if [ -z ${CHEMFLOW_HOME} ] ; then
+        echo "CHEMFLOW_HOME is not defined"
+        exit 1
+    fi
 
-checkpoint1() {
-if [ ! -f ${RUNDIR}/bcc/${LIGAND}/${LIGAND}.mol2 ] ; then
-   # echo "Could not complete the AM1-bcc calculation for ligand ${i}. Check the logfile for further information."
-    echo "Ligand ${LIGAND} - AM1-BCC charge calculation failed." >> ${RUNDIR}/Failed_bcc.dat
-else
-   # echo "AM1-Bcc calculation finished for ligand ${i} without problems. Writting to Ligand_bcc.dat"
-    echo "Ligand ${LIGAND} - AM1-BCC charge calculation completed." >> ${RUNDIR}/Ligand_bcc.dat 
-fi
+    if [ -z "$(command -v antechamber)" ] ; then
+        echo "AmberTools 17+ is not installed or on PATH" ; exit 1;
+    fi
 
+    if [ "${CHARGE}" == "resp" ] && [ -z "$(command -v g09)" ] ; then
+        echo "Gaussian is not installed or on PATH" ; exit 1
+    fi
 }
 
-LigFlow_write_origin_ligands() {
-#===  FUNCTION  ================================================================
-#          NAME: DockFlow_rewrite_ligands
-#   DESCRIPTION: User interface for the rewrite ligands option.
-#                 - Read all ligand names from the header of a .sdf file.
-#                 - Split each ligand to it's own ".sdf" file.
-#               #  - Create "ligand.lst" with the list of ligands do dock.
-#
-#    PARAMETERS: ${PROJECT}
-#                ${LIGAND_LIST}
-#                ${RUNDIR}
-#                ${DOCK_PROGRAM}
-#                ${WORKDIR}
-#
-#        Author: Dona de Francquen
-#   
-#        UPDATE: fri. july 6 14:49:50 CEST 2018
-#               july 2019 by Marion Sisquellas
-#===============================================================================
-OLDIFS=$IFS
-IFS='%'
+LigFlow_prepare() {
+    
+    # HPC adjustments
+    case "${JOB_SCHEDULLER}" in
+    "None") 
+        run_LigFlow_prepare
+        ;;
 
-if [ "${end_file}" == "sdf" ]; then
-n=0
-p=0
-cpt_sdf=0
+    "PBS"|"SLURM")
+        run_LigFlow_prepare_HPC
+        ;;
 
-while read line ; do   
-    if  [ "${line}" == "${LIGAND_LIST[$n]}" ] && [ "${n}" -lt "${NLIGANDS}" ]; then    
-        echo -e ${RUNDIR}/original/${LIGAND_LIST[$n]} >> ${RUNDIR}/original/Name.txt
-        cpt_sdf=0
-        echo -e "${line}" > ${RUNDIR}/original/${LIGAND_LIST[$n]}.sdf
-        let n=$n+1
-        let p=$n-1
-    elif [[ `echo ${line} | cut -c1-4` = '$$$$' ]]
-    then
-        echo -e "${line}" >> ${RUNDIR}/original/${LIGAND_LIST[$p]}.sdf
-        cpt_sdf=1
-    elif [ "${cpt_sdf}" == 0 ]
-    then
-        echo -e "${line}" >> ${RUNDIR}/original/${LIGAND_LIST[$p]}.sdf
-    #let n=$n+1
+    *) ERROR_MESSAGE="Invalid JOB_SCHEDULLER" ; ChemFlow_error ;
+       ;;
+    esac
+}
+
+run_LigFlow_prepare () {
+ 
+    # Create tmp directory
+    tmp_dir=$(mktemp -d -t ligflow-XXXXXXXXXX)
+    
+    # Go to tmp_dir
+    cd ${tmp_dir}
+    
+    # Extract one molecule from a .mol2 file
+    awk -v id=${LIGAND} -v line='@<TRIPOS>MOLECULE' 'BEGIN {print line}; $0~id{flag=1} /MOLECULE/{flag=0} flag'  ${LIGAND_FILE} > ligand.mol2
+        
+    if [ "$CHARGE" == "bcc" ] ; then 
+        antechamber -fi mol2  -i ligand.mol2 \
+                    -fo mol2  -o bcc.mol2 \
+                    -at gaff2 -c bcc -eq 2 \
+                    -rn MOL -dr no -pf y
     fi
-done < ${LIGAND_FILE}
-IFS=${OLDIFS}
-fi
 
+    if [ "$CHARGE" == "resp" ] ; then
+        antechamber -fi mol2 -i ligand.mol2 \
+                    -fo gcrt -o ligand.gau  \
+                    -ge ligand.gesp \
+                    -ch ligand -eq 1 -gv 1 \
+                    -gm %mem=${MAXMEM}Gb -gn %nproc=${NCPUS} \
+                    -rn MOL -dr no -pf y
 
-if [ "${end_file}" == "mol2" ]; then
+        if [ -f ligand.gau ] ; then 
+            g09 <ligand.gau>ligand.gout
 
-n=-1
-while read line ; do
-    #echo ${line}
-    if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-        let n=$n+1
-        #echo ${line}
-        echo -e "${line}" > ${RUNDIR}/original/${LIGAND_LIST[$n]}.mol2
-        echo -e ${RUNDIR}/original/${LIGAND_LIST[$n]} >> ${RUNDIR}/original/Name.txt
-    else
-        echo -e "${line}" >> ${RUNDIR}/original/${LIGAND_LIST[$n]}.mol2
+            # If gaussian ended normally
+            if [ "$(awk '/Normal/' ligand.gout )" != '' ] ; then
+                antechamber -fi gout -i ligand.gout  \
+                            -fo mol2 -o resp.mol2 \
+                            -c resp  -at gaff2 \
+                            -rn MOL -pf y -dr y 
+            fi
+
+        fi
     fi
-done < ${LIGAND_FILE}
-IFS=${OLDIFS}
-fi
 
-#<<<<<<< HEAD
-#=======
-python3 ${CHEMFLOW_HOME}/src/Charges_prog.py -i ${RUNDIR}/original/Name.txt -o ${RUNDIR}/original/Charges.dat -f ${end_file}
-CHARGE_FILE=${RUNDIR}/original/Charges.dat
+    # Wrap up
+    if [ -f ${CHARGE}.mol2 ] ; then
 
-#
-# QUICK AND DIRTY FIX BY DIEGO - PLEASE FIX THIS FOR THE LOVE OF GOD
-#
-#cd ${RUNDIR}/original/
-#for LIGAND in ${LIGAND_LIST[@]} ; do
-#    antechamber -i ${LIGAND}.sdf -o tmp.sdf -fi sdf -fo mol2 -at sybyl -dr no &>/dev/null
-##    if [ -f tmp.mol2 ]; then mv tmp.mol2 ${LIGAND}.mol2; fi
-#done
-#rm -f ANTECHAMBER_*
-#rm ATOMTYPE.INF
-#
-#
-#
-#>>>>>>> 11577829f54634cab78841ca43d4ad8ca97d5473
+      # Copy results
+      cp ${CHARGE}.mol2 $OUT_FOLDER/${LIGAND}.mol2
+
+      # Clean up tmp files.
+      rm -rf ${tmp_dir}
+
+    else 
+
+      echo "
+[ Error ] Failed to create ${LIGAND} with ${CHARGE} charges.
+      
+Check output at ${tmp_dir}
+"
+
+    fi
+}
+
+run_LigFlow_prepare_HPC() {
+    # Writes content of this function to stdout
+
+    # Copy HPC header to run file
+    cat ${HPC_HEADER}
+
+    # Write out relevant variables
+    echo "
+#######################################
+# Config
+#######################################
+CHARGE=\"${CHARGE}\"
+LIGAND=\"${LIGAND}\"
+LIGAND_FILE=\"${LIGAND_FILE}\"
+OUT_FOLDER=\"${OUT_FOLDER}\"
+NCPUS=\"${NCPUS}\"
+MAXMEM=\"${MAXMEM}\"
+
+#######################################
+# Functions
+#######################################
+"
+    declare -f run_LigFlow_prepare
+    
+    echo "
+#######################################
+# Program
+#######################################
+run_LigFlow_prepare
+
+    "
 }
 
 
-LigFlow_prepare_input() {
-#LIGAND_LIST=(`echo ${LIGAND_LIST[@]} | sed -e 's/_conf_[0-9]*//g'`)
-# Original
-if [ ! -d ${RUNDIR}/original/ ] ; then
-    mkdir -p ${RUNDIR}/original/
-fi
 
 
-for LIGAND in ${LIGAND_LIST[@]} ; do
-    if [ ! -f ${RUNDIR}/original/${LIGAND}.$end_file ] ; then
-        REWRITE="yes"
-        break
-    fi
-done
 
-if [ "${REWRITE}" == "yes" ] ; then
-    LigFlow_write_origin_ligands
-else
-    if [ "${CHARGE}" == "gas" ] ; then
-        echo "[ LigFlow ] All ligand already present ! " ; exit 0
-    fi
-fi
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -272,7 +297,7 @@ fi
 
 
 
-LigFlow_prepare_ligands_charges() {
+LigFlow_prepare_ligands_charges_BK() {
 
 
 # UPDATE the ligand list

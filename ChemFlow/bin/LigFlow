@@ -37,72 +37,36 @@
 #      REVISION:  ---
 #===============================================================================
 
-
-# SANITY CHECKS SHOULD BE MOVED TO A SEPARATE ROUTINE
-
-if [ -z ${CHEMFLOW_HOME} ] ; then
-  echo "CHEMFLOW_HOME is not defined"
-  exit 0
-fi
-
+# Sanity checks
+LigFlow_sanity
 
 # Read out functions
 source ${CHEMFLOW_HOME}/src/LigFlow_functions.bash
-#source ${CHEMFLOW_HOME}/src/ChemFlow_functions.bash
 source ${CHEMFLOW_HOME}/src/ChemFlow_functions_lig.bash
+
 # Software header
 ChemFlow_echo_software_header
 
-# Programm
+# Setup
 ChemFlow_set_defaults 'LigFlow'   # Set default values for docking parameters.
+
 LigFlow_CLI "$@"                  # Read the command line.
+
 ChemFlow_validate_input           # Sanity check. (parameters and input files)
 
-
-# PUT ALL SANITY CHECKS TOGETHER
-if [ -z "$(command -v antechamber)" ] ; then
-    echo "AmberTools 17+ is not installed or on PATH" ; exit 1;
-fi
-
-if [ "${CHARGE}" == "resp" ] && [ -z "$(command -v g09)" ] ; then
-    echo "Gaussian is not installed or on PATH" ; exit 1
-fi
-
-if [ -z "$(command -v g09)" ] ; then
-exit 0
-fi
-
-
-
+# Set run dir.
 RUNDIR=${WORKDIR}/${PROJECT}.chemflow/LigFlow/
 
-LigFlow_summary                 # Show a summary of actions.
+######## PROGRAM ###########
 
+LigFlow_summary         # Show a summary of actions.
 
-START_TIME=$SECONDS
+START_TIME=$SECONDS     # Log time 
 
+LigFlow_prepare         # Organizes and convert required files
 
-LigFlow_prepare_input           # Organizes and convert required files
-if [ ! ${CHARGE} == "gas" ] ; then
-    LigFlow_prepare_ligands_charges # Compute the charges
-fi
-ELAPSED_TIME=$(($SECONDS - $START_TIME))
+ELAPSED_TIME=$(($SECONDS - $START_TIME)) # END Log time 
+
 echo "
 [ LigFlow ] Normal completion in ${ELAPSED_TIME} seconds.
 "
-case ${CHARGE} in
-"bcc")
-    echo -e "[ LigFlow ] Normal completion in ${ELAPSED_TIME} seconds." >> TIME.log
-    mv TIME.log TIME_BCC.log
-;;
-"resp")
-    echo -e "[ LigFlow ] Normal completion in ${ELAPSED_TIME} seconds." >> TIME.log
-    case ${ATOM_TYPE} in
-        "gaff2")
-        mv TIME.log TIME_resp_gaff2.log
-        ;;
-        "sybyl")
-        mv TIME.log TIME_resp_sybyl.log
-    esac
-esac
-

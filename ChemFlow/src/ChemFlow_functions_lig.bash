@@ -355,7 +355,7 @@ elif [ $1 == 'ScoreFlow' ] ; then
     SCORE_PROGRAM="PLANTS"
     DOCK_LENGTH=("15" "15" "15")
     DOCK_RADIUS="15"
-    CHARGE="gas"
+    CHARGE="bcc"
 
     # Vina advanced options
     VINA_MODE="local_only"
@@ -371,8 +371,8 @@ elif [ $1 == 'ScoreFlow' ] ; then
 elif [ $1 == 'LigFlow' ] ; then
     WORKFLOW="LigFlow"
 
-    CHARGE="gas"
-    BCC="no"
+    CHARGE="bcc"
+    BCC="yes"
     RESP="no"
 fi
 }

@@ -126,7 +126,7 @@ case ${JOB_SCHEDULLER} in
             if [ ! -d ${RUNDIR}/${LIGAND}/VINA ] ; then
                 echo "mkdir -p ${RUNDIR}/${LIGAND}/VINA " >> dock.xargs
             fi
-            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/VINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
+            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/VINA/output.log --cpu 1 ${VINA_EXTRA} &>/dev/null " >> dock.xargs
         done
     ;;
     esac

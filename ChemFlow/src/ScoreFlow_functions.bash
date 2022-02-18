@@ -196,11 +196,10 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
         ${mgltools_folder}/bin/python \
         ${mgltools_folder}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py \
             -l ${RUNDIR}/${LIGAND}/ligand.mol2 \
-            -o ${RUNDIR}/${LIGAND}/ligand.pdbqt
- 	    -U 'lps'
+            -o ${RUNDIR}/${LIGAND}/ligand.pdbqt -U 'lps'
     fi
     # Run vina
-    vina --${VINA_MODE} --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
+    vina --${VINA_MODE} --cpu 1 --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt \
          --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
          --size_x ${DOCK_LENGHT[0]} --size_y ${DOCK_LENGHT[1]} --size_z ${DOCK_LENGHT[2]} \
          --out ${RUNDIR}/${LIGAND}/output.pdbqt --log ${RUNDIR}/${LIGAND}/output.log &> /dev/null
@@ -302,6 +301,11 @@ fi
 
 
 
+
+
+
+
+
 ScoreFlow_rescore_mmgbsa_write_compute_charges() {
 #===  FUNCTION  ================================================================
 #          NAME: ScoreFlow_rescore_mmgbsa_write_compute_charges
@@ -318,84 +322,59 @@ ScoreFlow_rescore_mmgbsa_write_compute_charges() {
 #                ${PROJECT}
 #                ${NCORES}
 #===============================================================================
-# The name of the ligand, without any conformational info
-LIGAND_NAME=`echo ${LIGAND} | sed -e 's/_conf_[0-9]*//'`
 
-# Mandatory Gasteiger charges
+# Ligand name without docking _conf_XX suffix. (in case you're rescoring from DockFlow)
+LIGAND_NAME=$(echo ${LIGAND} | awk -F '_conf' '{print $1}')
 
-if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/gas/${LIGAND}/${LIGAND}.mol2 ] ; then
-	echo "Preparing gas charges for ${LIGAND}"
-	mkdir -p ${WORKDIR}/${PROJECT}.chemflow/LigFlow/gas/${LIGAND}/
-	
-	antechamber -i ${RUNDIR}/${LIGAND}/ligand.mol2 -fi mol2 -o ${WORKDIR}/${PROJECT}.chemflow/LigFlow/gas/${LIGAND}/${LIGAND}.mol2 -fo mol2 -c gas -s 2 -eq 1 -rn MOL -pf yes -dr no &> antechamber.log
+# Path to LigFlow file. (if any)
+LIGFLOW_FILE=${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2
+
+# Check if charges already exists for this ligand
+if [ -f ${LIGFLOW_FILE} ] ; then
+
+    echo "${CHARGE} charges found in LigFlow for ${LIGAND}"
+
+    # Copy charges to file
+    awk '/ MOL/&&!/TEMP/ {print $9}' ${LIGFLOW_FILE} > charges.dat
+
+    # Prepare .mol2 with right charges
+    antechamber -i ${RUNDIR}/${LIGAND}/ligand.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -rn MOL -pf yes -dr no &> /dev/null
+
+    # Prepare the .frcmod file.
+    parmchk2 -i ${LIGFLOW_FILE} -o ${RUNDIR}/${LIGAND}/ligand.frcmod -s 2 -f mol2
+
+else 
+
+msg="\"${CHARGE}\" charges not found for ligand: ${LIGAND_NAME}.
+
+Did you run LigFlow first ?
+
+LigFlow -p ${PROJECT} -l ${LIGAND_FILE} --${CHARGE}"
+
+    ScoreFlow_error
+    
 fi
-        cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/gas/${LIGAND}/${LIGAND}.mol2 ${RUNDIR}/${LIGAND}/ligand_gas.mol2
-
-if [ ${CHARGE} != 'gas' ] ; then
-    DONE_CHARGE="false"
-
-    # Check if charges already exists for this ligand
-    if [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}/${LIGAND}.mol2 ] ; then
-        DONE_CHARGE="true"
-fi
-
-    # If it was not in ChemBase, look into the LigFlow folder.
-    if [ "${DONE_CHARGE}" == "false" ] && [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}/${LIGAND}.mol2 ] ; then
-        echo "${CHARGE} charges found in LigFlow for ${LIGAND}"
-#	cp ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}/${LIGAND}.mol2 ${RUNDIR}/${LIGAND}/
-else
-        awk '/ MOL/&&!/TEMP/ {print $9}' ${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND}/${LIGAND}.mol2 > charges.dat
-        antechamber -i ${RUNDIR}/${LIGAND}/ligand.mol2 -o ligand_${CHARGE}.mol2 -fi mol2 -fo mol2 -cf charges.dat -c rc -rn MOL -pf yes -dr no &> /dev/null
-
-        # Done
-        DONE_CHARGE="true"
-    fi
-
-    # If it was not in ChemBase or LigFlow, compute them.
-    if [ ${DONE_CHARGE} == "false" ] ; then
-
-        case ${CHARGE} in
-        "bcc")
-            # Compute am1-bcc charges
-            if [ ! -f  ${WORKDIR}/${PROJECT}.chemflow/LigFlow/bcc/${LIGAND}/${LIGAND}.mol2 ] ; then
-                echo "You asked for bcc charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later."
-                exit
-            fi
-
-            ;;
-        "resp")
-            # Prepare Gaussian
-            if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/resp/${LIGAND}/${LIGAND}.mol2 ] ; then
-                echo "You asked for resp charges. I was not able no find those in the ChemBase or LigFlow for ligand ${LIGAND}. Use LigFlow to compute them and try the rescoring later."
-                exit
-            fi
-        ;;
-        esac
-    fi
-fi
-
-if [ ! -f ${RUNDIR}/${LIGAND}/ligand.frcmod ] && [ -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/gas/${LIGAND}/${LIGAND}.mol2 ] ; then
-    parmchk2 -i ${WORKDIR}/${PROJECT}.chemflow/LigFlow/gas/${LIGAND}/${LIGAND}.mol2 -o ${RUNDIR}/${LIGAND}/ligand.frcmod -s 2 -f mol2
-
-    if [ ! -f ligand.frcmod ]  ; then
-        echo "${LIGAND} gas" >> ${RUNDIR}/antechamber_errors.lst
-    fi
-fi
-
-case ${CHARGE} in
-"bcc")
-    if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/bcc/${LIGAND}/${LIGAND}.mol2 ] ; then
-        echo "${LIGAND} bcc" >> ${RUNDIR}/antechamber_errors.lst
-    fi
-;;
-"resp")
-    if [ ! -f ${WORKDIR}/${PROJECT}.chemflow/LigFlow/resp/${LIGAND}/${LIGAND}.mol2 ]; then
-        echo "${LIGAND} resp">> ${RUNDIR}/antechamber_errors.lst
-    fi
-;;
-esac
 
 }
+
+
+ScoreFlow_error() {
+
+echo -e "\e[31m
+-------------------------------------------------
+         ScoreFlow stopped with ERROR 
+-------------------------------------------------
+
+$msg
+
+-------------------------------------------------
+\e[0m
+"    
+
+exit 1
+
+}
+
 
 ScoreFlow_rescore_mmgbsa_write_inputs() {
 #===  FUNCTION  ================================================================
@@ -842,8 +821,7 @@ ScoreFlow -r receptor.pdb -l ligand.mol2 -p myproject [-protocol protocol-name] 
  -sf/--function     STR : vina, chemplp, plp, plp95, mmgbsa, mmpbsa [chemplp]
 
 [ Charges for ligands - MMGBSA ]
- --gas                  : Gasteiger-Marsili (default)
- --bcc                  : AM1-BCC charges
+ --bcc                  : AM1-BCC charges (default)
  --resp                 : RESP charges (require gaussian)
 
 [ Simulation - MMGBSA ]
@@ -947,9 +925,6 @@ while [[ $# -gt 0 ]]; do
             shift # past argument
         ;;
         # Charge calculation
-        "--gas")
-            CHARGE="gas"
-        ;;
         "--resp")
             CHARGE="resp"
         ;;
