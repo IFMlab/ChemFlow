@@ -24,7 +24,7 @@ flexdist=		#angstrom
 
 #FLEX SIDE CHAINS RESID (side chains not too far) 
 
-flexres=X:,X:711,X:712	#resid of chosen flexible residues written as following chainID:resid 
+flexres=X:711,X:712	#resid of chosen flexible residues written as following chainID:resid 
 
 #USE ACCURATE LINE SEARCH
 
