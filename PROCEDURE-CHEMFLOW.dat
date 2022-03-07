@@ -18,6 +18,8 @@ download from : https://sourceforge.net/projects/smina/
 
 mkdir smina/
 mv smina.static smina/
+cd smina/
+chmod +x smina.static
 
 Then in the bashrc:
 
