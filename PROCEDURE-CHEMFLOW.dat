@@ -16,6 +16,9 @@ DOWNLOAD AND ADD the binary  smina in your bashrc:
 
 download from : https://sourceforge.net/projects/smina/
 
+mkdir smina/
+mv smina.static smina/
+
 Then in the bashrc:
 
 export PATH="/your/path/smina:$PATH
