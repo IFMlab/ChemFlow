@@ -7,9 +7,7 @@ export PATH=${PATH}:/your/path/plants/
 
 DOWNLOAD AND ADD the binary of qvina2.1 in your bashrc:
 
-#download from : https://github.com/QVina/qvina/blob/master/bin/qvina2.1
-
-#download from : https://github.com/QVina/qvina
+download from : https://github.com/QVina/qvina
 
 Then in the bashrc:
 export PATH="/your/path/qvina/bin:$PATH"
