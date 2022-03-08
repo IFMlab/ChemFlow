@@ -99,4 +99,8 @@ ScoreFlow -p tutorial --protocol chemplp -sf chemplp --receptor vmd-rec.mol2 --l
 # SCOREFLOW Vina (Local only)
 ScoreFlow --project tutorial --protocol vina_local_only -sf vina --vina-mode local_only --receptor vmd-rec.mol2 --ligand  all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500
 
+# ScoreFlow MM-GBSA   # TRICKY PART
+cp docked_ligands.mol2 in the $WORKDIR
+
+ScoreFlow --project tutorial --protocol mmgbsa_docked -sf mmgbsa --receptor receptor.pdb --ligand docked_ligands.mol2
 
