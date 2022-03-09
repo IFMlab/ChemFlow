@@ -91,7 +91,11 @@ DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 32.41
 
 DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 ---center 32.418 13.468 24.757  --size 22.500 24.160 22.500 -dp smina --postprocess --overwrite -n 3
 
-10- SCOREFLOW LOCALLY
+10- Compute bcc charges for the input with LIGFLOW
+
+LigFlow -l all.mol2 -p tutorial --bcc
+
+11- SCOREFLOW LOCALLY
 
 # SCOREFLOW ChemPLP
 ScoreFlow -p tutorial --protocol chemplp -sf chemplp --receptor vmd-rec.mol2 --ligand  all.mol2 --center 32.418 13.468 24.757
