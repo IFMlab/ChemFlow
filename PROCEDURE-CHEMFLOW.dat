@@ -78,8 +78,10 @@ For smina you can also run the Docking with a configuration file, in which you s
 
 DockFlow -p tutorial --protocol config -r vmd-rec.mol2 -l all.mol2 --config_smina config.txt -dp smina
 
-Some examples of the configuration files that one can use are provided in the folder 
+Some examples of the configuration files that one can use are provided in the folder: 
 ChemFlow/ChemFlow/templates/smina/
+
+Modify the center and size of the box as well as the scoring function you want to use and other feautes you want to apply to run the docking with Smina. 
 
 9- POSTPROCESS the results:
 
