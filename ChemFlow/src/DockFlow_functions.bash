@@ -1229,7 +1229,7 @@ case ${DOCK_PROGRAM} in
     echo " ENERGY RANGE: ${ENERGY_RANGE}"
 ;;
 "SMINA")
-#   echo "         SIZE: ${DOCK_LENGTH[@]} (X,Y,Z)"
+    echo "         SIZE: ${DOCK_LENGTH[@]} (X,Y,Z)"
     echo " EXHAUSTIVITY: ${EXHAUSTIVENESS}"
     echo " ENERGY RANGE: ${ENERGY_RANGE}"
 #    echo "  CONFIG FILE: ${conf_file}"
