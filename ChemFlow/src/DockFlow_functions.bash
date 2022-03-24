@@ -109,8 +109,7 @@ case ${JOB_SCHEDULLER} in
 		# rm ${RUNDIR}/dock_input.txt	
 		echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --config ${WORKDIR}/${conf_file} --out ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/SMINA/output.log &>/dev/null " >> dock.xargs
             else
-	        echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --accurate_line --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/SMINA/output.log &>/dev/null " >> dock.xargs
-            fi
+	        echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --num_modes ${DOCK_POSES} --accurate_line --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/SMINA/output.log &>/dev/null " >> dock.xargs            fi
         done
     ;;
     "QVINA")
@@ -118,7 +117,7 @@ case ${JOB_SCHEDULLER} in
             if [ ! -d ${RUNDIR}/${LIGAND}/QVINA ] ; then
                 echo "mkdir -p ${RUNDIR}/${LIGAND}/QVINA " >> dock.xargs
             fi
-            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; qvina2.1 --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/QVINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
+            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; qvina2.1 --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --num_modes ${DOCK_POSES} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS}  --out ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/QVINA/output.log  ${VINA_EXTRA} &>/dev/null " >> dock.xargs
         done
     ;;
     "VINA")
@@ -126,7 +125,7 @@ case ${JOB_SCHEDULLER} in
             if [ ! -d ${RUNDIR}/${LIGAND}/VINA ] ; then
                 echo "mkdir -p ${RUNDIR}/${LIGAND}/VINA " >> dock.xargs
             fi
-            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/VINA/output.log --cpu 1 ${VINA_EXTRA} &>/dev/null " >> dock.xargs
+            echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --num_modes ${DOCK_POSES} --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/VINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/VINA/output.log --cpu 1 ${VINA_EXTRA} &>/dev/null " >> dock.xargs
         done
     ;;
     esac
