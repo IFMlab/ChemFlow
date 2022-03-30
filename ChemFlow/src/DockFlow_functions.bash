@@ -918,11 +918,11 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS=${OLDIFS}
     fi
 done
-        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.dat
+        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.csv
 
         #KEEP JUST ONE CONFORMER PER LIGAND
 
-        cat SORTED.dat | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.dat
+        cat SORTED.csv | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.csv
 	
 if [ -f DockFlow.csv ] ; then
     sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
@@ -995,11 +995,11 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS=${OLDIFS}
     fi
 done
-        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.dat
+        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.csv
 
         #KEEP JUST ONE CONFORMER PER LIGAND
 
-        cat SORTED.dat | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.dat
+        cat SORTED.csv | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.csv
 	
 if [ -f DockFlow.csv ] ; then
     sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
@@ -1064,11 +1064,11 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS=${OLDIFS}
     fi
 done
-        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.dat
+        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.csv
 
         #KEEP JUST ONE CONFORMER PER LIGAND
 
-        cat SORTED.dat | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.dat
+        cat SORTED.csv | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.csv
 	
 if [ -f DockFlow.csv ] ; then
     sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
