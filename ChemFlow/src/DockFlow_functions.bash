@@ -806,8 +806,7 @@ let DOCK_POSES++
 
 if [ ! -z ${POSTPROCESS_ALL} ] ; then
   unset LIGAND_LIST
-  LIGAND_LIST=$(ls -p | grep /)
-  #LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
+  LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
 fi
 
 
@@ -875,8 +874,7 @@ DockFlow_postdock_vina_results() {
 
 if [ ! -z ${POSTPROCESS_ALL} ] ; then
   unset LIGAND_LIST
-  LIGAND_LIST=$(ls -p | grep /)
-  #LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
+  LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
 fi
 
 for LIGAND in ${LIGAND_LIST[@]}; do
@@ -951,8 +949,7 @@ DockFlow_postdock_smina_results() {
 
 if [ ! -z ${POSTPROCESS_ALL} ] ; then
   unset LIGAND_LIST
-  LIGAND_LIST=$(ls -p | grep /)
-  #LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
+  LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
 fi
 
 for LIGAND in ${LIGAND_LIST[@]}; do
@@ -1031,8 +1028,7 @@ DockFlow_postdock_qvina_results() {
 
 if [ ! -z ${POSTPROCESS_ALL} ] ; then
   unset LIGAND_LIST
-  LIGAND_LIST=$(ls -p | grep /)
-  #LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
+  LIGAND_LIST=($(ls -d */ | cut -d/ -f1))
 fi
 
 for LIGAND in ${LIGAND_LIST[@]}; do
