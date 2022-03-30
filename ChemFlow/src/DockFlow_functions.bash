@@ -1117,7 +1117,9 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
 
     # Retrieve available receptors
     if [ ! -z ${POSTPROCESS_ALL} ] ; then
-        RECEPTOR_LIST=($(ls -d */| cut -d/ -f1))
+     	RECEPTOR_LIST=($(ls -d */ | egrep -v input/ | cut -d/ -f1))
+        #to avoid selecting the input/ directory that exists in the $PROTOCOL/
+	#RECEPTOR_LIST=($(ls -d */| cut -d/ -f1))
     else
         RECEPTOR_LIST=${RECEPTOR_NAME}
     fi
