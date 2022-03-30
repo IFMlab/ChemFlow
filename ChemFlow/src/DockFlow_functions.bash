@@ -109,7 +109,8 @@ case ${JOB_SCHEDULLER} in
 		# rm ${RUNDIR}/dock_input.txt	
 		echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --config ${WORKDIR}/${conf_file} --out ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/SMINA/output.log &>/dev/null " >> dock.xargs
             else
-	        echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --num_modes ${DOCK_POSES} --accurate_line --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/SMINA/output.log &>/dev/null " >> dock.xargs            fi
+	        echo "echo [ Docking ] ${RECEPTOR_NAME} - ${LIGAND} ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/${LIGAND}/ligand.pdbqt --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} --num_modes ${DOCK_POSES} --accurate_line --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} --out ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt --log ${RUNDIR}/${LIGAND}/SMINA/output.log &>/dev/null " >> dock.xargs            
+	    fi
         done
     ;;
     "QVINA")
