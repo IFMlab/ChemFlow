@@ -918,11 +918,16 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS=${OLDIFS}
     fi
 done
-        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.csv
+        cat DockFlow.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 ' LC_ALL=C sort -nk6 ' >> SORTED.csv
 
         #KEEP JUST ONE CONFORMER PER LIGAND
 
-        cat SORTED.csv | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.csv
+        cat SORTED.csv | awk -v protocol=${PROTOCOL} -v ligand=${LIGAND} -v conf=1 ' {split($4,a,"_"); print a[1], $6, $4}' | LC_ALL=C sort -nk2 | awk '!a[$1]++' >> SORTED-OK-only
+
+        tac SORTED-OK-only | awk 'NR==1 {line =$0; next} 1; END{print line}' | tac >> SORTED-uniq-lig.csv
+
+        rm SORTED-OK-only
+
 	
 if [ -f DockFlow.csv ] ; then
     sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
@@ -995,11 +1000,16 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS=${OLDIFS}
     fi
 done
-        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.csv
+        cat DockFlow.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 ' LC_ALL=C sort -nk6 ' >> SORTED.csv
 
         #KEEP JUST ONE CONFORMER PER LIGAND
 
-        cat SORTED.csv | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.csv
+        cat SORTED.csv | awk -v protocol=${PROTOCOL} -v ligand=${LIGAND} -v conf=1 ' {split($4,a,"_"); print a[1], $6, $4}' | LC_ALL=C sort -nk2 | awk '!a[$1]++' >> SORTED-OK-only
+
+        tac SORTED-OK-only | awk 'NR==1 {line =$0; next} 1; END{print line}' | tac >> SORTED-uniq-lig.csv
+
+        rm SORTED-OK-only
+
 	
 if [ -f DockFlow.csv ] ; then
     sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
@@ -1064,12 +1074,16 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS=${OLDIFS}
     fi
 done
-        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.csv
+        cat DockFlow.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 ' LC_ALL=C sort -nk6 ' >> SORTED.csv
 
         #KEEP JUST ONE CONFORMER PER LIGAND
 
-        cat SORTED.csv | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.csv
-	
+        cat SORTED.csv | awk -v protocol=${PROTOCOL} -v ligand=${LIGAND} -v conf=1 ' {split($4,a,"_"); print a[1], $6, $4}' | LC_ALL=C sort -nk2 | awk '!a[$1]++' >> SORTED-OK-only
+
+        tac SORTED-OK-only | awk 'NR==1 {line =$0; next} 1; END{print line}' | tac >> SORTED-uniq-lig.csv
+
+        rm SORTED-OK-only
+
 if [ -f DockFlow.csv ] ; then
     sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
 fi
