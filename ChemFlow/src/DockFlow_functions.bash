@@ -885,12 +885,6 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         # Fill the DockFlow.csv file
         awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK VINA RESULT/ {print "VINA",protocol,target,ligand,conf,$4; conf++}' ${RUNDIR}/${LIGAND}/VINA/output.pdbqt |  head -${DOCK_POSES}  >> DockFlow.csv
 
-	cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.dat
-	#KEEP JUST ONE CONFORMER PER LIGAND
-
-	cat SORTED.dat | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.dat
-
-
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         if [ ! -f  ${RUNDIR}/${LIGAND}/VINA/output.mol2 ] ; then
             obabel -h -ipdbqt ${RUNDIR}/${LIGAND}/VINA/output.pdbqt -omol2 -O${RUNDIR}/${LIGAND}/VINA/output.mol2
@@ -924,7 +918,12 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS=${OLDIFS}
     fi
 done
+        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.dat
 
+        #KEEP JUST ONE CONFORMER PER LIGAND
+
+        cat SORTED.dat | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.dat
+	
 if [ -f DockFlow.csv ] ; then
     sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
 fi
@@ -965,11 +964,6 @@ for LIGAND in ${LIGAND_LIST[@]}; do
 
 	if awk 'BEGIN {exit !('$value' != '$zero')}' ; then
         awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK minimizedAffinity / {print "SMINA",protocol,target,ligand,conf,$3; conf++}' ${RUNDIR}/${LIGAND}/SMINA/output.pdbqt |  head -${DOCK_POSES}  >> DockFlow.csv
-	
-        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.dat
-        #KEEP JUST ONE CONFORMER PER LIGAND
-
-        cat SORTED.dat | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.dat
 
 
 	else
@@ -1001,7 +995,12 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS=${OLDIFS}
     fi
 done
+        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.dat
 
+        #KEEP JUST ONE CONFORMER PER LIGAND
+
+        cat SORTED.dat | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.dat
+	
 if [ -f DockFlow.csv ] ; then
     sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
     elif [ -f DockFlow-min.csv ] ; then
@@ -1040,12 +1039,6 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         # Fill the DockFlow.csv file
         awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 '/REMARK VINA RESULT/ {print "QVINA",protocol,target,ligand,conf,$4; conf++}' ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt |  head -${DOCK_POSES}  >> DockFlow.csv
 
-        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.dat
-        #KEEP JUST ONE CONFORMER PER LIGAND
-
-        cat SORTED.dat | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.dat
-
-
         # Create the docked_ligands.mol2, a file containing every conformations of every ligands.
         if [ ! -f  ${RUNDIR}/${LIGAND}/QVINA/output.mol2 ] ; then
             obabel -h -ipdbqt ${RUNDIR}/${LIGAND}/QVINA/output.pdbqt -omol2 -O${RUNDIR}/${LIGAND}/QVINA/output.mol2
@@ -1071,7 +1064,12 @@ for LIGAND in ${LIGAND_LIST[@]}; do
         IFS=${OLDIFS}
     fi
 done
+        cat DockFlow.csv | LC_ALL=C sort -nk6 >> SORTED.dat
 
+        #KEEP JUST ONE CONFORMER PER LIGAND
+
+        cat SORTED.dat | awk '{split($4,a,"_"); print a[1], $6, $4}' | awk '!a[$1]++' >> SORTED-uniq-lig.dat
+	
 if [ -f DockFlow.csv ] ; then
     sed -i 's/[a-zA-Z0-9]*_conf_//' DockFlow.csv
 fi
