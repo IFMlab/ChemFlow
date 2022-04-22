@@ -494,7 +494,7 @@ done" >> ${RUNDIR}/ScoreFlow.run
 
 if [ ! -f MMPBSA.dat ] ; then
 echo "rm -rf com.top rec.top ligand.top
-python3 $(which ante-MMPBSA.py) -p ${init}.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job" >>${RUNDIR}/ScoreFlow.run
+amber.python $(which ante-MMPBSA.py) -p ${init}.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_mmpbsa.job" >>${RUNDIR}/ScoreFlow.run
 
 if [ "${WATER}" != "yes" ] ; then
     echo "amber.python $(which MMPBSA.py) -O -i ../mmgbsa.in -cp com.top -rp rec.top -lp ligand.top -o MMPBSA.dat -eo MMPBSA.csv -y ${TRAJECTORY} &> MMPBSA.job" >>${RUNDIR}/ScoreFlow.run
