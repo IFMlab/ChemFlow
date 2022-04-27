@@ -359,7 +359,7 @@ sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.te
 
 run_salt(){
 if [ ${RUN_ONLY} == "yes" ] && [ "${WATER}" == 'yes' ] ; then
-        tleap -f ../tleap_water.in &> water.job
+        $(which tleap) -f ../tleap_water.in &> water.job
         WAT=$(grep -c 'WAT' ${RUNDIR}/${LIGAND}/ionized_solvated.prmtop)
         eval echo \""${WAT}"\" > ${RUNDIR}/${LIGAND}/water.dat
         nsalt=$(awk -v R=0.0187 -v C=0.15 -v WAT=$WAT 'BEGIN{print R*C*WAT}')
@@ -369,7 +369,7 @@ if [ ${RUN_ONLY} == "yes" ] && [ "${WATER}" == 'yes' ] ; then
         sed "s/nna/${nna}/g" ${RUNDIR}/tleap_salt.in >> ${RUNDIR}/tleap_salt-na.in
         sed "s/ncl/${ncl}/g" ${RUNDIR}/tleap_salt-na.in >> ${RUNDIR}/tleap_salt-tot.in
         rm -rf ${RUNDIR}/tleap_salt-na.in
-        tleap -f ${RUNDIR}/tleap_salt-tot.in &> tleap.job
+        $(which tleap) -f ${RUNDIR}/tleap_salt-tot.in &> tleap.job
 fi
 }
 
