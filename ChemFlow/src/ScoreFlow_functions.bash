@@ -238,10 +238,8 @@ fi
 
 if [ ${WRITE_ONLY} == 'yes' ] ; then
     for LIGAND in ${LIGAND_LIST[@]} ; do
-        echo ${LIGAND}
         if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ "${WATER}" != 'yes' ] ; then
             echo "$(which tleap) -f ../tleap_implicit.in &> tleap.job" > ScoreFlow.run.template
-            echo "si rifa'"
             break
         fi
         if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ "${WATER}" == 'yes' ] ; then
