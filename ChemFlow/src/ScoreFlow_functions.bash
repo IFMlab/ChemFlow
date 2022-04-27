@@ -243,7 +243,7 @@ if [ ${WRITE_ONLY} == 'yes' ] ; then
             break
         fi
         if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated.rst7 ] && [ "${WATER}" == 'yes' ] ; then
-            echo -e "$(which tleap) -f ../tleap_water.in &> water.job\ntleap -f ../tleap_salt-tot.in  &> tleap.job " > ScoreFlow.run.template
+            echo -e "$(which tleap) -f ../tleap_water.in &> water.job\n$(which tleap) -f ../tleap_salt-tot.in  &> tleap.job " > ScoreFlow.run.template
             break
         fi
     done
