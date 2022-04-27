@@ -134,8 +134,8 @@ case ${JOB_SCHEDULLER} in
     cd ${RUNDIR} ; cat dock.xargs | xargs -P${NCORES} -I '{}' bash -c '{}'
 ;;
 "SLURM"|"PBS")
-    echo -ne "\nHow many Dockings per PBS/SLURM job? "
-    read nlig
+    #echo -ne "\nHow many Dockings per PBS/SLURM job? "
+    #read nlig
 ###
 ### Marion! WHAT THE HELL WHAT THIS ?
 
@@ -1287,7 +1287,12 @@ JOB SCHEDULLER: ${JOB_SCHEDULLER}
     CORES/NODE: ${NCORES}
      OVERWRITE: ${OVERWRITE}
 "
-
+case ${JOB_SCHEDULLER} in
+"SLURM"|"PBS")
+    echo -ne "\nHow many Dockings per PBS/SLURM job? "
+    read nlig
+;;
+esac
 if [ "${YESTOALL}" != 'yes' ] ; then
 
 echo -n "
