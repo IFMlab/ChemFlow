@@ -266,7 +266,7 @@ else
     fi
      if [ ! -f ${LIGFLOW_FILE} ] ; then
         continue
-    fi
+     fi
          if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ ${WATER} != 'yes' ] ; then
                 echo "$(which tleap) -f ../tleap_implicit.in &> tleap.job" >> ScoreFlow.run
 	else
