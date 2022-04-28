@@ -264,6 +264,9 @@ else
 
             ScoreFlow_rescore_mmgbsa_write_compute_charges
     fi
+     if [ ! -f ${LIGFLOW_FILE} ] ; then
+        continue
+    fi
          if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ ${WATER} != 'yes' ] ; then
                 echo "$(which tleap) -f ../tleap_implicit.in &> tleap.job" >> ScoreFlow.run
 	else
@@ -275,6 +278,7 @@ else
 		if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated_SALT.prmtop ] && [ "${WATER}" == 'yes' ] ; then
 
         echo "You must run tleap_salt!"
+	continue
 	fi
 
         if [ ${JOB_SCHEDULLER} != "None" ] ; then
@@ -283,7 +287,7 @@ else
 
         case "${JOB_SCHEDULLER}" in
         "None")
-            echo -ne "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
+            echo -e "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
             bash ScoreFlow.run
         ;;
         "PBS")
@@ -350,8 +354,10 @@ Did you run LigFlow first ?
 
 LigFlow -p ${PROJECT} -l ${LIGAND_FILE} --${CHARGE}"
 
-    ScoreFlow_error
-    
+ScoreFlow_error
+
+echo "\"${CHARGE}\" charges not found for ligand: ${LIGAND_NAME}." >> ${RUNDIR}/FAILED_CHARGE.txt
+
 fi
 
 }
@@ -369,8 +375,6 @@ $msg
 -------------------------------------------------
 \e[0m
 "    
-
-exit 1
 
 }
 
