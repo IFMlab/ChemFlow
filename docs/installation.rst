@@ -39,10 +39,12 @@ Step 3 - Install the software dependencies
 
 * Qvina
     Download from: https://github.com/QVina/qvina/blob/master/bin/qvina2.1
+    
     Add in your ~/.bashrc : export PATH="/your/path/qvina/bin:$PATH"
     
 * Smina
-    Download from: https://sourceforge.net/projects/smina/\n
+    Download from: https://sourceforge.net/projects/smina/
+    
     Add in your ~/.bashrc : export PATH="/your/path/smina:$PATH
 
 * PLANTS ( Requires free registration )
