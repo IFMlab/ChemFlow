@@ -267,14 +267,14 @@ else
      if [ ! -f ${LIGFLOW_FILE} ] ; then
         continue
      fi
-         if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] && [ ${WATER} != 'yes' ] ; then
-                echo "$(which tleap) -f ../tleap_implicit.in &> tleap.job" >> ScoreFlow.run
-	else
-                echo "Running tleap with physiological salt concentration of 0.15M"
+     if [ ! -f ${RUNDIR}/${LIGAND}/complex.rst7 ] ; then
+           if [ ${WATER} != 'yes' ] ; then
+               sed -i '2 i $(which tleap) -f ../tleap_implicit.in &> tleap.job\n' ScoreFlow.run
+           else
+               echo "Running tleap with physiological salt concentration of 0.15M"
+                run_salt
 
-		run_salt
-
-	fi
+    	   fi
 		if [ ! -f ${RUNDIR}/${LIGAND}/ionized_solvated_SALT.prmtop ] && [ "${WATER}" == 'yes' ] ; then
 
         echo "You must run tleap_salt!"
