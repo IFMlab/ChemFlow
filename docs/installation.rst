@@ -35,18 +35,31 @@ Step 3 - Install the software dependencies
 
 * Autodock Vina
     Download from: https://vina.scripps.edu/downloads/
-    Add in your ~/.bashrc : export PATH="/your/path/autodock_vina_1_1_2_linux_x86/bin:$PATH"
+    
+    Add in your ~/.bashrc : 
+    
+    export PATH="/your/path/autodock_vina_1_1_2_linux_x86/bin:$PATH"
 
 * Qvina
     Download from: https://github.com/QVina/qvina/blob/master/bin/qvina2.1
     
-    Add in your ~/.bashrc : export PATH="/your/path/qvina/bin:$PATH"
+    Add in your ~/.bashrc : 
     
+    export PATH="/your/path/qvina-master/bin:$PATH"
+        
 * Smina
-    Download from: https://sourceforge.net/projects/smina/
+    Download from:  https://sourceforge.net/projects/smina/
     
-    Add in your ~/.bashrc : export PATH="/your/path/smina:$PATH
+    mkdir smina/
+    mv smina.static smina/
+    cd smina/
+    chmod +x smina.static
 
+    Add in your ~/.bashrc :
+
+    export PATH="/your/path/smina:$PATH
+    
+    
 * PLANTS ( Requires free registration )
     Download and install from: http://www.tcd.uni-konstanz.de/plants_download/
     
