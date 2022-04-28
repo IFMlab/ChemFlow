@@ -49,12 +49,15 @@ Step 3 - Install the software dependencies
 
 * PLANTS ( Requires free registration )
     Download and install from: http://www.tcd.uni-konstanz.de/plants_download/
+    
     Add in your ~/.bashrc:     export PATH="${PATH}:~/software/PLANTS/"
 
 * Amber18 (Optional, licence is required)
+
     Download and install from: http://ambermd.org
 
 * Gaussian (Optional, licence is required)
+
     Download and install from: https://gaussian.com
 
 Step 4 - Set PATHS
