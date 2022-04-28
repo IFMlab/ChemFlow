@@ -58,7 +58,7 @@ conda create --name ChemFlowOfficial --file env-file.txt
 
 conda activate ChemFlowOfficial
 
-7- GO to the tutorial folder:  
+7- Go to the tutorial folder:  
 
 cd tutorial/example-a-thrombin/
 
