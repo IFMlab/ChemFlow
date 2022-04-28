@@ -62,7 +62,7 @@ conda activate ChemFlowOfficial
 
 cd tutorial/example-a-thrombin/
 
-you will find the mol2 file for the ligands, prepared by PrepFlow (REF) and the pdb and mol2 of the receptor.
+you will find the mol2 file for the ligands, prepared by PrepFlow (M. Sisquellas, M. Cecchini, Mol. Inf. 2021, 40, 2100139) and the pdb and mol2 of the receptor.
 
 8- Run the DOCKING using DockFlow:
 
