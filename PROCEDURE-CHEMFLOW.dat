@@ -93,7 +93,7 @@ DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 32.41
 
 DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 ---center 32.418 13.468 24.757  --size 22.500 24.160 22.500 -dp smina --postprocess --overwrite -n 3
 
-10- Compute bcc charges for the input with LIGFLOW
+10- Compute bcc CHARGES for the ligands with LIGFLOW
 
 LigFlow -l all.mol2 -p tutorial --bcc
 
