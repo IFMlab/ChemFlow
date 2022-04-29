@@ -1,70 +1,17 @@
 STEPS CHEMFLOW :
 
-1- Follow the script: 
-/ifmdata/share/Tutorials/how_to_install_chemflow.txt to install Amber, PLANTS, g09
+1- ACTIVATE the environment you created for ChemFlow:
 
-export PATH=${PATH}:/your/path/plants/
+"conda activate ChemFlow"
 
-DOWNLOAD AND ADD the binary of qvina2.1 in your bashrc:
 
-download from : https://github.com/QVina/qvina
+2- ENTER in ChemFlow tutorial folder:
 
-Then in the bashrc:
-export PATH="/your/path/qvina-master/bin:$PATH"
-
-DOWNLOAD AND ADD the binary  smina in your bashrc:
-
-download from : https://sourceforge.net/projects/smina/
-
-mkdir smina/
-mv smina.static smina/
-cd smina/
-chmod +x smina.static
-
-Then in the bashrc:
-
-export PATH="/your/path/smina:$PATH
-
-DOWNLOAD AND ADD the binary  vina in your bashrc:
-
-download from : https://vina.scripps.edu/downloads/
-
-Then in the bashrc:
-
-export PATH="/your/path/autodock_vina_1_1_2_linux_x86/bin:$PATH"
-
-2- CLONE the branch of the Official version of ChemFlow:
-
-git clone --branch ChemFlow_Official https://github.com/IFMlab/ChemFlow.git
-
-3- ADD in the ~/.bashrc the path to your CHEMFLOW_HOME:
-
-export CHEMFLOW_HOME="/your/path/here/ChemFlow/ChemFlow/"
-
-export PATH="${PATH}:${CHEMFLOW_HOME}/bin/"
-
-Then source the bashrc:
-
-source ~/.bashrc
-
-4- ENTER in ChemFlow folder:
-cd ChemFlow
-
-5- CREATE CONDA ENVIRONMENT: 
-
-conda create --name ChemFlowOfficial --file env-file.txt
-
-6- ACTIVATE the environment:
-
-conda activate ChemFlowOfficial
-
-7- Go to the tutorial folder:  
-
-cd tutorial/example-a-thrombin/
+"cd ChemFlow/tutorial/example-a-thrombin/"
 
 you will find the mol2 file for the ligands, prepared by PrepFlow (M. Sisquellas, M. Cecchini, Mol. Inf. 2021, 40, 2100139) and the pdb and mol2 of the receptor.
 
-8- Run the DOCKING using DockFlow:
+3- Run the DOCKING using DockFlow:
 
 DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --radius 15
 
@@ -83,7 +30,7 @@ ChemFlow/ChemFlow/templates/smina/
 
 Modify the center and size of the box as well as the scoring function you want to use and other feautes you want to apply to run the docking with Smina. 
 
-9- POSTPROCESS the results:
+4- POSTPROCESS the results:
 
 DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757  --radius 15 --postprocess --overwrite -n 3
 
@@ -93,11 +40,11 @@ DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 32.41
 
 DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 ---center 32.418 13.468 24.757  --size 22.500 24.160 22.500 -dp smina --postprocess --overwrite -n 3
 
-10- Compute bcc CHARGES for the ligands with LIGFLOW
+5- Compute bcc CHARGES for the ligands with LIGFLOW
 
 LigFlow -l all.mol2 -p tutorial --bcc
 
-11- SCOREFLOW LOCALLY
+6- SCOREFLOW LOCALLY
 
 # SCOREFLOW ChemPLP
 ScoreFlow -p tutorial --protocol chemplp -sf chemplp --receptor vmd-rec.mol2 --ligand  all.mol2 --center 32.418 13.468 24.757
