@@ -2,28 +2,28 @@ STEPS CHEMFLOW :
 
 1- ACTIVATE the environment you created for ChemFlow:
 
-"conda activate ChemFlow"
+``conda activate ChemFlow``
 
 
 2- ENTER in ChemFlow tutorial folder:
 
-"cd ChemFlow/tutorial/example-a-thrombin/"
+``cd ChemFlow/tutorial/example-a-thrombin/``
 
 you will find the mol2 file for the ligands, prepared by PrepFlow (M. Sisquellas, M. Cecchini, Mol. Inf. 2021, 40, 2100139) and the pdb and mol2 of the receptor.
 
 3- Run the DOCKING using DockFlow:
 
-DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --radius 15
+``DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --radius 15``
 
-DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500 -sf vina -dp vina
+``DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500 -sf vina -dp vina``
 
-DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500 -sf vina -dp qvina
+``DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500 -sf vina -dp qvina``
 
-DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500 -dp smina
+``DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500 -dp smina``
 
 For smina you can also run the Docking with a configuration file, in which you specify the center and the size of the box and a different scoring function to use:
 
-DockFlow -p tutorial --protocol config -r vmd-rec.mol2 -l all.mol2 --config_smina config.txt -dp smina
+``DockFlow -p tutorial --protocol config -r vmd-rec.mol2 -l all.mol2 --config_smina config.txt -dp smina``
 
 Some examples of the configuration files that one can use are provided in the folder: 
 ChemFlow/ChemFlow/templates/smina/
