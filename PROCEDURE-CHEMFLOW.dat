@@ -74,7 +74,7 @@ Advanced
 
 Using the \-\-write-only flag, all input files will be written in tutorial.chemflow/ScoreFlow/mmgbsa_md/receptor/:
 
-    System Setup: You can modify the system setup (tleap.in file) inside your job.
+    System Setup: You can modify the system setup (tleap_implicit.in file or tleap_salt-tot.in) inside your job.
     Simulation protocol: The procedures for each protocol can also be modified, the user must review "ScoreFlow.run.template".
     Run input files (Amber and MMGBSA): Namely min1.in, heat.in, equil.in, md.in ... can also be manually modified at wish :)
     After the modifications, rerun ScoreFlow using \-\-run-only.
