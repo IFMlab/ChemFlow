@@ -15,6 +15,20 @@ The sources for ChemFlow can be downloaded from the `Github repo`_.
 You can either clone the public repository:
 
     ``git clone https://github.com/IFMlab/ChemFlow.git``
+    
+You can either clone the Oficial branch repository:
+    
+    ``git clone --branch ChemFlow_Official https://github.com/IFMlab/ChemFlow.git``
+    
+Then you can add in the ~/.bashrc the path to your CHEMFLOW_HOME as follows:
+
+export CHEMFLOW_HOME="/your/path/here/ChemFlow/ChemFlow/"
+
+export PATH="${PATH}:${CHEMFLOW_HOME}/bin/"
+
+Then source the bashrc:
+
+source ~/.bashrc
 
 
 Step 2 - Install anaconda3.
@@ -27,7 +41,7 @@ chmod +x Anaconda3-2021.11-Linux-x86_64.sh
 
 -execute: ./Anaconda3-2021.11-Linux-x86_64.sh
 
-* Create an environment for ChemFlow.
+* Create a conda environment for ChemFlow, with the provided environment file:
 ``conda create -n ChemFlow --file env-file.txt``
 
 Step 3 - Install the software dependencies
