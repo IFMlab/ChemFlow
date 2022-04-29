@@ -73,11 +73,11 @@ ScoreFlow --project tutorial --protocol mmgbsa_docked -sf mmgbsa --receptor rece
 
 Always remember that to run on HPC you need to provide an header file, appropriate for the supercomputer
 
-MMGBSA rescoring with explicit solvent:
+MMGBSA rescoring in explicit solvent:
 
 ScoreFlow --project tutorial --protocol mmgbsa_docked -sf mmgbsa --receptor receptor.pdb --ligand docked_ligands.mol2 --water --slurm --header ScoreFlow.header
 
-MMGBSA rescoring with implicit solvent:
+MMGBSA rescoring in implicit solvent:
 
 ScoreFlow --project tutorial --protocol mmgbsa_docked -sf mmgbsa --receptor receptor.pdb --ligand docked_ligands.mol2 --slurm --header ScoreFlow.header
 
