@@ -69,6 +69,18 @@ cp docked_ligands.mol2 in the $WORKDIR
 
 ScoreFlow --project tutorial --protocol mmgbsa_docked -sf mmgbsa --receptor receptor.pdb --ligand docked_ligands.mol2
 
+7- SCOREFLOW on HPC
+
+Always remember that to run on HPC you need to provide an header file, appropriate for the supercomputer
+
+Explicit solvent:
+
+ScoreFlow --project tutorial --protocol mmgbsa_docked -sf mmgbsa --receptor receptor.pdb --ligand docked_ligands.mol2 --water --slurm --header ScoreFlow.header
+
+Implicit solvent:
+
+ScoreFlow --project tutorial --protocol mmgbsa_docked -sf mmgbsa --receptor receptor.pdb --ligand docked_ligands.mol2 --slurm --header ScoreFlow.header
+
 
 Advanced
 
