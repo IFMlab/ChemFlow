@@ -40,20 +40,42 @@ DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 32.41
 
 DockFlow -p tutorial --protocol smina -r vmd-rec.mol2 -l all.mol2 ---center 32.418 13.468 24.757  --size 22.500 24.160 22.500 -dp smina --postprocess --overwrite -n 3
 
+For each of these commands you will be asked:
+
+    Continue? > y
+
 5- Compute bcc CHARGES for the ligands with LIGFLOW
 
-LigFlow -l all.mol2 -p tutorial --bcc
+igFlow can be used to build up a compound database with advanced charges such as AM1-BCC and RESP and their associated optimized structures, we'll see it's use latter to compute appropriate charges for the free energy calculations. Since these calculations are computationally expensive we recomend the users to use a cluster/supercomputer. In the examples bellow we demonstrate how to derive the AM1-BCC and RESP charges using the two most widespread queueing systems in supercomputers (PBS and SLURM)
 
-6- SCOREFLOW LOCALLY
+LigFlow -l docked_ligands.mol2 -p tutorial --bcc --slurm
+LigFlow -l docked_ligands.mol2 -p tutorial --bcc --pbs
+
+For each of these commands you will be asked:
+
+    Continue? > y
+
+
+6- SCOREFLOW LOCALLY to rescore the previous docking poses (best 3 for each ligand)
 
 # SCOREFLOW ChemPLP
-ScoreFlow -p tutorial --protocol chemplp -sf chemplp --receptor vmd-rec.mol2 --ligand  all.mol2 --center 32.418 13.468 24.757
+ScoreFlow -p tutorial --protocol chemplp -sf chemplp --receptor vmd-rec.mol2 --ligand docked_ligands.mol2 --center 32.418 13.468 24.757
 
 # SCOREFLOW Vina (Local only)
-ScoreFlow --project tutorial --protocol vina_local_only -sf vina --vina-mode local_only --receptor vmd-rec.mol2 --ligand  all.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500
+ScoreFlow --project tutorial --protocol vina_local_only -sf vina --vina-mode local_only --receptor vmd-rec.mol2 --ligand  docked_ligands.mol2 --center 32.418 13.468 24.757 --size 22.500 24.160 22.500
 
 # ScoreFlow MM-GBSA 
 cp docked_ligands.mol2 in the $WORKDIR
 
 ScoreFlow --project tutorial --protocol mmgbsa_docked -sf mmgbsa --receptor receptor.pdb --ligand docked_ligands.mol2
+
+
+Advanced
+
+Using the \-\-write-only flag, all input files will be written in tutorial.chemflow/ScoreFlow/mmgbsa_md/receptor/:
+
+    System Setup: You can modify the system setup (tleap.in file) inside your job.
+    Simulation protocol: The procedures for each protocol can also be modified, the user must review "ScoreFlow.run.template".
+    Run input files (Amber and MMGBSA): Namely min1.in, heat.in, equil.in, md.in ... can also be manually modified at wish :)
+    After the modifications, rerun ScoreFlow using \-\-run-only.
 
