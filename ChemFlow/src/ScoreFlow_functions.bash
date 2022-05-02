@@ -330,7 +330,7 @@ ScoreFlow_rescore_mmgbsa_write_compute_charges() {
 LIGAND_NAME=$(echo ${LIGAND} | awk -F '_conf' '{print $1}')
 
 # Path to LigFlow file. (if any)
-LIGFLOW_FILE=${WORKDIR}/${PROJECT}.chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2
+LIGFLOW_FILE=${WORKDIR}/${PROJECT}_chemflow/LigFlow/${CHARGE}/${LIGAND_NAME}.mol2
 
 # Check if charges already exists for this ligand
 if [ -f ${LIGFLOW_FILE} ] ; then
@@ -801,7 +801,7 @@ ScoreFlow_help_full(){
 echo "ScoreFlow is a bash script designed to work with PLANTS, Vina, IChem and AmberTools16+.
 It can perform an rescoring of molecular complexes such as protein-ligand
 
-ScoreFlow requires a project folder named 'myproject'.chemflow. If absent, one will be created.
+ScoreFlow requires a project folder named 'myproject'_chemflow. If absent, one will be created.
 
 Usage:
 # For VINA and PLANTS scoring functions:
