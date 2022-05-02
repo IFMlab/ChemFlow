@@ -70,14 +70,14 @@ run_LigFlow_prepare () {
     awk -v id=${LIGAND} -v line='@<TRIPOS>MOLECULE' 'BEGIN {print line}; $0~id{flag=1} /MOLECULE/{flag=0} flag'  ${LIGAND_FILE} > ligand.mol2
         
     if [ "$CHARGE" == "bcc" ] ; then 
-        antechamber -fi mol2  -i ligand.mol2 \
+        $(which antechamber) -fi mol2  -i ligand.mol2 \
                     -fo mol2  -o bcc.mol2 \
                     -c bcc -eq 2 \
                     -rn MOL -dr no -pf y
     fi
 
     if [ "$CHARGE" == "resp" ] ; then
-        antechamber -fi mol2 -i ligand.mol2 \
+        $(which antechamber) -fi mol2 -i ligand.mol2 \
                     -fo gcrt -o ligand.gau  \
                     -ge ligand.gesp \
                     -ch ligand -eq 1 -gv 1 \
@@ -89,7 +89,7 @@ run_LigFlow_prepare () {
 
             # If gaussian ended normally, post-process Gaussian Output to produce final .mol2
             if [ "$(awk '/Normal/' ligand.gout )" != '' ] ; then
-                antechamber -fi gout -i ligand.gout  \
+                $(which antechamber) -fi gout -i ligand.gout  \
                             -fo mol2 -o resp.mol2 \
                             -c resp  -at gaff2 \
                             -rn MOL -pf y -dr y 
