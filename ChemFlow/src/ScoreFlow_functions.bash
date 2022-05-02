@@ -62,7 +62,7 @@ ScoreFlow_update_ligand_list
 NDOCK=${#LIGAND_LIST[@]}
 
 if [ ${NDOCK} == 0 ] ; then
-    echo "[ DockFlow ] All compounds already docked ! " ; exit 0
+    echo "[ ScoreFlow ] All compounds already rescored ! " ; exit 0
 else
     echo "There are ${NLIGANDS} compounds and ${NDOCK} remaining to rescore"
 fi
