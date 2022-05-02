@@ -555,12 +555,12 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     case ${DOCK_PROGRAM} in
     "PLANTS")
         if [ ! -f ${LIGAND}/ligand.mol2 ] ; then
-            cp ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+            cp ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
         fi
     ;;
     "VINA")
     	    if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-		cp ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+		cp ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
 		cd ${LIGAND}/
 		python2 $(which prepare_ligand4.py) -l  ligand.mol2 -o  ligand.pdbqt -U 'lps'
 #        fi
@@ -569,7 +569,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     ;; 
     "SMINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-                cp ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+                cp ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
                 cd ${LIGAND}/
 		python2 $(which prepare_ligand4.py) -l ligand.mol2 -o ligand.pdbqt -U 'lps'
 	fi
@@ -577,7 +577,7 @@ for LIGAND in ${LIGAND_LIST[@]} ; do
     ;;
     "QVINA")
         if [ ! -f  ${LIGAND}/ligand.pdbqt ] ; then
-		cp ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
+		cp ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/input/${LIGAND}.mol2 ${LIGAND}/ligand.mol2
 		cd ${LIGAND}/
 		python2 $(which prepare_ligand4.py) -l ligand.mol2 -o ligand.pdbqt -U 'lps'
         fi
@@ -612,16 +612,16 @@ DockFlow_divide_input_ligands() {
 OLDIFS=$IFS
 IFS='%'
 n=-1
-if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/ ] ; then
-    mkdir -p ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/
+if [ ! -d ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/input/ ] ; then
+    mkdir -p ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/input/
 fi
 while read line ; do
     #echo ${line}
     if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
         let n=$n+1
-        echo -e "${line}" > ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND_LIST[$n]}.mol2
+        echo -e "${line}" > ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/input/${LIGAND_LIST[$n]}.mol2
     else
-        echo -e "${line}" >> ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/input/${LIGAND_LIST[$n]}.mol2
+        echo -e "${line}" >> ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/input/${LIGAND_LIST[$n]}.mol2
     fi
 done < ${LIGAND_FILE}
 IFS=${OLDIFS}
@@ -664,18 +664,18 @@ DockFlow_prepare_receptor
 # 3. Ligands
 
 
-if [ -e ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/*.mol2 ] ; then
-    if [ $( diff ${LIGAND_FILE} ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/*.mol2 | wc -l ) == 0 ] ; then 
+if [ -e ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/*.mol2 ] ; then
+    if [ $( diff ${LIGAND_FILE} ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/*.mol2 | wc -l ) == 0 ] ; then 
     echo "Same input file as before"
     fi
 else 
-    cp ${LIGAND_FILE} ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/
+    cp ${LIGAND_FILE} ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/
     DockFlow_divide_input_ligands
 fi
 
 DockFlow_prepare_ligands
 
-#if [ ! -d ${WORKDIR}/${PROJECT}.chemflow/LigFlow/original/ ] ; then
+#if [ ! -d ${WORKDIR}/${PROJECT}_chemflow/LigFlow/original/ ] ; then
 #    echo "Please run LigFlow before DockFlow to prepare the input ligands."
 #    exit 0
 #else
@@ -697,9 +697,9 @@ DockFlow_archive() {
 #===============================================================================
 PROJECT=$(echo ${PROJECT} | cut -d. -f1)
 
-if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow ] ; then
+if [ -d ${WORKDIR}/${PROJECT}_chemflow/DockFlow ] ; then
     # Start up going to the project folder.
-    cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow
+    cd ${WORKDIR}/${PROJECT}_chemflow/DockFlow
 
     # Retrieve available protocols
     if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTPROCESS_ALL} ] ; then
@@ -712,9 +712,9 @@ if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow ] ; then
 
     for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
 
-        if [ -d  ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL} ] ; then
+        if [ -d  ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL} ] ; then
             # Go to the protocol folder.
-            cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
+            cd ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}
             # Retrieve available receptors
             if [ ! -z ${ARCHIVE_ALL} ] || [ ! -z ${POSTPROCESS_ALL} ] ; then
                 RECEPTOR_LIST=($(ls -d */| cut -d/ -f1))
@@ -724,11 +724,11 @@ if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow ] ; then
         #    echo "Receptors: ${RECEPTOR_LIST[@]}"
 
             for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
-                if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR} ] ; then
+                if [ -d ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/${RECEPTOR} ] ; then
                     #  Go to the receptor folder.
-                    cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}
+                    cd ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}
 
-                    if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}/${LIGAND_LIST}/ ] ; then
+                    if [ -d ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}/${LIGAND_LIST}/ ] ; then
                         # Cleanup
                         if [ -f docked_folder.tar.gz ] ; then rm docked_folder.tar.gz ; fi
 
@@ -747,17 +747,17 @@ if [ -d ${WORKDIR}/${PROJECT}.chemflow/DockFlow ] ; then
                         ChemFlow_error ;
                     fi
                 else
-                    ERROR_MESSAGE="Error in the receptor name. The directory ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR} does not exist." ;
+                    ERROR_MESSAGE="Error in the receptor name. The directory ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/${RECEPTOR} does not exist." ;
                     ChemFlow_error ;
                 fi
             done
         else
-            ERROR_MESSAGE="Error in the protocol name or there is no DockFlow results. The directory ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL} does not exist." ;
+            ERROR_MESSAGE="Error in the protocol name or there is no DockFlow results. The directory ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL} does not exist." ;
             ChemFlow_error ;
         fi
     done
 else
-    ERROR_MESSAGE="Error in the project name. The directory ${WORKDIR}/${PROJECT}.chemflow/ does not exist." ;
+    ERROR_MESSAGE="Error in the project name. The directory ${WORKDIR}/${PROJECT}_chemflow/ does not exist." ;
     ChemFlow_error ;
 fi
 
@@ -773,7 +773,7 @@ case ${opt} in
 "y"|"yes"|"Yes"|"Y"|"YES")
     for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
         for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
-            rm -rf ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}/*/
+            rm -rf ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}/*/
             echo "[ DockFlow ] Done removing docking folders."
 
          done
@@ -1109,7 +1109,7 @@ DockFlow_postdock() {
 PROJECT=$(echo ${PROJECT} | cut -d. -f1)
 
 # Start up going to the project folder.
-cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow
+cd ${WORKDIR}/${PROJECT}_chemflow/DockFlow
 
 # Retrieve available protocols
 if [ ! -z ${POSTPROCESS_ALL} ] ; then
@@ -1123,7 +1123,7 @@ echo "Protocols: ${PROTOCOL_LIST[@]}"
 for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
 
     # Start up going to the project folder.
-    cd ${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}
+    cd ${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}
 
     # Retrieve available receptors
     if [ ! -z ${POSTPROCESS_ALL} ] ; then
@@ -1136,7 +1136,7 @@ for PROTOCOL in ${PROTOCOL_LIST[@]}  ; do
     echo "Receptors: ${RECEPTOR_LIST[@]}"
 
     for RECEPTOR in ${RECEPTOR_LIST[@]} ; do
-        RUNDIR="${WORKDIR}/${PROJECT}.chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}"
+        RUNDIR="${WORKDIR}/${PROJECT}_chemflow/DockFlow/${PROTOCOL}/${RECEPTOR}"
         cd ${RUNDIR}
 
 # You should always overwrite docked_ligands.mol2 and DockFlow.csv
