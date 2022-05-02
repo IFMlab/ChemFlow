@@ -59,7 +59,7 @@ LigFlow_CLI "$@"                  # Read the command line.
 ChemFlow_validate_input           # Sanity check. (parameters and input files)
 
 # Set run dir.
-RUNDIR=${WORKDIR}/${PROJECT}.chemflow/LigFlow/
+RUNDIR=${WORKDIR}/${PROJECT}_chemflow/LigFlow/
 
 ######## PROGRAM ###########
 
