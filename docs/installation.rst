@@ -42,7 +42,7 @@ chmod +x Anaconda3-2021.11-Linux-x86_64.sh
 -execute: ./Anaconda3-2021.11-Linux-x86_64.sh
 
 * Create a conda environment for ChemFlow, with the provided environment file:
-``conda create -n ChemFlow --file chemflow.yml``
+``conda create -n ChemFlow --file chemflow.txt``
 
 Step 3 - Install the software dependencies
 --------------------------------------------
