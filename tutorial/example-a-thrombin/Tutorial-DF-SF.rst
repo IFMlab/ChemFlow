@@ -72,7 +72,11 @@ You should obtain:
 ``VINA: 32.249 13.459 24.955 18.886 22.290 19.700``
     
  Step 2: Run DockFlow to predict the docking poses
----------------------------------------------------------
+--------------------------------------------------
+
+
+Step 4: Run Dock\ *Flow* to predict the docking poses.
+------------------------------------------------------
 
 To demonstrate **DockFlow** we'll run it with **three** sets of ligands, some of which we only know the binding
 affinity (7 compounds), second we know both the affinity and crystal structure (7 compounds)_ and third a set of decoys (14 compounds) All these scenarios will be used in the report different features. In the first place, we'll confront the 14 actives with the 14 decoys and evalute the classification (active/inactive) done by the scoring function from each docking program. Then using the crystal structures we'll evaluate the accuracy of each docking program to produce docking poses near the native one (**docking power**), finally.
