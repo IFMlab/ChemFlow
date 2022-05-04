@@ -70,12 +70,10 @@ You should obtain:
 ``PLANTS: 32.249 13.459 24.955 7.500``
     
 ``VINA: 32.249 13.459 24.955 18.886 22.290 19.700``
-    
- Step 2: Run DockFlow to predict the docking poses
---------------------------------------------------
 
 
-Step 4: Run Dock\ *Flow* to predict the docking poses.
+
+Step 2: Run Dock\ *Flow* to predict the docking poses.
 ------------------------------------------------------
 
 To demonstrate **DockFlow** we'll run it with **three** sets of ligands, some of which we only know the binding
