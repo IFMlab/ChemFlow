@@ -24,7 +24,7 @@ It consists of *BASH* and *PYTHON* scripts that can be launched locally (serial 
 Requirements for Chem\ *Flow*
 -----------------------------
 
-We do not provide any of the licensed softwares used by ChemFlow. It is up to the user to acquire and install PLANTS, Vina, Amber and the other softwares that might be added in future releases of ChemFlow.
+We do not provide any of the licensed softwares used by ChemFlow. It is up to the user to acquire and install PLANTS, Vina,QVina, Smina, Amber and the other softwares that might be added in future releases of ChemFlow.
 
 PLANTS_ and SPORES_ are both available under a free academic license.
 
