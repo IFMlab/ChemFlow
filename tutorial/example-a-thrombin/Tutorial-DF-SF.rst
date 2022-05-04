@@ -87,25 +87,38 @@ Run DockFlow for each set of ligands.
 
 * First, activate the conda environment of ChemFlow
 
-> conda activate ChemFlow
+.. code-block:: bash
+
+    conda activate ChemFlow
 
 * Using plants: ( -sf chemplp,plp,plp95 - chemplp is the default)
->DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --radius 15
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --radius 15
 
 * Using vina: ( -sf vina )
->DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp vina
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp vina
 
 * Using qvina: ( -sf vina )
 
->DockFlow -p tutorial --protocol qvina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp qvina
+.. code-block:: bash
 
-* Using smina with the scoring function vinardo: (-sf vinardo)
+    DockFlow -p tutorial --protocol qvina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp qvina
 
->DockFlow -p tutorial --protocol smina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vinardo -dp smina
+* Using smina with the scoring function vinardo: (-sf vina,vinardo,dkoes_fast,dkoes_scoring)
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol smina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vinardo -dp smina
 
 * For smina you can also run the Docking with a configuration file, in which you specify the center and the size of the box and a different scoring function to use:
 
->DockFlow -p tutorial --protocol config -r vmd-rec.mol2 -l all.mol2 --config_smina config.txt -dp smina
+.. code-block:: bash
+    DockFlow -p tutorial --protocol config -r vmd-rec.mol2 -l all.mol2 --config_smina config.txt -dp smina
 
 Some examples of the configuration files that one can use are provided in the folder: 
 ChemFlow/ChemFlow/templates/smina/
