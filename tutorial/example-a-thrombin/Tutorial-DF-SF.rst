@@ -159,3 +159,4 @@ Each energy and structure will be extracted from it's folder and written into a 
     
 .. image:: ../images/DockFlow-postprocess-archive.png
    :width: 600
+     :alt: Alternative text
