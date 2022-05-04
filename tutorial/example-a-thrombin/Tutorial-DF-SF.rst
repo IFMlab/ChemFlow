@@ -198,4 +198,19 @@ Also in this case you will get a summary of the variables you chose for running 
    :width: 800
    
 
+Score\ *Flow*
+************
+
+Step 5: Run Score\ *Flow* to rescore the previous docking poses (best 3 for each ligand)
+----------------------------------------------------------------------------------------
+Here, we only keep on with plants results (tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2).
+
+
+Rescoring through the MMGBSA method, using two protocols in **implicit solvent** first just minimization, then 1ns md simulation :
+
+
+.. code-block:: bash
+
+    ScoreFlow -p tutorial --protocol mmgbsa    -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa
+    ScoreFlow -p tutorial --protocol mmgbsa_md -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 -sf mmgbsa --md
 
