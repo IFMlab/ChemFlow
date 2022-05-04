@@ -126,3 +126,33 @@ ChemFlow/ChemFlow/templates/smina/
 
 
 Modify the center and size of the box as well as the scoring function you want to use and other feautes you want to apply to run the docking with Smina. 
+
+
+For each of these commands you will be asked:
+
+* Continue? > y
+
+
+Step 3: Postprocess all the results
+-----------------------------------
+
+Docking generates several files for each complex and the big issue here is that each docking program organizes their results their own way.
+To organize and standardize all results to the ChemFlow standands you should <b>--postprocess</b>.  
+Here, we decided to keep only the best 3 poses for each ligand (-n 3).
+
+Each energy and structure will be extracted from it's folder and written into a single Structure file (docked_ligands.mol2) and a single Energy file (DockFlow.csv) containing the selected structures. 
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --postprocess --overwrite -n 3 
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l all.mol2 --postprocess -sf vina --overwrite -n 3 
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol qvina  -r vmd-rec.mol2 -l all.mol2 -sf vina -dp qvina --postprocess --overwrite -n 3
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol smina  -r vmd-rec.mol2 -l all.mol2 -sf vinardo -dp smina --postprocess  --overwrite -n 3
