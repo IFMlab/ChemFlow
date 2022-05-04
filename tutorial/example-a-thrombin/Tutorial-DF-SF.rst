@@ -196,5 +196,6 @@ Also in this case you will get a summary of the variables you chose for running 
 
 .. image:: images/LigFlow-summary.png
    :width: 800
+   
 
 
