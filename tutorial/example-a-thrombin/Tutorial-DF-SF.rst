@@ -157,5 +157,5 @@ Each energy and structure will be extracted from it's folder and written into a 
 
     DockFlow -p tutorial --protocol smina  -r vmd-rec.mol2 -l all.mol2 -sf vinardo -dp smina --postprocess  --overwrite -n 3
     
-.. image:: ChemFlow/tutorial/example-a-thrombin/images/DockFlow-postprocess-archive.png
+.. image:: images/DockFlow-postprocess-archive.png
    :width: 600
