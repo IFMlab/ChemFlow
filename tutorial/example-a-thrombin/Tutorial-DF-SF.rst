@@ -159,4 +159,3 @@ Each energy and structure will be extracted from it's folder and written into a 
     
 .. image:: ChemFlow/tutorial/example-a-thrombin/images/DockFlow-postprocess-archive.png
    :width: 600
-   :alt: Alternative text
