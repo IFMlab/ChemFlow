@@ -34,4 +34,4 @@ PLANTS_ and SPORES_ are both available under a free academic license.
 How to get started
 -----------------------------
 
-Go to the docs/ folder and follow the installation instructions written in the file "installation.rst"
+Go to the ChemFlow/docs/ folder and follow the installation instructions written in the file "installation.rst"
