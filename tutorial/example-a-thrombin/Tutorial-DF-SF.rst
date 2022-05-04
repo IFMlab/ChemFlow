@@ -70,3 +70,43 @@ You should obtain:
   ``PLANTS: 32.249 13.459 24.955 7.500``
     
   ``VINA: 32.249 13.459 24.955 18.886 22.290 19.700``
+  
+  Step 2: Run DockFlow to predict the docking poses
+---------------------------------------------------------
+
+To demonstrate **DockFlow** we'll run it with **three** sets of ligands, some of which we only know the binding
+affinity (7 compounds), second we know both the affinity and crystal structure (7 compounds)_ and third a set of decoys (14 compounds) All these scenarios will be used in the report different features. In the first place, we'll confront the 14 actives with the 14 decoys and evalute the classification (active/inactive) done by the scoring function from each docking program. Then using the crystal structures we'll evaluate the accuracy of each docking program to produce docking poses near the native one (**docking power**), finally.
+
+Then we'll evaluate the quality of the scoring functions to rank the docking poses (**ranking power**) which will be latter compared with **ScoreFlow**
+results together with the **scoring power** which will measure how well it will rank *compounds* against each other.
+
+Let's do it locally:
+Run DockFlow for each set of ligands.
+
+* First, activate the conda environment of ChemFlow
+
+> conda activate ChemFlow
+
+* Using plants: ( -sf chemplp,plp,plp95 - chemplp is the default)
+>DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --radius 15
+
+* Using vina: ( -sf vina )
+>DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp vina
+
+* Using qvina: ( -sf vina )
+
+>DockFlow -p tutorial --protocol qvina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp qvina
+
+* Using smina with the scoring function vinardo: (-sf vinardo)
+
+>DockFlow -p tutorial --protocol smina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vinardo -dp smina
+
+* For smina you can also run the Docking with a configuration file, in which you specify the center and the size of the box and a different scoring function to use:
+
+>DockFlow -p tutorial --protocol config -r vmd-rec.mol2 -l all.mol2 --config_smina config.txt -dp smina
+
+Some examples of the configuration files that one can use are provided in the folder: 
+ChemFlow/ChemFlow/templates/smina/
+
+
+Modify the center and size of the box as well as the scoring function you want to use and other feautes you want to apply to run the docking with Smina. 
