@@ -132,7 +132,7 @@ For each of these commands you will be asked:
 
 * Continue? > y
 
-Here an example of what will appear on your screen:
+Here an example of a summary that will appear on your screen, after launching the Dock\ *Flow* command:
 
 .. image:: images/summary-DF-plants.png
    :width: 800
