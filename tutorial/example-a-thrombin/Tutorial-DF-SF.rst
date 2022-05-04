@@ -178,5 +178,15 @@ You can choose to archive the docking folder and get an nicely organized folder 
 Lig\ *Flow*
 ***********
 
-Step 4: Compute bcc or resp charges for the docked ligands
-----------------------------------------------------------
+Step 4: Compute AM1-BCC and RESP charges for the docked ligands
+---------------------------------------------------------------
+
+Lig\ *Flow* takes multimol2 files as input, then organizes them individually into your project folder to then compute *bcc* or *resp* charges.
+By default Lig\ *Flow* compute bcc charges.
+
+Here we compute bcc charges for the first 3 poses of the docked compounds:
+
+.. code-block:: bash
+    LigFlow -p tutorial -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 
+    
+The command can be run locally, even if it is computationally expensive
