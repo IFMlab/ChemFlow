@@ -52,11 +52,16 @@ Running the script *bounding_shape.py* you will get the sphere/box dimensions.
 Since AutodockVina requires a search space in each dimension that is no less than 15 larger than the size of the ligand, and no less than 22 Å total, we will compute the dimensions of the box with a padding of 15 Å, specified with the flag "-p".
 
 For PLANTS you will get the center and the radius of the sphere
->python $(which bounding_shape.py) reference_ligand.mol2 --shape sphere
+
+.. code-block:: bash
+
+python $(which bounding_shape.py) reference_ligand.mol2 --shape sphere
 
 For VINA you need the center of the box AND the lenghts of X Y and Z.
 
->python $(which bounding_shape.py) reference_ligand.mol2 --shape box -p 15
+.. code-block:: bash
+
+python $(which bounding_shape.py) reference_ligand.mol2 --shape box -p 15
 
 
 You should obtain:  
