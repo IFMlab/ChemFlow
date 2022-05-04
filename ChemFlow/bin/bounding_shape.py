@@ -130,7 +130,7 @@ if __name__ == '__main__':
 		choices=['box','sphere'])
 	parser.add_argument('-p', '--padding',
 		help="Value systematically added to the radius/size. Avoids returning a shape that is too restrictive.",
-		default=0.5,
+		default=0.0,
 		type=float,
 		metavar="FLOAT")
 	parser.add_argument('--pymol',
