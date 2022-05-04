@@ -170,6 +170,8 @@ At the end of the postprocessing Dock\ *Flow* writes DockFlow.csv with the docki
 .. image:: images/DockFlow-csv.png
    :width: 600 
 
+In this csv file are reported: the docking program that has been used, the protocol, the receptor and ligand names, the pose number and as last column the docking score.
+
 Step 3.1: Archiving the results
 -------------------------------
 
