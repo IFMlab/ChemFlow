@@ -39,4 +39,27 @@ Provided files
 | decoys.smi            | decoys for a-thrombin, from DUD-E              |
 +-----------------------+------------------------------------------------+
 
+Dock\ *Flow*
+************
 
+Step 1: Set the center coordinates for the binding pocket
+---------------------------------------------------------
+ChemFlow ships a tool to compute optimal box origin and dimensions provided a known ligand. Use the reference ligand to compute the center for docking. You may skip this step if you want to provide the coordinates manually.
+
+Use the reference ligand to compute the center for docking.
+
+Running the script *bounding_shape.py* you will get the sphere/box dimensions.
+Since AutodockVina requires a search space in each dimension that is no less than 15 larger than the size of the ligand, and no less than 22 Å total, we will compute the dimensions of the box with a padding of 15 Å, specified with the flag "-p".
+
+For PLANTS you will get the center and the radius of the sphere
+>python $(which bounding_shape.py) reference_ligand.mol2 --shape sphere
+
+For VINA you need the center of the box AND the lenghts of X Y and Z.
+
+>python $(which bounding_shape.py) reference_ligand.mol2 --shape box -p 15
+
+
+You should obtain:  
+
+    PLANTS: 32.249 13.459 24.955 7.500
+    VINA: 32.249 13.459 24.955 18.886 22.290 19.700
