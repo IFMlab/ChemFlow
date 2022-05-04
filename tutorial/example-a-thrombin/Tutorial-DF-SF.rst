@@ -55,13 +55,13 @@ For PLANTS you will get the center and the radius of the sphere
 
 .. code-block:: bash
 
-python $(which bounding_shape.py) reference_ligand.mol2 --shape sphere
+``python $(which bounding_shape.py) reference_ligand.mol2 --shape sphere``
 
 For VINA you need the center of the box AND the lenghts of X Y and Z.
 
 .. code-block:: bash
 
-python $(which bounding_shape.py) reference_ligand.mol2 --shape box -p 15
+``python $(which bounding_shape.py) reference_ligand.mol2 --shape box -p 15``
 
 
 You should obtain:  
