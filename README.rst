@@ -30,3 +30,8 @@ PLANTS_ and SPORES_ are both available under a free academic license.
 
 .. _PLANTS: http://www.uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/plants.html
 .. _SPORES: http://www.mnf.uni-tuebingen.de/fachbereiche/pharmazie-und-biochemie/pharmazie/pharmazeutische-chemie/pd-dr-t-exner/research/spores.html
+
+How to get started
+-----------------------------
+
+Go to the docs/ folder and follow the installation instructions written in the file "installation.rst"
