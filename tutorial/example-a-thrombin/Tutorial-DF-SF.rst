@@ -187,6 +187,7 @@ By default Lig\ *Flow* compute bcc charges.
 Here we compute bcc charges for the first 3 poses of the docked compounds:
 
 .. code-block:: bash
+
     LigFlow -p tutorial -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 
     
 The command can be run locally, even if it is computationally expensive
