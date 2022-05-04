@@ -67,4 +67,5 @@ python $(which bounding_shape.py) reference_ligand.mol2 --shape box -p 15
 You should obtain:  
 
     PLANTS: 32.249 13.459 24.955 7.500
+    
     VINA: 32.249 13.459 24.955 18.886 22.290 19.700
