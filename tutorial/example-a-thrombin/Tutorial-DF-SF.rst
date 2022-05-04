@@ -174,3 +174,9 @@ You can choose to archive the docking folder and get an nicely organized folder 
 
 .. image:: images/DockFlow-postprocess-archive.png
    :width: 800
+   
+Lig\ *Flow*
+***********
+
+Step 4: Compute bcc or resp charges for the docked ligands
+----------------------------------------------------------
