@@ -1478,13 +1478,17 @@ while [[ $# -gt 0 ]]; do
             PROTOCOL="$2"
             shift
         ;;
-        "-dp"|"--program")
+	"-dp"|"--program")
             DOCKING_PROGRAM="$2"
             echo ${DOCKING_PROGRAM}
             if [ "${DOCKING_PROGRAM}" == "plants" ] ; then
                 SCORING_FUNCTION="chemplp"
-            else 
+            else
+                if ["${DOCKING_PROGRAM}" == "smina"] ; then
+                SCORING_FUNCTION="${SCORING_FUNCTION}"
+            else
                 SCORING_FUNCTION="vina"
+                fi
             fi
             shift
         ;;
