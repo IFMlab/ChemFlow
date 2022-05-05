@@ -114,7 +114,14 @@ Run DockFlow for each set of ligands.
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol smina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vinardo -dp smina
+    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vinardo -dp smina
+    
+* Using smina with the scoring function vina: (-sf vina,vinardo,dkoes_fast,dkoes_scoring)
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp smina
+
 
 * For smina you can also run the Docking with a configuration file, in which you specify the center and the size of the box and a different scoring function to use:
 
@@ -158,9 +165,14 @@ Each energy and structure will be extracted from it's folder and written into a 
 .. code-block:: bash
 
     DockFlow -p tutorial --protocol qvina  -r vmd-rec.mol2 -l all.mol2 -sf vina -dp qvina --postprocess --overwrite -n 3
+    
 .. code-block:: bash
 
     DockFlow -p tutorial --protocol smina  -r vmd-rec.mol2 -l all.mol2 -sf vina -dp smina --postprocess  --overwrite -n 3
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol smina  -r vmd-rec.mol2 -l all.mol2 -sf vinardo -dp smina --postprocess  --overwrite -n 3
 
 .. image:: images/DockFlow-postprocessing.png
    :width: 600  
