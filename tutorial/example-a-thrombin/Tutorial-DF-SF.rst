@@ -185,6 +185,7 @@ We can extract the informations about the active compounds vs the decoys from th
 The decoys are the last 14 molecules reported (from C04221783 to C12716025, in the second column of the file).
 
 We computed the AUC with python adn we got the following results:
+
 .. image:: images/ROC-plants-vina-qvina-smina.png
    :width: 800
 
