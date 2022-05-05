@@ -189,7 +189,7 @@ We computed the AUC with python and we got the following results:
 .. image:: images/ROC-plants-vina-qvina-smina.png
    :width: 800
 
-As we can see the AUC is not really promising with the different docking program and it for this reason we propose an end-point free enrgy re-scoring method known as MMGBSA, in order to enrich our capability of properly discriminate the active compounds from the inactive ones.
+The various AUC show us that the best scoring function for our dataset seems to be vina, but since docking is an approximative way of computing binding affinity, we suggest to rescore the compounds by an end-point free enrgy re-scoring method known as MMGBSA.
 
 To do so, we invite you in continuing the tutorial until the module named Score\ *Flow* in which we implemented the MMGBSA free energy re-scoring method.
 
