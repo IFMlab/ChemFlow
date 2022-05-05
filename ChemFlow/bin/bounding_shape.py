@@ -37,7 +37,7 @@ def average_bs(XYZ, padding):
 
 	# Test if the sphere is big enough to contain all points in XYZ
 	found = False
-	radius = 2
+	radius = 15
 	while not found:
 		for i,point in enumerate(XYZ):
 			# If the sphere is too small
