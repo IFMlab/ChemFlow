@@ -72,7 +72,7 @@ run_LigFlow_prepare () {
     if [ "$CHARGE" == "bcc" ] ; then 
         $(which antechamber) -fi mol2  -i ligand.mol2 \
                     -fo mol2  -o bcc.mol2 \
-                    -c bcc -eq 2 \
+                    -c bcc -eq 2 -at gaff2\
                     -rn MOL -dr no -pf y
     fi
 
