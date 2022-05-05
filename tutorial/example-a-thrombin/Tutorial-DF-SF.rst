@@ -179,7 +179,19 @@ You can choose to archive the docking folder and get an nicely organized folder 
 
 .. image:: images/DockFlow-postprocess-archive.png
    :width: 800
-   
+
+Now we can analyze the results of the docking, by plotting the ROC curve and the AUC for each docking program we used.
+We can extract the informations about the active compounds vs the decoys from the file *CORRESPONDANCE-NAMES.dat* that is in the tutorial folder.
+The decoys are the last 14 molecules reported (from C04221783 to C12716025, in the second column of the file).
+
+We computed the AUC with python adn we got the following results:
+.. image:: images/ROC-plants-vina-qvina-smina.png
+   :width: 800
+
+As we can see the AUC is not really promising with the different docking program and it is for this reason that we propose a rescoring methods, such as the end point method known as MMGBSA, in order to enrich our capability of proper discriminate the active from the inactive compounds.
+
+To do so, we invite you in continuing the tutorial until the module named Score\ *Flow* in which we implemented the MMGBSA free energy rescoring method.
+
 Lig\ *Flow*
 ***********
 
