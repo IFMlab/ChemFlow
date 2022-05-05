@@ -172,7 +172,7 @@ Each energy and structure will be extracted from it's folder and written into a 
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol smina  -r vmd-rec.mol2 -l all.mol2 -sf vinardo -dp smina --postprocess  --overwrite -n 3
+    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l all.mol2 -sf vinardo -dp smina --postprocess  --overwrite -n 3
 
 .. image:: images/DockFlow-postprocessing.png
    :width: 600  
