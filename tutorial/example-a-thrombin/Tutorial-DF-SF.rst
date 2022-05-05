@@ -184,7 +184,7 @@ Now we can analyze the results of the docking, by plotting the ROC curve and the
 We can extract the informations about the active compounds vs the decoys from the file *CORRESPONDANCE-NAMES.dat* in the tutorial folder.
 The decoys are the last 14 molecules reported (from C04221783 to C12716025, in the second column of the file).
 
-We computed the AUC with python adn we got the following results:
+We computed the AUC with python and we got the following results:
 
 .. image:: images/ROC-plants-vina-qvina-smina.png
    :width: 800
