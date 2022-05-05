@@ -68,7 +68,7 @@ For VINA you need the center of the box AND the lenghts of X Y and Z.
 
 You should obtain:  
 
-``PLANTS: 32.249 13.459 24.955 7.500``
+``PLANTS: 32.249 13.459 24.955 15.000``
     
 ``VINA: 32.249 13.459 24.955 18.886 22.290 19.700``
 
