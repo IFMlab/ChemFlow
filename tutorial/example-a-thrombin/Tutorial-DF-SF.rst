@@ -114,7 +114,7 @@ Run DockFlow for each set of ligands.
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol smina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vinardo -dp smina
+    DockFlow -p tutorial --protocol smina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp smina
 
 * For smina you can also run the Docking with a configuration file, in which you specify the center and the size of the box and a different scoring function to use:
 
