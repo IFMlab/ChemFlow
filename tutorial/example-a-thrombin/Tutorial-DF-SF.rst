@@ -314,7 +314,7 @@ Connect to your slurm cluster.
 .. code-block:: bash
 
     DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --slurm --header DockFlow.header
-     DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --pbs --header DockFlow.header
+    DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --pbs --header DockFlow.header
 
 **If all goes right, you should see a summary like this one:**
 
