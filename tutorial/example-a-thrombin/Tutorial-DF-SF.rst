@@ -51,7 +51,7 @@ Use the reference ligand to compute the center for docking.
 Running the script *bounding_shape.py* you will get the sphere/box dimensions.
 Since AutodockVina requires a search space in each dimension that is no less than 15 larger than the size of the ligand, and no less than 22 Å total, we will compute the dimensions of the box with a padding of 15 Å, specified with the flag "-p".
 
-For PLANTS you will get the center and the radius of the sphere
+For PLANTS you will get the center and the radius of the sphere. By default the radius of the sphere is 15 Å.
 
 .. code-block:: bash
 
