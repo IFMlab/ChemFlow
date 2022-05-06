@@ -245,3 +245,7 @@ Rescoring through the MMGBSA method, using two protocols in **implicit solvent**
     ScoreFlow -p tutorial --protocol mmgbsa_md -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa --md
 
 Please note that we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM-1-BCC charges, by adding the flag "*--bcc*"
+
+
+Run on HPC
+************
