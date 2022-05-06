@@ -212,7 +212,7 @@ Step 4: Compute AM1-BCC and RESP charges for the docked ligands
 ---------------------------------------------------------------
 
 Lig\ *Flow* takes multimol2 files as input, then organizes them individually into your project folder to then compute *bcc* or *resp* charges.
-By default Lig\ *Flow* compute bcc charges.
+By default Lig\ *Flow* compute AM1-BCC charges.
 
 Here we compute bcc charges for the first 3 poses of the docked compounds:
 
@@ -320,6 +320,12 @@ Connect to your slurm cluster.
 
 .. image:: images/DockFlow-hpc-summary.png
    :width: 800
+
+Lig\ *Flow*:
+------------
+
+Computing AM1-BCC and RESP charges is computationally expensive and having the possibility to run the calculation on HPC becomes very useful.
+To run Lig\ *Flow* on HPC you can use the same command line you have used locally, adding the header file and specifying \\-\\ slurm or \\-\\ pbs
 
 
 Score\ *Flow*:
