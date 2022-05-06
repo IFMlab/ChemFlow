@@ -102,13 +102,13 @@ Run DockFlow for each set of ligands.
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp vina
+    DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp vina
 
 * Using qvina: ( -sf vina )
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol qvina   -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp qvina
+    DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp qvina
 
 * Using smina with the scoring function vinardo: (-sf vina,vinardo,dkoes_fast,dkoes_scoring)
 
