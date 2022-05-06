@@ -253,7 +253,7 @@ Run Chem\ *Flow* on HPC
 Chem\ *Flow* gives you the opportunity to also run the workflow on a cluster/supercomputer.
 If you are logged to a cluster/supercomputer, you may profit from the HPC resources using --slurm or --pbs flags accordingly.
 ChemFlow will automatically distribute the jobs for you after you answer some questions. 
-To run it properly, you should provide a template for your scheduler using the \\-\\-header FILE option. Here are examples for this header file.
+To run it properly, you should provide a template for your scheduler using the \\-\\-header FILE option. Here are examples for this header file for Score\ *Flow*.
 
 * Example for pbs::
 
@@ -293,4 +293,46 @@ To run it properly, you should provide a template for your scheduler using the \
     
     #Or if it exists a precompiled version of amber on the cluster then you can directly load the module"
     module load amber/amber18
+    
+Also for Dock\ *Flow* and Lig\ *Flow* you need to provide an header file to run on HPC resources.
+For running Lig\ *Flow* you need to load the gaussian module g09 and for Dock\ *Flow* you will need to answer how many compounds should be treated per job.
+
+
+Dock\ *Flow*:
+-------------
+Connect to your slurm cluster.
+
+* Using plants:
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --radius 15 --slurm --header DockFlow.header
+    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --radius 15 --pbs --header DockFlow.header
+
+* Using vina:
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --slurm --header DockFlow.header
+     DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --pbs --header DockFlow.header
+
+**If all goes right, you should see a summary like this one:**
+
+.. image:: images/DockFlow-hpc-summary.png
+   :width: 800
+
+
+Score\ *Flow*:
+--------------
+
+.. code-block:: bash
+
+    ScoreFlow -p tutorial --protocol mmgbsa    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa
+    ScoreFlow -p tutorial --protocol mmgbsa_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa --md``
+
+For each of these commands you will be asked:
+
+* Continue? > y
+
+For Dock\ *Flow*, you also will have to answer how many compounds should be treated per job.
 
