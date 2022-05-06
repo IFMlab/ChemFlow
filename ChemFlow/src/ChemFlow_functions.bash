@@ -15,7 +15,7 @@ echo "
 #                                                                      #
 #         Laboratoire d'Ingenierie des Fonctions Moleculaires          #
 #                                                                      #
-# Marco Cecchini - cecchini@unistra.fr                                 #
+# Marco Cecchini - mcecchini@unistra.fr                                 #
 # Diego E. B. Gomes - dgomes@pq.cnpq.br                                #
 #======================================================================#"
 }
