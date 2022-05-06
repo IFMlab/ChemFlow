@@ -336,3 +336,20 @@ For each of these commands you will be asked:
 
 For Dock\ *Flow*, you also will have to answer how many compounds should be treated per job.
 
+
+| Flag | Description |
+| --- | --- |
+| -p,--project | Project name |
+| --protocol   | Current protocol |
+| -r | receptor filename (.mol2)  | 
+| -l | ligand filename (.mol2) | 
+| -dp | docking program
+| -sf | scoring function
+| --center | Docking center (XYZ |
+| --radius | Search radius |
+| --size | Search box dimentions |
+|--slurm| Use the Slurm job Scheduller|
+|--pbs| Use the PBS job Scheduller| 
+|--overwrite| Overwrite (otherwise ChemFlow will resume calculations) |
+
+
