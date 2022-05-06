@@ -247,5 +247,50 @@ Rescoring through the MMGBSA method, using two protocols in **implicit solvent**
 Please note that we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM-1-BCC charges, by adding the flag "*--bcc*"
 
 
-Run on HPC
-************
+Run Chem\ *Flow* on HPC
+***********************
+
+Chem\ *Flow* gives you the opportunity to also run the workflow on a cluster/supercomputer.
+If you are logged to a cluster/supercomputer, you may profit from the HPC resources using --slurm or --pbs flags accordingly.
+ChemFlow will automatically distribute the jobs for you after you answer some questions. 
+To run it properly, you should provide a template for your scheduler using the \\-\\-header FILE option. Here are examples for this header file.
+
+* Example for pbs::
+
+    #! /bin/bash
+    # 1 noeud 8 coeurs
+    #PBS -q  route
+    #PBS -N
+    #PBS -l nodes=1:ppn=1
+    #PBS -l walltime=0:30:00
+    #PBS -V
+
+    source ~/software/amber16/amber.sh``
+
+* Example for slurm::
+
+    #! /bin/bash
+    #SBATCH -p publicgpu
+    #SBATCH -n 1
+    #SBATCH -t 2:00:00
+    #SBATCH --gres=gpu:1
+    #SBATCH --job-name="CF"
+    #SBATCH -o slurm.out
+    #SBATCH -e slurm.err
+
+    #
+    # Configuration
+    #
+    # Make sure you load all the necessary modules for your AMBER installation.
+    # Don't forget the CUDA modules
+    module load slurm/slurm
+    module load intel/intel20
+    module load intel/oneAPI-2021
+    module load openmpi/openmpi-4.0.i21
+    
+    # Path to amber.sh replace with your own
+    source ~/software/amber18/amber.sh
+    
+    #Or if it exists a precompiled version of amber on the cluster then you can directly load the module"
+    module load amber/amber18
+
