@@ -95,9 +95,15 @@ fi
       echo "No charge file provided"
     else
     net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
-    echo "Charges file founded"
+    
     fi
-    echo "${net_charge}"
+     echo -e "\e[33m
+
+   
+        The net charge for ${LIGAND} is ${net_charge}
+    \e[0m
+"
+
        
     if [ "$CHARGE" == "bcc" ] ; then 
         $(which antechamber) -fi mol2  -i ligand.mol2 \
