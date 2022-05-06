@@ -325,7 +325,7 @@ Lig\ *Flow*:
 ------------
 
 Computing AM1-BCC and RESP charges is computationally expensive and having the possibility to run the calculation on HPC becomes very useful.
-To run Lig\ *Flow* on HPC you can use the same command line you have used locally, adding the header file and specifying \\-\\ slurm or \\-\\ pbs
+To run Lig\ *Flow* on HPC you can use the same command line you have used locally, adding the header file and specifying *--slurm* or *--pbs*
 
 
 Score\ *Flow*:
