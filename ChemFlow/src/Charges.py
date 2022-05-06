@@ -54,7 +54,8 @@ def found_charges_mol2(file_out, file_lig):
             if '@<TRIPOS>BOND' in k :
                 flag = 0
             if flag == 1 :
-                net_charges = net_charges + float((k.split('\t')[-1][:-1]))
+                #net_charges = net_charges + float((k.split('\t')[-1][:-1]))
+                net_charges = net_charges + float((k.split(' ')[-1][:-1]))
             if '@<TRIPOS>ATOM' in k :
                 flag = 1
         net_charges = round(net_charges)
