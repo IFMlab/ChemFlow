@@ -6,7 +6,7 @@
 #
 # Diego E. B. Gomes(1,2,3) - dgomes@pq.cnpq.br
 # Cedric Bouysset (3,4) - cbouysset@unice.fr
-# Marco Cecchini (3) - cecchini@unistra.fr
+# Marco Cecchini (3) - mcecchini@unistra.fr
 #
 # 1 - Instituto Nacional de Metrologia, Qualidade e Tecnologia - Brazil
 # 2 - Coordenacao Aperfeicoamento de Pessoal de Ensino Superior - CAPES - Brazil.
