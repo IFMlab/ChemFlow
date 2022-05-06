@@ -186,7 +186,7 @@ run_LigFlow_prepare
 
 LigFlow_summary() {
 #===  FUNCTION  ================================================================
-#          NAME: DockFlow_summary
+#          NAME: LigFlow_summary
 #   DESCRIPTION: Summarize all docking information
 #
 #    PARAMETERS: ${HOSTNAME}
