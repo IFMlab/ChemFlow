@@ -70,33 +70,9 @@ run_LigFlow_prepare () {
 
 if [ "${end_file}" == "mol2" ]; then
 
-n=-1
-while read line ; do
-    #echo ${line}
-    if [ "${line}" == '@<TRIPOS>MOLECULE' ]; then
-        let n=$n+1
-        #echo ${line}
-        echo -e "${line}" > ${LIGAND_LIST[$n]}.mol2
-        echo -e ${RUNDIR}/${LIGAND_LIST[$n]} >> Name.txt
-    else
-        echo -e "${line}" >> ${RUNDIR}/${LIGAND_LIST[$n]}.mol2
-    fi
-done < ${LIGAND_FILE}
-IFS=${OLDIFS}
-fi
 
-#<<<<<<< HEAD
-#=======
-	python3 ${CHEMFLOW_HOME}/src/Charges_prog.py -i Name.txt -o Charges.dat -f ${end_file}
-	CHARGE_FILE=Charges.dat
-
-
-    #if [ "${CHARGE_FILE}" == '' ] ; then
-    #  echo "No charge file provided"
-    #else
-    #net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
     net_charge=$(awk '{q+=$9}END{printf ("%1.0f\n", q)}' ligand.mol2)
-    #fi
+
      echo -e "\e[33m
 
    
