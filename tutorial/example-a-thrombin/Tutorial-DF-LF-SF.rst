@@ -340,8 +340,5 @@ For each of these commands you will be asked:
 
 * Continue? > y
 
-For Dock\ *Flow*, you also will have to answer how many compounds should be treated per job.
-
-
 
 
