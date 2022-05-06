@@ -91,12 +91,12 @@ fi
 	CHARGE_FILE=Charges.dat
 
 
-    if [ "${CHARGE_FILE}" == '' ] ; then
-      echo "No charge file provided"
-    else
-    net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
-    
-    fi
+    #if [ "${CHARGE_FILE}" == '' ] ; then
+    #  echo "No charge file provided"
+    #else
+    #net_charge=$(awk -v i=${LIGAND} '$0 ~ i {print $2}' ${CHARGE_FILE})
+    net_charge=$(awk '{q+=$9}END{printf ("%1.0f\n", q)}' ligand.mol2)
+    #fi
      echo -e "\e[33m
 
    
