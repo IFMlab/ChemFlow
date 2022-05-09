@@ -71,7 +71,7 @@ run_LigFlow_prepare () {
 if [ "${end_file}" == "mol2" ]; then
 
 
-    net_charge=$(awk '{q+=$9}END{printf ("%1.0f\n", q)}' ligand.mol2)
+    net_charge=$(awk '{q+=$9}END{printf ("%1.0f\n", q)};/@<TRIPOS>BOND/{exit}' ligand.mol2 )
 
      echo -e "\e[33m
 
