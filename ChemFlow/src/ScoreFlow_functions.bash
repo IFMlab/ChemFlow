@@ -297,6 +297,7 @@ else
             sbatch ScoreFlow.slurm
         ;;
         esac
+	fi
     done
 fi
 }
