@@ -68,9 +68,6 @@ run_LigFlow_prepare () {
     # Extract one molecule from a .mol2 file
     awk -v id=${LIGAND} -v line='@<TRIPOS>MOLECULE' 'BEGIN {print line}; $0~id{flag=1} /MOLECULE/{flag=0} flag'  ${LIGAND_FILE} > ligand.mol2
 
-if [ "${end_file}" == "mol2" ]; then
-
-
     net_charge=$(awk '{q+=$9}END{printf ("%1.0f\n", q)};/@<TRIPOS>BOND/{exit}' ligand.mol2 )
 
      echo -e "\e[33m
