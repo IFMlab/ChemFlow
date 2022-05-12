@@ -420,7 +420,7 @@ if [ $1 == 'DockFlow' ] ; then
     DOCK_POSES="10"
 
     # PLANTS advanced options
-    SPEED="1"
+    SPEED="speed1"
     ANTS="20"
     EVAP_RATE="0.15"
     ITERATION_SCALING="1.0"
