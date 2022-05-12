@@ -1,5 +1,5 @@
 source oldff/leaprc.ff99SBildn
-source leaprc.gaff
+source leaprc.gaff2
 
 ptn = loadpdb ../receptor.pdb
 saveamberparm ptn ptn.prmtop ptn.rst7
