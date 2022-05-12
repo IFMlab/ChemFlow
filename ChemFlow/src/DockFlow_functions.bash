@@ -1484,7 +1484,7 @@ while [[ $# -gt 0 ]]; do
             if [ "${DOCKING_PROGRAM}" == "plants" ] ; then
                 SCORING_FUNCTION="chemplp"
             else
-                if ["${DOCKING_PROGRAM}" == "smina"] ; then
+                if [ "${DOCKING_PROGRAM}" == "smina" ] ; then
                 SCORING_FUNCTION="${SCORING_FUNCTION}"
             else
                 SCORING_FUNCTION="vina"
