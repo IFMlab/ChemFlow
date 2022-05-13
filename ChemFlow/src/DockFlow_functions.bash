@@ -852,7 +852,7 @@ done
 
         cat SORTED.csv | awk -v protocol=${PROTOCOL} -v ligand=${LIGAND} -v conf=1 ' {split($4,a,"_"); print a[1], $6, $4}' | LC_ALL=C sort -nk2 | awk '!a[$1]++' >> SORTED-OK-only
 
-        cat SORTED-OK-only | awk 'NR==1 {line =$0; next} 1; END{print line}' | tac >> SORTED-uniq-lig.csv
+        tac SORTED-OK-only | awk 'NR==1 {line =$0; next} 1; END{print line}' | tac >> SORTED-uniq-lig.csv
 
         rm SORTED-OK-only
 
