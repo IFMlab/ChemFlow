@@ -256,12 +256,19 @@ Now we can rescore the same compounds with MMGBSA in **explicit solvent**, runni
 Also here we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM-1-BCC charges, by adding the flag "*--bcc*"
 We indicate that we want to run **explicit** solvent MMGBSA calculations by adding the flag *--water* .
 
-Running it locally would take around 
+Running the md of 1ns locally would take around 10 minutes per compound.
 
 At the end of the free-energy rescoring you will have MMGBSA.dat file per each ligand in the ligand folder. 
-These data are collected in ScoreFlow.csv file in the receptor directory.
+These data are collected in ScoreFlow.csv file in the receptor directory after postprocessing the results witht he following command:
 
-From this file we can extract the data and compute again a ROC curve in order to se if with MMGBSA single point and MMGBSA re-scoring in explicit solvent we were able to  improve our predictive power, increasing the AUC value.
+.. code-block:: bash
+
+    ScoreFlow -p tutorial --protocol mmgbsa_md -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa --postprocess
+
+
+    ScoreFlow -p tutorial -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa  --postprocess
+
+From ScoreFlow.csv we can extract the data and compute again a ROC curve in order to se if with MMGBSA single point and MMGBSA re-scoring in explicit solvent we were able to  improve our predictive power, increasing the AUC value.
 
 
 
