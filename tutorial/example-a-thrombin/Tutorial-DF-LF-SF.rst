@@ -201,7 +201,7 @@ We computed the AUC with python and we got the following results:
 .. image:: images/ROC-plants-vina-qvina-smina.png
    :width: 800
 
-The various AUC show us that the best scoring function for our dataset seems to be vina, but since docking is an approximative way of computing binding affinity, we suggest to rescore the compounds by an end-point free enrgy re-scoring method known as MMGBSA.
+The various AUC show us that the best scoring function for our dataset seems to be vina and chemPLP seems to be the worst, but since docking is an approximative way of computing binding affinity, we suggest to rescore the compounds docked by PLANTS with an end-point free enrgy re-scoring method known as MMGBSA.
 
 To do so, we invite you in continuing the tutorial until the module named Score\ *Flow* in which we implemented the MMGBSA free energy re-scoring method.
 
@@ -245,6 +245,15 @@ Rescoring through the MMGBSA method, using two protocols in **implicit solvent**
     ScoreFlow -p tutorial --protocol mmgbsa_md -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa --md
 
 Please note that we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM-1-BCC charges, by adding the flag "*--bcc*"
+
+Now we can rescore the same compounds with MMGBSA in **explicit solvent**, running 1ns md simulation :
+
+.. code-block:: bash
+
+    
+    ScoreFlow -p tutorial -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa 
+
+Also here we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM-1-BCC charges, by adding the flag "*--bcc*"
 
 
 Run Chem\ *Flow* on HPC
