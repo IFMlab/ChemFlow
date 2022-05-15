@@ -270,7 +270,31 @@ These data are collected in ScoreFlow.csv file in the receptor directory after p
 
 From *SORTED-uniq-lig.csv* we can extract the data and compute again a ROC curve in order to see if with MMGBSA single point and MMGBSA re-scoring in explicit solvent we were able to  improve our predictive power, increasing the AUC value.
 
+Here we plot the ROC curve with the results of the docking performed with chemPLP scoring function and the results of MMGBSA computed in implicit solvent (single point analysis) and in explicit solvent after an md of 1ns:
 
+.. image:: images/ROC-plants-DOCKING-IMP-EXP-MMGBSA.png
+   :width: 800
+
+It emerges that MMGBSA improved the prediction with respect to the ones obtained with the initial docking.
+
+The fact that MMGBSA in explicit solvent hasa an AUC lower than MMGBSA run in implicit solvent is probably due to the fact that we run just 1ns md and the system would need longer md.
+
+The calculations are always system dependent, so we suggest you to try different protocols playing around with the input files of both md and MMGBSA.
+You can do this by running Score\ *Flow* with the flag *--write-only*. This will write the default input files in the receptor directory and you can modify them according to your needs and experiments. 
+
+Here an example for the explicit solvent calculations:
+
+.. code-block:: bash
+    
+    ScoreFlow -p tutorial -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa --write-only
+
+
+Once modifyed the iunput files, you can run them re-launching the command line of Score\ *Flow*, but this time with the flag *--run-only*.
+
+.. code-block:: bash
+    
+    ScoreFlow -p tutorial -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa --run-only
+    
 
 Run Chem\ *Flow* on HPC
 ***********************
