@@ -268,7 +268,7 @@ These data are collected in ScoreFlow.csv file in the receptor directory after p
 
     ScoreFlow -p tutorial -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa  --postprocess
 
-From ScoreFlow.csv we can extract the data and compute again a ROC curve in order to se if with MMGBSA single point and MMGBSA re-scoring in explicit solvent we were able to  improve our predictive power, increasing the AUC value.
+From *SORTED-uniq-lig.csv* we can extract the data and compute again a ROC curve in order to see if with MMGBSA single point and MMGBSA re-scoring in explicit solvent we were able to  improve our predictive power, increasing the AUC value.
 
 
 
