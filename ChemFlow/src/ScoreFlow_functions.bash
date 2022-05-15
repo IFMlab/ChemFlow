@@ -668,6 +668,16 @@ else
     sed -i 's/[a-zA-Z0-9]*_conf_//2' ${RUNDIR}/ScoreFlow.csv
     sed -i 's/_conf_[[:digit:]]*//' ${RUNDIR}/ScoreFlow.csv
 fi
+      cat ${RUNDIR}/ScoreFlow.csv | awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} -v conf=1 ' LC_ALL=C sort -nk6 ' >> ${RUNDIR}/SORTED.csv
+
+        #KEEP JUST ONE CONFORMER PER LIGAND
+
+        cat ${RUNDIR}/SORTED.csv | awk -v protocol=${PROTOCOL} -v ligand=${LIGAND} -v conf=1 ' {split($4,a,"_"); print a[1], $6, $4}' | LC_ALL=C sort -nk2 | awk '!a[$1]++' >> ${RUNDIR}/SORTED-OK-only
+
+        tac ${RUNDIR}/SORTED-OK-only | awk 'NR==1 {line =$0; next} 1; END{print line}' | tac >> ${RUNDIR}/SORTED-uniq-lig.csv
+
+        rm ${RUNDIR}/SORTED-OK-only
+
 }
 
 
