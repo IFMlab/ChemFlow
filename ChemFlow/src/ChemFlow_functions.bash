@@ -81,7 +81,7 @@ fi
 # Check if the receptor file has been given------------------------------------
 
 if [ -z "${RECEPTOR_FILE}" ] && [ ${WORKFLOW} != "LigFlow" ] ; then
-    if [ "${SCORING_FUNCTION}" != "mmgbsa" ] ; then
+    if [ "${SCORING_FUNCTION}" != "mmgbsa" ] || [ "${SCORING_FUNCTION}" != "mmpbsa" ]  ; then
         ERROR_MESSAGE="No RECEPTOR file name (-r receptor_file.mol2)" ;
         ChemFlow_error ;
     else
@@ -345,12 +345,12 @@ fi
 copy_tleap(){
 if [  "${WATER}" != "yes" ] ; then
 
-        sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_implicit.template >> ${RUNDIR}/tleap_implicit.in
+        sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbpbsa/tleap/tleap_implicit.template >> ${RUNDIR}/tleap_implicit.in
 
 else
-sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_water.template >> ${RUNDIR}/tleap_water.in
+sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbpbsa/tleap/tleap_water.template >> ${RUNDIR}/tleap_water.in
 #       sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.bash >> ${RUNDIR}/tleap.bash
-sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbsa/tleap/tleap_SALT.template >> ${RUNDIR}/tleap_salt.in
+sed "s/CHARGE/${CHARGE}/g" ${CHEMFLOW_HOME}/templates/mmgbpbsa/tleap/tleap_SALT.template >> ${RUNDIR}/tleap_salt.in
 
 
  fi
