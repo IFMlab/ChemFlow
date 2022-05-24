@@ -1,0 +1,23 @@
+source oldff/leaprc.ff99SBildn
+source leaprc.gaff2
+
+set default pbradii mbondi2
+
+ptn = loadpdb ../receptor.pdb
+#saveamberparm ptn ptn.prmtop ptn.rst7
+#savePDB ptn ptn.pdb
+#charge ptn
+
+# Ligand --------------------------------------------------
+# Load ligand parameters
+loadAmberParams ligand.frcmod
+ligand = loadmol2  ligand_CHARGE.mol2
+saveamberparm ligand ligand.prmtop ligand.rst7
+#savePDB ligand ligand.pdb
+#charge ligand
+
+complex = combine{ptn,ligand}
+saveamberparm complex complex.prmtop complex.rst7
+#savePDB complex complex.pdb
+#charge complex
+quit
