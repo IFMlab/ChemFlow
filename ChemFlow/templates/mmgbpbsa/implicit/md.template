@@ -1,0 +1,18 @@
+MD GB2, infinite cut off
+&cntrl
+  imin=0,irest=0,ntx=1,
+  nstlim=1000,dt=0.002,ntb=0,
+  ntf=2,ntc=2,
+  ntpr=1000, ntwx=1000, ntwr=30000,
+  cut=9999.0, rgbmax=15.0,
+  igb=2,ntt=3,gamma_ln=1.0,nscm=0,
+  temp0=300.0,
+! Frozen or restrained atoms
+!----------------------------------------------------------------------
+! ibelly,
+! bellymask,
+ ntr=1,
+ restraintmask='@CA,C,N,O',
+ restraint_wt=5.0,
+/
+
