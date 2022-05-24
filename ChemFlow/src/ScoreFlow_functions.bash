@@ -95,7 +95,7 @@ case ${SCORE_PROGRAM} in
 ;;
 "AMBER")
     # If the folder exists but there's no "output.pdbqt" its incomplete.
-    FILE="MMPBSA.dat"
+    FILE="${SCORING_FUNCTION}.dat"
 ;;
 esac
 if [ "${OVERWRITE}" == "no" ] ; then # Useless to process this loop if we overwrite anyway.
@@ -288,7 +288,7 @@ else
 
         case "${JOB_SCHEDULLER}" in
         "None")
-            echo -e "Computing MMPBSA for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
+            echo -e "Computing ${SCORING_FUNCTION} for ${RECEPTOR_NAME} - ${LIGAND}                                               \r"
             bash ScoreFlow.run
         ;;
         "PBS")
@@ -500,7 +500,7 @@ for run in ${scoreflow_protocol} ; do
 done" >> ${RUNDIR}/ScoreFlow.run
 
 
-if [ ! -f MMPBSA.dat ] ; then
+if [ ! -f ${SCORING_FUNCTION}.dat ] ; then
 echo "rm -rf com.top rec.top ligand.top
 python3 $(which ante-MMPBSA.py) -p ${init}.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_${SCORING_FUNCTION}.job" >>${RUNDIR}/ScoreFlow.run
 
@@ -653,11 +653,11 @@ case ${SCORE_PROGRAM} in
 ;;
 "AMBER")
     for LIGAND in ${LIGAND_LIST[@]} ; do
-        if [ -f ${RUNDIR}/${LIGAND}/MMPBSA.dat ] ; then
+        if [ -f ${RUNDIR}/${LIGAND}/${SCORING_FUNCTION}.dat ] ; then
             if [ ! -f ${RUNDIR}/ScoreFlow.csv ] ; then
                 echo ${SCOREFLOW_HEADER} > ${RUNDIR}/ScoreFlow.csv
             fi
-            awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/DELTA TOTAL/{print "AMBER",protocol,target,ligand,ligand,$3}' ${RUNDIR}/${LIGAND}/MMPBSA.dat >> ${RUNDIR}/ScoreFlow.csv
+            awk -v protocol=${PROTOCOL} -v target=${RECEPTOR_NAME} -v ligand=${LIGAND} '/DELTA TOTAL/{print "AMBER",protocol,target,ligand,ligand,$3}' ${RUNDIR}/${LIGAND}/${SCORING_FUNCTION}.dat >> ${RUNDIR}/ScoreFlow.csv
         fi
     done
 ;;
