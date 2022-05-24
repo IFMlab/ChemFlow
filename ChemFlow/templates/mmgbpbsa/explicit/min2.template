@@ -1,0 +1,85 @@
+INMETRO     - Instituto Nacional de Metrologia, Qualidade e Tecnologia
+   LAMAC    - Laboratorio de Macromoleculas
+      GBIC  - Grupo de Biologia Computacional
+
+RESPONSAVEL:
+Diego Enry Barreto Gomes
+   - dgomes@pq.cnpq.br
+   - (21) 2145 3070
+
+PROGRAMA:
+sander
+   - AmberTools 15
+   - Amber14
+
+DESCRICAO:
+Arquivo de entrada para minimizacao de energia
+   - restricoes de posicao bem fracas para o todos os heavy-atoms
+   - only hydrogen move
+
+ATUALIZACAO:
+Thu Oct  6 11:45:01 BRT 2016
+
+ &cntrl
+! General flags
+!----------------------------------------------------------------------
+ imin=1,          ! (0 = molecular dynamics, 1 = energy minimization)
+
+! Energy Minimization
+!----------------------------------------------------------------------
+ maxcyc=1000,
+ ncyc=500, !(RTFM)
+ ntmin=1,   !(0 full, 1 SD then CG after ncyc . RTFM)
+ dx0=0.01,  !default
+ drms=0.01  ! (default=1E-04)
+
+! Nature and format of the input
+!----------------------------------------------------------------------
+! irest=0,         ! restart md (0 no, 1 yes)
+! ntx=0,           ! coordinates & velocities (0 = coor only, 5 = restart MD)
+!
+! Run control options
+!----------------------------------------------------------------------
+! nstlim=250000,   ! nsteps  500ps
+! dt=0.002,        ! time step
+  cut=10.0,        !
+
+! Constraints
+!----------------------------------------------------------------------
+ ntc=1,            ! (1 = no shake ; SHAKE 2 = bonds involving hydrogen)
+ ntf=1,            ! (1 = no shake ; 2 = bond inter involving H-atoms omitted SHAKE)
+
+! Frozen or restrained atoms
+!----------------------------------------------------------------------
+! ibelly,
+! bellymask,
+ ntr=1,
+ restraintmask='!:WAT,Na+,Cl- & !@H=',
+ restraint_wt=5.0,
+
+! Temperature coupling
+!----------------------------------------------------------------------
+! ntt=3,           ! Langevin
+! gamma_ln=2.0,    !
+! tempi=0.0,       ! Start temperature
+! temp0=310,       ! Target temperature
+
+! Ensemble & Barostat
+!----------------------------------------------------------------------
+ ntb=1,            ! (PBC for constant 1 = VOLUME 2 = PRESSURE)
+! ntp=1,           ! (1 = isotropic scaling)
+! barostat=1,      ! (1 = Berendsen)
+! taup=1.0,        !
+
+!Nature and format of the output
+!----------------------------------------------------------------------
+ ntxo=2,           ! Write Final coor, vel & box to "restr" as (1 ASCII, 2 NetCDF)
+ ntpr=100,         ! Write energy to "mdout" and "mdinfo"
+ ntwr=1000,        ! Write restart to "rst"
+ ntwx=100,        ! Write coordinates to "mdcrd"
+! ntwf=1000,        ! Write force to "mfrc"
+ ntwe=100,         ! Write energy to "mden"
+ iwrap=1,          ! Wrap (off not to mess up with diffusion)
+ ioutfm=1,         ! Format of coor, vel & traj files (0 ASCII, 1 NetCDF)
+/
+end

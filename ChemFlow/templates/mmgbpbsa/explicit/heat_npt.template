@@ -1,0 +1,87 @@
+INMETRO     - Instituto Nacional de Metrologia, Qualidade e Tecnologia
+   LAMAC    - Laboratorio de Macromoleculas
+      GBIC  - Grupo de Biologia Computacional
+
+RESPONSAVEL:
+Diego Enry Barreto Gomes
+   - dgomes@pq.cnpq.br
+   - (21) 2145 3070
+
+PROGRAMA:
+sander
+   - AmberTools 15
+   - Amber14
+
+DESCRICAO:
+Arquivo de entrada para aquecimento 
+   - restricoes de posicao bem fraca para o atomos pesados da proteina/ligante
+   - aquece basicamente agua e ions
+
+ATUALIZACAO:
+Thu Oct  6 11:45:01 BRT 2016
+
+heat myosin. protein+atp+mg+ligand restrained, solvent free
+Constant pressure to allow system to change size, because water gets closer to protein.
+ &cntrl
+!----------------------------------------------------------------------
+!General flags
+  imin=0,          ! (0 = molecular dynamics, 1 = energy minimization)
+
+!----------------------------------------------------------------------
+!Energy Minimization
+! maxcyc=1
+! ncyc=10 !(RTFM)
+! ntmin=0 (0 full, RTFM) 
+! dx0=0.01 !default
+
+!----------------------------------------------------------------------
+!Nature and format of the input
+ ntx=5,           ! coordinates & velocities (1 = coor only, 5 = restart MD)
+ irest=1,         ! restart md (0 no, 1 yes)
+ nscm=100,        ! remove COM
+!----------------------------------------------------------------------
+!Nature and format of the output 
+ ntxo=2           ! Write Final coor, vel & box to "restr" as (1 ASCII, 2 NetCDF)
+ ntpr=1000        ! Write energy to "mdout" and "mdinfo"
+ ntwr=1000        ! Write restart to "rst"
+ ntwx=1000        ! Write coordinates to "mdcrd"
+!ntwf=1000        ! Write force to "mfrc"
+ ntwe=100         ! Write energy to "mden"
+ iwrap=0          ! Wrap (off not to mess up with diffusion) 
+ ioutfm=1         ! Format of coor, vel & traj files (0 ASCII, 1 NetCDF)
+
+!----------------------------------------------------------------------
+!Run control options
+ nstlim=125000,   ! nsteps 2500ps
+ dt=0.002,        ! time step
+ cut=10.0,        !
+
+!----------------------------------------------------------------------
+!Constraints
+ ntc=2,           ! (SHAKE 2 = bonds involving hydrogen)
+ ntf=2            ! (2 = bond inter involving H-atoms omitted SHAKE)
+
+!----------------------------------------------------------------------
+!Frozen or restrained atoms
+! ibelly
+! bellymask
+  ntr=1,
+  restraintmask='!:WAT,Na+,Cl- & @CA,C,N,O' 
+  restraint_wt=2.0,               ! Force constant for restraint kcal/mol A^2
+
+!----------------------------------------------------------------------
+!Temperature coupling
+ ntt=3,           ! (1=Berendsen 3=Langevin Dynamics)
+ gamma_ln=2.0,    ! (for Langevin)
+! tempi=100.0,    ! Start temperature
+ temp0=300.0,     ! Target temperature
+ tautp=2.0,       ! Time constant, in ps, for heat bath coupling for the system
+ ig=-1            ! Random seed
+!----------------------------------------------------------------------
+!Ensemble
+ ntb=2            ! (1 = PBC for constant VOLUME, 2 = PBS for constant Pressure)
+! ntp=0           ! constant volume
+ ntp=1,           ! (1 = isotropic scaling)
+ barostat=1       ! (1 = Berendsen)
+ taup=1.0,        !
+ /
