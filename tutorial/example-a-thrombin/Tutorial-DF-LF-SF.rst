@@ -223,7 +223,7 @@ The command can be run locally, even if it is computationally expensive.
 
 Also in this case you will get a summary of the variables you chose for running the program as follows:
 
-.. image:: images/LigFlow-summary.png
+.. image:: images/LigFlow-summary-21.png
    :width: 800
    
 
