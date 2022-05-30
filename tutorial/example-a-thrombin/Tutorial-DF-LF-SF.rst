@@ -285,14 +285,14 @@ Here an example for the explicit solvent calculations:
 
 .. code-block:: bash
     
-    ScoreFlow -p tutorial -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa --write-only
+    ScoreFlow -p tutorial -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa --write-only
 
 
 Once modifyed the iunput files, you can run them re-launching the command line of Score\ *Flow*, but this time with the flag *--run-only*.
 
 .. code-block:: bash
     
-    ScoreFlow -p tutorial -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa --run-only
+    ScoreFlow -p tutorial -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa --run-only
     
 
 Run Chem\ *Flow* on HPC
@@ -354,15 +354,15 @@ Connect to your slurm cluster.
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --radius 15 --slurm --header DockFlow.header
-    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --radius 15 --pbs --header DockFlow.header
+    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --radius 15 --slurm --header DockFlow.header
+    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --radius 15 --pbs --header DockFlow.header
 
 * Using vina:
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --slurm --header DockFlow.header
-    DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --pbs --header DockFlow.header
+    DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --slurm --header DockFlow.header
+    DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --pbs --header DockFlow.header
 
 **If all goes right, you should see a summary like this one:**
 
@@ -382,8 +382,8 @@ Score\ *Flow*:
 
 .. code-block:: bash
 
-    ScoreFlow -p tutorial --protocol mmgbsa    -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa
-    ScoreFlow -p tutorial --protocol mmgbsa_md -r receptor.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa --md``
+    ScoreFlow -p tutorial --protocol mmgbsa    -r vmd-rec.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa
+    ScoreFlow -p tutorial --protocol mmgbsa_md -r vmd-rec.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa --md``
 
 For each of these commands you will be asked:
 
