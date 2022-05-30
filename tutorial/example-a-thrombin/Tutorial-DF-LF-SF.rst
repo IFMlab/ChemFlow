@@ -262,7 +262,7 @@ These data are collected in ScoreFlow.csv file in the receptor directory after p
 
 .. code-block:: bash
 
-    ScoreFlow -p tutorial --protocol mmgbsa_md -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa --postprocess
+    ScoreFlow -p tutorial --protocol mmgbsa_md -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa --postprocess
 
 
     ScoreFlow -p tutorial -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa  --postprocess
