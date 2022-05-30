@@ -26,7 +26,7 @@ Provided files
 +-----------------------+------------------------------------------------+
 | receptor.mol2         | Receptor prepared using SPORES.                |
 +-----------------------+------------------------------------------------+
-| vmd-rec.mol2         | Receptor prepared using SPORES.                |
+| vmd-rec.mol2         | Receptor prepared using VMD.                |
 +-----------------------+------------------------------------------------+
 | reference_ligand.pdb  | Ligand from 1DWC crystal structure.            |
 +-----------------------+------------------------------------------------+
@@ -96,37 +96,37 @@ Run DockFlow for each set of ligands.
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --radius 15
+    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --radius 15
 
 * Using vina: ( -sf vina )
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp vina
+    DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp vina
 
 * Using qvina: ( -sf vina )
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp qvina
+    DockFlow -p tutorial --protocol qvina -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp qvina
 
 * Using smina with the scoring function vinardo: (-sf vina,vinardo,dkoes_fast,dkoes_scoring)
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vinardo -dp smina
+    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vinardo -dp smina
     
 * Using smina with the scoring function vina: (-sf vina,vinardo,dkoes_fast,dkoes_scoring)
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l all.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp smina
+    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina -dp smina
 
 
 * For smina you can also run the Docking with a configuration file, in which you specify the center and the size of the box and a different scoring function to use:
 
 .. code-block:: bash
-    DockFlow -p tutorial --protocol config -r vmd-rec.mol2 -l all.mol2 --config_smina config.txt -dp smina
+    DockFlow -p tutorial --protocol config -r vmd-rec.mol2 -l compounds.mol2 --config_smina config.txt -dp smina
 
 Some examples of the configuration files that one can use are provided in the folder: 
 ChemFlow/ChemFlow/templates/smina/
@@ -141,7 +141,7 @@ For each of these commands you will be asked:
 
 Here an example of a summary that will appear on your screen, after launching the Dock\ *Flow* command:
 
-.. image:: images/summary-DF-plants.png
+.. image:: images/summary-DockFlow-21.png
    :width: 800
 
 
@@ -156,23 +156,23 @@ Each energy and structure will be extracted from it's folder and written into a 
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l all.mol2 --postprocess --overwrite -n 3 
+    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --postprocess --overwrite -n 3 
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l all.mol2 --postprocess -sf vina --overwrite -n 3 
+    DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l compounds.mol2 --postprocess -sf vina --overwrite -n 3 
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol qvina  -r vmd-rec.mol2 -l all.mol2 -sf vina -dp qvina --postprocess --overwrite -n 3
+    DockFlow -p tutorial --protocol qvina  -r vmd-rec.mol2 -l compounds.mol2 -sf vina -dp qvina --postprocess --overwrite -n 3
     
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol smina  -r vmd-rec.mol2 -l all.mol2 -sf vina -dp smina --postprocess  --overwrite -n 3
+    DockFlow -p tutorial --protocol smina  -r vmd-rec.mol2 -l compounds.mol2 -sf vina -dp smina --postprocess  --overwrite -n 3
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l all.mol2 -sf vinardo -dp smina --postprocess  --overwrite -n 3
+    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l compounds.mol2 -sf vinardo -dp smina --postprocess  --overwrite -n 3
 
 .. image:: images/DockFlow-postprocessing.png
    :width: 600  
