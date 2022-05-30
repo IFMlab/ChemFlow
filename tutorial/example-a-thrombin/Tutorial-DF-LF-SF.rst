@@ -240,8 +240,8 @@ Rescoring through the MMGBSA method, using two protocols in **implicit solvent**
 
 .. code-block:: bash
 
-    ScoreFlow -p tutorial --protocol mmgbsa    -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa
-    ScoreFlow -p tutorial --protocol mmgbsa_md -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa --md
+    ScoreFlow -p tutorial --protocol mmgbsa    -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc -sf mmgbsa
+    ScoreFlow -p tutorial --protocol mmgbsa_md -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc -sf mmgbsa --md
 
 Please note that we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM-1-BCC charges, by adding the flag "*--bcc*"
 
@@ -382,8 +382,8 @@ Score\ *Flow*:
 
 .. code-block:: bash
 
-    ScoreFlow -p tutorial --protocol mmgbsa    -r vmd-rec.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa
-    ScoreFlow -p tutorial --protocol mmgbsa_md -r vmd-rec.pdb -l tutorial.chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --pbs -sf mmgbsa --md``
+    ScoreFlow -p tutorial --protocol mmgbsa    -r vmd-rec.pdb -l tutorial.chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --pbs -sf mmgbsa
+    ScoreFlow -p tutorial --protocol mmgbsa_md -r vmd-rec.pdb -l tutorial.chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --pbs -sf mmgbsa --md``
 
 For each of these commands you will be asked:
 
