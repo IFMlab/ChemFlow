@@ -240,8 +240,8 @@ Rescoring through the MMGBSA method, using two protocols in **implicit solvent**
 
 .. code-block:: bash
 
-    ScoreFlow -p tutorial --protocol mmgbsa    -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa
-    ScoreFlow -p tutorial --protocol mmgbsa_md -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa --md
+    ScoreFlow -p tutorial --protocol mmgbsa    -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa
+    ScoreFlow -p tutorial --protocol mmgbsa_md -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/receptor/docked_ligands.mol2 --bcc -sf mmgbsa --md
 
 Please note that we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM-1-BCC charges, by adding the flag "*--bcc*"
 
@@ -250,7 +250,7 @@ Now we can rescore the same compounds with MMGBSA in **explicit solvent**, runni
 .. code-block:: bash
 
     
-    ScoreFlow -p tutorial -r receptor.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa 
+    ScoreFlow -p tutorial -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa 
 
 Also here we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM-1-BCC charges, by adding the flag "*--bcc*"
 We indicate that we want to run **explicit** solvent MMGBSA calculations by adding the flag *--water* .
