@@ -193,8 +193,7 @@ You can choose to archive the docking folder and get an nicely organized folder 
    :width: 800
 
 Now we can analyze the results of the docking, by plotting the ROC curve and the AUC for each docking program we used.
-We can extract the informations about the active compounds vs the decoys from the file *CORRESPONDANCE-NAMES.dat* in the tutorial folder.
-The decoys are the last 14 molecules reported (from C04221783 to C12716025, in the second column of the file).
+The decoys are the last 14 molecules in the file *compounds.mol2* (from C04221783 to C12716025).
 
 We computed the AUC with python and we got the following results:
 
