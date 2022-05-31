@@ -276,10 +276,17 @@ Here we plot the ROC curve with the results of the docking performed with chemPL
 
 It emerges that MMGBSA improved the prediction with respect to the ones obtained with the initial docking.
 
+
+
 The fact that MMGBSA in explicit solvent has an AUC lower than MMGBSA run in implicit solvent is probably due to the fact that we run just 1ns md and the system would need longer md.
 
 The calculations are always system dependent, so we suggest you to try different protocols playing around with the input files of both md and MMGBSA.
 You can do this by running Score\ *Flow* with the flag *--write-only*. This will write the default input files in the receptor directory and you can modify them according to your needs and experiments. 
+
+
+
+.. image:: images/ROC-plants-MMPBSA-MMGBSA.png
+   :width: 800
 
 Here an example for the explicit solvent calculations:
 
