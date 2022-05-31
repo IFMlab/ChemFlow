@@ -187,7 +187,7 @@ In this csv file are reported: the docking program that has been used, the proto
 Step 3.1: Archiving the results
 -------------------------------
 
-You can choose to archive the docking folder and get an nicely organized folder with your <b>docked_ligands.mol2</b>
+You can choose to archive the docking folder and get an nicely organized folder with your **docked_ligands.mol2**
 
 .. image:: images/DockFlow-postprocess-archive.png
    :width: 800
