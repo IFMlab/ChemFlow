@@ -11,7 +11,7 @@ The sources for ChemFlow can be downloaded from the `Github repo`_.
 
 .. _Github repo: https://github.com/IFMlab/ChemFlow.git
     
-You can either clone the Official branch repository:
+You can clone the Official branch repository:
     
     ``git clone --branch ChemFlow_Official https://github.com/IFMlab/ChemFlow.git``
     
@@ -30,11 +30,12 @@ Step 2 - Install anaconda3.
 ---------------------------
 * Download and install anaconda3.
 https://www.anaconda.com/products/individual#linux
-
 -Go to the folder where you downloaded the script of anaconda and type:
-chmod +x Anaconda3-2021.11-Linux-x86_64.sh
+chmod +x Anaconda3-*-Linux-x86_64.sh
 
--execute: ./Anaconda3-2021.11-Linux-x86_64.sh
+-*execute*: 
+
+./Anaconda3-*-Linux-x86_64.sh
 
 * Create a conda environment for ChemFlow, with the provided environment file **chmeflow.txt** that is in the main folder *ChemFlow/*:
 ``conda create -n ChemFlow --file chemflow.txt``
@@ -49,14 +50,19 @@ Step 3 - Install the software dependencies
     
     export PATH="/your/path/autodock_vina_1_1_2_linux_x86/bin:$PATH"
 
-* Qvina
+* Qvina (EXECUTABLE FILE)
     Download from: https://github.com/QVina/qvina/blob/master/bin/qvina2.1
+    
+    mkdir qvina/
+    mv qvina2.1 qvina/
+    cd qvina/
+    chmod +x qvina2.1
     
     Add in your ~/.bashrc : 
     
-    export PATH="/your/path/qvina-master/bin:$PATH"
+    export PATH="/your/path/qvina:$PATH"
         
-* Smina
+* Smina (EXECUTABLE FILE)
     Download from:  https://sourceforge.net/projects/smina/
     
     mkdir smina/
