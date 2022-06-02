@@ -152,4 +152,4 @@ Now we can work in the tutorial directory:
     cd ..
     cd tutorial/example-a-thrombin
     
-and follow the intrruction of the tutorial file in the repository: ChemFlow/tutorial/example-a-thrombin/TUTORIAL-DF-LF-SF.rst
+and follow the intrruction of the tutorial file in the repository: ChemFlow/tutorial/example-a-thrombin/Tutorial-DF-LF-SF.rst
