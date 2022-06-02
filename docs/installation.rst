@@ -17,25 +17,31 @@ You can clone the Official branch repository:
     
 Then you can add in the ~/.bashrc the path to your CHEMFLOW_HOME as follows:
 
-export CHEMFLOW_HOME="/your/path/here/ChemFlow/ChemFlow/"
+**export CHEMFLOW_HOME="/your/path/here/ChemFlow/ChemFlow/"**
 
-export PATH="${PATH}:${CHEMFLOW_HOME}/bin/"
+**export PATH="${PATH}:${CHEMFLOW_HOME}/bin/"**
 
 Then source the bashrc:
 
-source ~/.bashrc
+.. code-block:: bash
+
+
+    source ~/.bashrc
 
 
 Step 2 - Install anaconda3.
 ---------------------------
 * Download and install anaconda3.
 https://www.anaconda.com/products/individual#linux
+
+
 -Go to the folder where you downloaded the script of anaconda and type:
-chmod +x Anaconda3-*-Linux-x86_64.sh
+
+**chmod +x Anaconda3-*-Linux-x86_64.sh**
 
 -*execute*: 
 
-./Anaconda3-*-Linux-x86_64.sh
+**./Anaconda3-*-Linux-x86_64.sh**
 
 * Create a conda environment for ChemFlow, with the provided environment file **chmeflow.txt** that is in the main folder *ChemFlow/*:
 ``conda create -n ChemFlow --file chemflow.txt``
