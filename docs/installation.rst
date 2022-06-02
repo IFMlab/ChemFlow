@@ -10,13 +10,8 @@ Step 1 - Download ChemFlow sources.
 The sources for ChemFlow can be downloaded from the `Github repo`_.
 
 .. _Github repo: https://github.com/IFMlab/ChemFlow.git
-
-
-You can either clone the public repository:
-
-    ``git clone https://github.com/IFMlab/ChemFlow.git``
     
-You can either clone the Oficial branch repository:
+You can either clone the Official branch repository:
     
     ``git clone --branch ChemFlow_Official https://github.com/IFMlab/ChemFlow.git``
     
