@@ -271,10 +271,10 @@ From *SORTED-uniq-lig.csv* we can extract the data and compute again a ROC curve
 
 Here we plot the ROC curve with the results of the docking performed with chemPLP scoring function and the results of MMGBSA computed in implicit solvent (single point analysis) and in explicit solvent after 1ns md:
 
-.. image:: images/ROC-plants-DOCKING-IMP-EXP-MMGBSA.png
+.. image:: images/ROC-MMGBSA-DOCKINGChemPLP.png
    :width: 800
 
-It emerges that MMGBSA improved the prediction with respect to the ones obtained with the initial docking.
+It emerges that MMGBSA implicit solvent improved the prediction with respect to the ones obtained with the initial docking.
 
 
 
