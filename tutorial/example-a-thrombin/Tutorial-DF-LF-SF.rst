@@ -269,7 +269,7 @@ These data are collected in ScoreFlow.csv file in the receptor directory after p
 
 From *SORTED-uniq-lig.csv* we can extract the data and compute again a ROC curve in order to see if with MMGBSA single point and MMGBSA re-scoring in explicit solvent we were able to  improve our predictive power, increasing the AUC value.
 
-Here we plot the ROC curve with the results of the docking performed with chemPLP scoring function and the results of MMGBSA computed in implicit solvent (single point analysis) and in explicit solvent after an md of 1ns:
+Here we plot the ROC curve with the results of the docking performed with chemPLP scoring function and the results of MMGBSA computed in implicit solvent (single point analysis) and in explicit solvent after 1ns md:
 
 .. image:: images/ROC-plants-DOCKING-IMP-EXP-MMGBSA.png
    :width: 800
