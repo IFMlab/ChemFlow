@@ -137,4 +137,19 @@ If you choose to manually install Amber18 and/or Gaussian, make sure they're als
     export GAUSS_SCRDIR=/tmp
     source $g09root/g09/bsd/g09.profile
 
+Step 5 - Activate the environment and go to the turotial folder
+----------------------------------------------------------------
 
+.. code-block:: bash
+
+    conda activate ChemFlow
+    
+Now we can work in the tutorial directory:
+
+.. code-block:: bash
+
+    cd $CHEMFLOWHOME
+    cd ..
+    cd tutorial/example-a-thrombin
+    
+and follow the intrruction of the tutorial file in the repository: ChemFlow/tutorial/example-a-thrombin/TUTORIAL-DF-LF-SF.rst
