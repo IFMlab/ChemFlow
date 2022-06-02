@@ -54,19 +54,22 @@ Step 3 - Install the software dependencies
     
     Add in your ~/.bashrc : 
     
-    export PATH="/your/path/autodock_vina_1_1_2_linux_x86/bin:$PATH"
+    **export PATH="/your/path/autodock_vina_1_1_2_linux_x86/bin:$PATH"**
 
 * Qvina (EXECUTABLE FILE)
     Download from: https://github.com/QVina/qvina/blob/master/bin/qvina2.1
     
+.. code-block:: bash
+    
+
     mkdir qvina/
     mv qvina2.1 qvina/
     cd qvina/
     chmod +x qvina2.1
     
-    Add in your ~/.bashrc : 
+Add in your ~/.bashrc : 
     
-    export PATH="/your/path/qvina:$PATH"
+    **export PATH="/your/path/qvina:$PATH"**
         
 * Smina (EXECUTABLE FILE)
     Download from:  https://sourceforge.net/projects/smina/
