@@ -252,13 +252,13 @@ Now we can rescore the same compounds with MMGBSA in **explicit solvent**, runni
     
     ScoreFlow -p tutorial -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc --water -sf mmgbsa --md --protocol explicit_mmgbsa 
 
-Also here we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM1-BCC charges, by adding the flag "*--bcc*"
+Also here we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM1-BCC charges, by adding the flag "*--bcc*".
 We indicate that we want to run **explicit** solvent MMGBSA calculations by adding the flag *--water* .
 
-Running the md of 1ns locally would take around 10 minutes per compound.
+Running an MD simulation of 1ns would take around 10 minutes per compound on your local computer.
 
-At the end of the free-energy rescoring you will have MMGBSA.dat file per each ligand in the ligand folder. 
-These data are collected in ScoreFlow.csv file in the receptor directory after postprocessing the results witht he following command:
+At the end of the free-energy rescoring you will have one *mmgbsa.dat* file per compound in the ligand folder. 
+These data are collected in *ScoreFlow.csv* file in the receptor directory after postprocessing the results with the following command:
 
 .. code-block:: bash
 
