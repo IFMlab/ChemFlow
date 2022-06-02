@@ -258,11 +258,13 @@ We indicate that we want to run **explicit** solvent MMGBSA calculations by addi
 Running an MD simulation of 1ns would take around 10 minutes per compound on your local computer.
 
 At the end of the free-energy rescoring you will have one file *mmgbsa.dat* per compound in the ligand folder. 
-These data are postprocessed and collected in *ScoreFlow.csv* file in the receptor directory with the following command:
+These data are postprocessed and collected in *ScoreFlow.csv* file in the receptor directory with the following commands for implicit
 
 .. code-block:: bash
 
     ScoreFlow -p tutorial --protocol mmgbsa_md -r vmd-rec.pdb -l tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --bcc -sf mmgbsa --postprocess
+
+and explicit MD
 
 .. code-block:: bash
 
