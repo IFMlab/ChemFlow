@@ -375,6 +375,9 @@ Connect to your slurm cluster.
 .. code-block:: bash
 
     DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --slurm --header DockFlow.header
+    
+.. code-block:: bash
+
     DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --pbs --header DockFlow.header
 
 **If all goes right, you should see a summary like this one:**
@@ -387,7 +390,7 @@ Lig\ *Flow*:
 
 Computing AM1-BCC and RESP charges is computationally expensive and having the possibility to run the calculation on HPC becomes very useful.
 To run Lig\ *Flow* on HPC you can use the same command line you have used locally, adding the header file and specifying *--slurm* or *--pbs*.
-**Remmeber** to load the module of Gaussian g09 to calculate charges.
+**Remember** to load the module of Gaussian g09 to calculate charges.
 
 
 Score\ *Flow*:
@@ -396,7 +399,10 @@ Score\ *Flow*:
 .. code-block:: bash
 
     ScoreFlow -p tutorial --protocol mmgbsa    -r vmd-rec.pdb -l tutorial.chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --pbs -sf mmgbsa
-    ScoreFlow -p tutorial --protocol mmgbsa_md -r vmd-rec.pdb -l tutorial.chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --pbs -sf mmgbsa --md``
+    
+.. code-block:: bash
+
+    ScoreFlow -p tutorial --protocol mmgbsa_md -r vmd-rec.pdb -l tutorial.chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2 --pbs -sf mmgbsa --md
 
 For each of these commands you will be asked:
 
