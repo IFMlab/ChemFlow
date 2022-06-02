@@ -160,7 +160,7 @@ Each energy and structure will be extracted from it's folder and written into a 
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l compounds.mol2 --postprocess -sf vina --overwrite -n 3 
+    DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l compounds.mol2 --postprocess -sf vina -dp vina --overwrite -n 3 
 
 .. code-block:: bash
 
@@ -168,7 +168,7 @@ Each energy and structure will be extracted from it's folder and written into a 
     
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol smina  -r vmd-rec.mol2 -l compounds.mol2 -sf vina -dp smina --postprocess  --overwrite -n 3
+    DockFlow -p tutorial --protocol smina-vina  -r vmd-rec.mol2 -l compounds.mol2 -sf vina -dp smina --postprocess  --overwrite -n 3
 
 .. code-block:: bash
 
