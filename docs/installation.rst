@@ -74,20 +74,25 @@ Add in your ~/.bashrc :
 * Smina (EXECUTABLE FILE)
     Download from:  https://sourceforge.net/projects/smina/
     
+.. code-block:: bash
+
+    
     mkdir smina/
     mv smina.static smina/
     cd smina/
     chmod +x smina.static
 
-    Add in your ~/.bashrc :
+Add in your ~/.bashrc :
 
-    export PATH="/your/path/smina:$PATH
+    **export PATH="/your/path/smina:$PATH**
     
     
 * PLANTS ( Requires free registration )
     Download and install from: http://www.tcd.uni-konstanz.de/plants_download/
     
-    Add in your ~/.bashrc:     export PATH="${PATH}:~/software/PLANTS/"
+    Add in your ~/.bashrc:    
+    
+    **export PATH="${PATH}:~/software/PLANTS/"**
 
 * Amber18 (Optional, licence is required)
 
@@ -114,6 +119,8 @@ If you choose to manually install Amber18 and/or Gaussian, make sure they're als
 # Instructions for the impacient:
 
 .. code-block:: bash
+
+
     # Please modify the following paths and add them to your .bashrc
 
     # ChemFlow
