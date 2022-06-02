@@ -137,7 +137,7 @@ If you choose to manually install Amber18 and/or Gaussian, make sure they're als
     export GAUSS_SCRDIR=/tmp
     source $g09root/g09/bsd/g09.profile
 
-Step 5 - Activate the environment and go to the turotial folder
+Step 5 - Activate the environment and go to the tutorial folder
 ----------------------------------------------------------------
 
 .. code-block:: bash
