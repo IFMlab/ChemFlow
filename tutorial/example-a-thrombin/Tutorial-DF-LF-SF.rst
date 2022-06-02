@@ -235,7 +235,7 @@ Step 5: Run Score\ *Flow* to rescore the previous docking poses (best 3 for each
 Here, we only keep on with plants results (tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2).
 
 
-Rescoring through the MMGBSA method, using two protocols in **implicit solvent** first just minimization, then 1ns md simulation :
+Rescoring through the MMGBSA method, using two protocols in **implicit solvent** first just minimization, then 1ns MD simulation :
 
 
 .. code-block:: bash
@@ -245,7 +245,7 @@ Rescoring through the MMGBSA method, using two protocols in **implicit solvent**
 
 Please note that we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM-1-BCC charges, by adding the flag "*--bcc*"
 
-Now we can rescore the same compounds with MMGBSA in **explicit solvent**, running 1ns md simulation :
+Now we can rescore the same compounds with MMGBSA in **explicit solvent**, running 1ns MD simulation :
 
 .. code-block:: bash
 
@@ -278,7 +278,7 @@ It emerges that MMGBSA implicit solvent improved the prediction with respect to 
 
 
 
-The fact that MMGBSA in explicit solvent has an AUC lower than MMGBSA run in implicit solvent is probably due to the fact that we run just 1ns md and the system would need longer md.
+The fact that MMGBSA in explicit solvent has an AUC lower than MMGBSA run in implicit solvent is probably due to the fact that we run just 1ns MD and the system would need longer simulations.
 
 The calculations are always system dependent, so we suggest you to try different protocols playing around with the input files of both md and MMGBSA.
 You can do this by running Score\ *Flow* with the flag *--write-only*. This will write the default input files in the receptor directory and you can modify them according to your needs and experiments. 
