@@ -191,6 +191,7 @@ We computed the AUC with python and we got the following results:
 
 .. image:: images/ROC-plants-vina-qvina-smina.png
    :width: 800
+   
 
 The various AUC show us that the best scoring function for our dataset seems to be chemPLP, but since docking is an approximative way of computing binding affinity, we suggest to rescore the compounds docked by PLANTS with an end-point free energy re-scoring method known as MMGB/(PB)SA.
 
