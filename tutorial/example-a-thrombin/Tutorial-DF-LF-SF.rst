@@ -187,7 +187,7 @@ In this csv file are reported: the docking program that has been used, the proto
 Now we can analyze the results of the docking, by plotting the ROC curve and the AUC for each docking program we used.
 The decoys are the last 14 molecules in the file *compounds.mol2* (from C04221783 to C12716025).
 
-We computed the AUC with python, by using hte jupyter notebook that is in the tutorial folder, named *ROC-CURVE-DOCKFLOW.ipynb*.
+We computed the **AUC** with python, by using hte jupyter notebook that is in the tutorial folder, named *ROC-CURVE-DOCKFLOW.ipynb*.
 Please run the notebook in the **tutorial_chemflow/DockFlow/** folder, in order to properly load the input files, following the designed path.
 
 
