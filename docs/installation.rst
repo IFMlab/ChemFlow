@@ -19,7 +19,7 @@ Then you can add in the ~/.bashrc the path to your CHEMFLOW_HOME as follows:
 
 **export CHEMFLOW_HOME="/your/path/here/ChemFlow/ChemFlow/"**
 
-**export PATH="${PATH}:${CHEMFLOW_HOME}/bin/"**
+**export** **PATH****=****"${PATH}:${CHEMFLOW_HOME}/bin/"**
 
 Then source the bashrc:
 
