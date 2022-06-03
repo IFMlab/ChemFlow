@@ -184,14 +184,6 @@ At the end of the postprocessing Dock\ *Flow* writes DockFlow.csv with the docki
 
 In this csv file are reported: the docking program that has been used, the protocol, the receptor and ligand names, the pose number and as last column the docking score.
 
-Step 3.1: Archiving the results
--------------------------------
-
-You can choose to archive the docking folder and get a nicely organized folder with your **docked_ligands.mol2**
-
-.. image:: images/DockFlow-postprocess-archive.png
-   :width: 800
-
 Now we can analyze the results of the docking, by plotting the ROC curve and the AUC for each docking program we used.
 The decoys are the last 14 molecules in the file *compounds.mol2* (from C04221783 to C12716025).
 
@@ -203,6 +195,16 @@ We computed the AUC with python and we got the following results:
 The various AUC show us that the best scoring function for our dataset seems to be chemPLP, but since docking is an approximative way of computing binding affinity, we suggest to rescore the compounds docked by PLANTS with an end-point free energy re-scoring method known as MMGB/(PB)SA.
 
 To do so, we invite you in continuing the tutorial until the module named Score\ *Flow* in which we implemented the MMGB/(PB)SA free energy re-scoring method.
+
+
+Step 3.1: Archiving the results
+-------------------------------
+
+You can choose to archive the docking folder and get a nicely organized folder with your **docked_ligands.mol2**
+
+.. image:: images/DockFlow-postprocess-archive.png
+   :width: 800
+   
 
 Lig\ *Flow*
 ***********
