@@ -297,7 +297,6 @@ The calculations are always system dependent, so we suggest you to try different
 
 You can do this by running Score\ *Flow* with the flag *--write-only*. This will write the default input files in the receptor directory and you can modify them according to your needs and experiments. 
 
-
 Here an example for the explicit solvent calculations:
 
 .. code-block:: bash
