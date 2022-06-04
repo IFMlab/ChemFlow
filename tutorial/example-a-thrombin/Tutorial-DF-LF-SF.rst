@@ -285,22 +285,18 @@ From *SORTED-uniq-lig.csv* we can extract the data and compute again a ROC curve
 
 Here we plot the ROC curve with the results of the docking performed with chemPLP scoring function and the results of MMGBSA computed in implicit solvent (single point analysis) and in explicit solvent after 1ns md:
 
-.. image:: images/ROC-MMGBSA-DOCKINGChemPLP.png
+.. image:: images/ROC-chemplp-mmgbsa-imp-exp.png
    :width: 800
 
-It emerges that MMGBSA implicit solvent improved the prediction with respect to the ones obtained with the initial docking.
+It emerges that the AUC of ChemPLP scoring function is the highest and that MMGBSA in explicit solvent is better than the calculations run with implicit solvent.
+
+The fact that MMGBSA in explicit solvent has an AUC lower than the one of the docking protocol is probably due to the fact that we run just 1ns MD and the system would need longer simulations.
+
+The calculations are always system dependent, so we suggest you to try different protocols playing around with the input files of both MD and MMGB/PBSA.
 
 
-
-The fact that MMGBSA in explicit solvent has an AUC lower than MMGBSA run in implicit solvent is probably due to the fact that we run just 1ns MD and the system would need longer simulations.
-
-The calculations are always system dependent, so we suggest you to try different protocols playing around with the input files of both md and MMGBSA.
 You can do this by running Score\ *Flow* with the flag *--write-only*. This will write the default input files in the receptor directory and you can modify them according to your needs and experiments. 
 
-
-
-.. image:: images/ROC-plants-MMPBSA-MMGBSA.png
-   :width: 800
 
 Here an example for the explicit solvent calculations:
 
