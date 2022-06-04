@@ -497,7 +497,7 @@ echo "rm -rf com.top rec.top ligand.top
 python3 $(which ante-MMPBSA.py) -p ${init}.prmtop -c com.top -r rec.top -l ligand.top -n :MOL -s ':WAT,Na+,Cl-' --radii=mbondi2 &> ante_${SCORING_FUNCTION}.job" >>${RUNDIR}/ScoreFlow.run
 
 if [ "${WATER}" != "yes" ] ; then
-    echo "python3 $(which MMPBSA.py) -O -i ../${SCORING_FUNCTION} -cp com.top -rp rec.top -lp ligand.top -o ${SCORING_FUNCTION}.dat -eo ${SCORING_FUNCTION}.csv -y ${TRAJECTORY} &> ${SCORING_FUNCTION}.job" >>${RUNDIR}/ScoreFlow.run
+    echo "python3 $(which MMPBSA.py) -O -i ../${SCORING_FUNCTION}.in -cp com.top -rp rec.top -lp ligand.top -o ${SCORING_FUNCTION}.dat -eo ${SCORING_FUNCTION}.csv -y ${TRAJECTORY} &> ${SCORING_FUNCTION}.job" >>${RUNDIR}/ScoreFlow.run
 else
     echo "python3 $(which MMPBSA.py) -O -i ../${SCORING_FUNCTION}.in -sp ${init}.prmtop -cp com.top -rp rec.top -lp ligand.top -o ${SCORING_FUNCTION}.dat -eo ${SCORING_FUNCTION}.csv -y ${TRAJECTORY} &> ${SCORING_FUNCTION}.job" >>${RUNDIR}/ScoreFlow.run
 fi
