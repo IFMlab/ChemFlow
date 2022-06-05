@@ -366,34 +366,34 @@ Dock\ *Flow*:
 -------------
 Connect to your slurm cluster.
 
-* Using plants:
-with slurm:
+* Using plants with slurm:
 
 .. code-block:: bash
 
     DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --radius 15 --slurm --header DockFlow.header
-    
-with pbs:
+
+
+or pbs:
 
 .. code-block:: bash
     
     DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --radius 15 --pbs --header DockFlow.header
 
-* Using vina:
+* Using vina with slurm:
 
-with slurm:
 .. code-block:: bash
 
     DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --slurm --header DockFlow.header
     
-with pbs:
+
+or pbs:
 .. code-block:: bash
 
     DockFlow -p tutorial --protocol vina -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --size 18.886 22.290 19.700 -sf vina --pbs --header DockFlow.header
 
 **If all goes right, you should see a summary like this one:**
 
-.. image:: images/DockFlow-hpc-summary.png
+.. image:: images/DockFlow-summary-hpc.png
    :width: 800
 
 Lig\ *Flow*:
