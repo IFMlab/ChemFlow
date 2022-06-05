@@ -371,6 +371,9 @@ Connect to your slurm cluster.
 .. code-block:: bash
 
     DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --radius 15 --slurm --header DockFlow.header
+    
+.. code-block:: bash
+    
     DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --center 32.249 13.459 24.955 --radius 15 --pbs --header DockFlow.header
 
 * Using vina:
