@@ -49,7 +49,7 @@ ChemFlow ships a tool to compute optimal box origin and dimensions provided a kn
 Use the reference ligand to compute the center for docking.
 
 Running the script *bounding_shape.py* you will get the sphere/box dimensions.
-Since AutodockVina requires a search space in each dimension that is no less than 15 larger than the size of the ligand, and no less than 22 Å total, we will compute the dimensions of the box with a padding of 15 Å, specified with the flag "-p".
+Since AutodockVina requires a search space in each dimension that is no less than 15 larger than the size of the ligand, and no less than 22 Å total, we will compute the dimensions of the box with a padding of 15 Å, specified with the flag "-p". This definition of the box will then be adapted also for Qvina and Smina in the following steps.
 
 For PLANTS you will get the center and the radius of the sphere. By default the radius of the sphere is 15 Å.
 
