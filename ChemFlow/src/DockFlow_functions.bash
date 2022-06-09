@@ -361,7 +361,7 @@ for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
     # Vina command.
     echo \"mkdir -p ${RUNDIR}/\${LIGAND}/VINA/ ; vina --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-        --size_x ${DOCK_LENGTH[1]} --size_y ${DOCK_LENGTH[2]} --size_z ${DOCK_LENGTH[3]} \
+        --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} \
 	--num_modes ${DOCK_POSES}\
         --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
         --out ${RUNDIR}/\${LIGAND}/VINA/output.pdbqt --log ${RUNDIR}/\${LIGAND}/VINA/output.log --cpu 1 &>/dev/null \" >> ${first}.xargs
@@ -392,7 +392,7 @@ for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
     # qvina command.
     echo \"mkdir -p ${RUNDIR}/\${LIGAND}/QVINA/ ; qvina2.1 --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-        --size_x ${DOCK_LENGTH[1]} --size_y ${DOCK_LENGTH[2]} --size_z ${DOCK_LENGTH[3]} \
+        --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} \
 	--num_modes ${DOCK_POSES}\
         --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
         --out ${RUNDIR}/\${LIGAND}/QVINA/output.pdbqt --log ${RUNDIR}/\${LIGAND}/QVINA/output.log --cpu 1 &>/dev/null \" >> ${first}.xargs
@@ -423,7 +423,7 @@ for LIGAND in ${LIGAND_LIST[@]:$first:$nlig} ; do
     # Vina command.
     echo \"mkdir -p ${RUNDIR}/\${LIGAND}/SMINA/ ; smina.static --receptor ${RUNDIR}/receptor.pdbqt --ligand ${RUNDIR}/\${LIGAND}/ligand.pdbqt \
         --center_x ${DOCK_CENTER[0]} --center_y ${DOCK_CENTER[1]} --center_z ${DOCK_CENTER[2]} \
-        --size_x ${DOCK_LENGTH[1]} --size_y ${DOCK_LENGTH[2]} --size_z ${DOCK_LENGTH[3]} \
+        --size_x ${DOCK_LENGTH[0]} --size_y ${DOCK_LENGTH[1]} --size_z ${DOCK_LENGTH[2]} \
 	--num_modes ${DOCK_POSES}\
         --energy_range ${ENERGY_RANGE} --exhaustiveness ${EXHAUSTIVENESS} \
 	--accurate_line --scoring vinardo
