@@ -144,12 +144,13 @@ Step 5 - Activate the environment and go to the tutorial folder
 
     conda activate ChemFlow
     
-Now we can work in the tutorial directory:
+Now we can go back to the main folder and extract the files for the tutorial in this way:
 
 .. code-block:: bash
 
     cd $CHEMFLOWHOME
     cd ..
-    cd tutorial/example-a-thrombin
+    tar xvzf tutorial.tar.gz
+    cd tutorial/
     
-and follow the intrruction of the tutorial file in the repository: ChemFlow/tutorial/example-a-thrombin/Tutorial-DF-LF-SF.rst
+Now you can follow the instruction of the tutorial that you find in the file: ChemFlow/tutorial/Tutorial-ChemFlow.rst and give it a try!
