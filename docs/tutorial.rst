@@ -1,1 +1,0 @@
-.. include:: ../tutorial/TUTORIAL.rst
