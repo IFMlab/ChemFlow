@@ -16,8 +16,8 @@ The workflows allow the user to spend more time **thinking**, i.e. running bench
 
 It consists of *BASH* and *PYTHON* scripts that can be launched locally (serial or with GNU parallel) or on a compute cluster via PBS.
 
-* Lig\ *Flow* : Prepare the compound to score. Normalize the mol2 files and/or compute charges
 * Dock\ *Flow* : Docking and Virtual Screening
+* Lig\ *Flow* : Computing AM1-BCC and/or RESP charges for the docked compounds we want to rescore
 * Score\ *Flow* : Rescoring using PLANTS, Vina, or MM(PB,GB)SA
 
 
