@@ -153,4 +153,4 @@ Now we can go back to the main folder and extract the files for the tutorial in 
     tar xvzf tutorial.tar.gz
     cd tutorial/
     
-Now you can follow the instruction of the tutorial that you find in the file: ChemFlow/tutorial/Tutorial-ChemFlow.rst and give it a try!
+Now you can follow the instruction of the tutorial that you find in the file: **docs/Tutorial-ChemFlow.rst** and give it a try!
