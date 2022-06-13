@@ -285,7 +285,7 @@ From *SORTED-uniq-lig.csv* we can extract the data and compute again a ROC curve
 
 Here we plot the ROC curve with the results of the docking performed with chemPLP scoring function and the results of MMGBSA computed in implicit solvent (single point analysis) and in explicit solvent after 1ns md:
 
-.. image:: images/ROC-chemplp-mmgbsa-imp-exp.png
+.. image:: images/ROC-curve-ScoreFlow.png
    :width: 800
 
 It emerges that the AUC of ChemPLP scoring function is the highest and that MMGBSA in explicit solvent is better than the calculations run with implicit solvent.
