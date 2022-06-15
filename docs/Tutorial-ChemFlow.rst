@@ -325,7 +325,8 @@ In order to retrieve the path of the ChemFlow environment, you can type on the t
 
     conda info --envs
     
- and it will appear 
+ 
+and it will appear 
 
     **ChemFlow                your/path/env/ChemFlow**
     
