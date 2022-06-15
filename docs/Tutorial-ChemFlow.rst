@@ -319,6 +319,19 @@ If you are logged to a cluster/supercomputer, you may profit from the HPC resour
 ChemFlow will automatically distribute the jobs for you after you answer some questions. 
 To run it properly, you should provide a template for your scheduler using the \\-\\-header FILE option. Here are examples for this header file for Score\ *Flow*.
 
+In order to retrieve the path of the ChemFlow environment, you can type on the terminal:
+
+.. code-block:: bash
+
+    conda info --envs
+    
+ and it will appear 
+
+    **ChemFlow                your/path/env/ChemFlow**
+    
+ 
+Once you have it, you can add the line in the header file to source *amber.sh* of the environment.
+
 * Example for pbs::
 
     #! /bin/bash
@@ -329,7 +342,7 @@ To run it properly, you should provide a template for your scheduler using the \
     #PBS -l walltime=0:30:00
     #PBS -V
 
-    source ~/software/amber16/amber.sh``
+    source your/path/env/ChemFlow/amber.sh
 
 * Example for slurm::
 
@@ -353,7 +366,7 @@ To run it properly, you should provide a template for your scheduler using the \
     module load openmpi/openmpi-4.0.i21
     
     # Path to amber.sh replace with your own
-    source ~/software/amber18/amber.sh
+    source your/path/env/ChemFlow/amber.sh
     
     #Or if it exists a precompiled version of amber on the cluster then you can directly load the module"
     module load amber/amber18
