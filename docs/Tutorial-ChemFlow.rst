@@ -328,7 +328,7 @@ In order to retrieve the path of the ChemFlow environment, you can type on the t
  
 and it will appear 
 
-    **ChemFlow                your/path/env/ChemFlow**
+ **ChemFlow                                  your/path/env/ChemFlow**
     
  
 Once you have it, you can add the line in the header file to source *amber.sh* of the environment.
