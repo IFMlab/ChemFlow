@@ -219,6 +219,7 @@ Step 3.1: Archiving the results
 
 You can choose to archive the docking folder and get a nicely organized folder with your **docked_ligands.mol2**.
 You can run the same commands you have run for the postprocessing adding the flag *--archive* :
+
 .. code-block:: bash
 
     DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --archive
