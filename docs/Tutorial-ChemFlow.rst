@@ -23,7 +23,7 @@ Provided files
 +-----------------------+------------------------------------------------+
 | 1DWD.pdb              | Original PDB                                   |
 +-----------------------+------------------------------------------------+
-| vmd-rec.pdb          | Receptor prepared with pdb4amber and --reduce. |
+| vmd-rec.pdb           | Receptor prepared with pdb4amber and --reduce. |
 +-----------------------+------------------------------------------------+
 | vmd-rec.mol2          | Receptor saevd using VMD.                      |
 +-----------------------+------------------------------------------------+
