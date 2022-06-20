@@ -160,29 +160,29 @@ Step 3: Postprocess all the results
 
 Docking generates several files for each complex and the big issue here is that each docking program organizes their results their own way.
 To organize and standardize all results to the ChemFlow standands you should <b>--postprocess</b>.  
-Here, we decided to keep only the best 3 poses for each ligand, as specified by the flag *-n* that stands for number of poses (-n 3).
+Here, we decided to keep only the best pose for each ligand, as specified by the flag *-n* that stands for number of poses (-n 1).
 
 Each energy and structure will be extracted from it's folder and written into a single Structure file (docked_ligands.mol2) and a single Energy file (DockFlow.csv) containing the selected structures. 
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --postprocess --overwrite -n 3 
+    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --postprocess --overwrite -n 1
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l compounds.mol2 --postprocess -sf vina -dp vina --overwrite -n 3 
+    DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l compounds.mol2 --postprocess -sf vina -dp vina --overwrite -n 1 
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol qvina  -r vmd-rec.mol2 -l compounds.mol2 -sf vina -dp qvina --postprocess --overwrite -n 3
+    DockFlow -p tutorial --protocol qvina  -r vmd-rec.mol2 -l compounds.mol2 -sf vina -dp qvina --postprocess --overwrite -n 1
     
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol smina-vina  -r vmd-rec.mol2 -l compounds.mol2 -sf vina -dp smina --postprocess  --overwrite -n 3
+    DockFlow -p tutorial --protocol smina-vina  -r vmd-rec.mol2 -l compounds.mol2 -sf vina -dp smina --postprocess  --overwrite -n 1
 
 .. code-block:: bash
 
-    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l compounds.mol2 -sf vinardo -dp smina --postprocess  --overwrite -n 3
+    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l compounds.mol2 -sf vinardo -dp smina --postprocess  --overwrite -n 1
 
 .. image:: images/DockFlow-postprocessing.png
    :width: 600  
@@ -195,7 +195,7 @@ At the end of the postprocessing Dock\ *Flow* writes DockFlow.csv with the docki
 In this csv file are reported: the docking program that has been used, the protocol, the receptor and ligand names, the pose number and as last column the docking score.
 
 Now we can analyze the results of the docking, by plotting the ROC curve and the AUC for each docking program we used.
-The decoys are the last 14 molecules in the file *compounds.mol2* (from C04221783 to C12716025).
+The decoys are the last 14 molecules in the file *CORRESPONDANCE-NAMES.dat* (from C04221783 to C12716025).
 
 We computed the **AUC** with python, by using hte jupyter notebook that is in the tutorial folder, named *ROC-CURVE-DOCKFLOW.ipynb*.
 Please run the notebook in the **example** folder, in order to properly load the input files, following the designed path.
