@@ -23,11 +23,9 @@ Provided files
 +-----------------------+------------------------------------------------+
 | 1DWD.pdb              | Original PDB                                   |
 +-----------------------+------------------------------------------------+
-| receptor.pdb          | Receptor prepared with pdb4amber and --reduce. |
+| vmd-rec.pdb          | Receptor prepared with pdb4amber and --reduce. |
 +-----------------------+------------------------------------------------+
-| receptor.mol2         | Receptor prepared using SPORES.                |
-+-----------------------+------------------------------------------------+
-| vmd-rec.mol2          | Receptor prepared using VMD.                   |
+| vmd-rec.mol2          | Receptor saevd using VMD.                      |
 +-----------------------+------------------------------------------------+
 | reference_ligand.pdb  | Ligand from 1DWC crystal structure.            |
 +-----------------------+------------------------------------------------+
