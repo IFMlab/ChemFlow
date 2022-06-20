@@ -256,7 +256,7 @@ Step 4: Compute AM1-BCC and RESP charges for the docked ligands
 Lig\ *Flow* takes multimol2 files as input, then organizes them individually into your project folder to then compute *bcc* or *resp* charges.
 By default Lig\ *Flow* compute AM1-BCC charges.
 
-Here we compute bcc charges for the first 3 poses of the docked compounds:
+Here we compute bcc charges for the first pose of the docked compounds:
 
 .. code-block:: bash
 
