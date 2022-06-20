@@ -273,7 +273,7 @@ Also in this case you will get a summary of the variables you chose for running 
 Score\ *Flow*
 ************
 
-Step 5: Run Score\ *Flow* to rescore the previous docking poses (best 3 for each ligand)
+Step 5: Run Score\ *Flow* to rescore the previous docking poses (best one for each ligand)
 ----------------------------------------------------------------------------------------
 Here, we only keep on with plants results (tutorial_chemflow/DockFlow/plants/vmd-rec/docked_ligands.mol2).
 
@@ -301,7 +301,7 @@ Now we can rescore the same compounds with MMGBSA in **explicit solvent**, runni
 Also here we specified to use for the rescoring the mol2 of the docked ligands for which we computed AM1-BCC charges, by adding the flag "*--bcc*".
 We indicate that we want to run **explicit** solvent MMGBSA calculations by adding the flag *--water* .
 
-Running an MD simulation of 1ns would take around 10 minutes per compound on your local computer.
+Running an MD simulation of 1ns would take around 10 minutes per compound on your local computer, using GPU.
 
 At the end of the free-energy rescoring you will have one file *mmgbsa.dat* per compound in the ligand folder. 
 These data are postprocessed and collected in *ScoreFlow.csv* file in the receptor directory with the following commands for implicit
