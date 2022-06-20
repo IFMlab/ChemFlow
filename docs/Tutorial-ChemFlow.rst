@@ -34,9 +34,9 @@ Provided files
 +-----------------------+------------------------------------------------+
 | ligands.smi           | b1-b7 ligands.                                 |
 +-----------------------+------------------------------------------------+
-| actives.sdf   | 1D3D 1D3P 1D3Q 1D3T 1DWB 1DWC 1DWD             |
+| actives.sdf           | 1D3D 1D3P 1D3Q 1D3T 1DWB 1DWC 1DWD             |
 +-----------------------+------------------------------------------------+
-| decoys.smi            | decoys for a-thrombin, from DUD-E              |
+| decoys.sdf            | decoys for a-thrombin, from DUD-E              |
 +-----------------------+------------------------------------------------+
 
 Dock\ *Flow*
