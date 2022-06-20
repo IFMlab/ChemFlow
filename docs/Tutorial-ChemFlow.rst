@@ -217,7 +217,28 @@ To do so, we invite you in continuing the tutorial until the module named Score\
 Step 3.1: Archiving the results
 -------------------------------
 
-You can choose to archive the docking folder and get a nicely organized folder with your **docked_ligands.mol2**
+You can choose to archive the docking folder and get a nicely organized folder with your **docked_ligands.mol2**.
+You can run the same commands you have run for the postprocessing adding the flag *--archive* :
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol plants -r vmd-rec.mol2 -l compounds.mol2 --archive
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol vina   -r vmd-rec.mol2 -l compounds.mol2 --postprocess -sf vina -dp vina  --archive 
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol qvina  -r vmd-rec.mol2 -l compounds.mol2 -sf vina -dp qvina --postprocess  --archive
+    
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol smina-vina  -r vmd-rec.mol2 -l compounds.mol2 -sf vina -dp smina --postprocess  --archive
+
+.. code-block:: bash
+
+    DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l compounds.mol2 -sf vinardo -dp smina --postprocess   --archive
+
 
 .. image:: images/DockFlow-postprocess-archive.png
    :width: 800
