@@ -187,9 +187,10 @@ Each energy and structure will be extracted from it's folder and written into a 
 .. image:: images/DockFlow-postprocessing.png
    :width: 600  
 
-At the end of the postprocessing Dock\ *Flow* writes DockFlow.csv with the docking score of the pose kept for each ligand:
+At the end of the postprocessing Dock\ *Flow* writes DockFlow.csv with the docking score of the pose kept for each ligand.
+Here an example reporting *DockFlow.csv* file obtained after the docking with vina:
 
-.. image:: images/DockFlow-csv-21.png
+.. image:: images/DockFlow-csv-vina.png
    :width: 600 
 
 In this csv file are reported: the docking program that has been used, the protocol, the receptor and ligand names, the pose number and as last column the docking score.
