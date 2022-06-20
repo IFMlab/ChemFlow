@@ -151,7 +151,7 @@ For each of these commands you will be asked:
 
 Here an example of a summary that will appear on your screen, after launching the Dock\ *Flow* command:
 
-.. image:: images/summary-DockFlow-21.png
+.. image:: images/DockFlow-summary.png
    :width: 800
 
 
