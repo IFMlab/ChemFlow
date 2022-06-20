@@ -241,6 +241,8 @@ You can run the same commands you have run for the postprocessing adding the fla
     DockFlow -p tutorial --protocol smina-vinardo  -r vmd-rec.mol2 -l compounds.mol2 -sf vinardo -dp smina --postprocess   --archive
 
 
+Once the command is launched, youshould get a summary like this:
+
 .. image:: images/DockFlow-postprocess-archive.png
    :width: 800
    
