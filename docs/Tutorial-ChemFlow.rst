@@ -40,6 +40,15 @@ Provided files
 | compounds.mol2        | actives and inactive, input for tutorial       |
 +-----------------------+------------------------------------------------+
 
+Prep\ *Flow*
+************
+Before running molecular docking one has to properly prepare the ligands. In order to do so, we used Prep\ *Flow*, starting from the sdf structures of the actives and the decoys (*actives.sdf* and *decoys.sdf* in the tutorial folder). 
+Prep \*Flow* returns a mol2 file *all.mol2* as well as an sdf file. We then catted the mol2 obtained both for decoys and actives and created *compounds.mol2* that we are gonna use in this tutorial:
+
+.. code-block:: bash
+
+    cat decoys.mol2 actives.mol2 >> compounds.mol2
+
 Dock\ *Flow*
 ************
 
