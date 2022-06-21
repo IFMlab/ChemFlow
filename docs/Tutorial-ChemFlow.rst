@@ -22,23 +22,25 @@ Provided files
 
 +-----------------------+------------------------------------------------+
 | 1DWD.pdb              | Original PDB                                   |
-+-----------------------+------------------------------------------------+
-| vmd-rec.pdb           | Receptor prepared with pdb4amber and --reduce. |
-+-----------------------+------------------------------------------------+
-| vmd-rec.mol2          | Receptor saevd using VMD.                      |
-+-----------------------+------------------------------------------------+
-| reference_ligand.pdb  | Ligand from 1DWC crystal structure.            |
-+-----------------------+------------------------------------------------+
-| reference_ligand.mol2 | converted with openbabel.                      |
-+-----------------------+------------------------------------------------+
-| ligands.smi           | b1-b7 ligands.                                 |
-+-----------------------+------------------------------------------------+
-| actives.sdf           | 1D3D 1D3P 1D3Q 1D3T 1DWB 1DWC 1DWD             |
-+-----------------------+------------------------------------------------+
-| decoys.sdf            | decoys for a-thrombin, from DUD-E              |
-+-----------------------+------------------------------------------------+
-| compounds.mol2        | actives and inactive, input for tutorial       |
-+-----------------------+------------------------------------------------+
++---------------------------+------------------------------------------------+
+| vmd-rec.pdb               | Receptor prepared with pdb4amber and --reduce. |
++---------------------------+------------------------------------------------+
+| vmd-rec.mol2              | Receptor saevd using VMD.                      |
++---------------------------+------------------------------------------------+
+| reference_ligand.pdb      | Ligand from 1DWC crystal structure.            |
++---------------------------+------------------------------------------------+
+| reference_ligand.mol2     | converted with openbabel.                      |
++---------------------------+------------------------------------------------+
+| ligands.smi               | b1-b7 ligands.                                 |
++---------------------------+------------------------------------------------+
+| actives.sdf               | 1D3D 1D3P 1D3Q 1D3T 1DWB 1DWC 1DWD             |
++---------------------------+------------------------------------------------+
+| decoys.sdf                | decoys for a-thrombin, from DUD-E              |
++---------------------------+------------------------------------------------+
+| compounds.mol2            | actives and inactive, input for tutorial       |
++---------------------------+------------------------------------------------+
+| CORRESPONDENCE-NAMES.dat  | InChIKey and name of each ligand analysed      |
+----------------------------+------------------------------------------------+
 
 Prep\ *Flow*
 ************
@@ -323,11 +325,10 @@ Here we plot the ROC curve with the results of the docking performed with chemPL
 .. image:: images/ROC-curve-ScoreFlow.png
    :width: 800
 
-It emerges that the AUC of ChemPLP scoring function is the highest and that MMGBSA in explicit solvent is better than the calculations run with implicit solvent.
+It emerges that the AUC improves with MMGBSA, both in implicit and explicit, solvent with respect to the results of the docking. 
+The AUC of the protocol MMGBSA in explicit solvent is slightly lower than the one of implicit solvent and this is maybe because 1ns MD is too short for this system.
 
-The fact that MMGBSA in explicit solvent has an AUC lower than the one of the docking protocol is probably due to the fact that we run just 1ns MD and the system would need longer simulations.
-
-The calculations are always system dependent, so we suggest you to try different protocols playing around with the input files of both MD and MMGB/PBSA.
+The calculations are always system dependent, so we suggest you to try different protocols playing around with the input files of both MD and MM/PB(GB)SA.
 
 
 You can do this by running Score\ *Flow* with the flag *--write-only*. This will write the default input files in the receptor directory and you can modify them according to your needs and experiments. 
