@@ -40,7 +40,8 @@ Provided files
 | compounds.mol2            | actives and inactive, input for tutorial       |
 +---------------------------+------------------------------------------------+
 | CORRESPONDENCE-NAMES.dat  | InChIKey and name of each ligand analysed      |
-----------------------------+------------------------------------------------+
++---------------------------+------------------------------------------------+
+
 
 Prep\ *Flow*
 ************
