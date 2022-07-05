@@ -86,11 +86,34 @@ run_LigFlow_prepare () {
                     -c bcc -eq 2 -s 2 -at gaff2 \
                     -rn MOL -dr no -pf y -nc ${net_charge}
     fi
-
-    if [ "$CHARGE" == "resp" ] ; then
+    
+    if [ "$CHARGE" == "resp" ] && [ "${ATOM_TYPE}" == "sybyl" ] ; then
         $(which antechamber) -fi mol2 -i ligand.mol2 \
                     -fo gcrt -o ligand.gau  \
-                    -ge ligand.gesp \
+                    -ge ligand.gesp -at sybyl \
+                    -ch ligand -eq 1 -gv 1 \
+                    -gm %mem=2Gb -gn %nproc=$(nproc --all) \
+                    -rn MOL -dr no -pf y
+
+        if [ -f ligand.gau ] ; then
+            g09 <ligand.gau>ligand.gout
+
+            # If gaussian ended normally, post-process Gaussian Output to produce final .mol2
+            if [ "$(awk '/Normal/' ligand.gout )" != '' ] ; then
+                $(which antechamber) -fi gout -i ligand.gout  \
+                            -fo mol2 -o resp.mol2 \
+                            -c resp -s 2 -at sybyl \
+                            -rn MOL -pf y -dr y -nc ${net_charge}
+            fi
+
+        fi
+    fi
+
+
+    if [ "$CHARGE" == "resp" ] && [ "${ATOM_TYPE}" != "sybyl" ] ; then
+        $(which antechamber) -fi mol2 -i ligand.mol2 \
+                    -fo gcrt -o ligand.gau  \
+                    -ge ligand.gesp -at gaff2 \
                     -ch ligand -eq 1 -gv 1 \
                     -gm %mem=2Gb -gn %nproc=$(nproc --all) \
                     -rn MOL -dr no -pf y
