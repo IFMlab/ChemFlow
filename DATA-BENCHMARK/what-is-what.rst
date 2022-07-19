@@ -10,6 +10,9 @@ The dataset used in this work. For each entry, the PDB code, the experimental bi
 
 3D structures of ligands with RESP charges used in this study in MOL2 format.
 
-**chemflow_receptors_pdb.tar.gz**:
+**chemflow_receptors_pdb.tar.gz.aa..ad**:
 
 3D structures of the proteins used in this study in PDB format.
+The PDBs were splitted in four tar.gz files and you can open them to generate the original folder with the following command:
+
+
