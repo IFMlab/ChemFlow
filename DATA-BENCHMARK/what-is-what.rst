@@ -15,4 +15,6 @@ The dataset used in this work. For each entry, the PDB code, the experimental bi
 3D structures of the proteins used in this study in PDB format.
 The PDBs were splitted in four tar.gz files and you can open them to generate the original folder with the following command:
 
-
+.. code-block:: bash
+    
+  cat chemflow_receptors_pdb.tar.gz.* | tar xzvf -
